@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Blink.App.Settings.SettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Blink Preferences">
+
+    <NavigationView PaneDisplayMode="Top" IsBackButtonVisible="Collapsed" IsSettingsVisible="False">
+        <NavigationView.MenuItems>
+            <NavigationViewItem Content="General" Tag="general">
+                <NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Setting"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Theme" Tag="theme">
+                <NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Edit"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Flow" Tag="flow">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE945;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="About" Tag="about">
+                <NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Help"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.MenuItems>
+
+        <ScrollViewer Padding="24">
+            <StackPanel x:Name="ContentPanel" Spacing="16" MaxWidth="500">
+                <!-- Content populated by code-behind based on selected tab -->
+            </StackPanel>
+        </ScrollViewer>
+    </NavigationView>
+</Window>
