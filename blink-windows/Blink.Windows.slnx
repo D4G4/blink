@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Blink.Core.Tests/Blink.Core.Tests.csproj" />
+    <Project Path="src/Blink.Core/Blink.Core.csproj" />
+    <Project Path="src/Blink.Platform/Blink.Platform.csproj" />
+  </Folder>
+</Solution>

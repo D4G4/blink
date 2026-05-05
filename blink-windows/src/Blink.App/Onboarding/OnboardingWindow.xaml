@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Blink.App.Onboarding.OnboardingWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Welcome to Blink">
+
+    <Grid x:Name="RootGrid" Padding="40">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Welcome text -->
+        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8">
+            <TextBlock Text="Welcome to Blink"
+                       FontSize="36" FontWeight="Bold"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="Smart breaks for your eyes"
+                       FontSize="16" Opacity="0.7"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Theme icon -->
+        <Image Grid.Row="1" x:Name="ThemeIcon"
+               Width="200" Height="200"
+               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+        <!-- Theme name -->
+        <TextBlock Grid.Row="2" x:Name="ThemeName"
+                   FontSize="20" FontWeight="SemiBold"
+                   HorizontalAlignment="Center" Margin="0,16,0,0"/>
+
+        <!-- Navigation -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal"
+                    HorizontalAlignment="Center" Spacing="24" Margin="0,24,0,0">
+            <Button x:Name="PrevButton" Content="◀" Click="OnPrevious"
+                    FontSize="24" Width="48" Height="48"/>
+            <Button x:Name="NextButton" Content="▶" Click="OnNext"
+                    FontSize="24" Width="48" Height="48"/>
+        </StackPanel>
+
+        <!-- Get Started -->
+        <StackPanel Grid.Row="4" HorizontalAlignment="Center" Spacing="12" Margin="0,32,0,0">
+            <Button Content="Get Started" Click="OnGetStarted"
+                    FontSize="16" FontWeight="SemiBold"
+                    Width="200" Height="48"
+                    HorizontalAlignment="Center"/>
+            <HyperlinkButton Content="Why do I exist?" Click="OnWhyExist"
+                             HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</Window>

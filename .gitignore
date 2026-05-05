@@ -3,3 +3,12 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 .swiftpm/
+
+# Windows / .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.cache
+TestResults/
