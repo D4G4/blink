@@ -1,0 +1,32 @@
+name: Blink
+options:
+  bundleIdPrefix: com.blink
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+
+packages:
+  BlinkCore:
+    path: BlinkCore
+
+targets:
+  Blink:
+    type: application
+    platform: macOS
+    sources:
+      - Blink
+    dependencies:
+      - package: BlinkCore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: com.blink.app
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_KEY_LSUIElement: true
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright 2026 Blink"
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+    entitlements:
+      path: Blink/Blink.entitlements
+      properties: {}
