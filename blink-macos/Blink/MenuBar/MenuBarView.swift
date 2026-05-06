@@ -7,6 +7,7 @@ struct MenuBarView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var theme: BlinkTheme { themeManager.current }
+    private var accentColor: Color { theme.accent(for: colorScheme) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -52,7 +53,7 @@ struct MenuBarView: View {
             HStack(spacing: 6) {
                 Image(systemName: "eye")
                     .font(.system(size: 11))
-                    .foregroundStyle(theme.accent)
+                    .foregroundStyle(accentColor)
                 Text("\(appState.breaksTakenToday) breaks today")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
@@ -66,7 +67,20 @@ struct MenuBarView: View {
                 .padding(.horizontal, 12)
 
             // Bottom buttons
-            HStack {
+            HStack(spacing: 12) {
+                Button {
+                    WhyExistWindowController.shared.show()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "questionmark.circle")
+                            .font(.system(size: 11))
+                        Text("About")
+                            .font(.system(size: 12))
+                    }
+                    .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+
                 Button {
                     PreferencesWindowController.shared.show(
                         appState: appState,
@@ -113,11 +127,11 @@ struct MenuBarView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3)
-                        .fill(theme.accent.opacity(0.15))
+                        .fill(accentColor.opacity(0.15))
                         .frame(height: 6)
 
                     RoundedRectangle(cornerRadius: 3)
-                        .fill(theme.accent)
+                        .fill(accentColor)
                         .frame(width: geo.size.width * appState.timerStateMachine.progress, height: 6)
                         .animation(.linear(duration: 1), value: appState.timerStateMachine.progress)
                 }
@@ -136,7 +150,7 @@ struct MenuBarView: View {
             }
         }
         .padding(14)
-        .background(theme.accent.opacity(0.06))
+        .background(accentColor.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -157,10 +171,10 @@ struct MenuBarView: View {
         if appState.isVideoPlaying { return .green }
         switch appState.flowState {
         case .normal: return .gray
-        case .flow, .deepFlow: return theme.accent
+        case .flow, .deepFlow: return accentColor
         case .idle: return .orange
         case .meeting: return .red
-        case .breakPrompted: return theme.accent
+        case .breakPrompted: return accentColor
         }
     }
 
@@ -199,7 +213,7 @@ struct MenuBarView: View {
         VStack(spacing: 8) {
             Image(systemName: "lock.shield")
                 .font(.system(size: 24))
-                .foregroundStyle(theme.accent)
+                .foregroundStyle(accentColor)
 
             Text("Grant Accessibility for smart break timing")
                 .font(.system(size: 12))
@@ -214,13 +228,13 @@ struct MenuBarView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 28)
-                    .background(theme.accent)
+                    .background(accentColor)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
             }
             .buttonStyle(.plain)
         }
         .padding(14)
-        .background(theme.accent.opacity(0.06))
+        .background(accentColor.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ThemedToggleStyle: ToggleStyle {
     let theme: BlinkTheme
+    @Environment(\.colorScheme) private var colorScheme
 
     func makeBody(configuration: Configuration) -> some View {
         HStack {
@@ -10,7 +11,7 @@ struct ThemedToggleStyle: ToggleStyle {
             Spacer()
 
             Capsule()
-                .fill(configuration.isOn ? theme.accent : Color.gray.opacity(0.3))
+                .fill(configuration.isOn ? theme.accent(for: colorScheme) : Color.gray.opacity(0.3))
                 .frame(width: 40, height: 24)
                 .overlay(
                     Circle()

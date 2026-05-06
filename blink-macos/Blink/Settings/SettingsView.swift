@@ -11,7 +11,9 @@ struct SettingsView: View {
     @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = false
     @AppStorage("useDarkOverlay") private var useDarkOverlay: Bool = false
 
+    @Environment(\.colorScheme) private var colorScheme
     private var theme: BlinkTheme { themeManager.current }
+    private var accentColor: Color { theme.accent(for: colorScheme) }
 
     @State private var selectedTab: Int = 0
 
@@ -45,7 +47,7 @@ struct SettingsView: View {
             }
         }
         .frame(width: 440, height: 380)
-        .tint(theme.accent)
+        .tint(accentColor)
     }
 
     // MARK: - Tab Button
@@ -62,10 +64,10 @@ struct SettingsView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
-            .foregroundStyle(selectedTab == index ? theme.accent : .secondary)
+            .foregroundStyle(selectedTab == index ? accentColor : .secondary)
             .background(
                 selectedTab == index
-                    ? theme.accent.opacity(0.1)
+                    ? accentColor.opacity(0.1)
                     : Color.clear
             )
             .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -81,7 +83,7 @@ struct SettingsView: View {
                 settingsRow("Base interval") {
                     HStack {
                         Slider(value: $baseInterval, in: 10...45, step: 5)
-                            .tint(theme.accent)
+                            .tint(accentColor)
                         Text("\(Int(baseInterval)) min")
                             .font(.system(size: 13, design: .monospaced))
                             .frame(width: 50)
@@ -123,7 +125,7 @@ struct SettingsView: View {
                         }
                         .font(.system(size: 12))
                         .buttonStyle(.borderedProminent)
-                        .tint(theme.accent)
+                        .tint(accentColor)
                         .controlSize(.small)
                     }
                 }
@@ -143,7 +145,7 @@ struct SettingsView: View {
                         Text("Restart Onboarding")
                             .font(.system(size: 12))
                     }
-                    .foregroundStyle(theme.accent)
+                    .foregroundStyle(accentColor)
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 4)
@@ -177,9 +179,9 @@ struct SettingsView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .stroke(theme.id == t.id ? theme.accent : .clear, lineWidth: 3)
+                                .stroke(theme.id == t.id ? accentColor : .clear, lineWidth: 3)
                         )
-                        .shadow(color: theme.id == t.id ? theme.accent.opacity(0.3) : .clear, radius: 8)
+                        .shadow(color: theme.id == t.id ? accentColor.opacity(0.3) : .clear, radius: 8)
                         .scaleEffect(theme.id == t.id ? 1.05 : 1.0)
                         .animation(.easeOut(duration: 0.2), value: theme.id)
 
@@ -205,7 +207,7 @@ struct SettingsView: View {
                 settingsRow("Sensitivity") {
                     HStack {
                         Slider(value: $flowSensitivity, in: 0.4...0.9, step: 0.05)
-                            .tint(theme.accent)
+                            .tint(accentColor)
                         Text(String(format: "%.0f%%", flowSensitivity * 100))
                             .font(.system(size: 13, design: .monospaced))
                             .frame(width: 40)
@@ -270,7 +272,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(theme.accent)
+                .foregroundStyle(accentColor)
                 .padding(.leading, 4)
 
             VStack(alignment: .leading, spacing: 12) {

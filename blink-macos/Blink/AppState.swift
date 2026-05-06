@@ -161,17 +161,21 @@ final class AppState: ObservableObject {
             log.info("Waiting for accessibility permission — prompting user")
             PermissionManager.requestAccessibility()
 
-            Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
-                Task { @MainActor in
+            // Poll on main run loop — must use DispatchQueue to ensure it runs on main thread
+            func pollPermission() {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                    guard let self else { return }
                     if PermissionManager.isAccessibilityGranted() {
                         log.info("Accessibility permission granted — starting up")
-                        self?.hasAccessibilityPermission = true
-                        self?.startMonitoring()
-                        self?.startTimers()
-                        timer.invalidate()
+                        self.hasAccessibilityPermission = true
+                        self.startMonitoring()
+                        self.startTimers()
+                    } else {
+                        pollPermission()
                     }
                 }
             }
+            pollPermission()
         }
     }
 
