@@ -25,7 +25,16 @@ They interrupt you mid-thought. They fire a popup while you're in a meeting. The
 
 ## Install
 
-### macOS
+### macOS — Homebrew (recommended)
+
+```bash
+brew tap D4G4/blink
+brew install --cask blink
+```
+
+Update later with `brew upgrade --cask blink`.
+
+### macOS — Manual
 
 1. **[Download Blink.dmg](../../releases/latest)** from the latest release
 2. Open the DMG, drag **Blink** to Applications
