@@ -49,14 +49,12 @@ Coming soon. Core logic is complete — see [`blink-windows/`](blink-windows/).
 
 ## What makes it smart
 
-| | Feature | How it works |
-|---|---|---|
-| **Brain icon** | **Flow detection** | Monitors typing rhythm and app switching. When you're in deep focus, the timer extends from 20 to 30-40 minutes. |
-| **Hand icon** | **Natural pause waiting** | Doesn't interrupt mid-keystroke. Waits for a 6-second gap in your input — a natural thought boundary. |
-| **Walk icon** | **Walk-away detection** | Left your desk for 90+ seconds? That counts as a break. Timer resets silently. |
-| **Play icon** | **Video awareness** | Watching YouTube or Netflix? Timer pauses — you're already resting your focus. |
-| **Video icon** | **Meeting detection** | Mic or camera active? Timer pauses. No interruptions during calls. |
-| **AI icon** | **Agent workflow aware** | Waiting for an AI response while scrolling? Timer keeps running. Sitting perfectly still for 90s? That's a walk-away. |
+- **Flow detection** — Monitors typing rhythm and app switching. When you're in deep focus, the timer extends from 20 to 30-40 minutes.
+- **Natural pause waiting** — Doesn't interrupt mid-keystroke. Waits for a 6-second gap in your input — a natural thought boundary.
+- **Walk-away detection** — Left your desk for 90+ seconds? That counts as a break. Timer resets silently.
+- **Video awareness** — Watching YouTube or Netflix? Timer pauses — you're already resting your focus.
+- **Meeting detection** — Mic or camera active? Timer pauses. No interruptions during calls.
+- **Agent workflow aware** — Waiting for an AI response while scrolling? Timer keeps running. Sitting perfectly still for 90s? That's a walk-away.
 
 ## How it works
 
