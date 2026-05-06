@@ -1,57 +1,97 @@
-# Blink
+<p align="center">
+  <img src="blink-macos/Blink/Assets.xcassets/AppIcon-Peach.imageset/icon.png" width="128" height="128" alt="Blink icon">
+</p>
 
-**Smart 20-20-20 eye break reminder for macOS and Windows.**
+<h1 align="center">Blink</h1>
 
-Every 20 minutes of screen time, look at something 20 feet away for 20 seconds. Blink makes this effortless by detecting your work patterns and prompting at the right moment — never mid-thought.
+<p align="center">
+  <strong>Smart 20-20-20 eye break reminder</strong><br>
+  <em>for macOS and Windows</em>
+</p>
 
-## Download
+<p align="center">
+  <a href="../../releases/latest"><img src="https://img.shields.io/badge/download-macOS-blue?style=flat-square&logo=apple" alt="Download macOS"></a>
+  <img src="https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey?style=flat-square" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
+</p>
+
+---
+
+Every 20 minutes of screen time, look at something 20 feet away for 20 seconds. Optometrists have recommended this since the 90s. The problem isn't the rule — it's the apps.
+
+They interrupt you mid-thought. They fire a popup while you're in a meeting. They nag you when you already walked away 2 minutes ago. They don't care that you're deep in a coding session and interrupting now will cost you 23 minutes to get back into flow.
+
+**Blink is different.** It watches *how* you work (never *what*) and breaks come at the right moment.
+
+## Install
 
 ### macOS
 
-1. Download the latest `.dmg` from [Releases](../../releases)
-2. Open the DMG and drag **Blink** to Applications
+1. **[Download Blink.dmg](../../releases/latest)** from the latest release
+2. Open the DMG, drag **Blink** to Applications
 3. Launch Blink — it appears as an icon in your menu bar
-4. Grant **Accessibility** permission when prompted (required for smart break detection)
-5. First-timers: right-click the app and select **Open** if you see a Gatekeeper warning
+4. Grant **Accessibility** when prompted (required for smart detection)
 
-> **Requires macOS 14 (Sonoma) or later.**
+> First launch: if macOS says "unidentified developer", right-click the app and select **Open**.
 
 ### Windows
 
-Coming soon. The core logic is complete — see `blink-windows/`.
+Coming soon. Core logic is complete — see [`blink-windows/`](blink-windows/).
 
 ## What makes it smart
 
-Most break reminder apps are dumb timers that interrupt you at the worst possible moment. Blink watches *how* you work (never *what*) and adapts:
-
-| Feature | What it does |
-|---|---|
-| **Flow detection** | Monitors typing rhythm and app switching to detect deep focus. Extends the timer so you're not interrupted mid-thought. |
-| **Natural pause waiting** | When you're focused, waits for a 6-second gap in your input before showing the break — not a jarring mid-keystroke popup. |
-| **Walk-away detection** | If you leave your desk for 90+ seconds, Blink counts that as a break and silently resets. |
-| **Video awareness** | Detects when you're watching video (YouTube, Netflix, etc.) and pauses the timer. |
-| **Meeting detection** | Pauses automatically during calls so you're never interrupted in a meeting. |
-| **Agent workflow aware** | Knows the difference between "waiting for AI to respond" (still at screen) and "walked away" (actually resting). |
+| | Feature | How it works |
+|---|---|---|
+| **Brain icon** | **Flow detection** | Monitors typing rhythm and app switching. When you're in deep focus, the timer extends from 20 to 30-40 minutes. |
+| **Hand icon** | **Natural pause waiting** | Doesn't interrupt mid-keystroke. Waits for a 6-second gap in your input — a natural thought boundary. |
+| **Walk icon** | **Walk-away detection** | Left your desk for 90+ seconds? That counts as a break. Timer resets silently. |
+| **Play icon** | **Video awareness** | Watching YouTube or Netflix? Timer pauses — you're already resting your focus. |
+| **Video icon** | **Meeting detection** | Mic or camera active? Timer pauses. No interruptions during calls. |
+| **AI icon** | **Agent workflow aware** | Waiting for an AI response while scrolling? Timer keeps running. Sitting perfectly still for 90s? That's a walk-away. |
 
 ## How it works
 
-1. A small icon sits in your menu bar — click it to see your timer and stats
-2. When it's time for a break, a gentle toast appears in the corner (3-second heads-up)
-3. Then a fullscreen overlay counts down 20 seconds — look at something far away
-4. Press **Esc** to skip, **→** to extend by 20 seconds
-5. Timer resets and the cycle continues
+```
+You work normally
+        |
+    20 minutes pass (or 30-40 in flow)
+        |
+    Toast appears in corner: "Break in 3s"
+        |
+    Fullscreen overlay: look away for 20 seconds
+        |
+    [esc] skip    [->] extend 20s
+        |
+    Timer resets. Cycle continues.
+```
+
+The app lives in your menu bar. Click to see your timer, flow state, and break stats.
 
 ## Themes
 
-Pick your vibe during onboarding or change anytime in Preferences:
+Choose during onboarding or change anytime in Preferences.
 
 **Peach** · **Sage** · **Sand** · **Midnight** · **Mono**
 
-Each theme colors the menu bar popup, break overlay, and settings. Mono is dark-mode-aware — it inverts automatically.
+Mono is dark-mode-aware — colors invert automatically.
 
 ## Privacy
 
-Blink monitors your input patterns (keystroke timing, app switches, mouse behavior) to detect flow state. It **never** records what you type, which apps you use by name, or any content. All data stays on your machine in `~/Library/Application Support/Blink/`.
+Blink monitors input *timing* (keystroke cadence, app switch frequency, mouse patterns) to detect flow state. It **never** logs:
+- What you type
+- Which apps you use
+- Window contents or titles
+- Any personal data
+
+All data stays local in `~/Library/Application Support/Blink/` as daily JSON files. No network calls. No analytics. No telemetry.
+
+## The 20-20-20 rule
+
+Coined by optometrist Dr. Jeffrey Anshel in 1991:
+
+> Every **20** minutes, look at something **20** feet away, for **20** seconds.
+
+Your blink rate drops from 15/min to 4/min during screen work. This causes dry eyes, headaches, and blurred vision. A 20-second break lets your eye muscles relax and reset.
 
 ## Building from source
 
@@ -59,46 +99,51 @@ Blink monitors your input patterns (keystroke timing, app switches, mouse behavi
 
 ```bash
 cd blink-macos
-brew install xcodegen  # if not installed
+brew install xcodegen
 xcodegen generate
-open Blink.xcodeproj
-# Cmd+R to run
+open Blink.xcodeproj   # Cmd+R to run
 ```
 
 ### Windows
 
-```bash
-cd blink-windows
-# Open Blink.Windows.slnx in Visual Studio 2022
-# or: dotnet build src/Blink.Core
-# Tests: dotnet test
-```
+Open `blink-windows/Blink.Windows.slnx` in Visual Studio 2022.
 
-### Running tests
+### Tests
 
 ```bash
-# macOS (Swift)
-cd blink-macos/BlinkCore && swift test  # 85 tests
+# macOS — 85 tests
+cd blink-macos/BlinkCore && swift test
 
-# Windows / cross-platform (C#)
-cd blink-windows && dotnet test          # 74 tests
+# Windows — 74 tests (runs on Mac too)
+cd blink-windows && dotnet test
 ```
 
-## Project structure
+## Architecture
 
 ```
-blink-macos/              # Swift / SwiftUI
-├── Blink/                 # App target (menu bar, overlay, onboarding, themes)
-├── BlinkCore/             # Pure logic package (flow detection, timer, compliance)
-└── project.yml            # XcodeGen spec
-
-blink-windows/             # C# / WinUI 3
-└── src/
-    ├── Blink.Core/        # Port of BlinkCore
-    ├── Blink.Core.Tests/  # xUnit tests
-    ├── Blink.Platform/    # Win32 adapters (P/Invoke)
-    └── Blink.App/         # WinUI 3 app
+blink-macos/                    blink-windows/
+├── BlinkCore/                  ├── Blink.Core/
+│   ├── FlowDetection/         │   ├── FlowDetection/
+│   │   ├── 5 signal scorers   │   │   ├── 5 signal scorers
+│   │   ├── FlowScoreCalc      │   │   ├── FlowScoreCalc
+│   │   └── FlowStateMachine   │   │   └── FlowStateMachine
+│   ├── Timer/                  │   ├── Timer/
+│   └── Compliance/             │   └── Compliance/
+├── Blink/                      ├── Blink.Platform/
+│   ├── Platform/ (CGEventTap)  │   ├── WinInputMonitor (hooks)
+│   ├── MenuBar/                │   ├── WinAppMonitor
+│   ├── Overlay/                │   └── WinIdleDetector
+│   ├── Onboarding/             └── Blink.App/
+│   ├── Settings/                   ├── TrayIcon/
+│   └── Theme/                      ├── Overlay/
+└── project.yml                     └── Theme/
 ```
+
+The core logic (flow detection, timer, compliance) is platform-agnostic. Platform adapters implement 4 interfaces:
+- `InputEventSource` — keyboard/mouse timing
+- `AppActivitySource` — app switches, window changes
+- `IdleStateSource` — time since last input
+- `ContextSource` — meetings, video, fullscreen
 
 ## License
 
