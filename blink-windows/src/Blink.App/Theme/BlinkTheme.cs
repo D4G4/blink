@@ -16,7 +16,9 @@ public sealed record BlinkTheme(
     Color OnBackgroundTextDark,
     bool InvertInDarkMode)
 {
-    public static BlinkTheme[] All => [Peach, Midnight, Sage, Sand, Mono];
+    public static BlinkTheme[] AllLight => [Peach, Sage, Sand, Midnight, Mono];
+    public static BlinkTheme[] AllDark => [Midnight, Mono, Sage, Sand, Peach];
+    public static BlinkTheme[] All => AllLight;
 
     public static BlinkTheme Named(string id) =>
         All.FirstOrDefault(t => t.Id == id) ?? Peach;
