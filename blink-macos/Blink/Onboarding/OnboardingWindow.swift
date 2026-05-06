@@ -18,8 +18,11 @@ final class OnboardingWindowController {
 
         let windowFrame = NSRect(x: x, y: y, width: windowWidth, height: windowHeight)
 
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+
         let onboardingView = OnboardingView(
             themeManager: themeManager,
+            isDarkMode: isDark,
             onComplete: { [weak self] in
                 self?.dismiss()
                 onComplete()
@@ -36,6 +39,7 @@ final class OnboardingWindowController {
         win.backgroundColor = .clear
         win.level = .floating
         win.hasShadow = true
+        win.appearance = NSApp.effectiveAppearance
         win.contentView = NSHostingView(rootView: onboardingView)
         win.makeKeyAndOrderFront(nil)
 

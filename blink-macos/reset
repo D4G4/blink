@@ -1,0 +1,6 @@
+#!/bin/bash
+# Reset Blink for testing — clears onboarding + accessibility
+defaults delete com.blink.app hasCompletedOnboarding 2>/dev/null
+defaults delete com.blink.app selectedTheme 2>/dev/null
+tccutil reset Accessibility com.blink.app 2>/dev/null
+echo "Blink reset. Run the app again."

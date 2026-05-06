@@ -65,12 +65,13 @@ struct BlinkTheme: Identifiable, Equatable {
         )
     }
 
-    static let all: [BlinkTheme] = [
-        .peach, .midnight, .sage, .sand, .mono
-    ]
+    static let allLight: [BlinkTheme] = [.peach, .sage, .sand, .midnight, .mono]
+    static let allDark: [BlinkTheme] = [.midnight, .mono, .sage, .sand, .peach]
+
+    static var all: [BlinkTheme] { allLight }
 
     static func named(_ id: String) -> BlinkTheme {
-        all.first { $0.id == id } ?? .peach
+        allLight.first { $0.id == id } ?? .peach
     }
 
     /// Pure dark overlay theme — used when "Use dark overlay" is on
