@@ -4,6 +4,7 @@ import BlinkCore
 struct MenuBarView: View {
     @ObservedObject var appState: AppState
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var updateChecker: UpdateChecker
     @Environment(\.colorScheme) private var colorScheme
 
     private var theme: BlinkTheme { themeManager.current }
@@ -38,6 +39,13 @@ struct MenuBarView: View {
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .padding(.bottom, 12)
+
+            // Update banner
+            if updateChecker.updateAvailable, let version = updateChecker.latestVersion {
+                updateBanner(version: version)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 4)
+            }
 
             // Timer card
             VStack(spacing: 12) {
@@ -154,6 +162,39 @@ struct MenuBarView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
+    // MARK: - Update Banner
+
+    private func updateBanner(version: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(accentColor)
+
+            Text("v\(version) available")
+                .font(.system(size: 12, weight: .medium))
+
+            Spacer()
+
+            Button {
+                if let url = updateChecker.downloadURL {
+                    NSWorkspace.shared.open(url)
+                }
+            } label: {
+                Text("Update")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(accentColor)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(10)
+        .background(accentColor.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
     // MARK: - Flow State
 
     private var flowStateBadge: some View {
@@ -250,4 +291,5 @@ struct MenuBarView: View {
 #Preview("Menu Bar - Peach") {
     MenuBarView(appState: AppState(preview: true))
         .environmentObject(ThemeManager.shared)
+        .environmentObject(UpdateChecker.shared)
 }

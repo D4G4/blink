@@ -11,6 +11,7 @@ struct BlinkApp: App {
         MenuBarExtra {
             MenuBarView(appState: appState)
                 .environmentObject(themeManager)
+                .environmentObject(UpdateChecker.shared)
         } label: {
             if showTimerInMenuBar && appState.hasAccessibilityPermission {
                 HStack(spacing: 4) {
@@ -54,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } else {
             NSApp.setActivationPolicy(.accessory)
+            UpdateChecker.shared.checkForUpdate()
         }
     }
 }

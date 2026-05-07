@@ -155,6 +155,7 @@ import BlinkCore
 private func menuBarCard(_ theme: BlinkTheme) -> some View {
     MenuBarView(appState: AppState(preview: true))
         .environmentObject(ThemeManager.preview(theme))
+        .environmentObject(UpdateChecker.shared)
         .frame(width: 280)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .shadow(radius: 4)
