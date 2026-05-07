@@ -41,11 +41,15 @@ Update later with `brew upgrade --cask blink`.
 ### macOS — Manual
 
 1. **[Download Blink.dmg](../../releases/latest)** from the latest release
-2. Open the DMG, drag **Blink** to Applications
-3. Launch Blink — it appears as an icon in your menu bar
-4. Grant **Accessibility** when prompted (required for smart detection)
+2. Open the DMG, drag **Blink** to the Applications folder
+3. Before first launch, run this in Terminal to clear the quarantine flag:
+   ```bash
+   xattr -cr /Applications/Blink.app
+   ```
+4. Launch Blink — it appears as an icon in your menu bar
+5. Grant **Accessibility** when prompted (required for smart detection)
 
-> First launch: if macOS says "unidentified developer", right-click the app and select **Open**.
+> The `xattr` step is needed because the app isn't notarized with Apple (we're open source, not paying $99/year for a certificate). Homebrew install handles this automatically.
 
 ### Windows
 
