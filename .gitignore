@@ -12,3 +12,4 @@ obj/
 *.suo
 *.cache
 TestResults/
+blink-macos/build/

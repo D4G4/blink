@@ -236,9 +236,12 @@ final class AppState: ObservableObject {
         timerStateMachine.tick(flowState: flowState, deltaSeconds: 1.0)
         remainingSeconds = timerStateMachine.remainingSeconds
 
-        // Log when timer gets extended due to flow state change
+        // Timer extended due to flow state change — notify user
         if remainingSeconds > before + 1 {
             log.notice("⏱️ Timer extended: \(String(format: "%.0f", before))s → \(String(format: "%.0f", self.remainingSeconds))s (state=\(self.flowState.rawValue))")
+            overlayController.showTimerExtendedToast { [weak self] in
+                self?.showBreakPrompt()
+            }
         }
     }
 
