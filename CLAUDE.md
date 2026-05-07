@@ -76,6 +76,15 @@ The script crops 6% from each side, rounds corners at 16% radius, outputs 1024x1
 - Prompted after onboarding completes, never during.
 - When running from Xcode, each rebuild creates a new binary — must re-grant Accessibility each time. Not an issue with archived builds.
 
+## Homebrew Distribution
+
+- Tap repo: `~/GitHub/D4G4/homebrew-blink` (`Casks/blink.rb`)
+- The app is ad-hoc signed (no Developer ID) — no TeamIdentifier, CDHash changes every build
+- The cask **must** have a `postflight` that runs `xattr -cr` on the installed app — this strips `com.apple.quarantine` so Gatekeeper doesn't block launch with "Apple could not verify"
+- Don't remove the `xattr -cr` postflight — without it the app won't launch at all
+- Accessibility permission (`AXIsProcessTrustedWithOptions`) works for ad-hoc signed apps only when quarantine is stripped first; removing the postflight breaks both launch and permission persistence
+- Because the app is ad-hoc signed, the TCC grant is tied to the binary's CDHash — upgrading to a new version (new CDHash) may require re-granting Accessibility permission
+
 ## Git Setup
 
 - Repo: `git@github.com:D4G4/blink.git` (private)
