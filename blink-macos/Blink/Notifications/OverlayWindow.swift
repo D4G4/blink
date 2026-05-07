@@ -22,6 +22,68 @@ final class OverlayWindowController {
         })
     }
 
+    /// Show a "timer extended" toast when flow is detected.
+    /// User can dismiss (keep extension) or tap "Take break now".
+    func showTimerExtendedToast(onTakeBreakNow: @escaping () -> Void) {
+        // Don't stack on existing toast
+        dismissToast()
+
+        guard let screen = NSScreen.main else { return }
+
+        let toastWidth: CGFloat = 340
+        let toastHeight: CGFloat = 56
+        let padding: CGFloat = 16
+
+        let toastFrame = NSRect(
+            x: screen.visibleFrame.maxX - toastWidth - padding,
+            y: screen.visibleFrame.minY + padding,
+            width: toastWidth,
+            height: toastHeight
+        )
+
+        let toastView = TimerExtendedToastView(
+            theme: theme,
+            onDismiss: { [weak self] in self?.dismissToast() },
+            onTakeBreak: { [weak self] in
+                self?.dismissToast()
+                onTakeBreakNow()
+            }
+        )
+
+        let panel = NSPanel(
+            contentRect: toastFrame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.level = .floating
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.ignoresMouseEvents = false  // clickable
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = true
+
+        panel.contentView = NSHostingView(rootView: toastView)
+
+        let win = panel
+        win.alphaValue = 0
+        win.orderFrontRegardless()
+
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.3
+            win.animator().alphaValue = 1
+        }
+
+        self.toastWindow = win
+
+        // Auto-dismiss after 5 seconds if not interacted with
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            self?.dismissToast()
+        }
+    }
+
     // MARK: - Phase 1: Mini toast (bottom-right corner)
 
     private func showToast(onToastDone: @escaping () -> Void) {
@@ -203,6 +265,46 @@ private struct ToastView: View {
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
+    }
+}
+
+// MARK: - Timer extended toast
+
+private struct TimerExtendedToastView: View {
+    let theme: BlinkTheme
+    let onDismiss: () -> Void
+    let onTakeBreak: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "brain.head.profile")
+                .font(.system(size: 16))
+                .foregroundStyle(theme.accent(for: colorScheme))
+
+            Text("In flow — timer extended")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            Button {
+                onTakeBreak()
+            } label: {
+                Text("Take break now")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(theme.accent(for: colorScheme))
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
