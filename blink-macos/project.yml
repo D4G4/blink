@@ -21,7 +21,7 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: true
         PRODUCT_BUNDLE_IDENTIFIER: com.blink.app
-        MARKETING_VERSION: "1.2.0"
+        MARKETING_VERSION: "1.3.0"
         CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_KEY_LSUIElement: true
         INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright 2026 Blink"
