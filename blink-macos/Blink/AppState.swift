@@ -17,6 +17,7 @@ final class AppState: ObservableObject {
     @Published var breaksPromptedToday: Int = 0
     @Published var hasAccessibilityPermission: Bool = false
     @Published var isVideoPlaying: Bool = false
+    @AppStorage("debugNotifications") var debugNotifications: Bool = false
 
     // Core engine
     let flowScoreCalculator = FlowScoreCalculator()
@@ -115,6 +116,9 @@ final class AppState: ObservableObject {
                 guard let self else { return }
                 let remainingBefore = self.timerStateMachine.remainingSeconds
                 log.info("Flow state: \(old.rawValue) → \(new.rawValue)")
+                if self.debugNotifications {
+                    self.overlayController.showDebugToast("State: \(old.rawValue) → \(new.rawValue)")
+                }
                 self.flowState = new
 
                 let remainingAfter = self.timerStateMachine.remainingSeconds
@@ -256,12 +260,18 @@ final class AppState: ObservableObject {
 
         if videoPlaying != isVideoPlaying {
             log.info("Video playback: \(videoPlaying ? "started" : "stopped")")
+            if debugNotifications {
+                overlayController.showDebugToast("Video \(videoPlaying ? "started" : "stopped")")
+            }
         }
         isVideoPlaying = videoPlaying
 
         // Video playback = user is not doing close-up screen work → reset timer
         if videoPlaying {
             log.debug("Video playing — timer reset")
+            if debugNotifications {
+                overlayController.showDebugToast("Timer reset: video playing")
+            }
             timerStateMachine.resetAfterBreak()
             remainingSeconds = timerStateMachine.remainingSeconds
             return
@@ -282,6 +292,9 @@ final class AppState: ObservableObject {
         // Idle ≥ threshold = eyes already rested, reset timer
         if hasAccessibilityPermission && idle >= Self.idleBreakThreshold && !isBreakPrompted && !inGracePeriod {
             log.info("Idle \(String(format: "%.0f", idle))s ≥ \(String(format: "%.0f", Self.idleBreakThreshold))s — eyes rested, timer reset")
+            if debugNotifications {
+                overlayController.showDebugToast("Timer reset: idle \(Int(idle))s ≥ \(Int(Self.idleBreakThreshold))s")
+            }
             timerStateMachine.resetAfterBreak()
             remainingSeconds = timerStateMachine.remainingSeconds
         }

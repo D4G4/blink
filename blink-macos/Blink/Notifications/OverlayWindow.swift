@@ -85,6 +85,55 @@ final class OverlayWindowController {
         }
     }
     
+    /// Show a debug toast with a reason for timer reset or state change.
+    func showDebugToast(_ message: String) {
+        dismissToast()
+
+        guard let screen = NSScreen.main else { return }
+
+        let toastWidth: CGFloat = 320
+        let toastHeight: CGFloat = 44
+        let padding: CGFloat = 16
+
+        let toastFrame = NSRect(
+            x: screen.visibleFrame.maxX - toastWidth - padding,
+            y: screen.visibleFrame.minY + padding,
+            width: toastWidth,
+            height: toastHeight
+        )
+
+        let view = DebugToastView(message: message)
+
+        let panel = NSPanel(
+            contentRect: toastFrame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.level = .floating
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.ignoresMouseEvents = true
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = true
+        panel.contentView = NSHostingView(rootView: view)
+
+        panel.alphaValue = 0
+        panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.2
+            panel.animator().alphaValue = 1
+        }
+
+        self.toastWindow = panel
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            self?.dismissToast()
+        }
+    }
+
     // MARK: - Phase 1: Mini toast (bottom-right corner)
     
     private func showToast(onToastDone: @escaping () -> Void) {
@@ -557,6 +606,28 @@ private struct KeyHintView: View {
                 .font(.system(size: 15))
                 .foregroundStyle(fg.opacity(0.5))
         }
+    }
+}
+
+// MARK: - Debug toast
+
+private struct DebugToastView: View {
+    let message: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "ant")
+                .font(.system(size: 12))
+                .foregroundStyle(.orange)
+            Text(message)
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 

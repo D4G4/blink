@@ -109,6 +109,12 @@ struct SettingsView: View {
                         updateLaunchAtLogin(newValue)
                     }
 
+                settingsToggle("Debug notifications", isOn: $appState.debugNotifications)
+                Text("Show toasts for timer resets, state changes, and idle detection")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 4)
+
                 settingsRow("Accessibility") {
                     if appState.hasAccessibilityPermission {
                         HStack(spacing: 4) {
