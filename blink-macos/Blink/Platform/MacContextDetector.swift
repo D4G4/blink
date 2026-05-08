@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import CoreAudio
 import BlinkCore
 import os
 
@@ -13,6 +14,13 @@ final class MacContextDetector: ContextSource {
         "com.microsoft.teams2",
         "com.apple.FaceTime",
         "com.webex.meetingmanager",
+        "com.cisco.webexmeetingsapp",
+        "com.google.Chrome",          // Google Meet runs in browser
+        "com.apple.Safari",
+        "org.mozilla.firefox",
+        "com.microsoft.edgemac",
+        "com.brave.Browser",
+        "company.thebrowser.Browser",  // Arc
     ]
 
     /// Apps where being frontmost = watching video
@@ -48,20 +56,53 @@ final class MacContextDetector: ContextSource {
     ]
 
     func isMicrophoneActive() -> Bool {
+        // Check if the system default input device (mic) is actually in use
+        // by any app — works regardless of which app is frontmost
+        guard isMicInUse() else { return false }
+
+        // Mic is active — check if a meeting/browser app is running
+        // (filters out false positives from music recording, voice memos, etc.)
         let runningApps = NSWorkspace.shared.runningApplications
-        let meetingAppRunning = runningApps.contains { app in
+        return runningApps.contains { app in
             guard let bundleID = app.bundleIdentifier else { return false }
             return Self.meetingApps.contains(bundleID) && !app.isHidden
         }
-        return meetingAppRunning && isCameraActive()
     }
 
     func isCameraActive() -> Bool {
+        // Camera-in-use detection via CoreAudio isn't available,
+        // but if the mic is in use with a meeting app, camera is likely on too.
+        // Also check if a meeting app is frontmost as a secondary signal.
         if let frontApp = NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
            Self.meetingApps.contains(frontApp) {
             return true
         }
         return false
+    }
+
+    /// Check if the default audio input device is running (mic in use by any app).
+    private func isMicInUse() -> Bool {
+        var defaultDevice = AudioDeviceID(0)
+        var size = UInt32(MemoryLayout<AudioDeviceID>.size)
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDefaultInputDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        let err = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &defaultDevice
+        )
+        guard err == noErr, defaultDevice != 0 else { return false }
+
+        var isRunning: UInt32 = 0
+        size = UInt32(MemoryLayout<UInt32>.size)
+        address.mSelector = kAudioDevicePropertyDeviceIsRunningSomewhere
+
+        let err2 = AudioObjectGetPropertyData(defaultDevice, &address, 0, nil, &size, &isRunning)
+        guard err2 == noErr else { return false }
+
+        return isRunning != 0
     }
 
     func isInFocusMode() -> Bool {
