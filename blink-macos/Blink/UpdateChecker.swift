@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import os
 
 private let log = Logger(subsystem: "com.blink.app", category: "Update")
@@ -8,10 +8,17 @@ private let log = Logger(subsystem: "com.blink.app", category: "Update")
 final class UpdateChecker: ObservableObject {
     static let shared = UpdateChecker()
 
+    enum CheckResult: Equatable {
+        case upToDate
+        case available(String)
+        case failed
+    }
+
     @Published var updateAvailable: Bool = false
     @Published var latestVersion: String?
     @Published var downloadURL: URL?
-
+    @Published var isChecking: Bool = false
+    @Published var lastCheckResult: CheckResult?
     private static let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     private static let releasesURL = URL(string: "https://api.github.com/repos/D4G4/blink/releases/latest")!
 
@@ -25,6 +32,8 @@ final class UpdateChecker: ObservableObject {
     }
 
     func checkForUpdate() {
+        isChecking = true
+        lastCheckResult = nil
         Task {
             do {
                 var request = URLRequest(url: Self.releasesURL)
@@ -34,7 +43,11 @@ final class UpdateChecker: ObservableObject {
                 let (data, _) = try await URLSession.shared.data(for: request)
 
                 guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      let tagName = json["tag_name"] as? String else { return }
+                      let tagName = json["tag_name"] as? String else {
+                    isChecking = false
+                    lastCheckResult = .failed
+                    return
+                }
 
                 let latest = tagName.replacingOccurrences(of: "v", with: "")
                 let current = Self.currentVersion
@@ -43,6 +56,7 @@ final class UpdateChecker: ObservableObject {
                     log.info("Update available: \(current) → \(latest)")
                     latestVersion = latest
                     updateAvailable = true
+                    lastCheckResult = .available(latest)
 
                     // Find DMG download URL from assets
                     if let assets = json["assets"] as? [[String: Any]] {
@@ -61,12 +75,17 @@ final class UpdateChecker: ObservableObject {
                     }
                 } else {
                     log.info("Up to date: \(current)")
+                    lastCheckResult = .upToDate
                 }
             } catch {
                 log.debug("Update check failed: \(error.localizedDescription)")
+                lastCheckResult = .failed
             }
+            isChecking = false
         }
     }
+
+    static let brewCommand = "brew upgrade --cask blink"
 
     /// Simple semver comparison: "1.2.0" > "1.1.0"
     private func isNewer(_ a: String, than b: String) -> Bool {

@@ -164,35 +164,59 @@ struct MenuBarView: View {
 
     // MARK: - Update Banner
 
+    @State private var showBrewDialog = false
+
     private func updateBanner(version: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: "arrow.down.circle.fill")
-                .font(.system(size: 14))
-                .foregroundStyle(accentColor)
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(accentColor)
 
-            Text("v\(version) available")
-                .font(.system(size: 12, weight: .medium))
+                Text("v\(version) available")
+                    .font(.system(size: 12, weight: .medium))
 
-            Spacer()
-
-            Button {
-                if let url = updateChecker.downloadURL {
-                    NSWorkspace.shared.open(url)
-                }
-            } label: {
-                Text("Update")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(accentColor)
-                    .clipShape(Capsule())
+                Spacer()
             }
-            .buttonStyle(.plain)
+
+            HStack(spacing: 6) {
+                Button {
+                    showBrewDialog = true
+                } label: {
+                    Text("Homebrew")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .frame(maxWidth: .infinity)
+                        .background(accentColor)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+
+                if let url = updateChecker.downloadURL {
+                    Button {
+                        NSWorkspace.shared.open(url)
+                    } label: {
+                        Text("Download DMG")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(accentColor)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .frame(maxWidth: .infinity)
+                            .background(accentColor.opacity(0.15))
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
         .padding(10)
         .background(accentColor.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10))
+        .sheet(isPresented: $showBrewDialog) {
+            BrewUpdateSheet(theme: theme, colorScheme: colorScheme)
+        }
     }
 
     // MARK: - Flow State
@@ -285,6 +309,69 @@ struct MenuBarView: View {
         let mins = Int(seconds) / 60
         let secs = Int(seconds) % 60
         return String(format: "%d:%02d", mins, secs)
+    }
+}
+
+// MARK: - Brew Update Sheet
+
+private struct BrewUpdateSheet: View {
+    let theme: BlinkTheme
+    let colorScheme: ColorScheme
+    @Environment(\.dismiss) private var dismiss
+    @State private var copied = false
+
+    private var accentColor: Color { theme.accent(for: colorScheme) }
+    private let command = UpdateChecker.brewCommand
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Update via Homebrew")
+                .font(.system(size: 14, weight: .semibold))
+
+            Text("Run this command in Terminal:")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 0) {
+                Text("$ ")
+                    .foregroundStyle(.secondary)
+                + Text(command)
+                    .foregroundStyle(.primary)
+
+                Spacer(minLength: 8)
+
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(command, forType: .string)
+                    copied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        copied = false
+                    }
+                } label: {
+                    Image(systemName: copied ? "checkmark" : "doc.on.clipboard")
+                        .font(.system(size: 12))
+                        .foregroundStyle(copied ? .green : accentColor)
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .font(.system(size: 12, design: .monospaced))
+            .padding(10)
+            .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(Color.primary.opacity(0.1))
+            )
+
+            Button("Done") { dismiss() }
+                .buttonStyle(.plain)
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+        }
+        .padding(20)
+        .frame(width: 320)
     }
 }
 
