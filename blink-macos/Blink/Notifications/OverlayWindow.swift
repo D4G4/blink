@@ -183,12 +183,12 @@ final class OverlayWindowController {
     
     private func dismissToast() {
         guard let win = toastWindow else { return }
+        toastWindow = nil
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.2
             win.animator().alphaValue = 0
-        }, completionHandler: { [weak self] in
+        }, completionHandler: {
             win.orderOut(nil)
-            self?.toastWindow = nil
         })
     }
     
