@@ -66,20 +66,46 @@ if [ "$APP_VERSION" != "$VERSION" ]; then
     exit 1
 fi
 
+# Generate DMG background
+echo "→ Generating DMG background..."
+swift scripts/dmg-background.swift "$BUILD_DIR/dmg-background.png"
+
 # Create DMG
 echo "→ Creating DMG..."
-DMG_TEMP="$BUILD_DIR/Blink_rw.sparseimage"
-rm -f "$DMG_TEMP"
+rm -f "$DMG_PATH"
 
-hdiutil create -size 50m -type SPARSE -fs HFS+ -volname "Blink" "$DMG_TEMP"
-MOUNT_POINT=$(hdiutil attach "$DMG_TEMP" -nobrowse | tail -1 | awk '{print $NF}')
+# Stage the app in a temp dir so we can add the Applications icon
+STAGE_DIR="$BUILD_DIR/dmg-stage"
+rm -rf "$STAGE_DIR"
+mkdir -p "$STAGE_DIR"
+cp -R "$EXPORT_DIR/Blink.app" "$STAGE_DIR/"
+ln -s /Applications "$STAGE_DIR/Applications"
 
-cp -R "$EXPORT_DIR/Blink.app" "$MOUNT_POINT/"
-ln -s /Applications "$MOUNT_POINT/Applications"
+# Apply system Applications folder icon to the symlink
+APP_FOLDER_ICON="/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/ApplicationsFolderIcon.icns"
+if [ -f "$APP_FOLDER_ICON" ]; then
+    cp "$APP_FOLDER_ICON" "$STAGE_DIR/Applications/.VolumeIcon.icns" 2>/dev/null || true
+    # Use fileicon if available, otherwise use Rez/DeRez
+    if command -v fileicon &>/dev/null; then
+        fileicon set "$STAGE_DIR/Applications" "$APP_FOLDER_ICON" 2>/dev/null || true
+    fi
+fi
 
-hdiutil detach "$MOUNT_POINT" -quiet
-hdiutil convert "$DMG_TEMP" -format UDZO -o "$DMG_PATH"
-rm -f "$DMG_TEMP"
+create-dmg \
+    --volname "Blink" \
+    --background "$BUILD_DIR/dmg-background.png" \
+    --window-pos 200 120 \
+    --window-size 540 380 \
+    --icon-size 128 \
+    --icon "Blink.app" 160 170 \
+    --icon "Applications" 380 170 \
+    --hide-extension "Blink.app" \
+    --no-internet-enable \
+    "$DMG_PATH" \
+    "$STAGE_DIR/" \
+    || true  # create-dmg exits 2 on "no custom icon" warning, which is fine
+
+rm -rf "$STAGE_DIR"
 
 # Summary
 DMG_SIZE=$(du -h "$DMG_PATH" | cut -f1)
