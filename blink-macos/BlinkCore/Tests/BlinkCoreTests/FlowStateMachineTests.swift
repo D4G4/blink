@@ -72,7 +72,7 @@ struct FlowStateMachineTests {
         #expect(sm.state == .normal)
     }
 
-    @Test("Idle detection triggers after 90s of no input")
+    @Test("Idle detection triggers after 180s of no input")
     func idleDetection() {
         let sm = FlowStateMachine()
         // 25s is not enough — should stay normal
@@ -80,9 +80,14 @@ struct FlowStateMachineTests {
                 isMicActive: false, isCameraActive: false, now: 1000)
         #expect(sm.state == .normal, "25s idle should not trigger idle state")
 
-        // 95s should trigger idle
+        // 95s should NOT trigger idle (threshold is 180s)
         sm.tick(flowScore: 0.5, secondsSinceLastInput: 95,
                 isMicActive: false, isCameraActive: false, now: 1030)
+        #expect(sm.state == .normal, "95s idle should not trigger idle state")
+
+        // 185s should trigger idle
+        sm.tick(flowScore: 0.5, secondsSinceLastInput: 185,
+                isMicActive: false, isCameraActive: false, now: 1060)
         #expect(sm.state == .idle)
     }
 
@@ -107,8 +112,8 @@ struct FlowStateMachineTests {
         }
         #expect(sm.state == .flow)
 
-        // Go idle (90s+ no input)
-        sm.tick(flowScore: 0.8, secondsSinceLastInput: 100,
+        // Go idle (180s+ no input)
+        sm.tick(flowScore: 0.8, secondsSinceLastInput: 190,
                 isMicActive: false, isCameraActive: false,
                 now: baseTime + 300)
         #expect(sm.state == .idle)

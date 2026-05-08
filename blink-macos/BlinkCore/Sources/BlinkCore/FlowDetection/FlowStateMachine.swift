@@ -16,7 +16,7 @@ public final class FlowStateMachine {
     public static let defaultFlowEntryDuration: TimeInterval = 180    // 3 minutes
     public static let defaultFlowExitDuration: TimeInterval = 120     // 2 minutes
     public static let defaultDeepFlowDuration: TimeInterval = 900     // 15 minutes in flow
-    public static let defaultIdleThreshold: TimeInterval = 90         // match AppState idle break threshold
+    public static let defaultIdleThreshold: TimeInterval = 180        // 3 min — allows passive screen watching (e.g. agent output)
 
     // Configurable thresholds
     public var flowEntryThreshold: Double = defaultFlowEntryThreshold

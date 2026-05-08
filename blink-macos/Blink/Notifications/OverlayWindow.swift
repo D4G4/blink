@@ -8,39 +8,40 @@ import AppKit
 final class OverlayWindowController {
     private var toastWindow: NSWindow?
     private var fullscreenWindow: NSWindow?
-
+    private var keyMonitor: Any?
+    
     private var theme: BlinkTheme {
         UserDefaults.standard.bool(forKey: "useDarkOverlay")
-            ? .dark
-            : ThemeManager.shared.current
+        ? .dark
+        : ThemeManager.shared.current
     }
-
+    
     func showBreak(onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
         showToast(onToastDone: { [weak self] in
             self?.dismissToast()
-            self?.showFullscreenCountdown(onComplete: onComplete, onSkip: onSkip)
+            self?.showBreakTimer(onComplete: onComplete, onSkip: onSkip)
         })
     }
-
+    
     /// Show a "timer extended" toast when flow is detected.
     /// User can dismiss (keep extension) or tap "Take break now".
     func showTimerExtendedToast(onTakeBreakNow: @escaping () -> Void) {
         // Don't stack on existing toast
         dismissToast()
-
+        
         guard let screen = NSScreen.main else { return }
-
-        let toastWidth: CGFloat = 340
-        let toastHeight: CGFloat = 56
+        
+        let toastWidth: CGFloat = 280
+        let toastHeight: CGFloat = 72
         let padding: CGFloat = 16
-
+        
         let toastFrame = NSRect(
             x: screen.visibleFrame.maxX - toastWidth - padding,
             y: screen.visibleFrame.minY + padding,
             width: toastWidth,
             height: toastHeight
         )
-
+        
         let toastView = TimerExtendedToastView(
             theme: theme,
             onDismiss: { [weak self] in self?.dismissToast() },
@@ -49,7 +50,7 @@ final class OverlayWindowController {
                 onTakeBreakNow()
             }
         )
-
+        
         let panel = NSPanel(
             contentRect: toastFrame,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -64,44 +65,44 @@ final class OverlayWindowController {
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary]
         panel.hidesOnDeactivate = false
         panel.becomesKeyOnlyIfNeeded = true
-
+        
         panel.contentView = NSHostingView(rootView: toastView)
-
+        
         let win = panel
         win.alphaValue = 0
         win.orderFrontRegardless()
-
+        
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.3
             win.animator().alphaValue = 1
         }
-
+        
         self.toastWindow = win
-
+        
         // Auto-dismiss after 5 seconds if not interacted with
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
             self?.dismissToast()
         }
     }
-
+    
     // MARK: - Phase 1: Mini toast (bottom-right corner)
-
+    
     private func showToast(onToastDone: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
-
+        
         let toastWidth: CGFloat = 280
         let toastHeight: CGFloat = 72
         let padding: CGFloat = 16
-
+        
         let toastFrame = NSRect(
             x: screen.visibleFrame.maxX - toastWidth - padding,
             y: screen.visibleFrame.minY + padding,
             width: toastWidth,
             height: toastHeight
         )
-
+        
         let toastView = ToastView(theme: theme, onDone: { onToastDone() })
-
+        
         let panel = NSPanel(
             contentRect: toastFrame,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -116,21 +117,21 @@ final class OverlayWindowController {
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary]
         panel.hidesOnDeactivate = false
         panel.becomesKeyOnlyIfNeeded = true
-
+        
         panel.contentView = NSHostingView(rootView: toastView)
-
+        
         let win = panel
         win.alphaValue = 0
         win.orderFrontRegardless()
-
+        
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.3
             win.animator().alphaValue = 1
         }
-
+        
         self.toastWindow = win
     }
-
+    
     private func dismissToast() {
         guard let win = toastWindow else { return }
         NSAnimationContext.runAnimationGroup({ context in
@@ -141,12 +142,12 @@ final class OverlayWindowController {
             self?.toastWindow = nil
         })
     }
-
-    // MARK: - Phase 2 + 3: Fullscreen countdown → break timer
-
-    private func showFullscreenCountdown(onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
+    
+    // MARK: - Fullscreen break timer
+    
+    private func showBreakTimer(onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
-
+        
         let win = NSWindow(
             contentRect: screen.frame,
             styleMask: [.borderless],
@@ -160,43 +161,56 @@ final class OverlayWindowController {
         win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         win.alphaValue = 0
         self.fullscreenWindow = win
-
-        let countdownView = CountdownPhaseView(
+        
+        let skipAction = { [weak self] in
+            self?.dismissFullscreen()
+            onSkip()
+        }
+        let breakModel = BreakPhaseModel()
+        let breakView = BreakPhaseView(
             theme: theme,
-            onCountdownDone: { [weak self] in
-                self?.transitionToBreak(onComplete: onComplete, onSkip: onSkip)
-            },
-            onSkip: { [weak self] in
+            model: breakModel,
+            onComplete: { [weak self] in
                 self?.dismissFullscreen()
-                onSkip()
-            }
+                onComplete()
+            },
+            onSkip: skipAction
         )
-
-        win.contentView = NSHostingView(rootView: AnyView(countdownView))
+        
+        // NSEvent local monitor for keyboard — .onKeyPress doesn't work in borderless windows
+        removeKeyMonitor()
+        currentKeyHandler = KeyEventHandler(
+            onEscape: skipAction,
+            onRightArrow: { [weak breakModel] in breakModel?.extend() }
+        )
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            if self?.currentKeyHandler?.handle(event) == true {
+                return nil // consumed
+            }
+            return event
+        }
+        
+        win.contentView = NSHostingView(rootView: AnyView(breakView))
         win.makeKeyAndOrderFront(nil)
-
+        
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.3
             win.animator().alphaValue = 1
         }
     }
-
-    private func transitionToBreak(onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
-        let breakView = BreakPhaseView(
-            theme: theme,
-            onComplete: { [weak self] in
-                self?.dismissFullscreen()
-                onComplete()
-            },
-            onSkip: { [weak self] in
-                self?.dismissFullscreen()
-                onSkip()
-            }
-        )
-        fullscreenWindow?.contentView = NSHostingView(rootView: AnyView(breakView))
+    
+    private var currentKeyHandler: KeyEventHandler?
+    
+    private func removeKeyMonitor() {
+        if let monitor = keyMonitor {
+            NSEvent.removeMonitor(monitor)
+            keyMonitor = nil
+        }
+        currentKeyHandler = nil
     }
-
+    
     private func dismissFullscreen() {
+        removeKeyMonitor()
         guard let win = fullscreenWindow else { return }
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.3
@@ -206,7 +220,7 @@ final class OverlayWindowController {
             self?.fullscreenWindow = nil
         })
     }
-
+    
     func dismiss() {
         dismissToast()
         dismissFullscreen()
@@ -218,24 +232,24 @@ final class OverlayWindowController {
 private struct ToastView: View {
     let theme: BlinkTheme
     let onDone: () -> Void
-
+    
     @State private var count: Int = 3
     @State private var timer: Timer?
-
+    
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "eye")
                 .font(.system(size: 20))
                 .foregroundStyle(.primary)
-
+            
             VStack(alignment: .leading, spacing: 2) {
                 Text("Break in \(count)s")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.primary)
             }
-
+            
             Spacer()
-
+            
             ZStack {
                 Circle()
                     .stroke(theme.accent.opacity(0.3), lineWidth: 2)
@@ -255,13 +269,13 @@ private struct ToastView: View {
         .onAppear { startTimer() }
         .onDisappear { stopTimer() }
     }
-
+    
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             if count > 1 { count -= 1 } else { stopTimer(); onDone() }
         }
     }
-
+    
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
@@ -275,36 +289,68 @@ private struct TimerExtendedToastView: View {
     let onDismiss: () -> Void
     let onTakeBreak: () -> Void
     @Environment(\.colorScheme) private var colorScheme
-
+    
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "brain.head.profile")
-                .font(.system(size: 16))
-                .foregroundStyle(theme.accent(for: colorScheme))
-
-            Text("In flow — timer extended")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.primary)
-
-            Spacer()
-
-            Button {
-                onTakeBreak()
-            } label: {
-                Text("Take break now")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(theme.accent(for: colorScheme))
-                    .clipShape(Capsule())
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "brain.head.profile")
+                    .font(.system(size: 14))
+                    .foregroundStyle(theme.accent(for: colorScheme))
+                
+                Text("In flow — timer extended")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.primary)
             }
-            .buttonStyle(.plain)
+            
+            HStack {
+                Spacer()
+                Button {
+                    onTakeBreak()
+                } label: {
+                    Text("Take break now")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(theme.accent(for: colorScheme))
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Key event handler (NSEvent-based, works in borderless windows)
+
+private final class KeyEventHandler {
+    let onEscape: (() -> Void)?
+    let onRightArrow: (() -> Void)?
+    
+    init(onEscape: (() -> Void)? = nil, onRightArrow: (() -> Void)? = nil) {
+        self.onEscape = onEscape
+        self.onRightArrow = onRightArrow
+    }
+    
+    /// Returns true if the event was consumed.
+    func handle(_ event: NSEvent) -> Bool {
+        switch event.keyCode {
+        case 53: // Escape
+            onEscape?()
+            return true
+        case 124: // Right arrow
+            if let action = onRightArrow {
+                action()
+                return true
+            }
+            return false
+        default:
+            return false
+        }
     }
 }
 
@@ -315,28 +361,28 @@ private struct CountdownPhaseView: View {
     let onCountdownDone: () -> Void
     let onSkip: () -> Void
     @Environment(\.colorScheme) private var colorScheme
-
+    
     @State private var count: Int = 3
     @State private var timer: Timer?
     @State private var scale: CGFloat = 1.0
-
+    
     var body: some View {
         let bg = theme.overlayBackground(for: colorScheme)
         let fg = theme.overlayText(for: colorScheme)
         ZStack {
             bg.ignoresSafeArea()
-
+            
             VStack(spacing: 20) {
                 Text("Break starting in")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundStyle(fg.opacity(0.7))
-
+                
                 Text("\(count)")
                     .font(.system(size: 96, weight: .ultraLight, design: .rounded))
                     .foregroundStyle(theme.accent)
                     .scaleEffect(scale)
                     .animation(.easeOut(duration: 0.3), value: count)
-
+                
                 Text("esc to skip")
                     .font(.system(size: 13))
                     .foregroundStyle(fg.opacity(0.3))
@@ -345,11 +391,8 @@ private struct CountdownPhaseView: View {
         }
         .onAppear { startTimer() }
         .onDisappear { stopTimer() }
-        .onKeyPress(.escape) {
-            stopTimer(); onSkip(); return .handled
-        }
     }
-
+    
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             if count > 1 {
@@ -361,8 +404,38 @@ private struct CountdownPhaseView: View {
             }
         }
     }
-
+    
     private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+}
+
+// MARK: - Break phase model (shared with key handler)
+
+private final class BreakPhaseModel: ObservableObject {
+    @Published var remaining: Int = 20
+    @Published var total: Int = 20
+    @Published var showExtendHint: Bool = false
+    var timer: Timer?
+    
+    func extend() {
+        remaining += 20
+        total += 20
+        withAnimation(.easeOut(duration: 0.4)) { showExtendHint = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            withAnimation { self?.showExtendHint = false }
+        }
+    }
+    
+    func startTimer(onComplete: @escaping () -> Void) {
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            if self.remaining > 0 { self.remaining -= 1 } else { self.stopTimer(); onComplete() }
+        }
+    }
+    
+    func stopTimer() {
         timer?.invalidate()
         timer = nil
     }
@@ -372,95 +445,88 @@ private struct CountdownPhaseView: View {
 
 private struct BreakPhaseView: View {
     let theme: BlinkTheme
+    @ObservedObject var model: BreakPhaseModel
     let onComplete: () -> Void
     let onSkip: () -> Void
     @Environment(\.colorScheme) private var colorScheme
-
-    @State private var remaining: Int = 20
-    @State private var total: Int = 20
-    @State private var timer: Timer?
-    @State private var showExtendHint: Bool = false
-
+    
     var body: some View {
         let bg = theme.overlayBackground(for: colorScheme)
         let fg = theme.overlayText(for: colorScheme)
         ZStack {
             bg.ignoresSafeArea()
-
-            VStack(spacing: 32) {
-                Spacer()
-
-                Image(systemName: "eye")
-                    .font(.system(size: 56, weight: .ultraLight))
-                    .foregroundStyle(theme.accent.opacity(0.8))
-
-                Text("Look at something far away")
-                    .font(.system(size: 22, weight: .medium))
-                    .foregroundStyle(fg)
-
-                ZStack {
-                    Circle()
-                        .stroke(theme.accent.opacity(0.15), lineWidth: 4)
-                        .frame(width: 160, height: 160)
-
-                    Circle()
-                        .trim(from: 0, to: CGFloat(remaining) / CGFloat(total))
-                        .stroke(theme.accent, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                        .frame(width: 160, height: 160)
-                        .rotationEffect(.degrees(-90))
-                        .animation(.linear(duration: 1), value: remaining)
-
-                    Text("\(remaining)")
-                        .font(.system(size: 64, weight: .ultraLight, design: .monospaced))
+            
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 40) {
+                    
+                    Spacer()
+                    
+                    Text("Look at something far away")
+                        .font(.system(size: 22, weight: .medium))
                         .foregroundStyle(fg)
-                }
-
-                if showExtendHint {
-                    Text("+20s")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(theme.accent)
-                        .transition(.opacity.combined(with: .scale))
-                }
-
-                Spacer()
-
-                VStack(spacing: 12) {
+                    
+                    Spacer()
+                    
+                    ZStack {
+                        Circle()
+                            .stroke(theme.accent.opacity(0.15), lineWidth: 4)
+                            .frame(width: 160, height: 160)
+                        
+                        Circle()
+                            .trim(from: 0, to: CGFloat(model.remaining) / CGFloat(model.total))
+                            .stroke(theme.accent, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                            .frame(width: 160, height: 160)
+                            .rotationEffect(.degrees(-90))
+                            .animation(.linear(duration: 1), value: model.remaining)
+                        
+                        Text("\(model.remaining)")
+                            .font(.system(size: 64, weight: .ultraLight, design: .monospaced))
+                            .foregroundStyle(fg)
+                    }
+                    
+                    if model.showExtendHint {
+                        Text("+20s")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(theme.accent)
+                            .transition(.opacity.combined(with: .scale))
+                    }
+                    
+                    Spacer()
+                    
                     HStack(spacing: 32) {
                         KeyHintView(key: "esc", label: "Skip break", theme: theme)
                         KeyHintView(key: "→", label: "Extend 20s", theme: theme)
                     }
+                    
+                    Spacer()
+                    
+                        .padding(.top, 24)
                 }
-                .padding(.bottom, 56)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+                // Mini 20-feet badge in top right
+                VStack(spacing: 6) {
+                    Image(systemName: "eye")
+                        .font(.system(size: 14))
+                        .foregroundStyle(theme.accent)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("20")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundStyle(fg)
+                        Text("ft")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(fg.opacity(0.5))
+                    }
+                }
+                .padding(10)
+                .background(theme.accent.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(.top, 28)
+                .padding(.trailing, 28)
             }
         }
-        .onAppear { startTimer() }
-        .onDisappear { stopTimer() }
-        .onKeyPress(.escape) {
-            stopTimer(); onSkip(); return .handled
-        }
-        .onKeyPress(.rightArrow) {
-            extend(); return .handled
-        }
-    }
-
-    private func extend() {
-        remaining += 20
-        total += 20
-        withAnimation(.easeOut(duration: 0.4)) { showExtendHint = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            withAnimation { showExtendHint = false }
-        }
-    }
-
-    private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if remaining > 0 { remaining -= 1 } else { stopTimer(); onComplete() }
-        }
-    }
-
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
+        .onAppear { model.startTimer(onComplete: onComplete) }
+        .onDisappear { model.stopTimer() }
     }
 }
 
@@ -471,7 +537,7 @@ private struct KeyHintView: View {
     let label: String
     let theme: BlinkTheme
     @Environment(\.colorScheme) private var colorScheme
-
+    
     var body: some View {
         let fg = theme.overlayText(for: colorScheme)
         HStack(spacing: 10) {
@@ -486,7 +552,7 @@ private struct KeyHintView: View {
                     RoundedRectangle(cornerRadius: 6)
                         .stroke(theme.accent.opacity(0.3), lineWidth: 1)
                 )
-
+            
             Text(label)
                 .font(.system(size: 15))
                 .foregroundStyle(fg.opacity(0.5))
@@ -507,16 +573,16 @@ private struct KeyHintView: View {
 }
 
 #Preview("Break Timer - Peach") {
-    BreakPhaseView(theme: .peach, onComplete: {}, onSkip: {})
+    BreakPhaseView(theme: .peach, model: BreakPhaseModel(), onComplete: {}, onSkip: {})
         .frame(width: 600, height: 500)
 }
 
 #Preview("Break Timer - Midnight") {
-    BreakPhaseView(theme: .midnight, onComplete: {}, onSkip: {})
+    BreakPhaseView(theme: .midnight, model: BreakPhaseModel(), onComplete: {}, onSkip: {})
         .frame(width: 600, height: 500)
 }
 
 #Preview("Break Timer - Sage") {
-    BreakPhaseView(theme: .sage, onComplete: {}, onSkip: {})
+    BreakPhaseView(theme: .sage, model: BreakPhaseModel(), onComplete: {}, onSkip: {})
         .frame(width: 600, height: 500)
 }

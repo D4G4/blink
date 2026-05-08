@@ -219,7 +219,7 @@ struct SettingsView: View {
 
                 Text("Higher sensitivity = flow detected more easily, extending break intervals.")
                     .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .padding(.leading, 4)
             }
 
@@ -258,7 +258,7 @@ struct SettingsView: View {
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
 
-            Text("v1.0.0")
+            Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0")")
                 .font(.system(size: 11))
                 .foregroundStyle(.tertiary)
 

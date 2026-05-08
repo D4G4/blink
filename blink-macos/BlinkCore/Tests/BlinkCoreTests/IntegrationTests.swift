@@ -15,10 +15,10 @@ struct IntegrationTests {
         #expect(sm.state == .normal, "30s pause should not be idle — user might be reading or thinking")
     }
 
-    @Test("Walking away (90s+) triggers idle")
+    @Test("Walking away (180s+) triggers idle")
     func walkingAwayTriggersIdle() {
         let sm = FlowStateMachine()
-        sm.tick(flowScore: 0.5, secondsSinceLastInput: 95,
+        sm.tick(flowScore: 0.5, secondsSinceLastInput: 185,
                 isMicActive: false, isCameraActive: false, now: 1000)
         #expect(sm.state == .idle)
     }
@@ -63,8 +63,8 @@ struct IntegrationTests {
         }
         #expect(sm.state == .flow)
 
-        // Go idle for 2 minutes
-        sm.tick(flowScore: 0.8, secondsSinceLastInput: 120,
+        // Go idle for 3+ minutes
+        sm.tick(flowScore: 0.8, secondsSinceLastInput: 190,
                 isMicActive: false, isCameraActive: false,
                 now: base + 360)
         #expect(sm.state == .idle)
@@ -153,7 +153,7 @@ struct IntegrationTests {
         let base: TimeInterval = 1000
 
         // User typed a prompt, now scrolling through output
-        // idle=5s (just scrolled), then idle=3s, then idle=8s — never hits 90s
+        // idle=5s (just scrolled), then idle=3s, then idle=8s — never hits 180s
         for i in 0..<10 {
             let idle = Double([5, 3, 8, 2, 12, 4, 6, 15, 3, 7][i])
             sm.tick(flowScore: 0.3, secondsSinceLastInput: idle,
@@ -163,14 +163,14 @@ struct IntegrationTests {
         #expect(sm.state == .normal, "Occasional mouse/scroll should prevent idle state")
     }
 
-    @Test("Waiting for agent response sitting perfectly still triggers idle after 90s")
+    @Test("Waiting for agent response sitting perfectly still triggers idle after 180s")
     func agentWorkflowSittingStill() {
         let sm = FlowStateMachine()
 
         // User sent prompt and is watching output without touching anything
-        sm.tick(flowScore: 0.3, secondsSinceLastInput: 95,
+        sm.tick(flowScore: 0.3, secondsSinceLastInput: 185,
                 isMicActive: false, isCameraActive: false, now: 1000)
-        #expect(sm.state == .idle, "95s of zero input should trigger idle")
+        #expect(sm.state == .idle, "185s of zero input should trigger idle")
     }
 
     // MARK: - Deep flow
@@ -202,8 +202,8 @@ struct IntegrationTests {
         }
         #expect(sm.state == .deepFlow)
 
-        // Go idle
-        sm.tick(flowScore: 0.85, secondsSinceLastInput: 100,
+        // Go idle (3+ min no input)
+        sm.tick(flowScore: 0.85, secondsSinceLastInput: 190,
                 isMicActive: false, isCameraActive: false,
                 now: base + 1250)
         #expect(sm.state == .idle)

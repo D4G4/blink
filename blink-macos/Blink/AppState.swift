@@ -40,7 +40,7 @@ final class AppState: ObservableObject {
     /// How long the user must be idle (zero input) before it counts as a break
     /// 90s = long enough that "reading agent output" with occasional scrolls won't trigger it,
     /// but short enough to catch actually walking away
-    private static let idleBreakThreshold: TimeInterval = 90
+    private static let idleBreakThreshold: TimeInterval = 180
 
     /// Input gap that counts as a "natural pause" for delivering a pending break
     private static let naturalPauseThreshold: TimeInterval = 6
