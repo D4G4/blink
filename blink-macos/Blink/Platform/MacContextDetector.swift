@@ -8,20 +8,27 @@ private let log = Logger(subsystem: "com.blink.app", category: "Context")
 
 /// Detects meeting state, Focus mode, fullscreen apps, and video playback.
 final class MacContextDetector: ContextSource {
-    private static let meetingApps: Set<String> = [
+    /// Dedicated meeting apps — running + mic in use = meeting
+    private static let dedicatedMeetingApps: Set<String> = [
         "us.zoom.xos",
         "com.microsoft.teams",
         "com.microsoft.teams2",
         "com.apple.FaceTime",
         "com.webex.meetingmanager",
         "com.cisco.webexmeetingsapp",
-        "com.google.Chrome",          // Google Meet runs in browser
-        "com.apple.Safari",
-        "org.mozilla.firefox",
-        "com.microsoft.edgemac",
-        "com.brave.Browser",
-        "company.thebrowser.Browser",  // Arc
     ]
+
+    /// Meeting title keywords for browser-based meetings (Google Meet, etc.)
+    private static let meetingTitleKeywords: [String] = [
+        "meet.google.com", "google meet",
+        "zoom.us",
+        "teams.microsoft.com", "teams.live.com",
+        "webex.com",
+    ]
+
+    /// Tracks whether a browser-based meeting was detected.
+    /// Stays true while mic remains active, even if user switches apps.
+    private var browserMeetingDetected = false
 
     /// Apps where being frontmost = watching video
     private static let videoApps: Set<String> = [
@@ -56,27 +63,46 @@ final class MacContextDetector: ContextSource {
     ]
 
     func isMicrophoneActive() -> Bool {
-        // Check if the system default input device (mic) is actually in use
-        // by any app — works regardless of which app is frontmost
-        guard isMicInUse() else { return false }
-
-        // Mic is active — check if a meeting/browser app is running
-        // (filters out false positives from music recording, voice memos, etc.)
-        let runningApps = NSWorkspace.shared.runningApplications
-        return runningApps.contains { app in
-            guard let bundleID = app.bundleIdentifier else { return false }
-            return Self.meetingApps.contains(bundleID) && !app.isHidden
+        guard isMicInUse() else {
+            browserMeetingDetected = false
+            return false
         }
+        return isMeetingAppActive()
     }
 
     func isCameraActive() -> Bool {
-        // Camera-in-use detection via CoreAudio isn't available,
-        // but if the mic is in use with a meeting app, camera is likely on too.
-        // Also check if a meeting app is frontmost as a secondary signal.
-        if let frontApp = NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
-           Self.meetingApps.contains(frontApp) {
+        guard isMicInUse() else { return false }
+        return isMeetingAppActive()
+    }
+
+    /// Returns true if a dedicated meeting app is running, or a browser-based
+    /// meeting was detected. Browser meetings latch on (stay active) while the
+    /// mic remains in use, so switching to iTerm mid-call doesn't exit meeting state.
+    private func isMeetingAppActive() -> Bool {
+        // Dedicated meeting app running (doesn't need to be frontmost)
+        let runningApps = NSWorkspace.shared.runningApplications
+        let hasDedicatedApp = runningApps.contains { app in
+            guard let bundleID = app.bundleIdentifier else { return false }
+            return Self.dedicatedMeetingApps.contains(bundleID) && !app.isHidden
+        }
+        if hasDedicatedApp { return true }
+
+        // Browser frontmost with meeting title — latch on
+        if let frontApp = NSWorkspace.shared.frontmostApplication,
+           let bundleID = frontApp.bundleIdentifier,
+           Self.browsers.contains(bundleID),
+           let title = windowTitle(for: frontApp)?.lowercased() {
+            if Self.meetingTitleKeywords.contains(where: { title.contains($0) }) {
+                browserMeetingDetected = true
+                return true
+            }
+        }
+
+        // Mic still active after browser meeting was detected — stay in meeting
+        if browserMeetingDetected {
             return true
         }
+
         return false
     }
 

@@ -85,7 +85,7 @@ final class UpdateChecker: ObservableObject {
         }
     }
 
-    static let brewCommand = "brew upgrade --cask blink"
+    static let brewCommand = "brew update && brew upgrade --cask blink"
 
     /// Simple semver comparison: "1.2.0" > "1.1.0"
     private func isNewer(_ a: String, than b: String) -> Bool {
