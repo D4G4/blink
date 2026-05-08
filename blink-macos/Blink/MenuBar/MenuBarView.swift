@@ -164,7 +164,8 @@ struct MenuBarView: View {
 
     // MARK: - Update Banner
 
-    @State private var showBrewDialog = false
+    @State private var showBrewCommand = false
+    @State private var brewCommandCopied = false
 
     private func updateBanner(version: String) -> some View {
         VStack(spacing: 8) {
@@ -181,7 +182,9 @@ struct MenuBarView: View {
 
             HStack(spacing: 6) {
                 Button {
-                    showBrewDialog = true
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showBrewCommand.toggle()
+                    }
                 } label: {
                     Text("Homebrew")
                         .font(.system(size: 11, weight: .semibold))
@@ -210,13 +213,46 @@ struct MenuBarView: View {
                     .buttonStyle(.plain)
                 }
             }
+
+            if showBrewCommand {
+                HStack(spacing: 0) {
+                    Text("$ ")
+                        .foregroundStyle(.secondary)
+                    + Text(UpdateChecker.brewCommand)
+                        .foregroundStyle(.primary)
+
+                    Spacer(minLength: 8)
+
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(UpdateChecker.brewCommand, forType: .string)
+                        brewCommandCopied = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            brewCommandCopied = false
+                        }
+                    } label: {
+                        Image(systemName: brewCommandCopied ? "checkmark" : "doc.on.clipboard")
+                            .font(.system(size: 12))
+                            .foregroundStyle(brewCommandCopied ? .green : accentColor)
+                            .frame(width: 24, height: 24)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .font(.system(size: 11, design: .monospaced))
+                .padding(8)
+                .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(Color.primary.opacity(0.1))
+                )
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
         .padding(10)
         .background(accentColor.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10))
-        .sheet(isPresented: $showBrewDialog) {
-            BrewUpdateSheet(theme: theme, colorScheme: colorScheme)
-        }
     }
 
     // MARK: - Flow State
@@ -309,69 +345,6 @@ struct MenuBarView: View {
         let mins = Int(seconds) / 60
         let secs = Int(seconds) % 60
         return String(format: "%d:%02d", mins, secs)
-    }
-}
-
-// MARK: - Brew Update Sheet
-
-private struct BrewUpdateSheet: View {
-    let theme: BlinkTheme
-    let colorScheme: ColorScheme
-    @Environment(\.dismiss) private var dismiss
-    @State private var copied = false
-
-    private var accentColor: Color { theme.accent(for: colorScheme) }
-    private let command = UpdateChecker.brewCommand
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("Update via Homebrew")
-                .font(.system(size: 14, weight: .semibold))
-
-            Text("Run this command in Terminal:")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-
-            HStack(spacing: 0) {
-                Text("$ ")
-                    .foregroundStyle(.secondary)
-                + Text(command)
-                    .foregroundStyle(.primary)
-
-                Spacer(minLength: 8)
-
-                Button {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(command, forType: .string)
-                    copied = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        copied = false
-                    }
-                } label: {
-                    Image(systemName: copied ? "checkmark" : "doc.on.clipboard")
-                        .font(.system(size: 12))
-                        .foregroundStyle(copied ? .green : accentColor)
-                        .frame(width: 24, height: 24)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-            .font(.system(size: 12, design: .monospaced))
-            .padding(10)
-            .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(Color.primary.opacity(0.1))
-            )
-
-            Button("Done") { dismiss() }
-                .buttonStyle(.plain)
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-        }
-        .padding(20)
-        .frame(width: 320)
     }
 }
 
