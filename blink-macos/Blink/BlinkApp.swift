@@ -55,7 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } else {
             NSApp.setActivationPolicy(.accessory)
-            UpdateChecker.shared.checkForUpdate()
+            UpdateChecker.shared.startPeriodicChecks()
         }
     }
 }

@@ -15,6 +15,15 @@ final class UpdateChecker: ObservableObject {
     private static let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     private static let releasesURL = URL(string: "https://api.github.com/repos/D4G4/blink/releases/latest")!
 
+    private var periodicTimer: Timer?
+
+    func startPeriodicChecks() {
+        checkForUpdate()
+        periodicTimer = Timer.scheduledTimer(withTimeInterval: 86400, repeats: true) { [weak self] _ in
+            self?.checkForUpdate()
+        }
+    }
+
     func checkForUpdate() {
         Task {
             do {

@@ -131,6 +131,20 @@ struct SettingsView: View {
                 }
 
                 Button {
+                    UpdateChecker.shared.checkForUpdate()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 11))
+                        Text("Check for Updates")
+                            .font(.system(size: 12))
+                    }
+                    .foregroundStyle(accentColor)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+
+                Button {
                     themeManager.hasCompletedOnboarding = false
                     let path = Bundle.main.bundleURL.absoluteString
                     let task = Process()
