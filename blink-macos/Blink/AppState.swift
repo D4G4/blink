@@ -31,6 +31,7 @@ final class AppState: ObservableObject {
     private var appMonitor: MacAppMonitor?
     private var idleDetector: MacIdleDetector?
     private var contextDetector: MacContextDetector?
+    private var permissionWindow: PermissionWindowController?
 
     // Timers
     private var tickTimer: Timer?
@@ -162,25 +163,35 @@ final class AppState: ObservableObject {
             startTimers()
             log.info("Monitors and timers started")
         } else {
-            log.info("Waiting for accessibility permission — prompting user")
-            PermissionManager.requestAccessibility()
+            log.info("Waiting for accessibility permission — showing explanation")
 
-            // Poll on main run loop — must use DispatchQueue to ensure it runs on main thread
-            func pollPermission() {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                    guard let self else { return }
-                    if PermissionManager.isAccessibilityGranted() {
-                        log.info("Accessibility permission granted — starting up")
-                        self.hasAccessibilityPermission = true
-                        self.startMonitoring()
-                        self.startTimers()
-                    } else {
-                        pollPermission()
-                    }
+            // Show themed permission explanation, then trigger system dialog
+            permissionWindow = PermissionWindowController()
+            permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
+                guard let self else { return }
+                self.permissionWindow = nil
+                log.info("User acknowledged — requesting accessibility")
+                PermissionManager.requestAccessibility()
+                self.startPermissionPolling()
+            }
+        }
+    }
+
+    private func startPermissionPolling() {
+        func poll() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                guard let self else { return }
+                if PermissionManager.isAccessibilityGranted() {
+                    log.info("Accessibility permission granted — starting up")
+                    self.hasAccessibilityPermission = true
+                    self.startMonitoring()
+                    self.startTimers()
+                } else {
+                    poll()
                 }
             }
-            pollPermission()
         }
+        poll()
     }
 
     private func startMonitoring() {

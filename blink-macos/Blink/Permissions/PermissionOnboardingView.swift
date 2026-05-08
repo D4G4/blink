@@ -1,33 +1,122 @@
 import SwiftUI
 
 struct PermissionOnboardingView: View {
+    let theme: BlinkTheme
+    let onContinue: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "eye.circle")
-                .font(.system(size: 48))
-                .foregroundStyle(.blue)
+        let fg = theme.onBackgroundText(for: colorScheme)
 
-            Text("Blink needs Accessibility access")
-                .font(.headline)
+        ZStack {
+            theme.backgroundGradient(for: colorScheme)
+                .ignoresSafeArea()
 
-            Text("This allows Blink to detect your typing and mouse patterns to intelligently time your break reminders. No keystrokes or content are ever recorded.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 300)
+            VStack(spacing: 0) {
+                Spacer()
 
-            Button("Open System Settings") {
-                PermissionManager.requestAccessibility()
+                // Shield icon
+                Image(systemName: "hand.raised.circle.fill")
+                    .font(.system(size: 56, weight: .light))
+                    .foregroundStyle(theme.accent(for: colorScheme))
+                    .padding(.bottom, 20)
+
+                Text("One more thing")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(fg)
+                    .padding(.bottom, 8)
+
+                Text("Blink needs Accessibility permission to work")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(fg.opacity(0.7))
+                    .padding(.bottom, 36)
+
+                // Explanation cards
+                VStack(spacing: 12) {
+                    permissionCard(
+                        icon: "keyboard",
+                        title: "Detects typing & mouse patterns",
+                        description: "So breaks come at the right time, not mid-thought",
+                        fg: fg
+                    )
+                    permissionCard(
+                        icon: "eye.slash",
+                        title: "No keystrokes or content recorded",
+                        description: "Only timing patterns — never what you type",
+                        fg: fg
+                    )
+                    permissionCard(
+                        icon: "brain.head.profile",
+                        title: "Powers smart flow detection",
+                        description: "Extends breaks when you're focused, pauses when you're away",
+                        fg: fg
+                    )
+                }
+                .frame(maxWidth: 400)
+                .padding(.bottom, 36)
+
+                // What happens next
+                HStack(spacing: 8) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 13))
+                        .foregroundStyle(fg.opacity(0.5))
+                    Text("macOS will ask you to grant access in System Settings")
+                        .font(.system(size: 13))
+                        .foregroundStyle(fg.opacity(0.5))
+                }
+                .padding(.bottom, 20)
+
+                Button {
+                    onContinue()
+                } label: {
+                    Text("Grant Access")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(theme.backgroundTop(for: colorScheme))
+                        .frame(width: 200, height: 48)
+                        .background(fg)
+                        .clipShape(Capsule())
+                        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-
-            Text("Blink will work as a simple timer without this permission, but smart flow detection will be disabled.")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 300)
+            .padding(.horizontal, 40)
         }
-        .padding(32)
     }
+
+    private func permissionCard(icon: String, title: String, description: String, fg: Color) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(theme.backgroundTop(for: colorScheme))
+                .frame(width: 36, height: 36)
+                .background(fg)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(fg)
+                Text(description)
+                    .font(.system(size: 12))
+                    .foregroundStyle(fg.opacity(0.6))
+            }
+
+            Spacer()
+        }
+        .padding(14)
+        .background(fg.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+#Preview("Permission - Peach") {
+    PermissionOnboardingView(theme: .peach, onContinue: {})
+        .frame(width: 500, height: 600)
+}
+
+#Preview("Permission - Midnight") {
+    PermissionOnboardingView(theme: .midnight, onContinue: {})
+        .frame(width: 500, height: 600)
 }
