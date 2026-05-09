@@ -1,0 +1,183 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  # ── Windows ──────────────────────────────────────────────────────
+  windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Test
+        run: dotnet test blink-windows/src/Blink.Core.Tests/ -c Release
+
+      - name: Publish
+        run: |
+          dotnet publish blink-windows/src/Blink.App/Blink.App.csproj `
+            -c Release `
+            -r win-${{ matrix.arch }} `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:PublishTrimmed=false `
+            -o publish/${{ matrix.arch }}
+
+      - name: Rename artifact
+        run: |
+          Move-Item publish/${{ matrix.arch }}/Blink.App.exe publish/${{ matrix.arch }}/Blink-${{ matrix.arch }}.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Blink-${{ matrix.arch }}
+          path: publish/${{ matrix.arch }}/Blink-${{ matrix.arch }}.exe
+
+  # ── macOS ────────────────────────────────────────────────────────
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install xcodegen create-dmg
+
+      - name: Run BlinkCore tests
+        run: cd blink-macos/BlinkCore && swift test
+
+      - name: Generate Xcode project
+        run: cd blink-macos && xcodegen generate
+
+      - name: Archive
+        run: |
+          cd blink-macos
+          xcodebuild archive \
+            -project Blink.xcodeproj \
+            -scheme Blink \
+            -configuration Release \
+            -archivePath build/Blink.xcarchive \
+            -quiet \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Export app
+        run: |
+          cd blink-macos
+          mkdir -p build/export
+          cat > build/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>mac-application</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath build/Blink.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -quiet \
+            || cp -R build/Blink.xcarchive/Products/Applications/Blink.app build/export/
+
+      - name: Create DMG
+        run: |
+          cd blink-macos
+          mkdir -p build/dmg-stage
+          cp -R build/export/Blink.app build/dmg-stage/
+          ln -s /Applications build/dmg-stage/Applications
+          create-dmg \
+            --volname "Blink" \
+            --window-pos 200 120 \
+            --window-size 540 380 \
+            --icon-size 128 \
+            --icon "Blink.app" 160 170 \
+            --icon "Applications" 380 170 \
+            --hide-extension "Blink.app" \
+            --no-internet-enable \
+            build/Blink.dmg \
+            build/dmg-stage/ \
+            || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Blink-macOS
+          path: blink-macos/build/Blink.dmg
+
+  # ── GitHub Release ───────────────────────────────────────────────
+  release:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/Blink-x64/Blink-x64.exe
+            artifacts/Blink-arm64/Blink-arm64.exe
+            artifacts/Blink-macOS/Blink.dmg
+
+  # ── Update Homebrew cask ─────────────────────────────────────────
+  homebrew:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Wait for release assets
+        run: sleep 10
+
+      - name: Get DMG sha256
+        id: sha
+        run: |
+          curl -sL "https://github.com/D4G4/blink/releases/download/${GITHUB_REF_NAME}/Blink.dmg" -o Blink.dmg
+          echo "sha256=$(sha256sum Blink.dmg | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Checkout homebrew-blink
+        uses: actions/checkout@v4
+        with:
+          repository: D4G4/homebrew-blink
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-blink
+
+      - name: Update cask
+        run: |
+          cd homebrew-blink
+          sed -i 's/version ".*"/version "${{ steps.version.outputs.version }}"/' Casks/blink.rb
+          sed -i 's/sha256 ".*"/sha256 "${{ steps.sha.outputs.sha256 }}"/' Casks/blink.rb
+
+      - name: Commit and push
+        run: |
+          cd homebrew-blink
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/blink.rb
+          git diff --cached --quiet && exit 0
+          git commit -m "Bump to v${{ steps.version.outputs.version }}"
+          git push
