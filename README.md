@@ -119,6 +119,8 @@ Your blink rate drops from 15/min to 4/min during screen work. This causes dry e
 
 ## Building from source
 
+CI builds run automatically on every push via GitHub Actions. Tagged releases (`v*`) build both platforms, create a GitHub Release with all artifacts, and update the Homebrew cask.
+
 ### macOS
 
 ```bash
