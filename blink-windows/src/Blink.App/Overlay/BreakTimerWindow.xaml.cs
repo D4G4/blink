@@ -33,9 +33,10 @@ public sealed partial class BreakTimerWindow : Window
         presenter.SetBorderAndTitleBar(false, false);
         appWindow.SetPresenter(presenter);
 
-        var workArea = Microsoft.UI.Windowing.DisplayArea.Primary.WorkArea;
-        appWindow.Move(new Windows.Graphics.PointInt32(workArea.X, workArea.Y));
-        appWindow.Resize(new Windows.Graphics.SizeInt32(workArea.Width, workArea.Height));
+        // Use full display area (not workArea, which excludes taskbar)
+        var display = Microsoft.UI.Windowing.DisplayArea.Primary;
+        appWindow.Move(new Windows.Graphics.PointInt32(0, 0));
+        appWindow.Resize(new Windows.Graphics.SizeInt32(display.OuterBounds.Width, display.OuterBounds.Height));
 
         // Apply theme gradient and text colors
         var theme = ThemeManager.Instance.Current;
