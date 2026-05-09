@@ -11,7 +11,7 @@ public sealed class FlowStateMachine
     public const double DefaultFlowEntryDuration = 180;    // 3 minutes
     public const double DefaultFlowExitDuration = 120;     // 2 minutes
     public const double DefaultDeepFlowDuration = 900;     // 15 minutes
-    public const double DefaultIdleThreshold = 90;         // 90 seconds
+    public const double DefaultIdleThreshold = 180;        // 3 min — allows passive screen watching (e.g. agent output)
 
     // Configurable thresholds
     public double FlowEntryThreshold { get; set; } = DefaultFlowEntryThreshold;

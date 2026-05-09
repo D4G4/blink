@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Blink.App.Overlay.BreakTimerWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid x:Name="RootGrid" KeyDown="OnKeyDown">
+        <Grid.Background>
+            <LinearGradientBrush x:Name="BackgroundBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop x:Name="GradientTop" Offset="0"/>
+                <GradientStop x:Name="GradientBottom" Offset="1"/>
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <!-- 20 ft badge — top-right corner -->
+        <Border HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="0,40,40,0" Padding="12,6" CornerRadius="8"
+                Background="#33FFFFFF">
+            <TextBlock x:Name="BadgeText" Text="20 ft" FontSize="16" FontWeight="SemiBold"/>
+        </Border>
+
+        <!-- Centered content -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+            <TextBlock x:Name="TitleText"
+                       Text="Look at something far away" FontSize="24"
+                       HorizontalAlignment="Center"/>
+
+            <!-- Timer display with circular progress -->
+            <Grid HorizontalAlignment="Center" Width="160" Height="160">
+                <!-- Circular progress arc -->
+                <ProgressRing x:Name="ProgressIndicator"
+                              IsActive="True" Width="140" Height="140"
+                              IsIndeterminate="False" Value="100"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                <!-- Countdown number centered over the ring -->
+                <TextBlock x:Name="TimerText"
+                           Text="20" FontSize="64" FontFamily="Consolas" FontWeight="Bold"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
+
+            <!-- Extend feedback (hidden by default) -->
+            <TextBlock x:Name="ExtendFeedback"
+                       Text="+20s" FontSize="20" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" Opacity="0"
+                       Foreground="#80FFFFFF"/>
+        </StackPanel>
+
+        <!-- Bottom hints -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                    Margin="0,0,0,48" Spacing="4">
+            <TextBlock x:Name="HintSkip"
+                       Text="esc = Skip break" FontSize="14" Opacity="0.5"
+                       HorizontalAlignment="Center"/>
+            <TextBlock x:Name="HintExtend"
+                       Text="&#x2192; = Extend 20s" FontSize="14" Opacity="0.5"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</Window>

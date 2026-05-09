@@ -1,0 +1,31 @@
+name: Build Windows
+
+on:
+  push:
+    paths:
+      - 'blink-windows/**'
+  pull_request:
+    paths:
+      - 'blink-windows/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Restore
+        run: dotnet restore blink-windows/Blink.Windows.slnx
+
+      - name: Build
+        run: dotnet build blink-windows/Blink.Windows.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test blink-windows/src/Blink.Core.Tests/ --no-restore -c Release

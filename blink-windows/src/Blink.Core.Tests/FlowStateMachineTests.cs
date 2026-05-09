@@ -43,13 +43,13 @@ public class FlowStateMachineTests
     }
 
     [Fact]
-    public void IdleDetection_At90s()
+    public void IdleDetection_At180s()
     {
         var sm = new FlowStateMachine();
         sm.Tick(0.5, 25, false, false, 1000);
         Assert.Equal(FlowState.Normal, sm.State); // 25s not enough
 
-        sm.Tick(0.5, 95, false, false, 1030);
+        sm.Tick(0.5, 185, false, false, 1030);
         Assert.Equal(FlowState.Idle, sm.State);
     }
 
@@ -69,7 +69,7 @@ public class FlowStateMachineTests
             sm.Tick(0.8, 0, false, false, 1000 + i * 30);
         Assert.Equal(FlowState.Flow, sm.State);
 
-        sm.Tick(0.8, 100, false, false, 1300);
+        sm.Tick(0.8, 185, false, false, 1300);
         Assert.Equal(FlowState.Idle, sm.State);
 
         sm.Tick(0.8, 0, false, false, 1330);

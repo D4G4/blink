@@ -16,7 +16,7 @@ public class IntegrationTests
     public void WalkingAway_TriggersIdle()
     {
         var sm = new FlowStateMachine();
-        sm.Tick(0.5, 95, false, false, 1000);
+        sm.Tick(0.5, 185, false, false, 1000);
         Assert.Equal(FlowState.Idle, sm.State);
     }
 
@@ -45,7 +45,7 @@ public class IntegrationTests
             sm.Tick(0.8, 0, false, false, 1000 + i * 30);
         Assert.Equal(FlowState.Flow, sm.State);
 
-        sm.Tick(0.8, 120, false, false, 1360);
+        sm.Tick(0.8, 185, false, false, 1360);
         Assert.Equal(FlowState.Idle, sm.State);
 
         sm.Tick(0.8, 0, false, false, 1390);
@@ -57,7 +57,7 @@ public class IntegrationTests
     {
         var sm = new FlowStateMachine();
         for (int i = 0; i < 8; i++)
-            sm.Tick(0.9, 100 + i * 30, false, false, 1000 + i * 30);
+            sm.Tick(0.9, 185 + i * 30, false, false, 1000 + i * 30);
         Assert.Equal(FlowState.Idle, sm.State);
 
         sm.Tick(0.9, 0, false, false, 1240);
@@ -78,7 +78,7 @@ public class IntegrationTests
     public void AgentWorkflow_SittingStill_TriggersIdle()
     {
         var sm = new FlowStateMachine();
-        sm.Tick(0.3, 95, false, false, 1000);
+        sm.Tick(0.3, 185, false, false, 1000);
         Assert.Equal(FlowState.Idle, sm.State);
     }
 
@@ -90,7 +90,7 @@ public class IntegrationTests
             sm.Tick(0.85, 0, false, false, 1000 + i * 30);
         Assert.Equal(FlowState.DeepFlow, sm.State);
 
-        sm.Tick(0.85, 100, false, false, 2250);
+        sm.Tick(0.85, 185, false, false, 2250);
         Assert.Equal(FlowState.Idle, sm.State);
 
         sm.Tick(0.85, 0, false, false, 2280);

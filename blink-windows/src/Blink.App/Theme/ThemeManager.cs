@@ -19,6 +19,42 @@ public sealed class ThemeManager
         Current = BlinkTheme.Named(id);
     }
 
+    public double BaseInterval
+    {
+        get => GetSetting("baseInterval", 20.0);
+        set => SetSetting("baseInterval", value);
+    }
+
+    public double FlowSensitivity
+    {
+        get => GetSetting("flowSensitivity", 0.7);
+        set => SetSetting("flowSensitivity", value);
+    }
+
+    public bool ShowTimerInTray
+    {
+        get => GetSetting("showTimerInTray", false);
+        set => SetSetting("showTimerInTray", value);
+    }
+
+    public bool UseDarkOverlay
+    {
+        get => GetSetting("useDarkOverlay", false);
+        set => SetSetting("useDarkOverlay", value);
+    }
+
+    public bool LaunchAtLogin
+    {
+        get => GetSetting("launchAtLogin", false);
+        set => SetSetting("launchAtLogin", value);
+    }
+
+    public bool DebugNotifications
+    {
+        get => GetSetting("debugNotifications", false);
+        set => SetSetting("debugNotifications", value);
+    }
+
     public void Select(BlinkTheme theme)
     {
         Current = theme;

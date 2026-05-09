@@ -5,6 +5,8 @@ using Blink.Core.Compliance;
 using Blink.Core.FlowDetection;
 using Blink.Core.Timer;
 using Blink.Platform;
+using Blink.App.Theme;
+using Microsoft.UI.Dispatching;
 
 namespace Blink.App;
 
@@ -15,7 +17,7 @@ namespace Blink.App;
 public sealed class AppState : INotifyPropertyChanged
 {
     // Constants
-    private const double IdleBreakThreshold = 90;
+    private const double IdleBreakThreshold = 180;
     private const double NaturalPauseThreshold = 6;
     private const double MaxPauseWaitSeconds = 300;
     private const double ScoreTickIntervalMs = 30_000;
@@ -45,6 +47,9 @@ public sealed class AppState : INotifyPropertyChanged
 
     // Overlay
     private Overlay.OverlayManager? _overlayManager;
+
+    // Video state tracking for debug notifications
+    private bool _wasVideoPlaying;
 
     // Persistence
     private readonly Persistence.PersistenceManager _persistence = new();
@@ -82,8 +87,9 @@ public sealed class AppState : INotifyPropertyChanged
         LoadTodayStats();
     }
 
-    public void Start()
+    public void Start(DispatcherQueue dispatcher)
     {
+        _overlayManager = new Overlay.OverlayManager(dispatcher);
         StartMonitoring();
         StartTimers();
     }
@@ -95,6 +101,9 @@ public sealed class AppState : INotifyPropertyChanged
             CurrentFlowState = @new;
             if (@new == FlowState.BreakPrompted)
                 IsBreakPrompted = true;
+
+            if (ThemeManager.Instance.DebugNotifications)
+                _overlayManager?.ShowDebugToast($"State: {old} → {@new}");
         };
 
         TimerStateMachine.OnBreakDue += HandleBreakDue;
@@ -150,7 +159,10 @@ public sealed class AppState : INotifyPropertyChanged
 
         if (RemainingSeconds > before + 1)
         {
-            // Timer was extended due to flow state change
+            _overlayManager?.ShowTimerExtendedToast(() => ShowBreakPrompt());
+
+            if (ThemeManager.Instance.DebugNotifications)
+                _overlayManager?.ShowDebugToast($"Timer extended: {(int)before}s → {(int)RemainingSeconds}s");
         }
     }
 
@@ -163,10 +175,15 @@ public sealed class AppState : INotifyPropertyChanged
 
         // Video detection
         var videoPlaying = _contextDetector?.IsMediaPlaying() ?? false;
+        if (videoPlaying != _wasVideoPlaying && ThemeManager.Instance.DebugNotifications)
+            _overlayManager?.ShowDebugToast(videoPlaying ? "Video started" : "Video stopped");
+        _wasVideoPlaying = videoPlaying;
         IsVideoPlaying = videoPlaying;
 
         if (videoPlaying)
         {
+            if (ThemeManager.Instance.DebugNotifications)
+                _overlayManager?.ShowDebugToast("Timer reset: video playing");
             TimerStateMachine.ResetAfterBreak();
             RemainingSeconds = TimerStateMachine.RemainingSeconds;
             return;
@@ -185,6 +202,8 @@ public sealed class AppState : INotifyPropertyChanged
         // Idle = break (eyes rested)
         if (idle >= IdleBreakThreshold && !IsBreakPrompted && !inGracePeriod)
         {
+            if (ThemeManager.Instance.DebugNotifications)
+                _overlayManager?.ShowDebugToast($"Timer reset: idle {(int)idle}s >= {(int)IdleBreakThreshold}s");
             TimerStateMachine.ResetAfterBreak();
             RemainingSeconds = TimerStateMachine.RemainingSeconds;
         }
@@ -225,7 +244,7 @@ public sealed class AppState : INotifyPropertyChanged
         }
     }
 
-    private void ShowBreakPrompt()
+    public void ShowBreakPrompt()
     {
         FlowStateMachine.EnterBreakPrompted();
         IsBreakPrompted = true;
@@ -233,8 +252,7 @@ public sealed class AppState : INotifyPropertyChanged
 
         ComplianceTracker.BreakPrompted(DateTime.UtcNow, CurrentFlowState, FlowScore);
 
-        _overlayManager ??= new Overlay.OverlayManager();
-        _overlayManager.ShowBreak(
+        _overlayManager?.ShowBreak(
             onComplete: () => TakeBreak(),
             onSkip: () => DismissBreak());
     }

@@ -5,34 +5,170 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Blink Preferences">
 
-    <NavigationView PaneDisplayMode="Top" IsBackButtonVisible="Collapsed" IsSettingsVisible="False">
+    <NavigationView PaneDisplayMode="Top" IsBackButtonVisible="Collapsed" IsSettingsVisible="False"
+                    SelectionChanged="NavigationView_SelectionChanged">
         <NavigationView.MenuItems>
-            <NavigationViewItem Content="General" Tag="general">
-                <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Setting"/>
-                </NavigationViewItem.Icon>
+            <NavigationViewItem Content="General" Tag="general" IsSelected="True">
+                <NavigationViewItem.Icon><SymbolIcon Symbol="Setting"/></NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Content="Theme" Tag="theme">
-                <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Edit"/>
-                </NavigationViewItem.Icon>
+                <NavigationViewItem.Icon><SymbolIcon Symbol="Edit"/></NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Content="Flow" Tag="flow">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE945;"/>
-                </NavigationViewItem.Icon>
+                <NavigationViewItem.Icon><FontIcon Glyph="&#xE945;"/></NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Content="About" Tag="about">
-                <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Help"/>
-                </NavigationViewItem.Icon>
+                <NavigationViewItem.Icon><SymbolIcon Symbol="Help"/></NavigationViewItem.Icon>
             </NavigationViewItem>
         </NavigationView.MenuItems>
 
         <ScrollViewer Padding="24">
-            <StackPanel x:Name="ContentPanel" Spacing="16" MaxWidth="500">
-                <!-- Content populated by code-behind based on selected tab -->
-            </StackPanel>
+            <Grid>
+                <!-- General Tab -->
+                <StackPanel x:Name="GeneralPanel" Spacing="16" MaxWidth="500" Visibility="Visible">
+                    <TextBlock Text="TIMER" FontSize="12" FontWeight="SemiBold" Opacity="0.5"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Base interval" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Slider x:Name="BaseIntervalSlider" Width="160" Minimum="10" Maximum="45" StepFrequency="5"
+                                    TickFrequency="5" TickPlacement="Outside"
+                                    ValueChanged="BaseIntervalSlider_ValueChanged"/>
+                            <TextBlock x:Name="BaseIntervalLabel" VerticalAlignment="Center" Width="50"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="TRAY" FontSize="12" FontWeight="SemiBold" Opacity="0.5" Margin="0,8,0,0"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Show countdown timer" VerticalAlignment="Center"/>
+                        <ToggleSwitch x:Name="ShowTimerToggle" Grid.Column="1" Toggled="ShowTimerToggle_Toggled"/>
+                    </Grid>
+
+                    <TextBlock Text="BREAK SCREEN" FontSize="12" FontWeight="SemiBold" Opacity="0.5" Margin="0,8,0,0"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Use dark overlay"/>
+                            <TextBlock Text="Dims screen during breaks" FontSize="12" Opacity="0.5"/>
+                        </StackPanel>
+                        <ToggleSwitch x:Name="DarkOverlayToggle" Grid.Column="1" Toggled="DarkOverlayToggle_Toggled"/>
+                    </Grid>
+
+                    <TextBlock Text="SYSTEM" FontSize="12" FontWeight="SemiBold" Opacity="0.5" Margin="0,8,0,0"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Launch at login" VerticalAlignment="Center"/>
+                        <ToggleSwitch x:Name="LaunchAtLoginToggle" Grid.Column="1" Toggled="LaunchAtLoginToggle_Toggled"/>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Debug notifications"/>
+                            <TextBlock Text="Show toasts for state changes and timer resets" FontSize="12" Opacity="0.5"/>
+                        </StackPanel>
+                        <ToggleSwitch x:Name="DebugToggle" Grid.Column="1" Toggled="DebugToggle_Toggled"/>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="UpdateButton" Content="Check for Updates" Click="UpdateButton_Click"/>
+                            <ProgressRing x:Name="UpdateProgress" IsActive="False" Width="20" Height="20" Visibility="Collapsed"/>
+                            <TextBlock x:Name="UpdateStatusText" VerticalAlignment="Center" FontSize="12" Opacity="0.7"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <HyperlinkButton Content="Restart Onboarding" Click="RestartOnboarding_Click"/>
+                </StackPanel>
+
+                <!-- Theme Tab -->
+                <StackPanel x:Name="ThemePanel" Spacing="16" MaxWidth="500" Visibility="Collapsed">
+                    <TextBlock Text="Choose your theme" FontSize="16" FontWeight="SemiBold"/>
+                    <ItemsRepeater x:Name="ThemeGrid">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout MinItemWidth="120" MinItemHeight="80" MinColumnSpacing="12" MinRowSpacing="12"/>
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+                </StackPanel>
+
+                <!-- Flow Tab -->
+                <StackPanel x:Name="FlowPanel" Spacing="16" MaxWidth="500" Visibility="Collapsed">
+                    <TextBlock Text="FLOW DETECTION" FontSize="12" FontWeight="SemiBold" Opacity="0.5"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Sensitivity" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Slider x:Name="FlowSensitivitySlider" Width="160" Minimum="40" Maximum="90" StepFrequency="5"
+                                    ValueChanged="FlowSensitivitySlider_ValueChanged"/>
+                            <TextBlock x:Name="FlowSensitivityLabel" VerticalAlignment="Center" Width="40"/>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="Higher sensitivity means flow state is detected more easily" FontSize="12" Opacity="0.5"/>
+
+                    <TextBlock Text="CURRENT STATE" FontSize="12" FontWeight="SemiBold" Opacity="0.5" Margin="0,16,0,0"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Flow Score"/>
+                        <TextBlock x:Name="FlowScoreValue" FontFamily="Consolas" Grid.Column="1"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="State"/>
+                        <TextBlock x:Name="FlowStateValue" FontFamily="Consolas" Grid.Column="1"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Breaks Today"/>
+                        <TextBlock x:Name="BreaksTodayValue" FontFamily="Consolas" Grid.Column="1"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- About Tab -->
+                <StackPanel x:Name="AboutPanel" Spacing="8" MaxWidth="500" Visibility="Collapsed"
+                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="Blink" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Smart 20-20-20 Break Reminder" HorizontalAlignment="Center" Opacity="0.7"/>
+                    <TextBlock x:Name="VersionText" HorizontalAlignment="Center" Opacity="0.5" Margin="0,8,0,0"/>
+                </StackPanel>
+            </Grid>
         </ScrollViewer>
     </NavigationView>
 </Window>
