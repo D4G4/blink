@@ -351,7 +351,7 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func showBreakPrompt() {
+    func showBreakPrompt() {
         log.notice("🔔 Showing break overlay (score=\(String(format: "%.2f", self.flowScore)), state=\(self.flowState.rawValue))")
         flowStateMachine.enterBreakPrompted()
         isBreakPrompted = true

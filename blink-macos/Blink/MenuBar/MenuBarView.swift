@@ -74,6 +74,28 @@ struct MenuBarView: View {
             Divider()
                 .padding(.horizontal, 12)
 
+            // Take Break Now button
+            if appState.hasAccessibilityPermission && !appState.isBreakPrompted {
+                Button {
+                    appState.showBreakPrompt()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "eye")
+                            .font(.system(size: 12))
+                        Text("Take Break Now")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 30)
+                    .background(accentColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.top, 4)
+            }
+
             // Bottom buttons
             HStack(spacing: 12) {
                 Button {
