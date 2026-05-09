@@ -11,7 +11,8 @@
 
 <p align="center">
   <a href="../../releases/latest"><img src="https://img.shields.io/badge/download-macOS-blue?style=flat-square&logo=apple" alt="Download macOS"></a>
-  <img src="https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey?style=flat-square" alt="macOS 14+">
+  <a href="../../releases/latest"><img src="https://img.shields.io/badge/download-Windows-blue?style=flat-square&logo=windows" alt="Download Windows"></a>
+  <img src="https://img.shields.io/badge/platform-macOS%2014%2B%20%7C%20Windows%2010%2B-lightgrey?style=flat-square" alt="macOS 14+ | Windows 10+">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
 </p>
 
@@ -53,16 +54,21 @@ Update later with `brew upgrade --cask blink`.
 
 ### Windows
 
-Coming soon. Core logic is complete — see [`blink-windows/`](blink-windows/).
+1. **[Download Blink-x64.exe](../../releases/latest)** from the latest release (or `Blink-arm64.exe` for ARM devices)
+2. Run the exe — Windows SmartScreen may warn "Unknown publisher", click **More info → Run anyway**
+3. Blink appears as an icon in your system tray
+4. Right-click the tray icon for Settings, Take Break Now, or Quit
+
+> The SmartScreen warning appears because the app isn't code-signed. It's a one-time click — the app works normally after that.
 
 ## What makes it smart
 
 - **Flow detection** — Monitors typing rhythm and app switching. When you're in deep focus, the timer extends from 20 to 30-40 minutes.
 - **Natural pause waiting** — Doesn't interrupt mid-keystroke. Waits for a 6-second gap in your input — a natural thought boundary.
-- **Walk-away detection** — Left your desk for 90+ seconds? That counts as a break. Timer resets silently.
+- **Walk-away detection** — Left your desk for 3+ minutes? That counts as a break. Timer resets silently.
 - **Video awareness** — Watching YouTube or Netflix? Timer pauses — you're already resting your focus.
 - **Meeting detection** — Mic or camera active? Timer pauses. No interruptions during calls.
-- **Agent workflow aware** — Waiting for an AI response while scrolling? Timer keeps running. Sitting perfectly still for 90s? That's a walk-away.
+- **Agent workflow aware** — Waiting for an AI response while scrolling? Timer keeps running. Sitting perfectly still for 3 minutes? That's a walk-away.
 
 ## How it works
 
@@ -80,7 +86,7 @@ You work normally
     Timer resets. Cycle continues.
 ```
 
-The app lives in your menu bar. Click to see your timer, flow state, and break stats.
+The app lives in your menu bar (macOS) or system tray (Windows). Click to see your timer, flow state, and break stats.
 
 ## Themes
 
@@ -98,7 +104,7 @@ Blink monitors input *timing* (keystroke cadence, app switch frequency, mouse pa
 - Window contents or titles
 - Any personal data
 
-All data stays local in `~/Library/Application Support/Blink/` as daily JSON files. No network calls. No analytics. No telemetry.
+All data stays local (`~/Library/Application Support/Blink/` on macOS, `%LOCALAPPDATA%\Blink\` on Windows) as daily JSON files. The only network call is an optional update check against GitHub Releases. No analytics. No telemetry.
 
 ## The 20-20-20 rule
 
@@ -121,7 +127,15 @@ open Blink.xcodeproj   # Cmd+R to run
 
 ### Windows
 
-Open `blink-windows/Blink.Windows.slnx` in Visual Studio 2022.
+Requires .NET 10 SDK and Windows App SDK.
+
+```bash
+cd blink-windows
+dotnet build
+dotnet run --project src/Blink.App
+```
+
+Or open `Blink.Windows.slnx` in Visual Studio 2022+.
 
 ### Tests
 
