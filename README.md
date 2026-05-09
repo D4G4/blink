@@ -39,7 +39,8 @@ brew install --cask blink
 
 Update later with `brew upgrade --cask blink`.
 
-### macOS — Manual
+<details>
+<summary><strong>macOS — Manual install</strong></summary>
 
 1. **[Download Blink.dmg](../../releases/latest)** from the latest release
 2. Open the DMG, drag **Blink** to the Applications folder
@@ -51,6 +52,8 @@ Update later with `brew upgrade --cask blink`.
 5. Grant **Accessibility** when prompted (required for smart detection)
 
 > The `xattr` step is needed because the app isn't notarized with Apple (we're open source, not paying $99/year for a certificate). Homebrew install handles this automatically.
+
+</details>
 
 ### Windows
 
