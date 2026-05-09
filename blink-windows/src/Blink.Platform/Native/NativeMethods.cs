@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Blink.Platform.Native;
 
-internal static class NativeMethods
+public static class NativeMethods
 {
     // ── Low-level hooks ──
 

@@ -5,9 +5,9 @@ namespace Blink.App.Theme;
 public sealed record BlinkTheme(
     string Id,
     string Name,
-    Color BackgroundTop,
-    Color BackgroundBottom,
-    Color Accent,
+    Color BackgroundTopLight,
+    Color BackgroundBottomLight,
+    Color AccentLight,
     Color OverlayBackgroundDark,
     Color OverlayBackgroundLight,
     Color OverlayTextDark,
@@ -28,11 +28,11 @@ public sealed record BlinkTheme(
     public Color OnBackgroundText(bool isDark) => isDark ? OnBackgroundTextDark : OnBackgroundTextLight;
 
     public Color BackgroundTop(bool isDark) =>
-        InvertInDarkMode && isDark ? C(0x1A, 0x1A, 0x1A) : BackgroundTop;
+        InvertInDarkMode && isDark ? C(0x1A, 0x1A, 0x1A) : BackgroundTopLight;
     public Color BackgroundBottom(bool isDark) =>
-        InvertInDarkMode && isDark ? C(0x11, 0x11, 0x11) : BackgroundBottom;
+        InvertInDarkMode && isDark ? C(0x11, 0x11, 0x11) : BackgroundBottomLight;
     public Color Accent(bool isDark) =>
-        InvertInDarkMode && isDark ? Colors.White : Accent;
+        InvertInDarkMode && isDark ? Colors.White : AccentLight;
 
     private static Color C(byte r, byte g, byte b) => Color.FromArgb(255, r, g, b);
 
