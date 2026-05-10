@@ -30,7 +30,7 @@ They interrupt you mid-thought. They fire a popup while you're in a meeting. The
 
 ## Install
 
-### macOS — Quick install
+###  macOS — Quick install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/D4G4/blink/main/install.sh | bash
@@ -38,7 +38,7 @@ curl -fsSL https://raw.githubusercontent.com/D4G4/blink/main/install.sh | bash
 
 Downloads the latest release, installs to `/Applications`, and handles quarantine automatically.
 
-### macOS — Homebrew
+###  macOS — Homebrew
 
 ```bash
 brew tap D4G4/blink
@@ -48,7 +48,7 @@ brew install --cask blink
 Update later with `brew upgrade --cask blink`.
 
 <details>
-<summary><strong>macOS — Manual install</strong></summary>
+<summary> <strong>macOS — Manual install</strong></summary>
 
 1. **[Download Blink.dmg](../../releases/latest)** from the latest release
 2. Open the DMG, drag **Blink** to the Applications folder
@@ -63,7 +63,7 @@ Update later with `brew upgrade --cask blink`.
 
 </details>
 
-### Windows
+###  Windows
 
 1. **[Download Blink-x64.exe](../../releases/latest)** from the latest release (or `Blink-arm64.exe` for ARM devices)
 2. Run the exe — Windows SmartScreen may warn "Unknown publisher", click **More info → Run anyway**
@@ -74,12 +74,12 @@ Update later with `brew upgrade --cask blink`.
 
 ## What makes it smart
 
-- **Flow detection** — Monitors typing rhythm and app switching. When you're in deep focus, the timer extends from 20 to 30-40 minutes.
-- **Natural pause waiting** — Doesn't interrupt mid-keystroke. Waits for a 6-second gap in your input — a natural thought boundary.
-- **Walk-away detection** — Left your desk for 3+ minutes? That counts as a break. Timer resets silently.
-- **Video awareness** — Watching YouTube or Netflix? Timer pauses — you're already resting your focus.
-- **Meeting detection** — Mic or camera active? Timer pauses. No interruptions during calls.
-- **Agent workflow aware** — Waiting for an AI response while scrolling? Timer keeps running. Sitting perfectly still for 3 minutes? That's a walk-away.
+- **🧠 Flow detection** — Monitors typing rhythm and app switching. When you're in deep focus, the timer extends from 20 to 30-40 minutes.
+- **⏸️ Natural pause waiting** — Doesn't interrupt mid-keystroke. Waits for a 6-second gap in your input — a natural thought boundary.
+- **🚶 Walk-away detection** — Left your desk for 3+ minutes? That counts as a break. Timer resets silently.
+- **🎬 Video awareness** — Watching YouTube or Netflix? Timer pauses — you're already resting your focus.
+- **🎙️ Meeting detection** — Mic or camera active? Timer pauses. No interruptions during calls.
+- **🤖 Agent workflow aware** — Waiting for an AI response while scrolling? Timer keeps running. Sitting perfectly still for 3 minutes? That's a walk-away.
 
 ## How it works
 
