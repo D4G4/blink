@@ -28,8 +28,9 @@ install_macos() {
 
     [ -z "$DOWNLOAD_URL" ] && error "Could not find DMG in latest release."
 
-    TMPDIR=$(mktemp -d)
-    DMG_PATH="$TMPDIR/$APP_NAME.dmg"
+    WORK_DIR=$(mktemp -d)
+    DMG_PATH="$WORK_DIR/$APP_NAME.dmg"
+    trap 'rm -rf "$WORK_DIR"' EXIT
 
     # Download
     info "Downloading $APP_NAME..."
@@ -37,7 +38,11 @@ install_macos() {
 
     # Mount DMG
     info "Installing..."
-    MOUNT_POINT=$(hdiutil attach "$DMG_PATH" -nobrowse -quiet | grep "/Volumes" | cut -f3-)
+    MOUNT_OUTPUT=$(hdiutil attach "$DMG_PATH" -nobrowse 2>/dev/null)
+    MOUNT_POINT=$(echo "$MOUNT_OUTPUT" | awk -F'\t' '/\/Volumes\// {print $NF}')
+
+    [ -z "$MOUNT_POINT" ] && error "Failed to mount DMG."
+    [ ! -d "$MOUNT_POINT/$APP_NAME.app" ] && error "$APP_NAME.app not found in DMG."
 
     # Copy to Applications
     if [ -d "/Applications/$APP_NAME.app" ]; then
@@ -45,19 +50,22 @@ install_macos() {
     fi
     cp -R "$MOUNT_POINT/$APP_NAME.app" /Applications/
 
-    # Unmount and clean up
+    # Unmount
     hdiutil detach "$MOUNT_POINT" -quiet 2>/dev/null || true
-    rm -rf "$TMPDIR"
 
     # Strip quarantine (same as Homebrew postflight)
     xattr -cr "/Applications/$APP_NAME.app" 2>/dev/null || true
 
-    success "$APP_NAME installed to /Applications/$APP_NAME.app"
+    success "$APP_NAME installed to /Applications/"
     echo ""
-    info "Next steps:"
-    echo "  1. Open $APP_NAME from Applications or Spotlight"
-    echo "  2. Grant Accessibility when prompted:"
-    echo "     System Settings → Privacy & Security → Accessibility → toggle $APP_NAME"
+
+    # Launch the app
+    info "Launching $APP_NAME..."
+    open "/Applications/$APP_NAME.app"
+
+    echo ""
+    info "Grant Accessibility when prompted:"
+    echo "  System Settings → Privacy & Security → Accessibility → toggle $APP_NAME"
     echo ""
     success "Done!"
 }
