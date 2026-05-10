@@ -30,7 +30,15 @@ They interrupt you mid-thought. They fire a popup while you're in a meeting. The
 
 ## Install
 
-### macOS — Homebrew (recommended)
+### macOS — Quick install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/D4G4/blink/main/install.sh | bash
+```
+
+Downloads the latest release, installs to `/Applications`, and handles quarantine automatically.
+
+### macOS — Homebrew
 
 ```bash
 brew tap D4G4/blink
