@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="../../releases/latest"><img src="https://img.shields.io/badge/download-macOS-blue?style=flat-square&logo=apple" alt="Download macOS"></a>
-  <a href="../../releases/latest"><img src="https://img.shields.io/badge/download-Windows-blue?style=flat-square&logo=windows" alt="Download Windows"></a>
+  <a href="#install"><img src="https://img.shields.io/badge/install-macOS-blue?style=flat-square&logo=apple" alt="Install macOS"></a>
+  <a href="#windows-install"><img src="https://img.shields.io/badge/install-Windows-blue?style=flat-square&logo=windows" alt="Install Windows"></a>
   <img src="https://img.shields.io/badge/platform-macOS%2014%2B%20%7C%20Windows%2010%2B-lightgrey?style=flat-square" alt="macOS 14+ | Windows 10+">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
 </p>
@@ -62,6 +62,8 @@ Update later with `brew upgrade --cask blink`.
 > The `xattr` step is needed because the app isn't notarized with Apple (we're open source, not paying $99/year for a certificate). Homebrew install handles this automatically.
 
 </details>
+
+<a id="windows-install"></a>
 
 ### <img src="https://img.shields.io/badge/-Windows-0078D4?style=flat-square&logo=windows&logoColor=white" alt="Windows" height="20">
 
