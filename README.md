@@ -30,7 +30,7 @@ They interrupt you mid-thought. They fire a popup while you're in a meeting. The
 
 ## Install
 
-###  macOS — Quick install
+### <img src="https://img.shields.io/badge/-Quick%20Install-black?style=flat-square&logo=apple&logoColor=white" alt="Quick Install" height="20"> macOS
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/D4G4/blink/main/install.sh | bash
@@ -38,7 +38,7 @@ curl -fsSL https://raw.githubusercontent.com/D4G4/blink/main/install.sh | bash
 
 Downloads the latest release, installs to `/Applications`, and handles quarantine automatically.
 
-###  macOS — Homebrew
+### <img src="https://img.shields.io/badge/-Homebrew-orange?style=flat-square&logo=homebrew&logoColor=white" alt="Homebrew" height="20"> macOS
 
 ```bash
 brew tap D4G4/blink
@@ -48,7 +48,7 @@ brew install --cask blink
 Update later with `brew upgrade --cask blink`.
 
 <details>
-<summary> <strong>macOS — Manual install</strong></summary>
+<summary><img src="https://img.shields.io/badge/-Manual%20Install-grey?style=flat-square&logo=apple&logoColor=white" alt="Manual" height="20"> macOS</summary>
 
 1. **[Download Blink.dmg](../../releases/latest)** from the latest release
 2. Open the DMG, drag **Blink** to the Applications folder
@@ -63,7 +63,7 @@ Update later with `brew upgrade --cask blink`.
 
 </details>
 
-###  Windows
+### <img src="https://img.shields.io/badge/-Windows-0078D4?style=flat-square&logo=windows&logoColor=white" alt="Windows" height="20">
 
 1. **[Download Blink-x64.exe](../../releases/latest)** from the latest release (or `Blink-arm64.exe` for ARM devices)
 2. Run the exe — Windows SmartScreen may warn "Unknown publisher", click **More info → Run anyway**
