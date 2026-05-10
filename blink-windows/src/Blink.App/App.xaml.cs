@@ -12,10 +12,12 @@ public partial class App : Application
 {
     private AppState? _appState;
     private TrayIconManager? _trayIcon;
+    private MenuBarPopup? _menuPopup;
 
     public App()
     {
         InitializeComponent();
+        DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
@@ -23,7 +25,6 @@ public partial class App : Application
         var themeManager = ThemeManager.Instance;
         _appState = new AppState();
 
-        // Show onboarding on first launch
         if (!themeManager.HasCompletedOnboarding)
         {
             var onboarding = new Onboarding.OnboardingWindow(themeManager);
@@ -31,21 +32,22 @@ public partial class App : Application
             onboarding.Closed += (_, _) =>
             {
                 themeManager.HasCompletedOnboarding = true;
-                StartApp();
+                StartApp(showWelcomeBalloon: true);
             };
         }
         else
         {
-            StartApp();
+            StartApp(showWelcomeBalloon: false);
         }
     }
 
-    private void StartApp()
+    private void StartApp(bool showWelcomeBalloon)
     {
         UpdateChecker.Instance.StartPeriodicChecks();
         _appState!.Start(DispatcherQueue.GetForCurrentThread());
 
         _trayIcon = new TrayIconManager(_appState);
+        _trayIcon.OnLeftClickRequested += ShowOrHideMenuPopup;
         _trayIcon.OnSettingsRequested += () =>
         {
             var settings = new Settings.SettingsWindow(_appState!);
@@ -58,5 +60,37 @@ public partial class App : Application
             Current.Exit();
         };
         _trayIcon.Show();
+
+        if (showWelcomeBalloon)
+        {
+            _trayIcon.ShowBalloon(
+                "Blink is running",
+                "Click the ^ in your taskbar to find Blink, then drag it onto the bar to pin it.");
+        }
+    }
+
+    private void ShowOrHideMenuPopup()
+    {
+        if (_menuPopup == null)
+        {
+            _menuPopup = new MenuBarPopup(_appState!);
+            _menuPopup.OnSettingsRequested += () =>
+            {
+                var settings = new Settings.SettingsWindow(_appState!);
+                settings.Activate();
+            };
+            _menuPopup.OnTakeBreakNowRequested += () => _appState!.ShowBreakPrompt();
+            _menuPopup.OnAboutRequested += () =>
+            {
+                var win = new Onboarding.WhyExistWindow(ThemeManager.Instance.Current);
+                win.Activate();
+            };
+            _menuPopup.OnQuitRequested += () =>
+            {
+                _trayIcon?.Dispose();
+                Current.Exit();
+            };
+        }
+        _menuPopup.ShowNearTray();
     }
 }

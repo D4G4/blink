@@ -11,7 +11,18 @@
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsPackageType>None</WindowsPackageType>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <Version>1.5.2</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="app.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Blink.Core\Blink.Core.csproj" />

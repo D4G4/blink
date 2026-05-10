@@ -99,6 +99,7 @@
                             <Button x:Name="UpdateButton" Content="Check for Updates" Click="UpdateButton_Click"/>
                             <ProgressRing x:Name="UpdateProgress" IsActive="False" Width="20" Height="20" Visibility="Collapsed"/>
                             <TextBlock x:Name="UpdateStatusText" VerticalAlignment="Center" FontSize="12" Opacity="0.7"/>
+                            <HyperlinkButton x:Name="DownloadUpdateButton" Content="Download" Click="DownloadUpdate_Click" Visibility="Collapsed" Padding="0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
 

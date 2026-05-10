@@ -21,6 +21,7 @@ public sealed partial class BreakTimerWindow : Window
         InitializeComponent();
 
         ExtendsContentIntoTitleBar = true;
+        SystemBackdrop = new DesktopAcrylicBackdrop();
 
         // Configure window: fullscreen, borderless, topmost
         var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -38,14 +39,15 @@ public sealed partial class BreakTimerWindow : Window
         appWindow.Move(new Windows.Graphics.PointInt32(0, 0));
         appWindow.Resize(new Windows.Graphics.SizeInt32(display.OuterBounds.Width, display.OuterBounds.Height));
 
-        // Apply theme gradient and text colors
+        // Apply theme tint (with alpha) over the acrylic backdrop, matching macOS overlayBackground.
         var theme = ThemeManager.Instance.Current;
         var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
 
-        GradientTop.Color = theme.BackgroundTop(isDark);
-        GradientBottom.Color = theme.BackgroundBottom(isDark);
+        var overlayColor = theme.OverlayBackground(isDark);
+        GradientTop.Color = overlayColor;
+        GradientBottom.Color = overlayColor;
 
-        var textColor = new SolidColorBrush(theme.OnBackgroundText(isDark));
+        var textColor = new SolidColorBrush(theme.OverlayText(isDark));
         TitleText.Foreground = textColor;
         TimerText.Foreground = textColor;
         BadgeText.Foreground = textColor;

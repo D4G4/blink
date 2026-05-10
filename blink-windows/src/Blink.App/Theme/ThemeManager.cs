@@ -1,22 +1,26 @@
-using Windows.Storage;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Blink.App.Theme;
 
 public sealed class ThemeManager
 {
+    private static readonly string SettingsPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Blink",
+        "settings.json");
+
     public static ThemeManager Instance { get; } = new();
 
+    private readonly object _gate = new();
+    private JsonObject _values;
+
     public BlinkTheme Current { get; private set; }
+
     public bool HasCompletedOnboarding
     {
         get => GetSetting("hasCompletedOnboarding", false);
         set => SetSetting("hasCompletedOnboarding", value);
-    }
-
-    private ThemeManager()
-    {
-        var id = GetSetting("selectedTheme", "peach");
-        Current = BlinkTheme.Named(id);
     }
 
     public double BaseInterval
@@ -55,21 +59,55 @@ public sealed class ThemeManager
         set => SetSetting("debugNotifications", value);
     }
 
+    private ThemeManager()
+    {
+        _values = LoadFromDisk();
+        var id = GetSetting("selectedTheme", "peach");
+        Current = BlinkTheme.Named(id);
+    }
+
     public void Select(BlinkTheme theme)
     {
         Current = theme;
         SetSetting("selectedTheme", theme.Id);
     }
 
-    private static T GetSetting<T>(string key, T defaultValue)
+    private static JsonObject LoadFromDisk()
     {
-        var settings = ApplicationData.Current.LocalSettings;
-        return settings.Values.TryGetValue(key, out var value) && value is T typed
-            ? typed : defaultValue;
+        try
+        {
+            if (File.Exists(SettingsPath))
+            {
+                var text = File.ReadAllText(SettingsPath);
+                if (JsonNode.Parse(text) is JsonObject obj) return obj;
+            }
+        }
+        catch { }
+        return new JsonObject();
     }
 
-    private static void SetSetting<T>(string key, T value)
+    private void SaveToDisk()
     {
-        ApplicationData.Current.LocalSettings.Values[key] = value;
+        Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+        File.WriteAllText(SettingsPath, _values.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private T GetSetting<T>(string key, T defaultValue)
+    {
+        lock (_gate)
+        {
+            if (!_values.TryGetPropertyValue(key, out var node) || node is null) return defaultValue;
+            try { return node.GetValue<T>(); }
+            catch { return defaultValue; }
+        }
+    }
+
+    private void SetSetting<T>(string key, T value)
+    {
+        lock (_gate)
+        {
+            _values[key] = JsonValue.Create(value);
+            SaveToDisk();
+        }
     }
 }

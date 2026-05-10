@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Blink.App.Onboarding.WhyExistWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Why do I exist?">
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Page 1: The Rule -->
+        <ScrollViewer Grid.Row="0" x:Name="Page1" VerticalScrollBarVisibility="Auto">
+            <StackPanel HorizontalAlignment="Stretch" Spacing="0" Padding="36,32,36,24">
+                <StackPanel Spacing="6" HorizontalAlignment="Center" Margin="0,0,0,28">
+                    <TextBlock Text="The 20-20-20 Rule"
+                               FontSize="28" FontWeight="Bold"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Recommended by optometrists since 1991"
+                               FontSize="15" Opacity="0.6"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <Grid x:Name="RuleCardsRow" ColumnSpacing="20" Margin="0,0,0,28">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                </Grid>
+
+                <StackPanel x:Name="FactsList" Spacing="14"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Page 2: How Blink Works -->
+        <ScrollViewer Grid.Row="0" x:Name="Page2" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Stretch" Spacing="0" Padding="36,32,36,24">
+                <StackPanel Spacing="6" HorizontalAlignment="Center" Margin="0,0,0,28">
+                    <TextBlock Text="How Blink Works"
+                               FontSize="28" FontWeight="Bold"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Breaks that respect your workflow"
+                               FontSize="15" Opacity="0.6"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel x:Name="FeaturesList" Spacing="20"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Bottom bar -->
+        <Grid Grid.Row="1" Padding="28,16,28,20" ColumnSpacing="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="150"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Back -->
+            <Button Grid.Column="0" x:Name="BackButton" Click="OnBack"
+                    Background="Transparent" BorderThickness="0"
+                    Visibility="Collapsed"
+                    HorizontalAlignment="Left" VerticalAlignment="Center"
+                    Padding="8,6">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <FontIcon Glyph="&#xE76B;" FontSize="12" Opacity="0.7"/>
+                    <TextBlock Text="Back" FontSize="13" FontWeight="Medium" Opacity="0.7"/>
+                </StackPanel>
+            </Button>
+
+            <!-- Center: dots -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Ellipse x:Name="Dot1" Width="7" Height="7"/>
+                <Ellipse x:Name="Dot2" Width="7" Height="7" Opacity="0.3"/>
+            </StackPanel>
+
+            <!-- Right: Next / Got it -->
+            <Button Grid.Column="2" x:Name="NextButton" Click="OnNext"
+                    Background="Transparent" BorderThickness="0"
+                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Padding="8,6">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock x:Name="NextLabel" Text="How Blink works" FontSize="13" FontWeight="Medium"/>
+                    <FontIcon x:Name="NextChevron" Glyph="&#xE76C;" FontSize="12"/>
+                </StackPanel>
+            </Button>
+
+            <Button Grid.Column="2" x:Name="GotItButton" Click="OnGotIt"
+                    Visibility="Collapsed"
+                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Width="120" Height="34"
+                    CornerRadius="17"
+                    FontSize="14" FontWeight="SemiBold"
+                    Foreground="White">
+                <TextBlock Text="Got it"/>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>

@@ -98,6 +98,8 @@ public static class NativeMethods
 
     public const int SM_CXSCREEN = 0;
     public const int SM_CYSCREEN = 1;
+    public const int SM_CXSMICON = 49;
+    public const int SM_CYSMICON = 50;
 
     [StructLayout(LayoutKind.Sequential)]
     public struct RECT
@@ -118,6 +120,11 @@ public static class NativeMethods
     public const uint NIF_TIP = 0x04;
     public const uint NIF_MESSAGE = 0x01;
     public const uint NIF_INFO = 0x10;
+    public const uint NIF_GUID = 0x20;
+
+    public const uint NIIF_INFO = 0x01;
+    public const uint NIIF_USER = 0x04;
+    public const uint NIIF_LARGE_ICON = 0x20;
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
     public struct NOTIFYICONDATA
@@ -130,6 +137,16 @@ public static class NativeMethods
         public IntPtr hIcon;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
         public string szTip;
+        public uint dwState;
+        public uint dwStateMask;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string szInfo;
+        public uint uTimeoutOrVersion;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+        public string szInfoTitle;
+        public uint dwInfoFlags;
+        public Guid guidItem;
+        public IntPtr hBalloonIcon;
     }
 
     // ── Context menu ──
@@ -155,6 +172,20 @@ public static class NativeMethods
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("kernel32.dll")]
+    public static extern uint GetCurrentThreadId();
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, [MarshalAs(UnmanagedType.Bool)] bool fAttach);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool BringWindowToTop(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr SetFocus(IntPtr hWnd);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -203,4 +234,18 @@ public static class NativeMethods
 
     public const uint WM_LBUTTONUP = 0x0202;
     public const uint WM_RBUTTONUP = 0x0205;
+
+    // ── Icons ──
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+    public static extern IntPtr LoadImage(IntPtr hInst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool DestroyIcon(IntPtr hIcon);
+
+    public const uint IMAGE_ICON = 1;
+    public const uint LR_LOADFROMFILE = 0x0010;
+    public const uint LR_DEFAULTSIZE = 0x0040;
+    public const uint LR_SHARED = 0x8000;
 }

@@ -13,6 +13,7 @@ public sealed class TrayIconManager : IDisposable
     private readonly AppState _appState;
     private NOTIFYICONDATA _iconData;
     private IntPtr _hWnd;
+    private IntPtr _hIcon;
     private bool _isShowing;
     private System.Threading.Timer? _tooltipTimer;
 
@@ -27,6 +28,7 @@ public sealed class TrayIconManager : IDisposable
     public event Action? OnSettingsRequested;
     public event Action? OnTakeBreakNowRequested;
     public event Action? OnQuitRequested;
+    public event Action? OnLeftClickRequested;
 
     public TrayIconManager(AppState appState)
     {
@@ -62,7 +64,7 @@ public sealed class TrayIconManager : IDisposable
             if (mouseMsg == WM_RBUTTONUP)
                 ShowContextMenu();
             else if (mouseMsg == WM_LBUTTONUP)
-                OnSettingsRequested?.Invoke();
+                OnLeftClickRequested?.Invoke();
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);
     }
@@ -98,6 +100,8 @@ public sealed class TrayIconManager : IDisposable
 
     public void Show()
     {
+        _hIcon = LoadTrayIcon();
+
         _iconData = new NOTIFYICONDATA
         {
             cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATA>(),
@@ -105,11 +109,13 @@ public sealed class TrayIconManager : IDisposable
             uID = 1,
             uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE,
             uCallbackMessage = WM_TRAYICON,
-            szTip = $"Blink — Next break in {_appState.FormattedRemaining}"
+            hIcon = _hIcon,
+            szTip = $"Blink — Next break in {_appState.FormattedRemaining}",
+            szInfo = "",
+            szInfoTitle = ""
         };
 
-        Shell_NotifyIcon(NIM_ADD, ref _iconData);
-        _isShowing = true;
+        _isShowing = Shell_NotifyIcon(NIM_ADD, ref _iconData);
 
         _tooltipTimer = new System.Threading.Timer(_ => UpdateTooltip(), null,
             TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
@@ -124,6 +130,17 @@ public sealed class TrayIconManager : IDisposable
         Shell_NotifyIcon(NIM_MODIFY, ref _iconData);
     }
 
+    public void ShowBalloon(string title, string body)
+    {
+        if (!_isShowing) return;
+
+        _iconData.szInfoTitle = title.Length > 63 ? title.Substring(0, 63) : title;
+        _iconData.szInfo = body.Length > 255 ? body.Substring(0, 255) : body;
+        _iconData.dwInfoFlags = NIIF_INFO;
+        _iconData.uFlags = NIF_INFO;
+        Shell_NotifyIcon(NIM_MODIFY, ref _iconData);
+    }
+
     public void Dispose()
     {
         _tooltipTimer?.Dispose();
@@ -132,10 +149,22 @@ public sealed class TrayIconManager : IDisposable
             Shell_NotifyIcon(NIM_DELETE, ref _iconData);
             _isShowing = false;
         }
+        if (_hIcon != IntPtr.Zero)
+        {
+            DestroyIcon(_hIcon);
+            _hIcon = IntPtr.Zero;
+        }
         if (_hWnd != IntPtr.Zero)
         {
             DestroyWindow(_hWnd);
             _hWnd = IntPtr.Zero;
         }
+    }
+
+    private static IntPtr LoadTrayIcon()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "app.ico");
+        var size = GetSystemMetrics(SM_CXSMICON);
+        return LoadImage(IntPtr.Zero, path, IMAGE_ICON, size, size, LR_LOADFROMFILE);
     }
 }

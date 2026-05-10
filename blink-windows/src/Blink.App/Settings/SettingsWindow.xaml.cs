@@ -13,6 +13,7 @@ public sealed partial class SettingsWindow : Window
     {
         _appState = appState;
         InitializeComponent();
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "app.ico"));
         AppWindow.Resize(new Windows.Graphics.SizeInt32(440, 480));
         LoadCurrentValues();
         _isLoading = false;
@@ -142,6 +143,7 @@ public sealed partial class SettingsWindow : Window
         UpdateProgress.Visibility = Visibility.Visible;
         UpdateProgress.IsActive = true;
         UpdateStatusText.Text = "Checking...";
+        DownloadUpdateButton.Visibility = Visibility.Collapsed;
 
         var checker = UpdateChecker.Instance;
         checker.PropertyChanged += OnUpdateCheckerChanged;
@@ -169,6 +171,22 @@ public sealed partial class SettingsWindow : Window
                 UpdateChecker.CheckResultKind.Failed => "Check failed",
                 _ => ""
             };
+
+            DownloadUpdateButton.Visibility =
+                checker.LastCheckResult?.Kind == UpdateChecker.CheckResultKind.Available
+                && !string.IsNullOrEmpty(checker.DownloadUrl)
+                    ? Visibility.Visible : Visibility.Collapsed;
+        });
+    }
+
+    private void DownloadUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        var url = UpdateChecker.Instance.DownloadUrl;
+        if (string.IsNullOrEmpty(url)) return;
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = url,
+            UseShellExecute = true
         });
     }
 

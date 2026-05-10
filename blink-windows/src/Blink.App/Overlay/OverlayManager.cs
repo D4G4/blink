@@ -3,10 +3,9 @@ using Microsoft.UI.Xaml;
 namespace Blink.App.Overlay;
 
 /// <summary>
-/// Manages the break overlay flow:
-/// 1. Toast (3s heads-up, bottom-right, topmost)
-/// 2. Fullscreen countdown (3s, Esc=skip)
-/// 3. Break timer (20s, Esc=skip, Right=extend +20s)
+/// Manages the break overlay flow (matches macOS):
+/// 1. Toast (3s heads-up, bottom-right)
+/// 2. Break timer (20s, Esc=skip, Right=extend +20s)
 ///
 /// Also provides standalone toasts for timer-extended and debug messages.
 /// </summary>
@@ -22,7 +21,7 @@ public sealed class OverlayManager
     }
 
     /// <summary>
-    /// Starts the full break flow: toast -> countdown -> break timer.
+    /// Starts the full break flow: toast -> break timer.
     /// </summary>
     public void ShowBreak(Action onComplete, Action onSkip)
     {
@@ -33,28 +32,10 @@ public sealed class OverlayManager
             {
                 _currentToast?.Close();
                 _currentToast = null;
-                ShowCountdown(onComplete, onSkip);
+                ShowBreakTimer(onComplete, onSkip);
             });
             _currentToast.Activate();
         });
-    }
-
-    private void ShowCountdown(Action onComplete, Action onSkip)
-    {
-        _currentFullscreen = new CountdownWindow(
-            onDone: () =>
-            {
-                _currentFullscreen?.Close();
-                _currentFullscreen = null;
-                ShowBreakTimer(onComplete, onSkip);
-            },
-            onSkip: () =>
-            {
-                _currentFullscreen?.Close();
-                _currentFullscreen = null;
-                onSkip();
-            });
-        _currentFullscreen.Activate();
     }
 
     private void ShowBreakTimer(Action onComplete, Action onSkip)

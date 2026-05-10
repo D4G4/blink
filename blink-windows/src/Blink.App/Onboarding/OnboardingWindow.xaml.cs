@@ -2,6 +2,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Blink.App.Theme;
 
 namespace Blink.App.Onboarding;
@@ -16,6 +17,7 @@ public sealed partial class OnboardingWindow : Window
     {
         _themeManager = themeManager;
         InitializeComponent();
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "app.ico"));
 
         // Start with Peach (or Midnight if system is dark)
         // WinUI dark mode detection:
@@ -43,8 +45,10 @@ public sealed partial class OnboardingWindow : Window
         bool isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
 
         ThemeName.Text = theme.Name;
-        PrevButton.IsEnabled = _selectedIndex > 0;
-        NextButton.IsEnabled = _selectedIndex < _themes.Length - 1;
+
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", $"theme-{theme.Id}.png");
+        if (File.Exists(iconPath))
+            ThemeIcon.Source = new BitmapImage(new Uri(iconPath));
 
         // Background gradient from theme colors
         var topColor = theme.BackgroundTop(isDark);
@@ -68,20 +72,14 @@ public sealed partial class OnboardingWindow : Window
 
     private void OnPrevious(object sender, RoutedEventArgs e)
     {
-        if (_selectedIndex > 0)
-        {
-            _selectedIndex--;
-            UpdateThemeDisplay();
-        }
+        _selectedIndex = (_selectedIndex - 1 + _themes.Length) % _themes.Length;
+        UpdateThemeDisplay();
     }
 
     private void OnNext(object sender, RoutedEventArgs e)
     {
-        if (_selectedIndex < _themes.Length - 1)
-        {
-            _selectedIndex++;
-            UpdateThemeDisplay();
-        }
+        _selectedIndex = (_selectedIndex + 1) % _themes.Length;
+        UpdateThemeDisplay();
     }
 
     private void OnGetStarted(object sender, RoutedEventArgs e)
@@ -91,55 +89,9 @@ public sealed partial class OnboardingWindow : Window
         Close();
     }
 
-    private async void OnWhyExist(object sender, RoutedEventArgs e)
+    private void OnWhyExist(object sender, RoutedEventArgs e)
     {
-        var dialog = new ContentDialog
-        {
-            Title = "Why do I exist?",
-            Content = new StackPanel
-            {
-                Spacing = 16,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = "The 20-20-20 Rule",
-                        FontSize = 20,
-                        FontWeight = Microsoft.UI.Text.FontWeights.Bold
-                    },
-                    new TextBlock
-                    {
-                        Text = "Every 20 minutes, look at something 20 feet away for 20 seconds.",
-                        TextWrapping = TextWrapping.Wrap
-                    },
-                    new TextBlock
-                    {
-                        Text = "When you stare at a screen, your blink rate drops from 15 to 3-4 times per minute. " +
-                               "This causes dry eyes, eye strain, and headaches. The 20-20-20 rule gives your eye muscles " +
-                               "a chance to relax and your tear film to refresh.",
-                        TextWrapping = TextWrapping.Wrap,
-                        Opacity = 0.7
-                    },
-                    new TextBlock
-                    {
-                        Text = "How Blink Works",
-                        FontSize = 20,
-                        FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-                        Margin = new Thickness(0, 8, 0, 0)
-                    },
-                    new TextBlock
-                    {
-                        Text = "Blink monitors your keyboard and mouse activity to detect when you're in a flow state. " +
-                               "When you're deeply focused, it extends the timer so you're not interrupted. " +
-                               "When you step away, it auto-resets — no wasted breaks.",
-                        TextWrapping = TextWrapping.Wrap,
-                        Opacity = 0.7
-                    }
-                }
-            },
-            CloseButtonText = "Got it",
-            XamlRoot = this.Content.XamlRoot
-        };
-        await dialog.ShowAsync();
+        var window = new WhyExistWindow(_themes[_selectedIndex]);
+        window.Activate();
     }
 }
