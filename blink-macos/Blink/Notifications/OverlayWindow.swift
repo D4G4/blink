@@ -507,50 +507,41 @@ private struct BreakPhaseView: View {
             
             ZStack(alignment: .topTrailing) {
                 VStack(spacing: 40) {
-                    
-                    Spacer()
-                    
                     Text("Look at something far away")
                         .font(.system(size: 22, weight: .medium))
                         .foregroundStyle(fg)
-                    
-                    Spacer()
-                    
+
                     ZStack {
                         Circle()
                             .stroke(theme.accent.opacity(0.15), lineWidth: 4)
                             .frame(width: 160, height: 160)
-                        
+
                         Circle()
                             .trim(from: 0, to: CGFloat(model.remaining) / CGFloat(model.total))
                             .stroke(theme.accent, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                             .frame(width: 160, height: 160)
                             .rotationEffect(.degrees(-90))
                             .animation(.linear(duration: 1), value: model.remaining)
-                        
+
                         Text("\(model.remaining)")
                             .font(.system(size: 64, weight: .ultraLight, design: .monospaced))
                             .foregroundStyle(fg)
                     }
-                    
+
                     if model.showExtendHint {
                         Text("+20s")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(theme.accent)
                             .transition(.opacity.combined(with: .scale))
                     }
-                    
-                    Spacer()
-                    
+
                     HStack(spacing: 32) {
                         KeyHintView(key: "esc", label: "Skip break", theme: theme)
                         KeyHintView(key: "→", label: "Extend 20s", theme: theme)
                     }
-                    
-                    Spacer()
+                    .padding(.top, 16)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .ignoresSafeArea()
                 
                 // Mini 20-feet badge in top right
                 VStack(spacing: 6) {
