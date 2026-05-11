@@ -12,7 +12,7 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsPackageType>None</WindowsPackageType>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>1.5.2</Version>
+    <Version>1.5.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
