@@ -548,10 +548,9 @@ private struct BreakPhaseView: View {
                     }
                     
                     Spacer()
-                    
-                        .padding(.top, 24)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
                 
                 // Mini 20-feet badge in top right
                 VStack(spacing: 6) {
