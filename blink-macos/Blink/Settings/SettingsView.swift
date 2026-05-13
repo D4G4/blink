@@ -136,45 +136,47 @@ struct SettingsView: View {
                     }
                 }
 
-                HStack(spacing: 8) {
-                    Button {
-                        UpdateChecker.shared.checkForUpdate()
-                    } label: {
-                        HStack(spacing: 4) {
-                            if UpdateChecker.shared.isChecking {
-                                ProgressView()
-                                    .controlSize(.small)
-                                    .scaleEffect(0.7)
-                            } else {
-                                Image(systemName: "arrow.triangle.2.circlepath")
-                                    .font(.system(size: 11))
+                if !UpdateChecker.isAppStore {
+                    HStack(spacing: 8) {
+                        Button {
+                            UpdateChecker.shared.checkForUpdate()
+                        } label: {
+                            HStack(spacing: 4) {
+                                if UpdateChecker.shared.isChecking {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                        .scaleEffect(0.7)
+                                } else {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                        .font(.system(size: 11))
+                                }
+                                Text("Check for Updates")
+                                    .font(.system(size: 12))
                             }
-                            Text("Check for Updates")
-                                .font(.system(size: 12))
+                            .foregroundStyle(accentColor)
                         }
-                        .foregroundStyle(accentColor)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(UpdateChecker.shared.isChecking)
+                        .buttonStyle(.plain)
+                        .disabled(UpdateChecker.shared.isChecking)
 
-                    if let result = UpdateChecker.shared.lastCheckResult {
-                        switch result {
-                        case .upToDate:
-                            Text("You're up to date")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        case .available(let version):
-                            Text("v\(version) available")
-                                .font(.system(size: 11))
-                                .foregroundStyle(accentColor)
-                        case .failed:
-                            Text("Check failed")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.red)
+                        if let result = UpdateChecker.shared.lastCheckResult {
+                            switch result {
+                            case .upToDate:
+                                Text("You're up to date")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                            case .available(let version):
+                                Text("v\(version) available")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(accentColor)
+                            case .failed:
+                                Text("Check failed")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.red)
+                            }
                         }
                     }
+                    .padding(.top, 4)
                 }
-                .padding(.top, 4)
 
                 Button {
                     themeManager.hasCompletedOnboarding = false

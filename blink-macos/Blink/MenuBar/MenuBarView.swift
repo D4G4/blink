@@ -40,8 +40,8 @@ struct MenuBarView: View {
             .padding(.top, 14)
             .padding(.bottom, 12)
 
-            // Update banner
-            if updateChecker.updateAvailable, let version = updateChecker.latestVersion {
+            // Update banner (only for direct/Homebrew installs, not App Store)
+            if !UpdateChecker.isAppStore, updateChecker.updateAvailable, let version = updateChecker.latestVersion {
                 updateBanner(version: version)
                     .padding(.horizontal, 12)
                     .padding(.bottom, 4)

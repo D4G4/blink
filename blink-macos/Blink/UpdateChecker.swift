@@ -22,9 +22,19 @@ final class UpdateChecker: ObservableObject {
     private static let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     private static let releasesURL = URL(string: "https://api.github.com/repos/D4G4/blink/releases/latest")!
 
+    /// True when installed from the Mac App Store (has a receipt file).
+    static let isAppStore: Bool = {
+        Bundle.main.appStoreReceiptURL?.path().contains("sandboxReceipt") == true ||
+        Bundle.main.appStoreReceiptURL.flatMap({ FileManager.default.fileExists(atPath: $0.path()) }) == true
+    }()
+
     private var periodicTimer: Timer?
 
     func startPeriodicChecks() {
+        guard !Self.isAppStore else {
+            log.info("App Store install — skipping update checks")
+            return
+        }
         checkForUpdate()
         periodicTimer = Timer.scheduledTimer(withTimeInterval: 86400, repeats: true) { [weak self] _ in
             self?.checkForUpdate()
