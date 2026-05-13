@@ -225,50 +225,51 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        Image(systemName: "brain.head.profile")
-                            .font(.system(size: 40, weight: .light))
-                            .foregroundStyle(accent)
-                            .padding(.top, 32)
-                            .padding(.bottom, 14)
-                        
-                        Text("Flow Detection")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundStyle(fg)
-                            .padding(.bottom, 6)
-                        
-                        Text("Blink detects when you're focused and extends break intervals")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(fg.opacity(0.85))
-                            .multilineTextAlignment(.center)
-                            .padding(.bottom, 24)
-                        
-                        // What is flow?
-                        VStack(alignment: .leading, spacing: 8) {
-                            flowExplainerRow(
-                                icon: "keyboard",
-                                text: "Steady typing rhythm = focused work",
-                                fg: fg, accent: accent
-                            )
-                            flowExplainerRow(
-                                icon: "arrow.triangle.swap",
-                                text: "Fewer app switches = deeper focus",
-                                fg: fg, accent: accent
-                            )
-                        }
-                        .frame(maxWidth: 360)
+                Spacer()
+
+                VStack(spacing: 0) {
+                    Image(systemName: "brain.head.profile")
+                        .font(.system(size: 40, weight: .light))
+                        .foregroundStyle(accent)
+                        .padding(.bottom, 14)
+
+                    Text("Flow Detection")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(fg)
+                        .padding(.bottom, 6)
+
+                    Text("Blink detects when you're focused and extends break intervals")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(fg.opacity(0.85))
+                        .multilineTextAlignment(.center)
                         .padding(.bottom, 24)
-                        
-                        FlowSensitivityView(
-                            sensitivity: $flowSensitivity,
-                            accentColor: accent,
-                            foregroundColor: fg,
-                            style: .onboarding
+
+                    // What is flow?
+                    VStack(alignment: .leading, spacing: 8) {
+                        flowExplainerRow(
+                            icon: "keyboard",
+                            text: "Steady typing rhythm = focused work",
+                            fg: fg, accent: accent
+                        )
+                        flowExplainerRow(
+                            icon: "arrow.triangle.swap",
+                            text: "Fewer app switches = deeper focus",
+                            fg: fg, accent: accent
                         )
                     }
+                    .frame(maxWidth: 360)
+                    .padding(.bottom, 24)
+
+                    FlowSensitivityView(
+                        sensitivity: $flowSensitivity,
+                        accentColor: accent,
+                        foregroundColor: fg,
+                        style: .onboarding
+                    )
                 }
                 .padding(.horizontal, 40)
+
+                Spacer()
                 
                 // Fixed bottom buttons
                 VStack(spacing: 10) {
