@@ -20,6 +20,7 @@
 		51B85A79F15C502885A3F8C2 /* BlinkTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0886829FB1518795A9E605C /* BlinkTheme.swift */; };
 		6236E723BC574777D616DE37 /* BlinkCore in Frameworks */ = {isa = PBXBuildFile; productRef = B3D1D1183FB72FCF22C0F8F6 /* BlinkCore */; };
 		6D05464304B14CAD3A2BE0D7 /* WhyExistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8919A95A03586CABD364494 /* WhyExistView.swift */; };
+		71DDA90772E11550128D362D /* FlowSensitivityPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4489BDE637012610175AC573 /* FlowSensitivityPage.swift */; };
 		721AB1C8176D69C9F1A07603 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71AF16B93A94215233284E2E /* OnboardingView.swift */; };
 		722622A0B195340B20B82F9C /* PermissionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1952E3C02F56495895D00BB8 /* PermissionWindowController.swift */; };
 		72570C0C40040759FE52FBDF /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D286D81AEFFC707C40AF416D /* MenuBarView.swift */; };
@@ -49,6 +50,7 @@
 		2D2974278123650670528178 /* PreferencesWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesWindowController.swift; sourceTree = "<group>"; };
 		32296CA5F384757F2CCB9CDC /* OnboardingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindow.swift; sourceTree = "<group>"; };
 		3D310BA2552802E7D6905702 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		4489BDE637012610175AC573 /* FlowSensitivityPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityPage.swift; sourceTree = "<group>"; };
 		454E601831980C64BDA0BDD1 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		48431B2C296BDB92BF0BB93C /* Blink.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blink.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4B2CC8BE1918B85F2A8165B5 /* MacIdleDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacIdleDetector.swift; sourceTree = "<group>"; };
@@ -165,6 +167,7 @@
 			children = (
 				93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */,
 				2B64A6EE793C76CA223A1CDF /* FlowLearnMoreWindowController.swift */,
+				4489BDE637012610175AC573 /* FlowSensitivityPage.swift */,
 				71AF16B93A94215233284E2E /* OnboardingView.swift */,
 				32296CA5F384757F2CCB9CDC /* OnboardingWindow.swift */,
 				A8919A95A03586CABD364494 /* WhyExistView.swift */,
@@ -292,6 +295,7 @@
 				DE5BDA2DC244F80E4D05FDA7 /* BreakNotificationManager.swift in Sources */,
 				09A1C80B8AA67D8958C07429 /* FlowLearnMoreView.swift in Sources */,
 				A4411B3A5D05D71332F0C539 /* FlowLearnMoreWindowController.swift in Sources */,
+				71DDA90772E11550128D362D /* FlowSensitivityPage.swift in Sources */,
 				015614087E1362D0362B4424 /* FlowSensitivityView.swift in Sources */,
 				9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */,
 				D5C6DCF4BA41B2C014A4D3C8 /* MacContextDetector.swift in Sources */,
@@ -444,13 +448,15 @@
 				CODE_SIGN_ENTITLEMENTS = Blink/Blink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 Blink";
+				INFOPLIST_KEY_NSInputMonitoringUsageDescription = "Blink monitors keyboard and mouse timing to detect flow state and deliver breaks at the right moment. No keystrokes or content are recorded.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -470,13 +476,15 @@
 				CODE_SIGN_ENTITLEMENTS = Blink/Blink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 Blink";
+				INFOPLIST_KEY_NSInputMonitoringUsageDescription = "Blink monitors keyboard and mouse timing to detect flow state and deliver breaks at the right moment. No keystrokes or content are recorded.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
