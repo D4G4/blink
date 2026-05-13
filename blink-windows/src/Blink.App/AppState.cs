@@ -51,6 +51,9 @@ public sealed class AppState : INotifyPropertyChanged
     // Video state tracking for debug notifications
     private bool _wasVideoPlaying;
 
+    // Consecutive break tracking — resets on idle/walk-away
+    private int _consecutiveBreaksTaken;
+
     // Persistence
     private readonly Persistence.PersistenceManager _persistence = new();
 
@@ -204,6 +207,7 @@ public sealed class AppState : INotifyPropertyChanged
         {
             if (ThemeManager.Instance.DebugNotifications)
                 _overlayManager?.ShowDebugToast($"Timer reset: idle {(int)idle}s >= {(int)IdleBreakThreshold}s");
+            _consecutiveBreaksTaken = 0; // walked away — reset streak
             TimerStateMachine.ResetAfterBreak();
             RemainingSeconds = TimerStateMachine.RemainingSeconds;
         }
@@ -211,13 +215,19 @@ public sealed class AppState : INotifyPropertyChanged
 
     private void HandleBreakDue()
     {
+        // In flow/deep flow: gentle nudge, don't force overlay
         if (CurrentFlowState is FlowState.Flow or FlowState.DeepFlow)
         {
-            _breakDuePending = true;
-            _breakDueSince = DateTime.UtcNow;
+            var minutes = (int)TimerStateMachine.TimerDuration / 60;
+            _overlayManager?.ShowTimerExtendedToast(() => ShowBreakPrompt());
+            TimerStateMachine.ResetAfterBreak();
+            RemainingSeconds = TimerStateMachine.RemainingSeconds;
             return;
         }
-        ShowBreakPrompt();
+
+        // Normal state: wait for natural pause, then show overlay
+        _breakDuePending = true;
+        _breakDueSince = DateTime.UtcNow;
     }
 
     private void CheckPendingBreak()
@@ -259,6 +269,7 @@ public sealed class AppState : INotifyPropertyChanged
 
     public void TakeBreak()
     {
+        _consecutiveBreaksTaken++;
         ComplianceTracker.BreakTaken(DateTime.UtcNow, 20);
         FinishBreak();
     }
