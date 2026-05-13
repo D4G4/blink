@@ -214,23 +214,6 @@ struct OnboardingView: View {
         }
     }
     
-    private var flowSensitivityExample: String {
-        switch flowSensitivity {
-        case ..<0.5:
-            return "Strict — flow rarely detected. Breaks every 20 min even during focus."
-        case 0.5..<0.6:
-            return "Conservative — only intense coding sessions trigger flow. Breaks mostly at 20 min."
-        case 0.6..<0.7:
-            return "Balanced — steady work extends to 30 min. Casual browsing stays at 20 min."
-        case 0.7..<0.8:
-            return "Recommended — normal work extends to 30 min. Deep focus reaches 40 min."
-        case 0.8..<0.9:
-            return "Sensitive — most focused work triggers flow. Breaks at 30–40 min."
-        default:
-            return "Very sensitive — flow detected easily. You'll rarely get a break at 20 min."
-        }
-    }
-    
     // MARK: - Flow Sensitivity Page
     
     private var flowSensitivityPage: some View {
@@ -277,38 +260,12 @@ struct OnboardingView: View {
                         .frame(maxWidth: 360)
                         .padding(.bottom, 24)
                         
-                        // Sensitivity slider
-                        VStack(spacing: 10) {
-                            Text("Flow Sensitivity")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(fg)
-                            
-                            HStack(spacing: 12) {
-                                Text("Low")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(fg.opacity(0.7))
-                                Slider(value: $flowSensitivity, in: 0.4...0.9, step: 0.05)
-                                    .tint(accent)
-                                Text("High")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(fg.opacity(0.7))
-                            }
-                            
-                            Text(String(format: "%.0f%%", flowSensitivity * 100))
-                                .font(.system(size: 24, weight: .light, design: .monospaced))
-                                .foregroundStyle(fg)
-                            
-                            // Dynamic example based on sensitivity
-                            Text(flowSensitivityExample)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(fg.opacity(0.8))
-                                .multilineTextAlignment(.center)
-                                .animation(.easeInOut(duration: 0.2), value: flowSensitivity)
-                        }
-                        .frame(maxWidth: 320)
-                        .padding(20)
-                        .background(fg.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        FlowSensitivityView(
+                            sensitivity: $flowSensitivity,
+                            accentColor: accent,
+                            foregroundColor: fg,
+                            style: .onboarding
+                        )
                     }
                 }
                 .padding(.horizontal, 40)

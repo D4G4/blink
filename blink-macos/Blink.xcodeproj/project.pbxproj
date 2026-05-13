@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		015614087E1362D0362B4424 /* FlowSensitivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDA291436352B986E47616EA /* FlowSensitivityView.swift */; };
 		09A1C80B8AA67D8958C07429 /* FlowLearnMoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */; };
 		0AF1EB410D21A0FAD63E48EA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D310BA2552802E7D6905702 /* SettingsView.swift */; };
 		1BB8F112BA1F2D463757D0E8 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB2FCB3D4A937B4DF52593C /* AppState.swift */; };
@@ -25,6 +26,7 @@
 		78F685AF5FBDA94856623590 /* AllPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4978224F028FE729A5E799 /* AllPreviews.swift */; };
 		8A0AFA5135D8FBEB7414E8FB /* MacIdleDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B2CC8BE1918B85F2A8165B5 /* MacIdleDetector.swift */; };
 		9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 216A16F819CB23807A4A69BF /* MacAppMonitor.swift */; };
+		A4411B3A5D05D71332F0C539 /* FlowLearnMoreWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B64A6EE793C76CA223A1CDF /* FlowLearnMoreWindowController.swift */; };
 		AF2AA32997C297584EE5186E /* OnboardingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32296CA5F384757F2CCB9CDC /* OnboardingWindow.swift */; };
 		CBF502A96C4139DA82CA7235 /* PersistenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259BC5A29D8C29D30B7A8C1F /* PersistenceManager.swift */; };
 		CEC516E6EED0DAFCDECC1AE9 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454E601831980C64BDA0BDD1 /* ThemeManager.swift */; };
@@ -43,6 +45,7 @@
 		216A16F819CB23807A4A69BF /* MacAppMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAppMonitor.swift; sourceTree = "<group>"; };
 		259BC5A29D8C29D30B7A8C1F /* PersistenceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceManager.swift; sourceTree = "<group>"; };
 		2B15A88459421C77F80ACFC3 /* BreakNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakNotificationManager.swift; sourceTree = "<group>"; };
+		2B64A6EE793C76CA223A1CDF /* FlowLearnMoreWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLearnMoreWindowController.swift; sourceTree = "<group>"; };
 		2D2974278123650670528178 /* PreferencesWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesWindowController.swift; sourceTree = "<group>"; };
 		32296CA5F384757F2CCB9CDC /* OnboardingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindow.swift; sourceTree = "<group>"; };
 		3D310BA2552802E7D6905702 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -65,6 +68,7 @@
 		BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistWindowController.swift; sourceTree = "<group>"; };
 		D286D81AEFFC707C40AF416D /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		E0886829FB1518795A9E605C /* BlinkTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkTheme.swift; sourceTree = "<group>"; };
+		EDA291436352B986E47616EA /* FlowSensitivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityView.swift; sourceTree = "<group>"; };
 		EDCB6EA78FBAD3A0E6F29598 /* OverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayWindow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -142,6 +146,7 @@
 				4BF5F1BD395AB638696B46E9 /* Assets.xcassets */,
 				8C3FE352EB3AFEEB76ECBD6B /* Blink.entitlements */,
 				989DBB159CA5CB427CCCADEF /* BlinkApp.swift */,
+				EDA291436352B986E47616EA /* FlowSensitivityView.swift */,
 				73EF2DCF137E47C83983AFEB /* UpdateChecker.swift */,
 				C6B99614A55F03D45A44213D /* MenuBar */,
 				57EF48B0C782CFEFFFE18294 /* Notifications */,
@@ -159,6 +164,7 @@
 			isa = PBXGroup;
 			children = (
 				93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */,
+				2B64A6EE793C76CA223A1CDF /* FlowLearnMoreWindowController.swift */,
 				71AF16B93A94215233284E2E /* OnboardingView.swift */,
 				32296CA5F384757F2CCB9CDC /* OnboardingWindow.swift */,
 				A8919A95A03586CABD364494 /* WhyExistView.swift */,
@@ -285,6 +291,8 @@
 				51B85A79F15C502885A3F8C2 /* BlinkTheme.swift in Sources */,
 				DE5BDA2DC244F80E4D05FDA7 /* BreakNotificationManager.swift in Sources */,
 				09A1C80B8AA67D8958C07429 /* FlowLearnMoreView.swift in Sources */,
+				A4411B3A5D05D71332F0C539 /* FlowLearnMoreWindowController.swift in Sources */,
+				015614087E1362D0362B4424 /* FlowSensitivityView.swift in Sources */,
 				9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */,
 				D5C6DCF4BA41B2C014A4D3C8 /* MacContextDetector.swift in Sources */,
 				8A0AFA5135D8FBEB7414E8FB /* MacIdleDetector.swift in Sources */,

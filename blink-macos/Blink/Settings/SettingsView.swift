@@ -251,23 +251,30 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 20) {
             settingsSection("Flow Detection") {
                 settingsRow("Sensitivity") {
-                    HStack {
-                        Slider(value: $flowSensitivity, in: 0.4...0.9, step: 0.05)
-                            .tint(accentColor)
-                        Text(String(format: "%.0f%%", flowSensitivity * 100))
-                            .font(.system(size: 13, design: .monospaced))
-                            .frame(width: 40)
-                    }
+                    FlowSensitivityView(
+                        sensitivity: $flowSensitivity,
+                        accentColor: accentColor,
+                        foregroundColor: .primary,
+                        style: .settings
+                    )
                 }
                 .onChange(of: flowSensitivity) { _, newValue in
                     appState.flowStateMachine.flowEntryThreshold = newValue
                 }
-
-                Text("Higher sensitivity = flow detected more easily, extending break intervals.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .padding(.leading, 4)
             }
+
+            Button {
+                FlowLearnMoreWindowController.shared.show(theme: themeManager.current)
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 11))
+                    Text("Learn more about flow detection")
+                        .font(.system(size: 12))
+                }
+                .foregroundStyle(accentColor)
+            }
+            .buttonStyle(.plain)
 
             settingsSection("Current State") {
                 stateRow("Flow Score", value: String(format: "%.0f%%", appState.flowScore * 100))
