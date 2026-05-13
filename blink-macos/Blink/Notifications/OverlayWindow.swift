@@ -506,12 +506,14 @@ private struct BreakPhaseView: View {
                 .ignoresSafeArea()
 
             ZStack(alignment: .topTrailing) {
-                VStack() {
+                VStack(spacing: 0) {
                     Spacer()
 
                     Text("Look at something far away")
                         .font(.system(size: 24, weight: .medium))
                         .foregroundStyle(fg)
+                    
+                    Spacer()
 
                     ZStack {
                         Circle()
@@ -529,13 +531,14 @@ private struct BreakPhaseView: View {
                             .font(.system(size: 64, weight: .ultraLight, design: .monospaced))
                             .foregroundStyle(fg)
                     }
+                    
+                    Spacer()
 
-                    if model.showExtendHint {
-                        Text("+20s")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(theme.accent)
-                            .transition(.opacity.combined(with: .scale))
-                    }
+                    Text("+20s")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(theme.accent)
+                        .opacity(model.showExtendHint ? 1 : 0)
+                        .animation(.easeInOut(duration: 0.3), value: model.showExtendHint)
 
                     Spacer()
 
