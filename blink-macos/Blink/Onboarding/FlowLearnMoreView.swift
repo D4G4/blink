@@ -59,6 +59,24 @@ struct FlowLearnMoreView: View {
                         detail: "Code editors, design tools, and writing apps get a focus bonus. Browsers and social apps don't."
                     )
 
+                    sectionHeader("When Blink pauses automatically")
+
+                    signalRow(
+                        icon: "mic",
+                        title: "Microphone active",
+                        detail: "Any mic usage — calls, dictation, voice recording — pauses the timer. You'll never get a break mid-conversation."
+                    )
+                    signalRow(
+                        icon: "video",
+                        title: "Video playing",
+                        detail: "Watching YouTube, Netflix, or any video? Timer pauses — you're already resting your focus."
+                    )
+                    signalRow(
+                        icon: "figure.walk",
+                        title: "Away from desk",
+                        detail: "No input for 3+ minutes? Blink assumes you walked away and silently resets the timer."
+                    )
+
                     // How it affects timing
                     sectionHeader("How it affects your breaks")
 
