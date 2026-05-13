@@ -9,6 +9,14 @@ packages:
   BlinkCore:
     path: BlinkCore
 
+schemes:
+  Blink:
+    build:
+      targets:
+        Blink: all
+    archive:
+      config: Release
+
 targets:
   Blink:
     type: application
