@@ -63,16 +63,16 @@ final class MacContextDetector: ContextSource {
     ]
 
     func isMicrophoneActive() -> Bool {
-        guard isMicInUse() else {
-            browserMeetingDetected = false
-            return false
-        }
-        return isMeetingAppActive()
+        let micInUse = isMicInUse()
+        if !micInUse { browserMeetingDetected = false }
+        return micInUse
     }
 
     func isCameraActive() -> Bool {
-        guard isMicInUse() else { return false }
-        return isMeetingAppActive()
+        // Reliable camera detection in sandbox is limited.
+        // Mic active already covers most call scenarios (Zoom, Teams, Meet).
+        // For camera-only situations (e.g. recording), mic is usually also active.
+        return false
     }
 
     /// Returns true if a dedicated meeting app is running, or a browser-based
