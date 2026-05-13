@@ -10,6 +10,7 @@ struct OnboardingView: View {
     @State private var iconOpacity: Double = 0
     @State private var showWhySheet: Bool = false
     @State private var showFlowPage: Bool = false
+    @State private var showFlowLearnMore: Bool = false
     @AppStorage("flowSensitivity") private var flowSensitivity: Double = 0.7
     
     private let themes: [BlinkTheme]
@@ -160,11 +161,29 @@ struct OnboardingView: View {
                         .fill(.ultraThinMaterial)
                         .ignoresSafeArea()
                         .onTapGesture { withAnimation(.spring(response: 0.3)) { showWhySheet = false } }
-                    
+
                     WhyExistView(theme: selectedTheme, onDismiss: {
                         withAnimation(.spring(response: 0.3)) { showWhySheet = false }
                     })
                     .frame(width: 620, height: 560)
+                    .background(Color(nsColor: .windowBackgroundColor))
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .shadow(color: .black.opacity(0.3), radius: 30, y: 10)
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            }
+
+            if showFlowLearnMore {
+                ZStack {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea()
+                        .onTapGesture { withAnimation(.spring(response: 0.3)) { showFlowLearnMore = false } }
+
+                    FlowLearnMoreView(theme: selectedTheme, onDismiss: {
+                        withAnimation(.spring(response: 0.3)) { showFlowLearnMore = false }
+                    })
+                    .frame(width: 480, height: 560)
                     .background(Color(nsColor: .windowBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .shadow(color: .black.opacity(0.3), radius: 30, y: 10)
@@ -296,33 +315,18 @@ struct OnboardingView: View {
                 
                 // Fixed bottom buttons
                 VStack(spacing: 10) {
-                    HStack(spacing: 20) {
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = false }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 12))
-                                Text("Themes")
-                                    .font(.system(size: 13, weight: .medium))
-                            }
-                            .foregroundStyle(fg.opacity(0.7))
+                    Button {
+                        withAnimation(.spring(response: 0.4)) { showFlowLearnMore = true }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 13))
+                            Text("Learn more about flow detection")
+                                .font(.system(size: 13, weight: .medium))
                         }
-                        .buttonStyle(.plain)
-
-                        Button {
-                            withAnimation(.spring(response: 0.4)) { showWhySheet = true }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "info.circle")
-                                    .font(.system(size: 12))
-                                Text("Learn more")
-                                    .font(.system(size: 13, weight: .medium))
-                            }
-                            .foregroundStyle(fg.opacity(0.7))
-                        }
-                        .buttonStyle(.plain)
+                        .foregroundStyle(fg.opacity(0.7))
                     }
+                    .buttonStyle(.plain)
 
                     Button {
                         themeManager.hasCompletedOnboarding = true
