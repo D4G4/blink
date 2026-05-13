@@ -56,12 +56,17 @@ struct PermissionOnboardingView: View {
                 .padding(.bottom, 36)
 
                 // What happens next
-                HStack(spacing: 8) {
-                    Image(systemName: "info.circle")
-                        .font(.system(size: 13))
-                        .foregroundStyle(fg.opacity(0.5))
-                    Text("macOS will ask you to grant access in System Settings")
-                        .font(.system(size: 13))
+                VStack(spacing: 4) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 13))
+                            .foregroundStyle(fg.opacity(0.5))
+                        Text("System Settings will open to Accessibility")
+                            .font(.system(size: 13))
+                            .foregroundStyle(fg.opacity(0.5))
+                    }
+                    Text("Click + → find Blink in Applications → Open")
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(fg.opacity(0.5))
                 }
                 .padding(.bottom, 20)
