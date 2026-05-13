@@ -63,8 +63,8 @@ struct MenuBarView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(accentColor)
                 Text("\(appState.breaksTakenToday) breaks today")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.primary.opacity(0.7))
                 Spacer()
             }
             .padding(.horizontal, 16)
@@ -107,7 +107,7 @@ struct MenuBarView: View {
                         Text("About")
                             .font(.system(size: 12))
                     }
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary.opacity(0.6))
                 }
                 .buttonStyle(.plain)
 
@@ -123,7 +123,7 @@ struct MenuBarView: View {
                         Text("Preferences")
                             .font(.system(size: 12))
                     }
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary.opacity(0.6))
                 }
                 .buttonStyle(.plain)
 
@@ -134,7 +134,7 @@ struct MenuBarView: View {
                 } label: {
                     Text("Quit")
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary.opacity(0.6))
+                        .foregroundStyle(.primary.opacity(0.4))
                 }
                 .buttonStyle(.plain)
             }
@@ -285,8 +285,8 @@ struct MenuBarView: View {
                 .fill(flowStateColor)
                 .frame(width: 6, height: 6)
             Text(flowStateBadgeLabel)
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.primary.opacity(0.7))
         }
     }
 
@@ -317,8 +317,8 @@ struct MenuBarView: View {
         if appState.isVideoPlaying { return "Video playing — timer paused" }
         switch appState.flowState {
         case .normal: return "Timer running"
-        case .flow: return "In flow — timer extended"
-        case .deepFlow: return "Deep flow — timer extended"
+        case .flow: return "In flow — extended to 30 min"
+        case .deepFlow: return "Deep flow — extended to 40 min"
         case .idle: return "Away — timer paused"
         case .meeting: return "In meeting — timer paused"
         case .breakPrompted: return "Break time"

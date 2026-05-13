@@ -500,15 +500,15 @@ private struct BreakPhaseView: View {
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
-        let bg = theme.overlayBackground(for: colorScheme)
-        let fg = theme.overlayText(for: colorScheme)
+        let fg = theme.onBackgroundText(for: colorScheme)
         ZStack {
-            bg.ignoresSafeArea()
-            
+            theme.backgroundGradient(for: colorScheme)
+                .ignoresSafeArea()
+
             ZStack(alignment: .topTrailing) {
                 VStack(spacing: 40) {
                     Text("Look at something far away")
-                        .font(.system(size: 22, weight: .medium))
+                        .font(.system(size: 24, weight: .medium))
                         .foregroundStyle(fg)
 
                     ZStack {
@@ -543,25 +543,25 @@ private struct BreakPhaseView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
-                // Mini 20-feet badge in top right
-                VStack(spacing: 6) {
+                // 20-feet badge in top right
+                VStack(spacing: 8) {
                     Image(systemName: "eye")
-                        .font(.system(size: 14))
-                        .foregroundStyle(theme.accent)
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        .font(.system(size: 22))
+                        .foregroundStyle(theme.accent(for: colorScheme))
+                    HStack(alignment: .firstTextBaseline, spacing: 3) {
                         Text("20")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundStyle(fg)
                         Text("ft")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(fg.opacity(0.5))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(fg.opacity(0.7))
                     }
                 }
-                .padding(10)
-                .background(theme.accent.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .padding(.top, 28)
-                .padding(.trailing, 28)
+                .padding(16)
+                .background(theme.accent(for: colorScheme).opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.top, 32)
+                .padding(.trailing, 32)
             }
         }
         .onAppear { model.startTimer(onComplete: onComplete) }

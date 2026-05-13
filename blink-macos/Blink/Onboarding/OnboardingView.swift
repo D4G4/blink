@@ -9,6 +9,8 @@ struct OnboardingView: View {
     @State private var iconScale: CGFloat = 0.5
     @State private var iconOpacity: Double = 0
     @State private var showWhySheet: Bool = false
+    @State private var showFlowPage: Bool = false
+    @AppStorage("flowSensitivity") private var flowSensitivity: Double = 0.7
 
     private let themes: [BlinkTheme]
 
@@ -124,13 +126,17 @@ struct OnboardingView: View {
                 .buttonStyle(.plain)
                 .padding(.bottom, 12)
 
-                // Get started button
+                // Next / Get Started button
                 Button {
                     themeManager.select(selectedTheme)
-                    themeManager.hasCompletedOnboarding = true
-                    onComplete()
+                    if !showFlowPage {
+                        withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = true }
+                    } else {
+                        themeManager.hasCompletedOnboarding = true
+                        onComplete()
+                    }
                 } label: {
-                    Text("Get Started")
+                    Text(showFlowPage ? "Get Started" : "Next")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(selectedTheme.backgroundTop(for: colorScheme))
                         .frame(width: 200, height: 48)
@@ -140,6 +146,12 @@ struct OnboardingView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.bottom, 32)
+            }
+
+            // Flow sensitivity page overlay
+            if showFlowPage {
+                flowSensitivityPage
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
             }
 
             if showWhySheet {
@@ -181,6 +193,142 @@ struct OnboardingView: View {
             onComplete()
             return .handled
         }
+    }
+
+    // MARK: - Flow Sensitivity Page
+
+    private var flowSensitivityPage: some View {
+        let fg = selectedTheme.onBackgroundText(for: colorScheme)
+        let accent = selectedTheme.accent(for: colorScheme)
+
+        return ZStack {
+            selectedTheme.backgroundGradient(for: colorScheme)
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                Image(systemName: "brain.head.profile")
+                    .font(.system(size: 48, weight: .light))
+                    .foregroundStyle(accent)
+                    .padding(.bottom, 20)
+
+                Text("Flow Detection")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(fg)
+                    .padding(.bottom, 8)
+
+                Text("Blink detects when you're focused and extends break intervals")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(fg.opacity(0.85))
+                    .multilineTextAlignment(.center)
+                    .padding(.bottom, 32)
+
+                // What is flow?
+                VStack(alignment: .leading, spacing: 12) {
+                    flowExplainerRow(
+                        icon: "keyboard",
+                        text: "Steady typing rhythm = focused work",
+                        fg: fg, accent: accent
+                    )
+                    flowExplainerRow(
+                        icon: "arrow.triangle.swap",
+                        text: "Fewer app switches = deeper concentration",
+                        fg: fg, accent: accent
+                    )
+                    flowExplainerRow(
+                        icon: "timer",
+                        text: "In flow: 20 min → 30 min. Deep flow: → 40 min",
+                        fg: fg, accent: accent
+                    )
+                }
+                .frame(maxWidth: 380)
+                .padding(.bottom, 32)
+
+                // Sensitivity slider
+                VStack(spacing: 12) {
+                    Text("Flow Sensitivity")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(fg)
+
+                    HStack(spacing: 12) {
+                        Text("Low")
+                            .font(.system(size: 12))
+                            .foregroundStyle(fg.opacity(0.6))
+                        Slider(value: $flowSensitivity, in: 0.4...0.9, step: 0.05)
+                            .tint(accent)
+                        Text("High")
+                            .font(.system(size: 12))
+                            .foregroundStyle(fg.opacity(0.6))
+                    }
+
+                    Text(String(format: "%.0f%%", flowSensitivity * 100))
+                        .font(.system(size: 28, weight: .light, design: .monospaced))
+                        .foregroundStyle(fg)
+
+                    Text("Higher = flow detected more easily, longer intervals between breaks")
+                        .font(.system(size: 12))
+                        .foregroundStyle(fg.opacity(0.6))
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: 340)
+                .padding(24)
+                .background(fg.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+
+                Spacer()
+
+                // Back button
+                Button {
+                    withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = false }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 13))
+                        Text("Back to themes")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .foregroundStyle(fg.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 12)
+
+                // Get Started button
+                Button {
+                    themeManager.hasCompletedOnboarding = true
+                    onComplete()
+                } label: {
+                    Text("Get Started")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(selectedTheme.backgroundTop(for: colorScheme))
+                        .frame(width: 200, height: 48)
+                        .background(fg)
+                        .clipShape(Capsule())
+                        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 32)
+            }
+            .padding(.horizontal, 40)
+        }
+    }
+
+    private func flowExplainerRow(icon: String, text: String, fg: Color, accent: Color) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(selectedTheme.backgroundTop(for: colorScheme))
+                .frame(width: 36, height: 36)
+                .background(fg)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            Text(text)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(fg.opacity(0.9))
+            Spacer()
+        }
+        .padding(12)
+        .background(fg.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private func navigatePrevious() {
