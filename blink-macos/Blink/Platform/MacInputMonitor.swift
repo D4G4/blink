@@ -3,7 +3,7 @@ import CoreGraphics
 import BlinkCore
 
 /// Monitors keyboard and mouse events via CGEventTap (listen-only).
-/// Requires Accessibility permission.
+/// Requires Input Monitoring permission.
 final class MacInputMonitor: InputEventSource {
     var onKeystroke: ((KeystrokeEvent) -> Void)?
     var onMouseEvent: ((MouseEvent) -> Void)?
@@ -31,7 +31,7 @@ final class MacInputMonitor: InputEventSource {
             callback: MacInputMonitor.eventCallback,
             userInfo: selfPtr
         ) else {
-            print("[Blink] Failed to create CGEventTap — Accessibility permission may not be granted")
+            print("[Blink] Failed to create CGEventTap — Input Monitoring permission may not be granted")
             return
         }
 

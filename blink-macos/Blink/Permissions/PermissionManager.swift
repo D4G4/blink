@@ -10,10 +10,30 @@ enum PermissionManager {
         CGPreflightListenEventAccess()
     }
 
-    /// Request Input Monitoring permission (shows system prompt).
+    /// Request Input Monitoring permission.
+    /// First calls CGRequestListenEventAccess() for the system prompt,
+    /// then attempts to create a CGEventTap which also triggers the prompt
+    /// on some macOS versions where CGRequestListenEventAccess alone doesn't.
     static func requestInputMonitoring() {
-        guard !isInputMonitoringGranted() else { return }
-        CGRequestListenEventAccess()
+        if !isInputMonitoringGranted() {
+            // This should show the system prompt
+            CGRequestListenEventAccess()
+
+            // On some macOS versions, creating the tap itself triggers the prompt
+            let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
+            if let tap = CGEvent.tapCreate(
+                tap: .cgSessionEventTap,
+                place: .tailAppendEventTap,
+                options: .listenOnly,
+                eventsOfInterest: eventMask,
+                callback: { _, _, event, _ in Unmanaged.passUnretained(event) },
+                userInfo: nil
+            ) {
+                // Tap created = permission was already granted, clean up
+                CGEvent.tapEnable(tap: tap, enable: false)
+            }
+            // If tap creation fails, the system should have shown the prompt
+        }
     }
 
     /// Opens System Settings to the Input Monitoring pane directly.
