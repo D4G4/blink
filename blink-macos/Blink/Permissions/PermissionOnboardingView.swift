@@ -27,8 +27,8 @@ struct PermissionOnboardingView: View {
                     .padding(.bottom, 8)
 
                 Text("Blink needs Accessibility permission to work")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(fg.opacity(0.7))
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(fg.opacity(0.85))
                     .padding(.bottom, 36)
 
                 // Explanation cards
@@ -56,18 +56,18 @@ struct PermissionOnboardingView: View {
                 .padding(.bottom, 36)
 
                 // What happens next
-                VStack(spacing: 4) {
+                VStack(spacing: 6) {
                     HStack(spacing: 8) {
                         Image(systemName: "info.circle")
-                            .font(.system(size: 13))
-                            .foregroundStyle(fg.opacity(0.5))
+                            .font(.system(size: 14))
+                            .foregroundStyle(fg.opacity(0.8))
                         Text("System Settings will open to Accessibility")
-                            .font(.system(size: 13))
-                            .foregroundStyle(fg.opacity(0.5))
+                            .font(.system(size: 14))
+                            .foregroundStyle(fg.opacity(0.8))
                     }
-                    Text("Click + → find Blink in Applications → Open")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(fg.opacity(0.5))
+                    Text("Click  +  →  find Blink in Applications  →  Open")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(fg)
                 }
                 .padding(.bottom, 20)
 
@@ -95,23 +95,23 @@ struct PermissionOnboardingView: View {
             Image(systemName: icon)
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(theme.backgroundTop(for: colorScheme))
-                .frame(width: 36, height: 36)
+                .frame(width: 40, height: 40)
                 .background(fg)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(fg)
                 Text(description)
-                    .font(.system(size: 12))
-                    .foregroundStyle(fg.opacity(0.6))
+                    .font(.system(size: 13))
+                    .foregroundStyle(fg.opacity(0.8))
             }
 
             Spacer()
         }
-        .padding(14)
-        .background(fg.opacity(0.08))
+        .padding(16)
+        .background(fg.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
