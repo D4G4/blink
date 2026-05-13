@@ -195,6 +195,23 @@ struct OnboardingView: View {
         }
     }
 
+    private var flowSensitivityExample: String {
+        switch flowSensitivity {
+        case ..<0.5:
+            return "Strict — flow rarely detected. Breaks every 20 min even during focus."
+        case 0.5..<0.6:
+            return "Conservative — only intense coding sessions trigger flow. Breaks mostly at 20 min."
+        case 0.6..<0.7:
+            return "Balanced — steady work extends to 30 min. Casual browsing stays at 20 min."
+        case 0.7..<0.8:
+            return "Recommended — normal work extends to 30 min. Deep focus reaches 40 min."
+        case 0.8..<0.9:
+            return "Sensitive — most focused work triggers flow. Breaks at 30–40 min."
+        default:
+            return "Very sensitive — flow detected easily. You'll rarely get a break at 20 min."
+        }
+    }
+
     // MARK: - Flow Sensitivity Page
 
     private var flowSensitivityPage: some View {
@@ -206,110 +223,113 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                Spacer()
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        Image(systemName: "brain.head.profile")
+                            .font(.system(size: 40, weight: .light))
+                            .foregroundStyle(accent)
+                            .padding(.top, 32)
+                            .padding(.bottom, 14)
 
-                Image(systemName: "brain.head.profile")
-                    .font(.system(size: 48, weight: .light))
-                    .foregroundStyle(accent)
-                    .padding(.bottom, 20)
+                        Text("Flow Detection")
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundStyle(fg)
+                            .padding(.bottom, 6)
 
-                Text("Flow Detection")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundStyle(fg)
-                    .padding(.bottom, 8)
+                        Text("Blink detects when you're focused and extends break intervals")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(fg.opacity(0.85))
+                            .multilineTextAlignment(.center)
+                            .padding(.bottom, 24)
 
-                Text("Blink detects when you're focused and extends break intervals")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(fg.opacity(0.85))
-                    .multilineTextAlignment(.center)
-                    .padding(.bottom, 32)
+                        // What is flow?
+                        VStack(alignment: .leading, spacing: 8) {
+                            flowExplainerRow(
+                                icon: "keyboard",
+                                text: "Steady typing rhythm = focused work",
+                                fg: fg, accent: accent
+                            )
+                            flowExplainerRow(
+                                icon: "arrow.triangle.swap",
+                                text: "Fewer app switches = deeper focus",
+                                fg: fg, accent: accent
+                            )
+                            flowExplainerRow(
+                                icon: "timer",
+                                text: "Flow: 30 min · Deep flow: 40 min",
+                                fg: fg, accent: accent
+                            )
+                        }
+                        .frame(maxWidth: 360)
+                        .padding(.bottom, 24)
 
-                // What is flow?
-                VStack(alignment: .leading, spacing: 12) {
-                    flowExplainerRow(
-                        icon: "keyboard",
-                        text: "Steady typing rhythm = focused work",
-                        fg: fg, accent: accent
-                    )
-                    flowExplainerRow(
-                        icon: "arrow.triangle.swap",
-                        text: "Fewer app switches = deeper concentration",
-                        fg: fg, accent: accent
-                    )
-                    flowExplainerRow(
-                        icon: "timer",
-                        text: "In flow: 20 min → 30 min. Deep flow: → 40 min",
-                        fg: fg, accent: accent
-                    )
-                }
-                .frame(maxWidth: 380)
-                .padding(.bottom, 32)
+                        // Sensitivity slider
+                        VStack(spacing: 10) {
+                            Text("Flow Sensitivity")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(fg)
 
-                // Sensitivity slider
-                VStack(spacing: 12) {
-                    Text("Flow Sensitivity")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(fg)
+                            HStack(spacing: 12) {
+                                Text("Low")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(fg.opacity(0.7))
+                                Slider(value: $flowSensitivity, in: 0.4...0.9, step: 0.05)
+                                    .tint(accent)
+                                Text("High")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(fg.opacity(0.7))
+                            }
 
-                    HStack(spacing: 12) {
-                        Text("Low")
-                            .font(.system(size: 12))
-                            .foregroundStyle(fg.opacity(0.6))
-                        Slider(value: $flowSensitivity, in: 0.4...0.9, step: 0.05)
-                            .tint(accent)
-                        Text("High")
-                            .font(.system(size: 12))
-                            .foregroundStyle(fg.opacity(0.6))
+                            Text(String(format: "%.0f%%", flowSensitivity * 100))
+                                .font(.system(size: 24, weight: .light, design: .monospaced))
+                                .foregroundStyle(fg)
+
+                            // Dynamic example based on sensitivity
+                            Text(flowSensitivityExample)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(fg.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                                .animation(.easeInOut(duration: 0.2), value: flowSensitivity)
+                        }
+                        .frame(maxWidth: 320)
+                        .padding(20)
+                        .background(fg.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
-
-                    Text(String(format: "%.0f%%", flowSensitivity * 100))
-                        .font(.system(size: 28, weight: .light, design: .monospaced))
-                        .foregroundStyle(fg)
-
-                    Text("Higher = flow detected more easily, longer intervals between breaks")
-                        .font(.system(size: 12))
-                        .foregroundStyle(fg.opacity(0.6))
-                        .multilineTextAlignment(.center)
                 }
-                .frame(maxWidth: 340)
-                .padding(24)
-                .background(fg.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .padding(.horizontal, 40)
 
-                Spacer()
-
-                // Back button
-                Button {
-                    withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = false }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 13))
-                        Text("Back to themes")
-                            .font(.system(size: 14, weight: .medium))
+                // Fixed bottom buttons
+                VStack(spacing: 10) {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = false }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 13))
+                            Text("Back to themes")
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        .foregroundStyle(fg.opacity(0.7))
                     }
-                    .foregroundStyle(fg.opacity(0.7))
-                }
-                .buttonStyle(.plain)
-                .padding(.bottom, 12)
+                    .buttonStyle(.plain)
 
-                // Get Started button
-                Button {
-                    themeManager.hasCompletedOnboarding = true
-                    onComplete()
-                } label: {
-                    Text("Get Started")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(selectedTheme.backgroundTop(for: colorScheme))
-                        .frame(width: 200, height: 48)
-                        .background(fg)
-                        .clipShape(Capsule())
-                        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                    Button {
+                        themeManager.hasCompletedOnboarding = true
+                        onComplete()
+                    } label: {
+                        Text("Get Started")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(selectedTheme.backgroundTop(for: colorScheme))
+                            .frame(width: 200, height: 48)
+                            .background(fg)
+                            .clipShape(Capsule())
+                            .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-                .padding(.bottom, 32)
+                .padding(.bottom, 24)
             }
-            .padding(.horizontal, 40)
         }
     }
 

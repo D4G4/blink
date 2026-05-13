@@ -506,7 +506,9 @@ private struct BreakPhaseView: View {
                 .ignoresSafeArea()
 
             ZStack(alignment: .topTrailing) {
-                VStack(spacing: 40) {
+                VStack() {
+                    Spacer()
+
                     Text("Look at something far away")
                         .font(.system(size: 24, weight: .medium))
                         .foregroundStyle(fg)
@@ -535,13 +537,18 @@ private struct BreakPhaseView: View {
                             .transition(.opacity.combined(with: .scale))
                     }
 
+                    Spacer()
+
                     HStack(spacing: 32) {
                         KeyHintView(key: "esc", label: "Skip break", theme: theme)
                         KeyHintView(key: "→", label: "Extend 20s", theme: theme)
                     }
-                    .padding(.top, 16)
+
+                    Spacer()
+                        .frame(height: 40)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
                 
                 // 20-feet badge in top right
                 VStack(spacing: 8) {
