@@ -505,13 +505,37 @@ private struct BreakPhaseView: View {
             theme.backgroundGradient(for: colorScheme)
                 .ignoresSafeArea()
 
-            ZStack(alignment: .topTrailing) {
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
+                // Title row with 20ft badge
+                HStack {
                     Spacer()
-
                     Text("Look at something far away")
                         .font(.system(size: 24, weight: .medium))
                         .foregroundStyle(fg)
+                    Spacer()
+                }
+                .overlay(alignment: .trailing) {
+                    VStack(spacing: 6) {
+                        Image(systemName: "eye")
+                            .font(.system(size: 20))
+                            .foregroundStyle(fg.opacity(0.7))
+                        HStack(alignment: .firstTextBaseline, spacing: 3) {
+                            Text("20")
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundStyle(fg)
+                            Text("ft")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(fg.opacity(0.7))
+                        }
+                    }
+                    .padding(14)
+                    .background(fg.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.trailing, 32)
+                }
+                .padding(.top, 60)
+                    
+                    Spacer()
                     
                     Spacer()
 
@@ -535,8 +559,8 @@ private struct BreakPhaseView: View {
                     Spacer()
 
                     Text("+20s")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(theme.accent)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(fg)
                         .opacity(model.showExtendHint ? 1 : 0)
                         .animation(.easeInOut(duration: 0.3), value: model.showExtendHint)
 
@@ -552,27 +576,6 @@ private struct BreakPhaseView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
-                
-                // 20-feet badge in top right
-                VStack(spacing: 8) {
-                    Image(systemName: "eye")
-                        .font(.system(size: 22))
-                        .foregroundStyle(theme.accent(for: colorScheme))
-                    HStack(alignment: .firstTextBaseline, spacing: 3) {
-                        Text("20")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundStyle(fg)
-                        Text("ft")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(fg.opacity(0.7))
-                    }
-                }
-                .padding(16)
-                .background(theme.accent(for: colorScheme).opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .padding(.top, 32)
-                .padding(.trailing, 32)
-            }
         }
         .onAppear { model.startTimer(onComplete: onComplete) }
         .onDisappear { model.stopTimer() }
@@ -588,23 +591,23 @@ private struct KeyHintView: View {
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
-        let fg = theme.overlayText(for: colorScheme)
+        let fg = theme.onBackgroundText(for: colorScheme)
         HStack(spacing: 10) {
             Text(key)
                 .font(.system(size: 15, weight: .medium, design: .rounded))
-                .foregroundStyle(fg.opacity(0.9))
+                .foregroundStyle(fg)
                 .frame(minWidth: 36, minHeight: 28)
                 .padding(.horizontal, 8)
-                .background(theme.accent.opacity(0.15))
+                .background(fg.opacity(0.12))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(theme.accent.opacity(0.3), lineWidth: 1)
+                        .stroke(fg.opacity(0.2), lineWidth: 1)
                 )
-            
+
             Text(label)
                 .font(.system(size: 15))
-                .foregroundStyle(fg.opacity(0.5))
+                .foregroundStyle(fg.opacity(0.6))
         }
     }
 }
