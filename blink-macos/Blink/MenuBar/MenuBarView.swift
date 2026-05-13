@@ -308,7 +308,7 @@ struct MenuBarView: View {
         case .flow: return "In flow"
         case .deepFlow: return "Deep flow"
         case .idle: return "Away"
-        case .meeting: return "Meeting"
+        case .meeting: return "Mic active"
         case .breakPrompted: return "Break"
         }
     }
@@ -320,7 +320,7 @@ struct MenuBarView: View {
         case .flow: return "In flow — extended to 30 min"
         case .deepFlow: return "Deep flow — extended to 40 min"
         case .idle: return "Away — timer paused"
-        case .meeting: return "In meeting — timer paused"
+        case .meeting: return "Mic active — timer paused"
         case .breakPrompted: return "Break time"
         }
     }
