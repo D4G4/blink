@@ -551,18 +551,18 @@ private struct BreakPhaseView: View {
                 
                 ZStack {
                     Circle()
-                        .stroke(theme.accent.opacity(0.15), lineWidth: 4)
-                        .frame(width: 160, height: 160)
-                    
+                        .stroke(theme.accent.opacity(0.15), lineWidth: 5)
+                        .frame(width: 220, height: 220)
+
                     Circle()
                         .trim(from: 0, to: CGFloat(model.remaining) / CGFloat(model.total))
-                        .stroke(theme.accent, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                        .frame(width: 160, height: 160)
+                        .stroke(theme.accent, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .frame(width: 220, height: 220)
                         .rotationEffect(.degrees(-90))
                         .animation(.linear(duration: 1), value: model.remaining)
-                    
+
                     Text("\(model.remaining)")
-                        .font(.system(size: 64, weight: .ultraLight, design: .monospaced))
+                        .font(.system(size: 80, weight: .ultraLight, design: .monospaced))
                         .foregroundStyle(fg)
                 }
                 
