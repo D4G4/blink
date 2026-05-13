@@ -9,6 +9,7 @@ final class OverlayWindowController {
     private var toastWindow: NSWindow?
     private var fullscreenWindow: NSWindow?
     private var keyMonitor: Any?
+    private var globalKeyMonitor: Any?
     
     private var theme: BlinkTheme {
         UserDefaults.standard.bool(forKey: "useDarkOverlay")
@@ -226,7 +227,8 @@ final class OverlayWindowController {
             onSkip: skipAction
         )
         
-        // NSEvent local monitor for keyboard — .onKeyPress doesn't work in borderless windows
+        // NSEvent monitor for keyboard — .onKeyPress doesn't work in borderless windows
+        // Use local monitor (when app is active) + global monitor (when another app has focus)
         removeKeyMonitor()
         currentKeyHandler = KeyEventHandler(
             onEscape: skipAction,
@@ -238,10 +240,14 @@ final class OverlayWindowController {
             }
             return event
         }
+        globalKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            _ = self?.currentKeyHandler?.handle(event)
+        }
         
         win.contentView = NSHostingView(rootView: AnyView(breakView))
         win.makeKeyAndOrderFront(nil)
-        
+        NSApp.activate(ignoringOtherApps: true)
+
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.3
             win.animator().alphaValue = 1
@@ -254,6 +260,10 @@ final class OverlayWindowController {
         if let monitor = keyMonitor {
             NSEvent.removeMonitor(monitor)
             keyMonitor = nil
+        }
+        if let monitor = globalKeyMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalKeyMonitor = nil
         }
         currentKeyHandler = nil
     }
