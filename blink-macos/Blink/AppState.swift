@@ -170,9 +170,8 @@ final class AppState: ObservableObject {
             permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
                 guard let self else { return }
                 self.permissionWindow = nil
-                log.info("User acknowledged — opening accessibility settings")
+                log.info("User acknowledged — requesting accessibility permission")
                 PermissionManager.requestAccessibility()
-                PermissionManager.openAccessibilitySettings()
                 self.startPermissionPolling()
             }
         }
