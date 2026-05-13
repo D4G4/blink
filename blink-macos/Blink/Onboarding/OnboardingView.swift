@@ -3,7 +3,7 @@ import SwiftUI
 struct OnboardingView: View {
     @ObservedObject var themeManager: ThemeManager
     let onComplete: () -> Void
-
+    
     @Environment(\.colorScheme) private var colorScheme
     @State private var selectedIndex: Int = 0
     @State private var iconScale: CGFloat = 0.5
@@ -11,47 +11,47 @@ struct OnboardingView: View {
     @State private var showWhySheet: Bool = false
     @State private var showFlowPage: Bool = false
     @AppStorage("flowSensitivity") private var flowSensitivity: Double = 0.7
-
+    
     private let themes: [BlinkTheme]
-
+    
     init(themeManager: ThemeManager, isDarkMode: Bool = false, onComplete: @escaping () -> Void) {
         self.themeManager = themeManager
         self.onComplete = onComplete
         self.themes = isDarkMode ? BlinkTheme.allDark : BlinkTheme.allLight
     }
-
+    
     private var selectedTheme: BlinkTheme {
         themes[max(0, min(selectedIndex, themes.count - 1))]
     }
-
+    
     var body: some View {
         ZStack {
             selectedTheme.backgroundGradient(for: colorScheme)
                 .animation(.easeInOut(duration: 0.5), value: selectedIndex)
                 .animation(.easeInOut(duration: 0.3), value: colorScheme)
                 .ignoresSafeArea()
-
+            
             RadialGradient(
                 colors: [selectedTheme.onBackgroundText(for: colorScheme).opacity(0.1), .clear],
                 center: .center,
                 startRadius: 50,
                 endRadius: 300
             )
-
+            
             VStack(spacing: 0) {
                 Spacer()
-
+                
                 VStack(spacing: 8) {
                     Text("Welcome to Blink")
                         .font(.system(size: 38, weight: .bold, design: .rounded))
                         .foregroundStyle(selectedTheme.onBackgroundText(for: colorScheme))
-
+                    
                     Text("Smart breaks for your eyes")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(selectedTheme.onBackgroundText(for: colorScheme).opacity(0.7))
                 }
                 .padding(.bottom, 48)
-
+                
                 Image(selectedTheme.iconAsset)
                     .resizable()
                     .interpolation(.high)
@@ -64,13 +64,13 @@ struct OnboardingView: View {
                     .animation(.spring(response: 0.5, dampingFraction: 0.7), value: selectedIndex)
                     .id(selectedIndex)
                     .frame(height: 220)
-
+                
                 Text(selectedTheme.name)
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
                     .foregroundStyle(selectedTheme.onBackgroundText(for: colorScheme))
                     .padding(.top, 24)
                     .animation(.easeInOut(duration: 0.3), value: selectedIndex)
-
+                
                 // Navigation arrows
                 HStack(spacing: 60) {
                     Button {
@@ -82,7 +82,7 @@ struct OnboardingView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(selectedIndex == 0)
-
+                    
                     HStack(spacing: 8) {
                         ForEach(0..<themes.count, id: \.self) { i in
                             Circle()
@@ -92,7 +92,7 @@ struct OnboardingView: View {
                                 .animation(.easeOut(duration: 0.2), value: selectedIndex)
                         }
                     }
-
+                    
                     Button {
                         withAnimation { navigateNext() }
                     } label: {
@@ -104,9 +104,9 @@ struct OnboardingView: View {
                     .disabled(selectedIndex == themes.count - 1)
                 }
                 .padding(.top, 36)
-
+                
                 Spacer()
-
+                
                 // Why do I exist — above Get Started
                 Button {
                     withAnimation(.spring(response: 0.4)) { showWhySheet = true }
@@ -125,7 +125,7 @@ struct OnboardingView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.bottom, 12)
-
+                
                 // Next / Get Started button
                 Button {
                     themeManager.select(selectedTheme)
@@ -147,20 +147,20 @@ struct OnboardingView: View {
                 .buttonStyle(.plain)
                 .padding(.bottom, 32)
             }
-
+            
             // Flow sensitivity page overlay
             if showFlowPage {
                 flowSensitivityPage
                     .transition(.move(edge: .trailing).combined(with: .opacity))
             }
-
+            
             if showWhySheet {
                 ZStack {
                     Rectangle()
                         .fill(.ultraThinMaterial)
                         .ignoresSafeArea()
                         .onTapGesture { withAnimation(.spring(response: 0.3)) { showWhySheet = false } }
-
+                    
                     WhyExistView(theme: selectedTheme, onDismiss: {
                         withAnimation(.spring(response: 0.3)) { showWhySheet = false }
                     })
@@ -194,7 +194,7 @@ struct OnboardingView: View {
             return .handled
         }
     }
-
+    
     private var flowSensitivityExample: String {
         switch flowSensitivity {
         case ..<0.5:
@@ -211,17 +211,17 @@ struct OnboardingView: View {
             return "Very sensitive — flow detected easily. You'll rarely get a break at 20 min."
         }
     }
-
+    
     // MARK: - Flow Sensitivity Page
-
+    
     private var flowSensitivityPage: some View {
         let fg = selectedTheme.onBackgroundText(for: colorScheme)
         let accent = selectedTheme.accent(for: colorScheme)
-
+        
         return ZStack {
             selectedTheme.backgroundGradient(for: colorScheme)
                 .ignoresSafeArea()
-
+            
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
@@ -230,18 +230,18 @@ struct OnboardingView: View {
                             .foregroundStyle(accent)
                             .padding(.top, 32)
                             .padding(.bottom, 14)
-
+                        
                         Text("Flow Detection")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundStyle(fg)
                             .padding(.bottom, 6)
-
+                        
                         Text("Blink detects when you're focused and extends break intervals")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(fg.opacity(0.85))
                             .multilineTextAlignment(.center)
                             .padding(.bottom, 24)
-
+                        
                         // What is flow?
                         VStack(alignment: .leading, spacing: 8) {
                             flowExplainerRow(
@@ -254,21 +254,16 @@ struct OnboardingView: View {
                                 text: "Fewer app switches = deeper focus",
                                 fg: fg, accent: accent
                             )
-                            flowExplainerRow(
-                                icon: "timer",
-                                text: "Flow: 30 min · Deep flow: 40 min",
-                                fg: fg, accent: accent
-                            )
                         }
                         .frame(maxWidth: 360)
                         .padding(.bottom, 24)
-
+                        
                         // Sensitivity slider
                         VStack(spacing: 10) {
                             Text("Flow Sensitivity")
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(fg)
-
+                            
                             HStack(spacing: 12) {
                                 Text("Low")
                                     .font(.system(size: 12))
@@ -279,11 +274,11 @@ struct OnboardingView: View {
                                     .font(.system(size: 12))
                                     .foregroundStyle(fg.opacity(0.7))
                             }
-
+                            
                             Text(String(format: "%.0f%%", flowSensitivity * 100))
                                 .font(.system(size: 24, weight: .light, design: .monospaced))
                                 .foregroundStyle(fg)
-
+                            
                             // Dynamic example based on sensitivity
                             Text(flowSensitivityExample)
                                 .font(.system(size: 12, weight: .medium))
@@ -298,21 +293,36 @@ struct OnboardingView: View {
                     }
                 }
                 .padding(.horizontal, 40)
-
+                
                 // Fixed bottom buttons
                 VStack(spacing: 10) {
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = false }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 13))
-                            Text("Back to themes")
-                                .font(.system(size: 14, weight: .medium))
+                    HStack(spacing: 20) {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = false }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 12))
+                                Text("Themes")
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                            .foregroundStyle(fg.opacity(0.7))
                         }
-                        .foregroundStyle(fg.opacity(0.7))
+                        .buttonStyle(.plain)
+
+                        Button {
+                            withAnimation(.spring(response: 0.4)) { showWhySheet = true }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "info.circle")
+                                    .font(.system(size: 12))
+                                Text("Learn more")
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                            .foregroundStyle(fg.opacity(0.7))
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
 
                     Button {
                         themeManager.hasCompletedOnboarding = true
@@ -332,7 +342,7 @@ struct OnboardingView: View {
             }
         }
     }
-
+    
     private func flowExplainerRow(icon: String, text: String, fg: Color, accent: Color) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
@@ -350,7 +360,7 @@ struct OnboardingView: View {
         .background(fg.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
-
+    
     private func navigatePrevious() {
         guard selectedIndex > 0 else { return }
         iconScale = 0.8
@@ -361,7 +371,7 @@ struct OnboardingView: View {
             iconOpacity = 1.0
         }
     }
-
+    
     private func navigateNext() {
         guard selectedIndex < themes.count - 1 else { return }
         iconScale = 0.8
