@@ -3,7 +3,7 @@ import Combine
 import os
 import BlinkCore
 
-private let log = Logger(subsystem: "com.blink.app", category: "AppState")
+private let log = Logger(subsystem: "com.blink20.app", category: "AppState")
 
 /// Central app state that coordinates all subsystems.
 @MainActor

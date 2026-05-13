@@ -1,7 +1,7 @@
 import AppKit
 import os
 
-private let log = Logger(subsystem: "com.blink.app", category: "Update")
+private let log = Logger(subsystem: "com.blink20.app", category: "Update")
 
 /// Checks GitHub Releases for a newer version on launch.
 @MainActor

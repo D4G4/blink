@@ -4,7 +4,7 @@ import CoreAudio
 import BlinkCore
 import os
 
-private let log = Logger(subsystem: "com.blink.app", category: "Context")
+private let log = Logger(subsystem: "com.blink20.app", category: "Context")
 
 /// Detects meeting state, Focus mode, fullscreen apps, and video playback.
 final class MacContextDetector: ContextSource {
