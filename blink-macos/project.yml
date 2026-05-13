@@ -24,9 +24,16 @@ targets:
         MARKETING_VERSION: "1.5.3"
         CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_KEY_LSUIElement: true
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.healthcare-fitness"
         INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright 2026 Blink"
+        ENABLE_HARDENED_RUNTIME: true
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 6V6FZW3FFN
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
     entitlements:
       path: Blink/Blink.entitlements
-      properties: {}
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.automation.apple-events: true
+        com.apple.security.network.client: true
