@@ -1,24 +1,24 @@
 import Foundation
 import AppKit
 import UserNotifications
+import CoreGraphics
 
-/// Manages system permissions for Accessibility and Notifications.
+/// Manages system permissions for Input Monitoring and Notifications.
 enum PermissionManager {
-    /// Check if Accessibility permission is currently granted.
-    static func isAccessibilityGranted() -> Bool {
-        AXIsProcessTrusted()
+    /// Check if Input Monitoring permission is currently granted.
+    static func isInputMonitoringGranted() -> Bool {
+        CGPreflightListenEventAccess()
     }
 
-    /// Request Accessibility permission (shows system prompt only if not already granted).
-    static func requestAccessibility() {
-        guard !isAccessibilityGranted() else { return }
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
-        AXIsProcessTrustedWithOptions(options)
+    /// Request Input Monitoring permission (shows system prompt).
+    static func requestInputMonitoring() {
+        guard !isInputMonitoringGranted() else { return }
+        CGRequestListenEventAccess()
     }
 
-    /// Opens System Settings to the Accessibility pane directly.
-    static func openAccessibilitySettings() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+    /// Opens System Settings to the Input Monitoring pane directly.
+    static func openInputMonitoringSettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")!)
     }
 
     /// Request notification permission.

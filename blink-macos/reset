@@ -1,6 +1,6 @@
 #!/bin/bash
-# Reset Blink for testing — clears onboarding + accessibility
+# Reset Blink for testing — clears onboarding + input monitoring
 defaults delete com.blink20.app hasCompletedOnboarding 2>/dev/null
 defaults delete com.blink20.app selectedTheme 2>/dev/null
-tccutil reset Accessibility com.blink20.app 2>/dev/null
+tccutil reset ListenEvent com.blink20.app 2>/dev/null
 echo "Blink reset. Run the app again."
