@@ -17,10 +17,10 @@ final class OverlayWindowController {
         : ThemeManager.shared.current
     }
     
-    func showBreak(onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
+    func showBreak(breakNumber: Int = 0, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
         showToast(onToastDone: { [weak self] in
             self?.dismissToast()
-            self?.showBreakTimer(onComplete: onComplete, onSkip: onSkip)
+            self?.showBreakTimer(breakNumber: breakNumber, onComplete: onComplete, onSkip: onSkip)
         })
     }
     
@@ -254,7 +254,7 @@ final class OverlayWindowController {
     
     // MARK: - Fullscreen break timer
     
-    private func showBreakTimer(onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
+    private func showBreakTimer(breakNumber: Int = 0, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
         
         let win = NSWindow(
@@ -279,6 +279,7 @@ final class OverlayWindowController {
         let breakView = BreakPhaseView(
             theme: theme,
             model: breakModel,
+            showWalkSuggestion: breakNumber >= 4,
             onComplete: { [weak self] in
                 self?.dismissFullscreen()
                 onComplete()
@@ -564,23 +565,35 @@ private final class BreakPhaseModel: ObservableObject {
 private struct BreakPhaseView: View {
     let theme: BlinkTheme
     @ObservedObject var model: BreakPhaseModel
+    var showWalkSuggestion: Bool = false
     let onComplete: () -> Void
     let onSkip: () -> Void
     @Environment(\.colorScheme) private var colorScheme
-    
+
     var body: some View {
         let fg = theme.onBackgroundText(for: colorScheme)
         ZStack {
             theme.backgroundGradient(for: colorScheme)
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // Title row with 20ft badge
                 HStack {
                     Spacer()
-                    Text("Look at something far away")
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundStyle(fg)
+                    VStack(spacing: 6) {
+                        Text("Look at something far away")
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundStyle(fg)
+                        if showWalkSuggestion {
+                            HStack(spacing: 6) {
+                                Image(systemName: "figure.walk")
+                                    .font(.system(size: 13))
+                                Text("You've taken 4+ breaks — consider a quick walk!")
+                                    .font(.system(size: 14, weight: .medium))
+                            }
+                            .foregroundStyle(fg.opacity(0.7))
+                        }
+                    }
                     Spacer()
                 }
                 .overlay(alignment: .trailing) {

@@ -61,6 +61,9 @@ final class AppState: ObservableObject {
     private var breakDueSince: Date?
     private var lastBreakEndedAt: Date?
 
+    // Consecutive break tracking — resets after 30 min idle or walk-away
+    private var consecutiveBreaksTaken: Int = 0
+
     // Break overlay
     private let overlayController = OverlayWindowController()
 
@@ -306,6 +309,7 @@ final class AppState: ObservableObject {
             if debugNotifications {
                 overlayController.showDebugToast("Timer reset: idle \(Int(idle))s ≥ \(Int(Self.idleBreakThreshold))s")
             }
+            consecutiveBreaksTaken = 0  // walked away — reset streak
             timerStateMachine.resetAfterBreak()
             remainingSeconds = timerStateMachine.remainingSeconds
         }
@@ -374,6 +378,7 @@ final class AppState: ObservableObject {
 
         // 3s countdown → 20s screen takeover
         overlayController.showBreak(
+            breakNumber: consecutiveBreaksTaken + 1,
             onComplete: { [weak self] in
                 Task { @MainActor in self?.takeBreak() }
             },
@@ -385,6 +390,7 @@ final class AppState: ObservableObject {
 
     func takeBreak() {
         log.info("✅ Break taken")
+        consecutiveBreaksTaken += 1
         complianceTracker.breakTaken(at: Date(), idleDuration: 20)
         finishBreak()
     }
