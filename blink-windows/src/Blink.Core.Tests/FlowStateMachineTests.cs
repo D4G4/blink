@@ -29,16 +29,16 @@ public class FlowStateMachineTests
     }
 
     [Fact]
-    public void SustainedLowScore_ExitsFlow()
+    public void GapExceedingTolerance_ExitsFlow()
     {
         var sm = new FlowStateMachine();
+        // Enter flow (3+ min of activity)
         for (int i = 0; i < 8; i++)
-            sm.Tick(0.8, 0, false, false, 1000 + i * 30);
+            sm.Tick(0.0, 5, false, false, 1000 + i * 30);
         Assert.Equal(FlowState.Flow, sm.State);
 
-        var exitStart = 1240.0;
-        for (int i = 0; i < 6; i++)
-            sm.Tick(0.2, 0, false, false, exitStart + i * 30);
+        // Gap > tolerance (65s > 60s at default 0.7 sensitivity)
+        sm.Tick(0.0, 65, false, false, 1300);
         Assert.Equal(FlowState.Normal, sm.State);
     }
 

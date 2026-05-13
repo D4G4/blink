@@ -1,25 +1,32 @@
 import Foundation
 
-/// Manages flow state transitions with hysteresis to prevent flapping.
+/// Manages flow state transitions based on activity gaps.
+///
+/// Instead of a weighted multi-scorer approach, flow is determined by
+/// a single metric: how long since the last input? If the user has been
+/// continuously active (no gap exceeding the tolerance) for 3+ minutes,
+/// they're in flow. One pause that exceeds the tolerance breaks flow.
+///
+/// The sensitivity slider controls gap tolerance:
+///   40% → 15s (strict)  ...  70% → 45s (default)  ...  90% → 90s (forgiving)
 public final class FlowStateMachine {
     public private(set) var state: FlowState = .normal
     public var onStateChange: ((_ old: FlowState, _ new: FlowState) -> Void)?
 
-    // Hysteresis tracking
-    private var scoreAboveFlowThresholdSince: TimeInterval?
-    private var scoreBelowExitThresholdSince: TimeInterval?
-    private var flowEntrySince: TimeInterval? // when we first entered flow
+    // Activity tracking
+    private var continuousActivityStart: TimeInterval?
+    private var flowEntrySince: TimeInterval?
 
     // Threshold defaults
-    public static let defaultFlowEntryThreshold: Double = 0.7
-    public static let defaultFlowExitThreshold: Double = 0.4
-    public static let defaultFlowEntryDuration: TimeInterval = 180    // 3 minutes
-    public static let defaultFlowExitDuration: TimeInterval = 120     // 2 minutes
+    public static let defaultFlowEntryThreshold: Double = 0.7  // sensitivity (maps to gap tolerance)
+    public static let defaultFlowExitThreshold: Double = 0.4   // unused, kept for API compat
+    public static let defaultFlowEntryDuration: TimeInterval = 180    // 3 minutes of activity
+    public static let defaultFlowExitDuration: TimeInterval = 120     // unused, kept for API compat
     public static let defaultDeepFlowDuration: TimeInterval = 900     // 15 minutes in flow
-    public static let defaultIdleThreshold: TimeInterval = 180        // 3 min — allows passive screen watching (e.g. agent output)
+    public static let defaultIdleThreshold: TimeInterval = 180        // 3 min idle = away
 
     // Configurable thresholds
-    public var flowEntryThreshold: Double = defaultFlowEntryThreshold
+    public var flowEntryThreshold: Double = defaultFlowEntryThreshold  // sensitivity
     public var flowExitThreshold: Double = defaultFlowExitThreshold
     public var flowEntryDuration: TimeInterval = defaultFlowEntryDuration
     public var flowExitDuration: TimeInterval = defaultFlowExitDuration
@@ -31,7 +38,16 @@ public final class FlowStateMachine {
 
     public init() {}
 
+    /// Gap tolerance in seconds, derived from the sensitivity slider (0.4–0.9).
+    /// Higher sensitivity = longer tolerance = easier to stay in flow.
+    public var gapTolerance: TimeInterval {
+        // 0.4 → 15s, 0.9 → 90s (linear)
+        let t = (flowEntryThreshold - 0.4) / (0.9 - 0.4)
+        return 15 + t * 75
+    }
+
     /// Called every 30 seconds by the app's tick loop.
+    /// flowScore is kept for display but NOT used for state transitions.
     public func tick(
         flowScore: Double,
         secondsSinceLastInput: TimeInterval,
@@ -48,7 +64,7 @@ public final class FlowStateMachine {
             return
         }
 
-        // Idle detection
+        // Idle detection (walked away)
         if secondsSinceLastInput >= idleThreshold {
             if state != .idle {
                 stateBeforePause = state
@@ -60,33 +76,40 @@ public final class FlowStateMachine {
         // Returning from idle/meeting
         if state == .idle || state == .meeting {
             stateBeforePause = nil
-            // Always return to normal — flow needs to be re-earned after being away
-            scoreAboveFlowThresholdSince = nil
-            scoreBelowExitThresholdSince = nil
+            continuousActivityStart = nil
             flowEntrySince = nil
             transition(to: .normal)
-            // Don't return — fall through to update hysteresis with current score
         }
 
         // Skip flow calculations during break
         if state == .breakPrompted { return }
 
-        // Update hysteresis counters
-        updateHysteresis(flowScore: flowScore, now: now)
+        // Activity-gap based flow detection
+        let isActive = secondsSinceLastInput < gapTolerance
 
-        // State transitions
+        if isActive {
+            if continuousActivityStart == nil {
+                continuousActivityStart = now
+            }
+        } else {
+            // Gap exceeded tolerance — break continuous activity
+            continuousActivityStart = nil
+        }
+
         switch state {
         case .normal:
-            if let since = scoreAboveFlowThresholdSince,
-               now - since >= flowEntryDuration {
+            // Enter flow after sustained activity
+            if let start = continuousActivityStart,
+               now - start >= flowEntryDuration {
                 flowEntrySince = now
                 transition(to: .flow)
             }
 
         case .flow:
-            if let since = scoreBelowExitThresholdSince,
-               now - since >= flowExitDuration {
+            if !isActive {
+                // Gap exceeded tolerance — exit flow
                 flowEntrySince = nil
+                continuousActivityStart = nil
                 transition(to: .normal)
             } else if let flowStart = flowEntrySince,
                       now - flowStart >= deepFlowDuration {
@@ -94,9 +117,9 @@ public final class FlowStateMachine {
             }
 
         case .deepFlow:
-            if let since = scoreBelowExitThresholdSince,
-               now - since >= flowExitDuration {
+            if !isActive {
                 flowEntrySince = nil
+                continuousActivityStart = nil
                 transition(to: .normal)
             }
 
@@ -113,34 +136,11 @@ public final class FlowStateMachine {
     /// Exit break-prompted state after break is taken or dismissed.
     public func exitBreakPrompted() {
         flowEntrySince = nil
-        scoreAboveFlowThresholdSince = nil
-        scoreBelowExitThresholdSince = nil
+        continuousActivityStart = nil
         transition(to: .normal)
     }
 
     // MARK: - Private
-
-    private func updateHysteresis(flowScore: Double, now: TimeInterval) {
-        if flowScore >= flowEntryThreshold {
-            if scoreAboveFlowThresholdSince == nil {
-                scoreAboveFlowThresholdSince = now
-            }
-            scoreBelowExitThresholdSince = nil
-        } else if flowScore < flowExitThreshold {
-            if scoreBelowExitThresholdSince == nil {
-                scoreBelowExitThresholdSince = now
-            }
-            scoreAboveFlowThresholdSince = nil
-        } else {
-            // In the dead zone between thresholds — maintain current state
-            // Reset whichever counter doesn't apply
-            if state == .normal {
-                scoreBelowExitThresholdSince = nil
-            } else {
-                scoreAboveFlowThresholdSince = nil
-            }
-        }
-    }
 
     private func transition(to newState: FlowState) {
         guard newState != state else { return }

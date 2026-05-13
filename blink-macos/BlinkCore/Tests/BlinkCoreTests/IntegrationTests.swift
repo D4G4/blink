@@ -147,20 +147,20 @@ struct IntegrationTests {
 
     // MARK: - Agent workflow (waiting for AI response)
 
-    @Test("Waiting for agent response with occasional scrolling keeps timer running")
+    @Test("Waiting for agent response with occasional scrolling enters flow")
     func agentWorkflowWithScrolling() {
         let sm = FlowStateMachine()
         let base: TimeInterval = 1000
 
         // User typed a prompt, now scrolling through output
-        // idle=5s (just scrolled), then idle=3s, then idle=8s — never hits 180s
+        // All gaps < 60s (default tolerance) → continuous activity → enters flow after 3 min
         for i in 0..<10 {
             let idle = Double([5, 3, 8, 2, 12, 4, 6, 15, 3, 7][i])
-            sm.tick(flowScore: 0.3, secondsSinceLastInput: idle,
+            sm.tick(flowScore: 0.0, secondsSinceLastInput: idle,
                     isMicActive: false, isCameraActive: false,
                     now: base + Double(i) * 30)
         }
-        #expect(sm.state == .normal, "Occasional mouse/scroll should prevent idle state")
+        #expect(sm.state == .flow, "5 min of continuous activity should enter flow")
     }
 
     @Test("Waiting for agent response sitting perfectly still triggers idle after 180s")

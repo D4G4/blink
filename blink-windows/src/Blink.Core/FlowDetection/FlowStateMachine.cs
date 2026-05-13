@@ -1,17 +1,22 @@
 namespace Blink.Core.FlowDetection;
 
+/// <summary>
+/// Manages flow state transitions based on activity gaps.
+/// Flow is determined by a single metric: how long since the last input?
+/// The sensitivity slider controls gap tolerance (how long you can pause and stay in flow).
+/// </summary>
 public sealed class FlowStateMachine
 {
     public FlowState State { get; private set; } = FlowState.Normal;
     public event Action<FlowState, FlowState>? OnStateChange;
 
     // Threshold defaults
-    public const double DefaultFlowEntryThreshold = 0.7;
+    public const double DefaultFlowEntryThreshold = 0.7;  // sensitivity
     public const double DefaultFlowExitThreshold = 0.4;
-    public const double DefaultFlowEntryDuration = 180;    // 3 minutes
-    public const double DefaultFlowExitDuration = 120;     // 2 minutes
-    public const double DefaultDeepFlowDuration = 900;     // 15 minutes
-    public const double DefaultIdleThreshold = 180;        // 3 min — allows passive screen watching (e.g. agent output)
+    public const double DefaultFlowEntryDuration = 180;    // 3 minutes of activity
+    public const double DefaultFlowExitDuration = 120;
+    public const double DefaultDeepFlowDuration = 900;     // 15 minutes in flow
+    public const double DefaultIdleThreshold = 180;        // 3 min idle = away
 
     // Configurable thresholds
     public double FlowEntryThreshold { get; set; } = DefaultFlowEntryThreshold;
@@ -21,11 +26,21 @@ public sealed class FlowStateMachine
     public double DeepFlowDuration { get; set; } = DefaultDeepFlowDuration;
     public double IdleThreshold { get; set; } = DefaultIdleThreshold;
 
-    // Hysteresis tracking
-    private double? _scoreAboveFlowThresholdSince;
-    private double? _scoreBelowExitThresholdSince;
+    // Activity tracking
+    private double? _continuousActivityStart;
     private double? _flowEntrySince;
     private FlowState? _stateBeforePause;
+
+    /// Gap tolerance in seconds, derived from sensitivity (0.4–0.9).
+    /// Higher sensitivity = longer tolerance = easier to stay in flow.
+    public double GapTolerance
+    {
+        get
+        {
+            var t = (FlowEntryThreshold - 0.4) / (0.9 - 0.4);
+            return 15 + t * 75;
+        }
+    }
 
     public void Tick(double flowScore, double secondsSinceLastInput, bool isMicActive, bool isCameraActive, double now)
     {
@@ -40,7 +55,7 @@ public sealed class FlowStateMachine
             return;
         }
 
-        // Idle detection
+        // Idle detection (walked away)
         if (secondsSinceLastInput >= IdleThreshold)
         {
             if (State != FlowState.Idle)
@@ -55,8 +70,7 @@ public sealed class FlowStateMachine
         if (State is FlowState.Idle or FlowState.Meeting)
         {
             _stateBeforePause = null;
-            _scoreAboveFlowThresholdSince = null;
-            _scoreBelowExitThresholdSince = null;
+            _continuousActivityStart = null;
             _flowEntrySince = null;
             Transition(FlowState.Normal);
         }
@@ -64,12 +78,22 @@ public sealed class FlowStateMachine
         // Skip flow calculations during break
         if (State == FlowState.BreakPrompted) return;
 
-        UpdateHysteresis(flowScore, now);
+        // Activity-gap based flow detection
+        var isActive = secondsSinceLastInput < GapTolerance;
+
+        if (isActive)
+        {
+            _continuousActivityStart ??= now;
+        }
+        else
+        {
+            _continuousActivityStart = null;
+        }
 
         switch (State)
         {
             case FlowState.Normal:
-                if (_scoreAboveFlowThresholdSince is { } since && now - since >= FlowEntryDuration)
+                if (_continuousActivityStart is { } start && now - start >= FlowEntryDuration)
                 {
                     _flowEntrySince = now;
                     Transition(FlowState.Flow);
@@ -77,9 +101,10 @@ public sealed class FlowStateMachine
                 break;
 
             case FlowState.Flow:
-                if (_scoreBelowExitThresholdSince is { } exitSince && now - exitSince >= FlowExitDuration)
+                if (!isActive)
                 {
                     _flowEntrySince = null;
+                    _continuousActivityStart = null;
                     Transition(FlowState.Normal);
                 }
                 else if (_flowEntrySince is { } flowStart && now - flowStart >= DeepFlowDuration)
@@ -89,9 +114,10 @@ public sealed class FlowStateMachine
                 break;
 
             case FlowState.DeepFlow:
-                if (_scoreBelowExitThresholdSince is { } deepExitSince && now - deepExitSince >= FlowExitDuration)
+                if (!isActive)
                 {
                     _flowEntrySince = null;
+                    _continuousActivityStart = null;
                     Transition(FlowState.Normal);
                 }
                 break;
@@ -103,30 +129,8 @@ public sealed class FlowStateMachine
     public void ExitBreakPrompted()
     {
         _flowEntrySince = null;
-        _scoreAboveFlowThresholdSince = null;
-        _scoreBelowExitThresholdSince = null;
+        _continuousActivityStart = null;
         Transition(FlowState.Normal);
-    }
-
-    private void UpdateHysteresis(double flowScore, double now)
-    {
-        if (flowScore >= FlowEntryThreshold)
-        {
-            _scoreAboveFlowThresholdSince ??= now;
-            _scoreBelowExitThresholdSince = null;
-        }
-        else if (flowScore < FlowExitThreshold)
-        {
-            _scoreBelowExitThresholdSince ??= now;
-            _scoreAboveFlowThresholdSince = null;
-        }
-        else
-        {
-            if (State == FlowState.Normal)
-                _scoreBelowExitThresholdSince = null;
-            else
-                _scoreAboveFlowThresholdSince = null;
-        }
     }
 
     private void Transition(FlowState newState)

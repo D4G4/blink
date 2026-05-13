@@ -65,13 +65,14 @@ public class IntegrationTests
     }
 
     [Fact]
-    public void AgentWorkflow_ScrollingPreventsIdle()
+    public void AgentWorkflow_ScrollingEntersFlow()
     {
         var sm = new FlowStateMachine();
+        // All gaps < 60s tolerance → continuous activity → enters flow after 3 min
         var idleTimes = new[] { 5.0, 3, 8, 2, 12, 4, 6, 15, 3, 7 };
         for (int i = 0; i < 10; i++)
-            sm.Tick(0.3, idleTimes[i], false, false, 1000 + i * 30);
-        Assert.Equal(FlowState.Normal, sm.State);
+            sm.Tick(0.0, idleTimes[i], false, false, 1000 + i * 30);
+        Assert.Equal(FlowState.Flow, sm.State);
     }
 
     [Fact]

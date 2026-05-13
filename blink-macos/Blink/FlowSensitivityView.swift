@@ -53,7 +53,7 @@ struct FlowSensitivityView: View {
                 .multilineTextAlignment(.center)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
         }
-        .frame(maxWidth: 320)
+        .frame(maxWidth: 420)
         .padding(20)
         .background(foregroundColor.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -80,20 +80,25 @@ struct FlowSensitivityView: View {
 
     // MARK: - Description
 
+    private var gapSeconds: Int {
+        let t = (sensitivity - 0.4) / (0.9 - 0.4)
+        return Int(15 + t * 75)
+    }
+
     var description: String {
         switch sensitivity {
         case ..<0.5:
-            return "Strict — flow rarely detected. Breaks every 20 min even during focus."
+            return "Strict — pauses over \(gapSeconds)s break flow. Only continuous action counts."
         case 0.5..<0.6:
-            return "Conservative — only intense coding sessions trigger flow. Breaks mostly at 20 min."
+            return "Conservative — pauses up to \(gapSeconds)s keep flow. Short thinking breaks are OK."
         case 0.6..<0.7:
-            return "Balanced — steady work extends to 30 min. Casual browsing stays at 20 min."
+            return "Balanced — pauses up to \(gapSeconds)s keep flow. Brief reading won't interrupt."
         case 0.7..<0.8:
-            return "Recommended — normal work extends to 30 min. Deep focus reaches 40 min."
+            return "Recommended — pauses up to \(gapSeconds)s keep flow. Natural thinking stays in flow."
         case 0.8..<0.9:
-            return "Sensitive — most focused work triggers flow. Breaks at 30–40 min."
+            return "Relaxed — pauses up to \(gapSeconds)s keep flow. Long reading sessions are fine."
         default:
-            return "Very sensitive — flow detected easily. You'll rarely get a break at 20 min."
+            return "Very relaxed — pauses up to \(gapSeconds)s keep flow. Almost any activity counts."
         }
     }
 }

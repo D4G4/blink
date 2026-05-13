@@ -312,16 +312,25 @@ final class AppState: ObservableObject {
     }
 
     private func handleBreakDue() {
-        // In flow/deep flow: don't interrupt immediately.
-        // Wait for a natural pause in input before showing the prompt.
+        // In flow/deep flow: show gentle nudge, don't force overlay
         if flowState == .flow || flowState == .deepFlow {
-            log.info("Break due but in \(self.flowState.rawValue) — waiting for natural pause")
-            breakDuePending = true
-            breakDueSince = Date()
+            let minutes = Int(timerStateMachine.timerDuration) / 60
+            log.info("Break due but in \(self.flowState.rawValue) — showing gentle nudge")
+            overlayController.showFlowNudge(
+                message: "You've been focused for \(minutes) min — time for a break?",
+                onTakeBreak: { [weak self] in
+                    Task { @MainActor in self?.showBreakPrompt() }
+                }
+            )
+            // Reset timer for next nudge in 20 min
+            timerStateMachine.resetAfterBreak()
+            remainingSeconds = timerStateMachine.remainingSeconds
             return
         }
 
-        showBreakPrompt()
+        // Normal state: wait for natural pause, then show overlay
+        breakDuePending = true
+        breakDueSince = Date()
     }
 
     /// Check if a pending break can now be delivered (natural pause detected).
@@ -332,7 +341,7 @@ final class AppState: ObservableObject {
         let idle = idleDetector?.secondsSinceLastInput() ?? 0
         let waited = Date().timeIntervalSince(breakDueSince ?? Date())
 
-        // Natural pause detected — user stopped typing/mousing for 3+ seconds
+        // Natural pause detected — user stopped typing/mousing for 6+ seconds
         if idle >= Self.naturalPauseThreshold {
             log.info("Natural pause detected (\(String(format: "%.1f", idle))s idle) after \(String(format: "%.0f", waited))s wait — showing break")
             breakDuePending = false
@@ -341,7 +350,7 @@ final class AppState: ObservableObject {
             return
         }
 
-        // Max wait exceeded — show a very subtle nudge (menu bar icon only, no popup)
+        // Max wait exceeded — reset silently
         if waited >= Self.maxPauseWaitSeconds {
             log.info("Waited \(String(format: "%.0f", waited))s for natural pause — giving up, resetting timer")
             breakDuePending = false
