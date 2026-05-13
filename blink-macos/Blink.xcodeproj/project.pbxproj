@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		09A1C80B8AA67D8958C07429 /* FlowLearnMoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */; };
 		0AF1EB410D21A0FAD63E48EA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D310BA2552802E7D6905702 /* SettingsView.swift */; };
 		1BB8F112BA1F2D463757D0E8 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB2FCB3D4A937B4DF52593C /* AppState.swift */; };
 		25F8E55421DC2B55922B6CC4 /* BlinkApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 989DBB159CA5CB427CCCADEF /* BlinkApp.swift */; };
@@ -56,6 +57,7 @@
 		71AF16B93A94215233284E2E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		73EF2DCF137E47C83983AFEB /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		8C3FE352EB3AFEEB76ECBD6B /* Blink.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Blink.entitlements; sourceTree = "<group>"; };
+		93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLearnMoreView.swift; sourceTree = "<group>"; };
 		977674318B8EB84E0DD3DE41 /* MacContextDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContextDetector.swift; sourceTree = "<group>"; };
 		989DBB159CA5CB427CCCADEF /* BlinkApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkApp.swift; sourceTree = "<group>"; };
 		A8919A95A03586CABD364494 /* WhyExistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistView.swift; sourceTree = "<group>"; };
@@ -156,6 +158,7 @@
 		A8EA54A8A76E97F6EDF86DC4 /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
+				93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */,
 				71AF16B93A94215233284E2E /* OnboardingView.swift */,
 				32296CA5F384757F2CCB9CDC /* OnboardingWindow.swift */,
 				A8919A95A03586CABD364494 /* WhyExistView.swift */,
@@ -281,6 +284,7 @@
 				25F8E55421DC2B55922B6CC4 /* BlinkApp.swift in Sources */,
 				51B85A79F15C502885A3F8C2 /* BlinkTheme.swift in Sources */,
 				DE5BDA2DC244F80E4D05FDA7 /* BreakNotificationManager.swift in Sources */,
+				09A1C80B8AA67D8958C07429 /* FlowLearnMoreView.swift in Sources */,
 				9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */,
 				D5C6DCF4BA41B2C014A4D3C8 /* MacContextDetector.swift in Sources */,
 				8A0AFA5135D8FBEB7414E8FB /* MacIdleDetector.swift in Sources */,
@@ -444,7 +448,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.5.3;
+				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -470,7 +474,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.5.3;
+				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;

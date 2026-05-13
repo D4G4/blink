@@ -88,22 +88,22 @@ final class OverlayWindowController {
     /// Show a debug toast with a reason for timer reset or state change.
     func showDebugToast(_ message: String) {
         dismissToast()
-
+        
         guard let screen = NSScreen.main else { return }
-
+        
         let toastWidth: CGFloat = 320
         let toastHeight: CGFloat = 44
         let padding: CGFloat = 16
-
+        
         let toastFrame = NSRect(
             x: screen.visibleFrame.maxX - toastWidth - padding,
             y: screen.visibleFrame.minY + padding,
             width: toastWidth,
             height: toastHeight
         )
-
+        
         let view = DebugToastView(message: message)
-
+        
         let panel = NSPanel(
             contentRect: toastFrame,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -119,21 +119,21 @@ final class OverlayWindowController {
         panel.hidesOnDeactivate = false
         panel.becomesKeyOnlyIfNeeded = true
         panel.contentView = NSHostingView(rootView: view)
-
+        
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.2
             panel.animator().alphaValue = 1
         }
-
+        
         self.toastWindow = panel
-
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
             self?.dismissToast()
         }
     }
-
+    
     // MARK: - Phase 1: Mini toast (bottom-right corner)
     
     private func showToast(onToastDone: @escaping () -> Void) {
@@ -504,7 +504,7 @@ private struct BreakPhaseView: View {
         ZStack {
             theme.backgroundGradient(for: colorScheme)
                 .ignoresSafeArea()
-
+            
             VStack(spacing: 0) {
                 // Title row with 20ft badge
                 HStack {
@@ -533,49 +533,49 @@ private struct BreakPhaseView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .padding(.trailing, 32)
                 }
-                .padding(.top, 60)
+                .padding(.top, 80)
+                
+                Spacer()
+                
+                Spacer()
+                
+                ZStack {
+                    Circle()
+                        .stroke(theme.accent.opacity(0.15), lineWidth: 4)
+                        .frame(width: 160, height: 160)
                     
-                    Spacer()
+                    Circle()
+                        .trim(from: 0, to: CGFloat(model.remaining) / CGFloat(model.total))
+                        .stroke(theme.accent, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .frame(width: 160, height: 160)
+                        .rotationEffect(.degrees(-90))
+                        .animation(.linear(duration: 1), value: model.remaining)
                     
-                    Spacer()
-
-                    ZStack {
-                        Circle()
-                            .stroke(theme.accent.opacity(0.15), lineWidth: 4)
-                            .frame(width: 160, height: 160)
-
-                        Circle()
-                            .trim(from: 0, to: CGFloat(model.remaining) / CGFloat(model.total))
-                            .stroke(theme.accent, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                            .frame(width: 160, height: 160)
-                            .rotationEffect(.degrees(-90))
-                            .animation(.linear(duration: 1), value: model.remaining)
-
-                        Text("\(model.remaining)")
-                            .font(.system(size: 64, weight: .ultraLight, design: .monospaced))
-                            .foregroundStyle(fg)
-                    }
-                    
-                    Spacer()
-
-                    Text("+20s")
-                        .font(.system(size: 16, weight: .semibold))
+                    Text("\(model.remaining)")
+                        .font(.system(size: 64, weight: .ultraLight, design: .monospaced))
                         .foregroundStyle(fg)
-                        .opacity(model.showExtendHint ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.3), value: model.showExtendHint)
-
-                    Spacer()
-
-                    HStack(spacing: 32) {
-                        KeyHintView(key: "esc", label: "Skip break", theme: theme)
-                        KeyHintView(key: "→", label: "Extend 20s", theme: theme)
-                    }
-
-                    Spacer()
-                        .frame(height: 40)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .ignoresSafeArea()
+                
+                Spacer()
+                
+                Text("+20s")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(fg)
+                    .opacity(model.showExtendHint ? 1 : 0)
+                    .animation(.easeInOut(duration: 0.3), value: model.showExtendHint)
+                
+                Spacer()
+                
+                HStack(spacing: 32) {
+                    KeyHintView(key: "esc", label: "Skip break", theme: theme)
+                    KeyHintView(key: "→", label: "Extend 20s", theme: theme)
+                }
+                
+                Spacer()
+                    .frame(height: 40)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
         }
         .onAppear { model.startTimer(onComplete: onComplete) }
         .onDisappear { model.stopTimer() }
@@ -604,7 +604,7 @@ private struct KeyHintView: View {
                     RoundedRectangle(cornerRadius: 6)
                         .stroke(fg.opacity(0.2), lineWidth: 1)
                 )
-
+            
             Text(label)
                 .font(.system(size: 15))
                 .foregroundStyle(fg.opacity(0.6))
@@ -616,7 +616,7 @@ private struct KeyHintView: View {
 
 private struct DebugToastView: View {
     let message: String
-
+    
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "ant")
