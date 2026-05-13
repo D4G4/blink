@@ -43,7 +43,4 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
     entitlements:
       path: Blink/Blink.entitlements
-      properties:
-        com.apple.security.app-sandbox: true
-        com.apple.security.automation.apple-events: true
-        com.apple.security.network.client: true
+      properties: {}

@@ -1,44 +1,24 @@
 import Foundation
 import AppKit
 import UserNotifications
-import CoreGraphics
 
-/// Manages system permissions for Input Monitoring and Notifications.
+/// Manages system permissions for Accessibility and Notifications.
 enum PermissionManager {
-    /// Check if Input Monitoring permission is currently granted.
-    static func isInputMonitoringGranted() -> Bool {
-        CGPreflightListenEventAccess()
+    /// Check if Accessibility permission is currently granted.
+    static func isAccessibilityGranted() -> Bool {
+        AXIsProcessTrusted()
     }
 
-    /// Request Input Monitoring permission.
-    /// First calls CGRequestListenEventAccess() for the system prompt,
-    /// then attempts to create a CGEventTap which also triggers the prompt
-    /// on some macOS versions where CGRequestListenEventAccess alone doesn't.
-    static func requestInputMonitoring() {
-        if !isInputMonitoringGranted() {
-            // This should show the system prompt
-            CGRequestListenEventAccess()
-
-            // On some macOS versions, creating the tap itself triggers the prompt
-            let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
-            if let tap = CGEvent.tapCreate(
-                tap: .cgSessionEventTap,
-                place: .tailAppendEventTap,
-                options: .listenOnly,
-                eventsOfInterest: eventMask,
-                callback: { _, _, event, _ in Unmanaged.passUnretained(event) },
-                userInfo: nil
-            ) {
-                // Tap created = permission was already granted, clean up
-                CGEvent.tapEnable(tap: tap, enable: false)
-            }
-            // If tap creation fails, the system should have shown the prompt
-        }
+    /// Request Accessibility permission (shows system prompt if not already granted).
+    static func requestAccessibility() {
+        guard !isAccessibilityGranted() else { return }
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
+        AXIsProcessTrustedWithOptions(options)
     }
 
-    /// Opens System Settings to the Input Monitoring pane directly.
-    static func openInputMonitoringSettings() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")!)
+    /// Opens System Settings to the Accessibility pane directly.
+    static func openAccessibilitySettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
 
     /// Request notification permission.

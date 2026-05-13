@@ -26,7 +26,7 @@ struct PermissionOnboardingView: View {
                     .foregroundStyle(fg)
                     .padding(.bottom, 8)
 
-                Text("Blink needs Input Monitoring permission to work")
+                Text("Blink needs Accessibility permission to work")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundStyle(fg.opacity(0.85))
                     .padding(.bottom, 36)

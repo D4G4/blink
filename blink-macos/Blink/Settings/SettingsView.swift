@@ -115,7 +115,7 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                     .padding(.leading, 4)
 
-                settingsRow("Input Monitoring") {
+                settingsRow("Accessibility") {
                     if appState.hasAccessibilityPermission {
                         HStack(spacing: 4) {
                             Image(systemName: "checkmark.circle.fill")
@@ -127,7 +127,7 @@ struct SettingsView: View {
                         }
                     } else {
                         Button("Grant") {
-                            PermissionManager.requestInputMonitoring()
+                            PermissionManager.openAccessibilitySettings()
                         }
                         .font(.system(size: 12))
                         .buttonStyle(.borderedProminent)

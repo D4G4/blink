@@ -338,13 +338,13 @@ struct MenuBarView: View {
                 .font(.system(size: 24))
                 .foregroundStyle(accentColor)
 
-            Text("Grant Input Monitoring for smart break timing")
+            Text("Grant Accessibility for smart break timing")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
             Button {
-                PermissionManager.requestInputMonitoring()
+                PermissionManager.openAccessibilitySettings()
             } label: {
                 Text("Open Settings")
                     .font(.system(size: 12, weight: .medium))
