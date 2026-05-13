@@ -275,12 +275,6 @@ struct SettingsView: View {
                 .foregroundStyle(accentColor)
             }
             .buttonStyle(.plain)
-
-            settingsSection("Current State") {
-                stateRow("Flow Score", value: String(format: "%.0f%%", appState.flowScore * 100))
-                stateRow("State", value: appState.flowState.rawValue.capitalized)
-                stateRow("Breaks Today", value: "\(appState.breaksTakenToday)/\(appState.breaksPromptedToday)")
-            }
         }
     }
 
