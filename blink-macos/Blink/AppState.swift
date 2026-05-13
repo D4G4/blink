@@ -170,8 +170,9 @@ final class AppState: ObservableObject {
             permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
                 guard let self else { return }
                 self.permissionWindow = nil
-                log.info("User acknowledged — requesting Input Monitoring permission")
+                log.info("User acknowledged — opening Input Monitoring settings")
                 PermissionManager.requestInputMonitoring()
+                PermissionManager.openInputMonitoringSettings()
                 self.startPermissionPolling()
             }
         }
