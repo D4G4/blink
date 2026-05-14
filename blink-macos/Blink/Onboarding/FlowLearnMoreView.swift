@@ -5,7 +5,7 @@ struct FlowLearnMoreView: View {
     let theme: BlinkTheme
     let onDismiss: () -> Void
     @Environment(\.colorScheme) private var colorScheme
-    @State private var sensitivity: Double = 0.7
+    @AppStorage("flowSensitivity") private var sensitivity: Double = 0.7
 
     private var gapTolerance: Int {
         let t = (sensitivity - 0.4) / (0.9 - 0.4)
