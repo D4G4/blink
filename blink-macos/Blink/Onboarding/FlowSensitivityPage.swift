@@ -69,13 +69,17 @@ struct FlowSensitivityPage: View {
                     Button {
                         onLearnMore()
                     } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "info.circle")
-                                .font(.system(size: 13))
-                            Text("See real-world scenarios for this sensitivity")
-                                .font(.system(size: 13, weight: .medium))
+                        HStack(spacing: 6) {
+                            Image(systemName: "slider.horizontal.3")
+                                .font(.system(size: 14, weight: .semibold))
+                            Text("See real-world scenarios")
+                                .font(.system(size: 14, weight: .bold))
                         }
-                        .foregroundStyle(fg.opacity(0.7))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(.white.opacity(0.2))
+                        .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
 
