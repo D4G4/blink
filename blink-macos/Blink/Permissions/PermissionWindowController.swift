@@ -1,35 +1,43 @@
 import SwiftUI
 import AppKit
 
-/// Shows the permission explanation screen, then the step-by-step guide if needed.
+/// Shows the permission guide screen.
+/// Tries the system prompt first (works for unsandboxed/DMG builds).
+/// If sandboxed, shows step-by-step instructions.
 final class PermissionWindowController {
     private var window: NSWindow?
 
     func show(theme: BlinkTheme, onContinue: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
 
+        // Try the system prompt first (works for unsandboxed/DMG builds)
+        PermissionManager.requestAccessibility()
+
+        // Check after a short delay if permission was granted
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            if PermissionManager.isAccessibilityGranted() {
+                // System prompt worked — done, no window needed
+                onContinue()
+            } else {
+                // Prompt didn't appear (sandboxed) — show step-by-step guide
+                self?.showGuide(theme: theme, screen: screen)
+            }
+        }
+    }
+
+    private func showGuide(theme: BlinkTheme, screen: NSScreen) {
         let windowWidth: CGFloat = 500
         let windowHeight: CGFloat = 650
         let visible = screen.visibleFrame
         let x = visible.midX - windowWidth / 2
         let y = visible.midY - windowHeight / 2
 
-        let view = PermissionOnboardingView(theme: theme) { [weak self] in
-            // Try the system prompt first (works for unsandboxed/DMG builds)
-            PermissionManager.requestAccessibility()
-
-            // Check after a short delay if permission was granted
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                if PermissionManager.isAccessibilityGranted() {
-                    // System prompt worked (unsandboxed) — done
-                    self?.dismiss()
-                    onContinue()
-                } else {
-                    // Prompt didn't appear (sandboxed) — show step-by-step guide
-                    self?.showGuide(theme: theme, onContinue: onContinue)
-                }
+        let guideView = PermissionGuideView(
+            theme: theme,
+            onOpenSettings: {
+                PermissionManager.openAccessibilitySettings()
             }
-        }
+        )
 
         let win = NSWindow(
             contentRect: NSRect(x: x, y: y, width: windowWidth, height: windowHeight),
@@ -39,10 +47,10 @@ final class PermissionWindowController {
         )
         win.isOpaque = false
         win.backgroundColor = .clear
-        win.level = .floating
+        win.level = .normal  // don't stay on top — let user interact with Settings
         win.hasShadow = true
         win.appearance = NSApp.effectiveAppearance
-        win.contentView = NSHostingView(rootView: view)
+        win.contentView = NSHostingView(rootView: guideView)
 
         win.alphaValue = 0
         win.makeKeyAndOrderFront(nil)
@@ -54,28 +62,6 @@ final class PermissionWindowController {
         }
 
         self.window = win
-    }
-
-    private func showGuide(theme: BlinkTheme, onContinue: @escaping () -> Void) {
-        guard let win = window else { return }
-
-        let guideView = PermissionGuideView(
-            theme: theme,
-            onOpenSettings: {
-                PermissionManager.openAccessibilitySettings()
-            }
-        )
-
-        NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = 0.2
-            win.animator().alphaValue = 0
-        }, completionHandler: {
-            win.contentView = NSHostingView(rootView: guideView)
-            NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.2
-                win.animator().alphaValue = 1
-            }
-        })
     }
 
     func dismiss() {

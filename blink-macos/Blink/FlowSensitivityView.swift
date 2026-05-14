@@ -51,6 +51,7 @@ struct FlowSensitivityView: View {
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(foregroundColor.opacity(0.8))
                 .multilineTextAlignment(.center)
+                .frame(height: 32, alignment: .top)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
         }
         .frame(maxWidth: 420)

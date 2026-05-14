@@ -37,7 +37,7 @@ final class OnboardingWindowController {
         )
         win.isOpaque = false
         win.backgroundColor = .clear
-        win.level = .floating
+        win.level = .normal
         win.hasShadow = true
         win.appearance = NSApp.effectiveAppearance
         win.contentView = NSHostingView(rootView: onboardingView)
