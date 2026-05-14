@@ -29,24 +29,22 @@ import Foundation
 ///   "active" 100% of the time. Flow triggers for casual browsing.
 ///   Users report it never interrupts them.
 ///
-/// ### V3 — Activity gap, intentional input only (proposed)
-/// - Same gap model as V2, but excludes mouse MOVES from flow detection
-/// - Flow uses: keyboard + clicks + scroll (intentional actions)
-/// - Idle uses: any input including mouse moves (to detect walk-away)
-/// - Pros: fixes V2's permissiveness — casual mouse browsing won't trigger flow
-/// - Cons: not yet tested with real users
-///
-/// ### V4 — Keyboard entry, intentional maintenance (proposed)
-/// - Flow ENTRY requires sustained keyboard activity for 3+ minutes
-/// - Flow MAINTENANCE allows keyboard + clicks + scroll within gap tolerance
-/// - Pure clicking/scrolling (no keyboard) never enters flow
-/// - Escalation: nudge → nudge → forced overlay (count depends on sensitivity)
-///   - 40% sensitivity: force after 1 ignored nudge
-///   - 70% sensitivity: force after 3 ignored nudges
-///   - 90% sensitivity: never force, nudge forever
-/// - Pros: keyboard is the strongest flow signal. Browsing (no keyboard) correctly
-///   stays in normal mode. Designers still enter flow via keyboard shortcuts.
-/// - Cons: more complex, not yet built
+/// ### V3 — Intentional input with keyboard entry + escalation (proposed)
+/// - Flow ENTRY: requires sustained keyboard activity for 3+ minutes
+///   (pure clicking/scrolling never enters flow — eliminates casual browsing)
+/// - Flow MAINTENANCE: keyboard + clicks + scroll within gap tolerance
+///   (excludes mouse moves which are ambient)
+/// - Idle detection: any input including mouse moves (to detect walk-away)
+/// - Escalation ladder for breaks during flow:
+///   - Nudge → wait 20 min → nudge again → eventually force overlay
+///   - Nudges before forcing depends on sensitivity:
+///     - 40% (strict): force after 1 ignored nudge
+///     - 70% (default): force after 3 ignored nudges
+///     - 90% (permissive): never force, nudge forever
+/// - Pros: keyboard is the strongest flow signal. Browsing correctly stays
+///   in normal mode. Designers enter flow via keyboard shortcuts.
+///   Sensitivity controls both flow detection AND break aggressiveness.
+/// - Cons: not yet built or tested
 ///
 public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
     /// V1: 5-scorer weighted system with hysteresis
@@ -55,11 +53,8 @@ public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
     /// V2: Activity gap using any input (current default)
     case activityGapAnyInput = "v2_activity_gap"
 
-    /// V3: Activity gap using intentional input only (keyboard + clicks + scroll)
-    case activityGapIntentional = "v3_intentional_input"
-
-    /// V4: Keyboard required for entry, intentional input for maintenance
-    case keyboardEntry = "v4_keyboard_entry"
+    /// V3: Keyboard entry, intentional maintenance, escalation ladder
+    case intentionalWithEscalation = "v3_intentional_escalation"
 
     /// Current active strategy
     public static let current: FlowDetectionStrategy = .activityGapAnyInput
