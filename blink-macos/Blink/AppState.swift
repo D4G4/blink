@@ -321,7 +321,7 @@ final class AppState: ObservableObject {
             let minutes = Int(timerStateMachine.timerDuration) / 60
             log.info("Break due but in \(self.flowState.rawValue) — showing gentle nudge")
             overlayController.showFlowNudge(
-                message: "You've been focused for \(minutes) min — time for a break?",
+                message: "You've been focused for \(minutes) min",
                 onTakeBreak: { [weak self] in
                     Task { @MainActor in self?.showBreakPrompt() }
                 }

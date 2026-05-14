@@ -43,12 +43,6 @@ struct FlowLearnMoreView: View {
                     .background(fg.opacity(0.04))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
-                    // Sensitivity
-                    sectionHeader("What \"sensitivity\" controls")
-                    Text("The sensitivity slider sets how long you can pause between actions and still stay in flow. At the default (70%), you can think for up to 60 seconds without losing flow.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(fg.opacity(0.8))
-
                     // Real scenarios
                     sectionHeader("Real scenarios")
 
@@ -108,6 +102,12 @@ struct FlowLearnMoreView: View {
                         result: "Fullscreen break overlay — 20 seconds. Esc to skip, → to extend",
                         accent: accent
                     )
+                    
+                    // Sensitivity
+                    sectionHeader("What \"sensitivity\" controls")
+                    Text("The sensitivity slider sets how long you can pause between actions and still stay in flow. At the default (70%), you can think for up to 60 seconds without losing flow.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(fg.opacity(0.8))
 
                     // Timer summary
                     sectionHeader("Break intervals")
