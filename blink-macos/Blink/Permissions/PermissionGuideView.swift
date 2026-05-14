@@ -69,12 +69,26 @@ struct PermissionGuideView: View {
                         bgTop: bgTop
                     )
                     stepConnector()
-                    stepRow(
-                        icon: "folder.fill",
-                        title: "Find Blink in Applications",
-                        subtitle: "Applications → Blink → Open",
-                        bgTop: bgTop
-                    )
+                    // Blink icon step
+                    HStack(spacing: 14) {
+                        Image(theme.iconAsset)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 36, height: 36)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Find Blink in Applications")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(.white)
+                            Text("Applications → Blink → Open")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.white.opacity(0.75))
+                        }
+
+                        Spacer()
+                    }
+                    .padding(.vertical, 10)
                     stepConnector()
                     stepRow(
                         icon: "switch.2",
@@ -154,23 +168,29 @@ struct PermissionGuideView: View {
                 )
                 .shadow(color: .black.opacity(0.3), radius: 16, y: 8)
 
-            // Arrow pointing to the "+" button
-            HStack(spacing: 4) {
-                Text("Click here")
-                    .font(.system(size: 11, weight: .bold))
+            // Highlight circle on the "+" button area
+            Circle()
+                .stroke(.white, lineWidth: 2)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(.white.opacity(0.2)))
+                .offset(x: 18, y: -12)
+
+            // Arrow + label pointing to the "+" button
+            VStack(alignment: .leading, spacing: 2) {
+                Image(systemName: "arrow.down.left")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.white)
+                Text("Click  +")
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(bgTop)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
                     .background(.white)
                     .clipShape(Capsule())
-
-                Image(systemName: "arrow.down.left")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
             }
-            .offset(x: 50, y: -10)
+            .offset(x: 55, y: -8)
         }
-        .frame(maxWidth: 360)
+        .frame(maxWidth: 420)
     }
 
     // MARK: - Step Components
