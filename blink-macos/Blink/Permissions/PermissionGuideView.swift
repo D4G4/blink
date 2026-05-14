@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Visual step-by-step guide for granting Accessibility permission manually.
+/// Visual guide for granting Accessibility permission manually.
+/// Landscape layout — image-focused with minimal text.
 /// Auto-dismissed by AppState polling when permission is granted.
 struct PermissionGuideView: View {
     let theme: BlinkTheme
@@ -8,7 +9,6 @@ struct PermissionGuideView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        let fg = theme.onBackgroundText(for: colorScheme)
         let accent = theme.accent(for: colorScheme)
         let bgTop = theme.backgroundTop(for: colorScheme)
 
@@ -16,136 +16,93 @@ struct PermissionGuideView: View {
             theme.backgroundGradient(for: colorScheme)
                 .ignoresSafeArea()
 
-            // Subtle radial glow
             RadialGradient(
-                colors: [.white.opacity(0.12), .clear],
-                center: .center,
+                colors: [.white.opacity(0.1), .clear],
+                center: .top,
                 startRadius: 50,
-                endRadius: 350
+                endRadius: 400
             )
 
-            VStack(spacing: 0) {
-                Spacer()
-
-                // Header icon
-                ZStack {
-                    Circle()
-                        .fill(.white.opacity(0.2))
-                        .frame(width: 80, height: 80)
-                    Image(systemName: "hand.raised.circle.fill")
-                        .font(.system(size: 44, weight: .light))
-                        .foregroundStyle(.white)
-                }
-                .padding(.bottom, 20)
-
-                Text("Grant Accessibility Access")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .padding(.bottom, 8)
-
-                Text("Blink needs this to detect your typing and mouse patterns")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .multilineTextAlignment(.center)
-                    .padding(.bottom, 24)
-
-                // Annotated screenshot
+            HStack(spacing: 32) {
+                // LEFT: Annotated screenshot (hero)
                 annotatedScreenshot(accent: accent, bgTop: bgTop)
-                    .padding(.bottom, 20)
 
-                // Steps card
-                VStack(spacing: 0) {
-                    stepRow(
-                        icon: "gear",
-                        title: "Open Accessibility Settings",
-                        subtitle: "Click the button below to open the right page",
-                        bgTop: bgTop
-                    )
-                    stepConnector()
-                    stepRow(
-                        icon: "plus.circle.fill",
-                        title: "Click the  +  button",
-                        subtitle: "At the bottom-left of the app list",
-                        bgTop: bgTop
-                    )
-                    stepConnector()
-                    // Blink icon step
-                    HStack(spacing: 14) {
-                        Image(theme.iconAsset)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 36, height: 36)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                // RIGHT: Title + steps + button
+                VStack(alignment: .leading, spacing: 0) {
+                    Spacer()
 
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Find Blink in Applications")
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundStyle(.white)
-                            Text("Applications → Blink → Open")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.white.opacity(0.75))
-                        }
-
-                        Spacer()
-                    }
-                    .padding(.vertical, 10)
-                    stepConnector()
-                    stepRow(
-                        icon: "switch.2",
-                        title: "Toggle Blink on",
-                        subtitle: "You may need to enter your password",
-                        bgTop: bgTop
-                    )
-                }
-                .padding(24)
-                .background(.white.opacity(0.2))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .stroke(.white.opacity(0.15), lineWidth: 1)
-                )
-                .frame(maxWidth: 400)
-
-                Spacer()
-
-                // Privacy note
-                HStack(spacing: 8) {
-                    Image(systemName: "lock.shield.fill")
-                        .font(.system(size: 14))
+                    // Header
+                    Image(systemName: "hand.raised.circle.fill")
+                        .font(.system(size: 36, weight: .light))
                         .foregroundStyle(.white)
-                    Text("Reads input timing only — never what you type or see")
+                        .padding(.bottom, 12)
+
+                    Text("Grant Access")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .padding(.bottom, 4)
+
+                    Text("Blink needs Accessibility to detect input timing")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white.opacity(0.85))
-                }
-                .padding(.bottom, 20)
+                        .padding(.bottom, 24)
 
-                // Open Settings button
-                Button {
-                    onOpenSettings()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 15, weight: .semibold))
-                        Text("Open Accessibility Settings")
-                            .font(.system(size: 17, weight: .bold))
+                    // Steps
+                    VStack(alignment: .leading, spacing: 0) {
+                        stepRow(icon: "gear", title: "Open Settings", bgTop: bgTop)
+                        stepConnector()
+                        stepRow(icon: "plus.circle.fill", title: "Click  +  button", bgTop: bgTop)
+                        stepConnector()
+                        blinkIconStep()
+                        stepConnector()
+                        stepRow(icon: "switch.2", title: "Toggle on", bgTop: bgTop)
                     }
-                    .foregroundStyle(bgTop)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(.white)
-                    .clipShape(Capsule())
-                    .shadow(color: .black.opacity(0.2), radius: 12, y: 6)
-                }
-                .buttonStyle(.plain)
-                .frame(maxWidth: 320)
+                    .padding(16)
+                    .background(.white.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
 
-                Text("This screen closes automatically once access is granted")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.5))
-                    .padding(.top, 12)
-                    .padding(.bottom, 32)
+                    Spacer()
+
+                    // Privacy
+                    HStack(spacing: 6) {
+                        Image(systemName: "lock.shield.fill")
+                            .font(.system(size: 11))
+                        Text("Reads timing only — never content")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(.white.opacity(0.7))
+                    .padding(.bottom, 12)
+
+                    // Button
+                    Button {
+                        onOpenSettings()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "gear")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text("Open Settings")
+                                .font(.system(size: 15, weight: .bold))
+                        }
+                        .foregroundStyle(bgTop)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 44)
+                        .background(.white)
+                        .clipShape(Capsule())
+                        .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+                    }
+                    .buttonStyle(.plain)
+
+                    Text("Closes automatically once granted")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.white.opacity(0.4))
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 8)
+                        .padding(.bottom, 16)
+                }
+                .frame(width: 240)
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 32)
+            .padding(.vertical, 24)
         }
     }
 
@@ -153,97 +110,101 @@ struct PermissionGuideView: View {
 
     private func annotatedScreenshot(accent: Color, bgTop: Color) -> some View {
         ZStack(alignment: .bottomLeading) {
-            // Screenshot with theme tint
             Image("AccessibilitySettings")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(accent.opacity(0.08))
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(accent.opacity(0.06))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(.white.opacity(0.2), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(.white.opacity(0.25), lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(0.3), radius: 16, y: 8)
+                .shadow(color: .black.opacity(0.35), radius: 20, y: 10)
 
-            // Highlight circle on the "+" button area
+            // Pulsing highlight on the "+" button
             Circle()
-                .stroke(.white, lineWidth: 2)
-                .frame(width: 32, height: 32)
-                .background(Circle().fill(.white.opacity(0.2)))
-                .offset(x: 18, y: -12)
+                .stroke(.white, lineWidth: 2.5)
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(.white.opacity(0.25)))
+                .offset(x: 22, y: -14)
 
-            // Arrow + label pointing to the "+" button
-            VStack(alignment: .leading, spacing: 2) {
-                Image(systemName: "arrow.down.left")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.white)
+            // "Click +" label with arrow
+            HStack(spacing: 4) {
                 Text("Click  +")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(bgTop)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .background(.white)
                     .clipShape(Capsule())
+                    .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+
+                Image(systemName: "arrow.turn.left.down")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.white)
             }
-            .offset(x: 55, y: -8)
+            .offset(x: 65, y: -6)
         }
-        .frame(maxWidth: 420)
     }
 
     // MARK: - Step Components
 
-    private func stepRow(icon: String, title: String, subtitle: String, bgTop: Color) -> some View {
-        HStack(spacing: 14) {
-            // Icon in a white circle
+    private func stepRow(icon: String, title: String, bgTop: Color) -> some View {
+        HStack(spacing: 10) {
             ZStack {
                 Circle()
                     .fill(.white)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 28, height: 28)
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(bgTop)
             }
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.white)
-                Text(subtitle)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.75))
-            }
-
+            Text(title)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(.white)
             Spacer()
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 6)
+    }
+
+    private func blinkIconStep() -> some View {
+        HStack(spacing: 10) {
+            Image(theme.iconAsset)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 28, height: 28)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+            Text("Find Blink → Open")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(.white)
+            Spacer()
+        }
+        .padding(.vertical, 6)
     }
 
     private func stepConnector() -> some View {
-        HStack {
-            Rectangle()
-                .fill(.white.opacity(0.35))
-                .frame(width: 2, height: 12)
-                .padding(.leading, 17)
-            Spacer()
-        }
+        Rectangle()
+            .fill(.white.opacity(0.3))
+            .frame(width: 2, height: 8)
+            .padding(.leading, 13)
     }
 }
 
 #Preview("Permission Guide — Peach") {
     PermissionGuideView(theme: .peach, onOpenSettings: {})
-        .frame(width: 520, height: 820)
+        .frame(width: 700, height: 480)
 }
 
-#Preview("Permission Guide — Midnight Dark") {
+#Preview("Permission Guide — Midnight") {
     PermissionGuideView(theme: .midnight, onOpenSettings: {})
-        .frame(width: 520, height: 820)
+        .frame(width: 700, height: 480)
         .preferredColorScheme(.dark)
 }
 
 #Preview("Permission Guide — Sage") {
     PermissionGuideView(theme: .sage, onOpenSettings: {})
-        .frame(width: 520, height: 820)
+        .frame(width: 700, height: 480)
 }

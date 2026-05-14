@@ -26,8 +26,8 @@ final class PermissionWindowController {
     }
 
     private func showGuide(theme: BlinkTheme, screen: NSScreen) {
-        let windowWidth: CGFloat = 520
-        let windowHeight: CGFloat = 820
+        let windowWidth: CGFloat = 700
+        let windowHeight: CGFloat = 480
         let visible = screen.visibleFrame
         let x = visible.midX - windowWidth / 2
         let y = visible.midY - windowHeight / 2
