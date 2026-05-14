@@ -51,13 +51,11 @@ struct PermissionGuideView: View {
                     VStack(spacing: 0) {
                         Spacer()
                         VStack(alignment: .leading, spacing: 0) {
-                            stepRow(icon: "gear", title: "Open Settings", bgTop: bgTop)
-                            stepConnector()
                             stepRow(icon: "plus.circle.fill", title: "Click  +  button", bgTop: bgTop)
                             stepConnector()
                             blinkIconStep()
                             stepConnector()
-                            toggleStep(bgTop: bgTop)
+                            toggleStep(accent: accent)
                         }
                         Spacer()
                     }
@@ -112,62 +110,62 @@ struct PermissionGuideView: View {
 
     // MARK: - Step Components
 
-    private func stepRow(icon: String, title: String, bgTop: Color, customTrailing: AnyView? = nil) -> some View {
-        HStack(spacing: 10) {
+    private func stepRow(icon: String, title: String, bgTop: Color) -> some View {
+        HStack(spacing: 12) {
             ZStack {
                 Circle()
                     .fill(.white)
-                    .frame(width: 28, height: 28)
+                    .frame(width: 36, height: 36)
                 Image(systemName: icon)
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(bgTop)
             }
             Text(title)
-                .font(.system(size: 13, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(.white)
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
     }
 
     private func blinkIconStep() -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(theme.iconAsset)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: 28, height: 28)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .frame(width: 36, height: 36)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
             Text("Find Blink → Open")
-                .font(.system(size: 13, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(.white)
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
     }
 
-    private func toggleStep(bgTop: Color) -> some View {
-        HStack(spacing: 10) {
-            // Mini macOS-style toggle (on state)
+    private func toggleStep(accent: Color) -> some View {
+        HStack(spacing: 12) {
+            // Mini macOS-style toggle (on state) with theme color
             ZStack(alignment: .trailing) {
                 Capsule()
-                    .fill(Color.red.opacity(0.85))
-                    .frame(width: 28, height: 16)
+                    .fill(accent)
+                    .frame(width: 36, height: 20)
                 Circle()
                     .fill(.white)
-                    .frame(width: 14, height: 14)
+                    .frame(width: 17, height: 17)
                     .shadow(color: .black.opacity(0.15), radius: 1, y: 1)
-                    .padding(.trailing, 1)
+                    .padding(.trailing, 1.5)
             }
             Text("Toggle on")
-                .font(.system(size: 13, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(.white)
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
     }
 
     private func stepConnector() -> some View {
         Rectangle()
             .fill(.white.opacity(0.3))
-            .frame(width: 2, height: 8)
-            .padding(.leading, 13)
+            .frame(width: 2, height: 10)
+            .padding(.leading, 17)
     }
 }
 
