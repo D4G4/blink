@@ -1,101 +1,88 @@
 # How Flow Detection Works
 
-Blink uses a simple, predictable model to detect when you're focused: **activity gaps**.
-
-If you've been continuously active — any keyboard or mouse input — with no long pauses, Blink considers you in flow and extends your break interval.
+Blink detects focused work by tracking **intentional input** — typing, clicking, and scrolling. Mouse movement alone doesn't count (it's ambient — everyone moves their mouse constantly, even while browsing casually).
 
 ## The Rule
 
-| State | Condition | Break interval |
-|-------|-----------|---------------|
+| State | How it's detected | Break interval |
+|-------|------------------|---------------|
 | Normal | Default | 20 min |
-| Flow | Active for 3+ min (no gap > tolerance) | 30 min |
+| Flow | Sustained intentional input for 3+ min | 30 min |
 | Deep Flow | In flow for 15+ min | 40 min |
-| Idle | No input for 3 min | Timer resets silently |
+| Idle | No input at all for 3 min | Timer resets silently |
 | Meeting | Mic or camera active | Timer pauses |
 
-## What "Active" Means
+## What Counts as "Intentional Input"
 
-Blink checks every 30 seconds: how long since the last keyboard or mouse input?
+| Input | Counts for flow? | Counts for idle? |
+|-------|-----------------|-----------------|
+| Keyboard (typing) | **Yes** — strongest signal | Yes |
+| Mouse clicks | **Yes** — intentional interaction | Yes |
+| Scrolling | **Yes** — active engagement | Yes |
+| Mouse movement | **No** — ambient, constant | Yes |
 
-- If the gap is **within your tolerance** → you're active
-- If the gap **exceeds your tolerance** → activity streak breaks
+## Two-Tier Gap Tolerance
 
-That's it. No weighted scores, no app categorization, no complicated heuristics.
+Flow uses two different thresholds:
 
-## Sensitivity = Gap Tolerance
+- **Entry tolerance**: how long you can pause and still build toward flow (stricter)
+- **Maintenance tolerance**: how long you can pause and stay in flow once entered (1.5x more forgiving)
 
-The sensitivity slider controls how long you can pause between actions and stay in flow:
+This handles agent/AI workflows: you type a prompt, wait 60-90 seconds while scrolling through the AI's response, then type again. The maintenance tolerance keeps you in flow during the wait.
 
-| Sensitivity | Gap Tolerance | Description |
-|-------------|--------------|-------------|
-| 40% | 15s | Strict — only continuous typing counts |
-| 50% | 25s | Short thinking pauses OK |
-| 60% | 35s | Brief reading won't break flow |
-| **70% (default)** | **60s** | **Natural thinking and reading stay in flow** |
-| 80% | 60s | Can read for 1 minute |
-| 90% | 90s | Very forgiving — 90s pauses OK |
+| Sensitivity | Entry tolerance | Maintenance tolerance |
+|-------------|---------------|----------------------|
+| 40% (strict) | 15s | 22s |
+| 50% | 30s | 45s |
+| 60% | 45s | 67s |
+| **70% (default)** | **60s** | **90s** |
+| 80% | 75s | 112s |
+| 90% (relaxed) | 90s | 135s |
 
-## Scenarios
+## Natural Breakpoint Detection
 
-### Coding for 10 minutes
-You're typing steadily with short pauses to think (< 60s each). Blink detects flow after 3 minutes. Timer extends to 30 min. After 15 min of sustained activity, deep flow — 40 min.
+When a break is due during flow, Blink doesn't interrupt immediately. It waits for a **natural task boundary** — a moment between thoughts, not during one.
 
-**Result:** Gentle toast nudge at 30–40 min ("You've been focused for 40 min — time for a break?"). Auto-dismisses in 7 seconds. Never forces a fullscreen overlay during flow.
+Research shows that 2-15 second pauses indicate active working memory processing (thinking about syntax, logic). Interrupting during these pauses costs 32% more cognitive recovery than interrupting at task boundaries.
 
-### Reading docs for 2 minutes, then coding
-You read without touching the keyboard for 90 seconds, then start typing. At default sensitivity (60s tolerance), the 90s pause breaks flow.
+Blink detects breakpoints using compound signals:
 
-**Result:** Flow resets. Timer stays at 20 min until you're active for 3 min again.
+| Signal | What it means |
+|--------|-------------|
+| Keyboard → mouse transition | Stopped typing, started clicking = finished a thought |
+| Typing burst → 30s+ silence | Completed a unit of work |
+| App switch after typing | Moved to different context |
 
-### Switching between editor and browser
-You switch apps frequently but keep typing and clicking. Every gap between inputs is under 60 seconds.
+## Break Delivery
 
-**Result:** Flow stays active — it's based on input gaps, not which app you're in.
+What happens when the timer fires depends on your state and sensitivity:
 
-### Getting coffee (away 5 minutes)
-No keyboard or mouse input for 5 minutes. Blink detects you're away after 3 minutes.
+**Not in flow** → forced overlay (20s break). You're not deeply focused, so the interruption cost is low.
 
-**Result:** Timer resets silently. No break shown — your eyes already rested.
+**In flow** → Blink waits for a natural breakpoint, then:
+- At low sensitivity (40-50%): forced overlay after 1 ignored nudge
+- At default (70%): gentle nudge, forced overlay after 3 ignored nudges
+- At high sensitivity (90%): gentle nudge only, never forced
 
-### On a Zoom/Teams call
-Microphone is active. Blink detects this immediately.
+## Walk Suggestion
 
-**Result:** Timer pauses completely. Resumes when the call ends. Any mic usage triggers this — calls, dictation, voice recording.
+After 4+ consecutive breaks without leaving your desk (no 3-minute idle period), the break overlay adds: "Consider a quick walk!" Resets when you step away.
 
-### Watching a YouTube video
-Video is playing in the browser. No keyboard/mouse input.
+## Why Breaks Matter During Flow
 
-**Result:** Timer pauses — you're already resting your focus on fixed content.
+Research shows your eyes strain **most** during exactly the kind of focused work that triggers flow:
 
-### Deep in flow, timer fires
-You've been coding for 40 minutes straight. Timer reaches zero.
+- **Blink rate drops 69%** during active typing (5/min vs 15/min normal)
+- **92% of blinks become incomplete** during focused screen work
+- **4+ hours** of screen time nearly doubles dry eye risk
 
-**Result:** Gentle toast in bottom-right corner: "You've been focused for 40 min — time for a break?" with a "Break" button. Auto-dismisses after 7 seconds. Timer resets for another 20 min. **Never forces the fullscreen overlay during flow.**
+This is why Blink's default (70%) still delivers breaks during flow — just at natural moments. Higher sensitivity settings reduce break frequency, but your eyes pay the cost.
 
-### Not in flow, timer fires
-You've been browsing casually for 20 minutes. Timer reaches zero. No recent sustained activity.
+## Privacy
 
-**Result:** 3-second countdown toast → fullscreen break overlay (20 seconds). Press Esc to skip, → to extend 20s.
+Blink monitors input **timing** only:
+- When keys are pressed (never which keys)
+- When clicks and scrolls happen (never where or what)
+- When you switch apps (never which apps — app identity is not used for flow detection in V3)
 
-### 4+ consecutive breaks without walking
-You've taken 4 breaks in a row without leaving your desk (no idle period > 3 min between them).
-
-**Result:** The break overlay adds a suggestion: "You've taken 4+ breaks — consider a quick walk!" Resets when you step away for 3+ minutes.
-
-## What Blink Monitors
-
-- **Keyboard timing** — when keys are pressed (never which keys)
-- **Mouse movement** — movement patterns, clicks, scrolls (never position or content)
-- **Microphone status** — on/off (never audio content)
-- **Video playback** — playing/paused (never what's playing)
-- **Idle time** — seconds since last input
-
-## What Blink Does NOT Monitor
-
-- What you type (keystrokes, passwords, messages)
-- What's on screen (window contents, URLs, documents)
-- Which apps you use (app identity is not used for flow detection)
-- Your location, contacts, calendar, or any personal data
-
-All data stays local. No analytics, no telemetry. The only network call is an optional update check against GitHub Releases.
+All data stays local. No analytics, no telemetry.
