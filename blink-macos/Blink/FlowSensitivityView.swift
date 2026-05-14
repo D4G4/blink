@@ -102,3 +102,37 @@ struct FlowSensitivityView: View {
         }
     }
 }
+
+// MARK: - Previews
+
+private struct FlowSensitivityPreview: View {
+    @State private var sensitivity: Double
+    let style: FlowSensitivityView.Style
+
+    init(sensitivity: Double = 0.7, style: FlowSensitivityView.Style = .onboarding) {
+        self._sensitivity = State(initialValue: sensitivity)
+        self.style = style
+    }
+
+    var body: some View {
+        FlowSensitivityView(
+            sensitivity: $sensitivity,
+            accentColor: BlinkTheme.peach.accent,
+            foregroundColor: .white,
+            style: style
+        )
+    }
+}
+
+#Preview("Onboarding Style") {
+    FlowSensitivityPreview(style: .onboarding)
+        .padding(40)
+        .frame(width: 500, height: 300)
+        .background(BlinkTheme.peach.backgroundGradient)
+}
+
+#Preview("Settings Style") {
+    FlowSensitivityPreview(sensitivity: 0.5, style: .settings)
+        .padding(20)
+        .frame(width: 440, height: 200)
+}
