@@ -63,10 +63,6 @@ final class PermissionWindowController {
             theme: theme,
             onOpenSettings: {
                 PermissionManager.openAccessibilitySettings()
-            },
-            onDone: { [weak self] in
-                self?.dismiss()
-                onContinue()
             }
         )
 
@@ -82,7 +78,7 @@ final class PermissionWindowController {
         })
     }
 
-    private func dismiss() {
+    func dismiss() {
         guard let win = window else { return }
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.3

@@ -184,6 +184,8 @@ final class AppState: ObservableObject {
                 guard let self else { return }
                 if PermissionManager.isAccessibilityGranted() {
                     log.info("Accessibility permission granted — starting up")
+                    self.permissionWindow?.dismiss()
+                    self.permissionWindow = nil
                     self.hasAccessibilityPermission = true
                     self.startMonitoring()
                     self.startTimers()
