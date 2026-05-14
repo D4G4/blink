@@ -69,6 +69,7 @@ final class AppState: ObservableObject {
 
     // Break overlay
     private let overlayController = OverlayWindowController()
+    private let breakpointDetector = BreakpointDetector()
 
     // Persistence
     private let persistence = PersistenceManager()
@@ -222,6 +223,7 @@ final class AppState: ObservableObject {
         appMon.onAppSwitch = { [weak self] event in
             log.debug("App switch → \(event.appBundleID)")
             self?.flowScoreCalculator.recordAppSwitch(event)
+            self?.breakpointDetector.recordAppSwitch(at: event.timestamp)
         }
         appMon.onWindowTitleChange = { [weak self] in
             log.debug("Window title changed")
@@ -275,7 +277,18 @@ final class AppState: ObservableObject {
         let now = Date().timeIntervalSinceReferenceDate
         let idle = idleDetector?.secondsSinceLastInput() ?? 0
         let intentionalIdle = idleDetector?.secondsSinceLastIntentionalInput() ?? 0
+        let keystrokeIdle = idleDetector?.secondsSinceLastKeystroke() ?? 0
+        let clickIdle = idleDetector?.secondsSinceLastClick() ?? 0
+        let scrollIdle = idleDetector?.secondsSinceLastScroll() ?? 0
         let micActive = contextDetector?.isMicrophoneActive() ?? false
+
+        // Feed breakpoint detector
+        breakpointDetector.recordInput(
+            secondsSinceLastKeystroke: keystrokeIdle,
+            secondsSinceLastClick: clickIdle,
+            secondsSinceLastScroll: scrollIdle,
+            now: now
+        )
         let camActive = contextDetector?.isCameraActive() ?? false
 
         // Check if user is actively watching video
@@ -392,26 +405,47 @@ final class AppState: ObservableObject {
         breakDueSince = Date()
     }
 
-    /// Check if a pending break can now be delivered (natural pause detected).
+    /// Check if a pending break can now be delivered at a natural boundary.
     /// Called every second from tickCountdown.
+    /// V1/V2: simple 6s idle pause. V3: compound breakpoint detection.
     private func checkPendingBreak() {
         guard breakDuePending else { return }
 
         let idle = idleDetector?.secondsSinceLastInput() ?? 0
         let waited = Date().timeIntervalSince(breakDueSince ?? Date())
+        let strategy = flowStateMachine.strategy
 
-        // Natural pause detected — user stopped typing/mousing for 6+ seconds
-        if idle >= Self.naturalPauseThreshold {
-            log.info("Natural pause detected (\(String(format: "%.1f", idle))s idle) after \(String(format: "%.0f", waited))s wait — showing break")
+        let isAtBreakpoint: Bool
+        switch strategy {
+        case .scoreBased, .activityGapAnyInput:
+            // V1/V2: simple idle threshold
+            isAtBreakpoint = idle >= Self.naturalPauseThreshold
+
+        case .intentionalWithEscalation:
+            // V3: compound breakpoint detection (keyboard→mouse, typing burst→silence, app switch)
+            let keystrokeIdle = idleDetector?.secondsSinceLastKeystroke() ?? 0
+            let clickIdle = idleDetector?.secondsSinceLastClick() ?? 0
+            let scrollIdle = idleDetector?.secondsSinceLastScroll() ?? 0
+            let now = Date().timeIntervalSinceReferenceDate
+            isAtBreakpoint = breakpointDetector.isAtBreakpoint(
+                secondsSinceLastKeystroke: keystrokeIdle,
+                secondsSinceLastClick: clickIdle,
+                secondsSinceLastScroll: scrollIdle,
+                now: now
+            )
+        }
+
+        if isAtBreakpoint {
+            log.info("Breakpoint detected after \(String(format: "%.0f", waited))s wait — showing break")
             breakDuePending = false
             breakDueSince = nil
             showBreakPrompt()
             return
         }
 
-        // Max wait exceeded — reset silently
+        // Max wait exceeded — show nudge (not mid-keystroke, just between keystrokes)
         if waited >= Self.maxPauseWaitSeconds {
-            log.info("Waited \(String(format: "%.0f", waited))s for natural pause — giving up, resetting timer")
+            log.info("Waited \(String(format: "%.0f", waited))s for breakpoint — delivering nudge")
             breakDuePending = false
             breakDueSince = nil
             timerStateMachine.resetAfterBreak()
