@@ -189,4 +189,105 @@ struct FlowStateMachineTests {
                 now: baseTime + 270)
         #expect(sm.state == .normal, "20s pause should break flow at 40% sensitivity")
     }
+
+    // MARK: - V3 Two-tier tolerance
+
+    @Test("V3: maintenance tolerance is more forgiving than entry")
+    func v3TwoTierTolerance() {
+        let sm = FlowStateMachine()
+        sm.strategy = .intentionalWithEscalation
+        sm.sensitivity = 0.7 // entry=60s, maintenance=90s
+        let baseTime: TimeInterval = 1000
+
+        // Enter flow with intentional input (secondsSinceLastIntentionalInput)
+        for i in 0..<8 {
+            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                    secondsSinceLastIntentionalInput: 5,
+                    isMicActive: false, isCameraActive: false,
+                    now: baseTime + Double(i) * 30)
+        }
+        #expect(sm.state == .flow)
+
+        // 75s pause — exceeds entry (60s) but within maintenance (90s)
+        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                secondsSinceLastIntentionalInput: 75,
+                isMicActive: false, isCameraActive: false,
+                now: baseTime + 270)
+        #expect(sm.state == .flow, "75s pause should keep flow (within 90s maintenance tolerance)")
+    }
+
+    @Test("V3: pause exceeding maintenance tolerance exits flow")
+    func v3MaintenanceToleranceExceeded() {
+        let sm = FlowStateMachine()
+        sm.strategy = .intentionalWithEscalation
+        sm.sensitivity = 0.7
+        let baseTime: TimeInterval = 1000
+
+        // Enter flow
+        for i in 0..<8 {
+            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                    secondsSinceLastIntentionalInput: 5,
+                    isMicActive: false, isCameraActive: false,
+                    now: baseTime + Double(i) * 30)
+        }
+        #expect(sm.state == .flow)
+
+        // 95s pause — exceeds maintenance (90s)
+        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                secondsSinceLastIntentionalInput: 95,
+                isMicActive: false, isCameraActive: false,
+                now: baseTime + 270)
+        #expect(sm.state == .normal, "95s pause should break flow (exceeds 90s maintenance)")
+    }
+
+    @Test("V3: agent workflow — scroll during AI wait keeps flow")
+    func v3AgentWorkflow() {
+        let sm = FlowStateMachine()
+        sm.strategy = .intentionalWithEscalation
+        sm.sensitivity = 0.7 // entry=60s, maintenance=90s
+        let baseTime: TimeInterval = 1000
+
+        // Type a prompt (keyboard active)
+        for i in 0..<8 {
+            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                    secondsSinceLastIntentionalInput: 3,
+                    isMicActive: false, isCameraActive: false,
+                    now: baseTime + Double(i) * 30)
+        }
+        #expect(sm.state == .flow)
+
+        // Wait for AI response — scroll every 40s (within 90s maintenance)
+        // secondsSinceLastIntentionalInput = 40 (last scroll)
+        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                secondsSinceLastIntentionalInput: 40,
+                isMicActive: false, isCameraActive: false,
+                now: baseTime + 270)
+        #expect(sm.state == .flow, "Scrolling during AI wait should keep flow")
+
+        // Another 40s — still scrolling
+        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                secondsSinceLastIntentionalInput: 40,
+                isMicActive: false, isCameraActive: false,
+                now: baseTime + 300)
+        #expect(sm.state == .flow, "Continued scrolling keeps flow")
+    }
+
+    @Test("V3: mouse-only browsing never enters flow")
+    func v3MouseOnlyNoFlow() {
+        let sm = FlowStateMachine()
+        sm.strategy = .intentionalWithEscalation
+        sm.sensitivity = 0.7
+        let baseTime: TimeInterval = 1000
+
+        // 10 ticks of mouse-only activity (intentional idle keeps growing)
+        // secondsSinceLastInput = 0 (mouse moves)
+        // secondsSinceLastIntentionalInput = growing (no keyboard/click/scroll)
+        for i in 0..<10 {
+            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                    secondsSinceLastIntentionalInput: Double(i) * 30 + 30,
+                    isMicActive: false, isCameraActive: false,
+                    now: baseTime + Double(i) * 30)
+        }
+        #expect(sm.state == .normal, "Mouse-only browsing should never enter flow in V3")
+    }
 }

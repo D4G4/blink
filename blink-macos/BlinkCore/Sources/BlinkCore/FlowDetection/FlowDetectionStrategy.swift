@@ -26,13 +26,17 @@ public struct StrategyConfig: Sendable {
     // Flow detection
     public let flowEntryScoreThreshold: Double    // V1: score needed for flow
     public let flowExitScoreThreshold: Double     // V1: score to exit flow
-    public let gapTolerance: TimeInterval         // V2/V3: seconds before gap breaks flow
+    public let entryGapTolerance: TimeInterval    // V3: stricter tolerance for entering flow
+    public let maintenanceGapTolerance: TimeInterval // V3: more forgiving for staying in flow
     public let flowInputMethod: FlowInputMethod
 
     // Break delivery
     public let breakDeliveryInFlow: BreakDeliveryInFlow
     /// How many nudges before escalating to forced overlay. nil = never force.
     public let maxNudgesBeforeForce: Int?
+
+    /// Convenience: single gap tolerance for V2 (entry == maintenance)
+    public var gapTolerance: TimeInterval { entryGapTolerance }
 }
 
 // MARK: - Strategy
@@ -90,10 +94,11 @@ public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
         return StrategyConfig(
             flowEntryScoreThreshold: entryThreshold,
             flowExitScoreThreshold: max(exitThreshold, 0.1),
-            gapTolerance: 0, // not used in V1
+            entryGapTolerance: 0,
+            maintenanceGapTolerance: 0,
             flowInputMethod: .anyInput,
             breakDeliveryInFlow: .waitForPause,
-            maxNudgesBeforeForce: nil // always forces (via natural pause)
+            maxNudgesBeforeForce: nil
         )
     }
 
@@ -107,12 +112,13 @@ public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
         let gap = 15.0 + t * 75.0
 
         return StrategyConfig(
-            flowEntryScoreThreshold: 0, // not used in V2
+            flowEntryScoreThreshold: 0,
             flowExitScoreThreshold: 0,
-            gapTolerance: gap,
+            entryGapTolerance: gap,
+            maintenanceGapTolerance: gap, // same for V2
             flowInputMethod: .anyInput,
             breakDeliveryInFlow: .nudge,
-            maxNudgesBeforeForce: nil // never forces during flow
+            maxNudgesBeforeForce: nil
         )
     }
 
@@ -121,12 +127,16 @@ public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
     /// V3: sensitivity maps to gap tolerance AND escalation aggressiveness.
     /// High sensitivity (0.9) → 90s tolerance, never force overlay.
     /// Low sensitivity (0.4) → 15s tolerance, force after 1 ignored nudge.
+    /// V3: two-tier tolerance + escalation.
+    /// Entry is stricter (keyboard-focused), maintenance is 1.5x more forgiving.
+    /// This handles agent workflows: type a prompt, wait 90s for response while
+    /// scrolling — maintenance tolerance keeps flow alive during the wait.
     private func configV3(sensitivity: Double) -> StrategyConfig {
         let t = (sensitivity - 0.4) / (0.9 - 0.4)
-        let gap = 15.0 + t * 75.0
+        let entryGap = 15.0 + t * 75.0              // same base as V2
+        let maintenanceGap = entryGap * 1.5          // 1.5x more forgiving
 
         // Escalation: low sensitivity = aggressive, high = patient
-        // 0.4 → 1 nudge, 0.5 → 1, 0.6 → 2, 0.7 → 3, 0.8 → 5, 0.9 → nil (never)
         let maxNudges: Int?
         switch sensitivity {
         case ..<0.55:  maxNudges = 1
@@ -139,7 +149,8 @@ public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
         return StrategyConfig(
             flowEntryScoreThreshold: 0,
             flowExitScoreThreshold: 0,
-            gapTolerance: gap,
+            entryGapTolerance: entryGap,
+            maintenanceGapTolerance: maintenanceGap,
             flowInputMethod: .intentionalOnly,
             breakDeliveryInFlow: .nudgeWithEscalation,
             maxNudgesBeforeForce: maxNudges

@@ -90,7 +90,7 @@ public final class FlowStateMachine {
         case .activityGapAnyInput:
             tickActivityGap(idleTime: secondsSinceLastInput, now: now)
         case .intentionalWithEscalation:
-            tickActivityGap(idleTime: secondsSinceLastIntentionalInput, now: now)
+            tickActivityGapTwoTier(idleTime: secondsSinceLastIntentionalInput, now: now)
         }
     }
 
@@ -146,6 +146,48 @@ public final class FlowStateMachine {
 
     private func tickActivityGap(idleTime: TimeInterval, now: TimeInterval) {
         let isActive = idleTime < config.gapTolerance
+
+        if isActive {
+            continuousActivityStart = continuousActivityStart ?? now
+        } else {
+            continuousActivityStart = nil
+        }
+
+        switch state {
+        case .normal:
+            if let start = continuousActivityStart,
+               now - start >= flowEntryDuration {
+                flowEntrySince = now
+                transition(to: .flow)
+            }
+        case .flow:
+            if !isActive {
+                flowEntrySince = nil
+                continuousActivityStart = nil
+                transition(to: .normal)
+            } else if let start = flowEntrySince,
+                      now - start >= deepFlowDuration {
+                transition(to: .deepFlow)
+            }
+        case .deepFlow:
+            if !isActive {
+                flowEntrySince = nil
+                continuousActivityStart = nil
+                transition(to: .normal)
+            }
+        case .idle, .meeting, .breakPrompted:
+            break
+        }
+    }
+
+    // MARK: - V3: Two-tier activity gap
+
+    /// Entry uses stricter tolerance (must be actively typing).
+    /// Maintenance uses 1.5x tolerance (clicks/scroll during AI wait keep flow alive).
+    private func tickActivityGapTwoTier(idleTime: TimeInterval, now: TimeInterval) {
+        let inFlow = state == .flow || state == .deepFlow
+        let tolerance = inFlow ? config.maintenanceGapTolerance : config.entryGapTolerance
+        let isActive = idleTime < tolerance
 
         if isActive {
             continuousActivityStart = continuousActivityStart ?? now
