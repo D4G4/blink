@@ -38,16 +38,9 @@ struct FlowLearnMoreView: View {
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                     }
-                    HStack(spacing: 8) {
-                        Text("Sensitivity: \(Int(sensitivity * 100))%")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.secondary)
-                        Text("·")
-                            .foregroundStyle(.secondary)
-                        Text("Pause tolerance: \(gapTolerance)s")
-                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(accent)
-                    }
+                    Text("Sensitivity: \(Int(sensitivity * 100))%")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(accent)
                 }
             }
             .padding(.horizontal, 24)
