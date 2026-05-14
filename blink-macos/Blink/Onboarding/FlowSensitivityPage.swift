@@ -17,23 +17,25 @@ struct FlowSensitivityPage: View {
             theme.backgroundGradient(for: colorScheme)
                 .ignoresSafeArea()
 
-            VStack(alignment: .center, spacing: 0) {
-                Spacer()
-
+            VStack(spacing: 0) {
                 Image(systemName: "brain.head.profile")
                     .font(.system(size: 60, weight: .light))
                     .foregroundStyle(fg.opacity(0.7))
-                    .padding(.bottom, 16)
+                    .frame(maxWidth: .infinity)
+
+                Spacer()
 
                 Text("Flow Detection")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(fg)
+                    .frame(maxWidth: .infinity)
                     .padding(.bottom, 6)
 
                 Text("Blink detects when you're focused and extends break intervals")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(fg.opacity(0.85))
                     .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
                     .padding(.bottom, 24)
 
                 FlowSensitivityView(
@@ -42,6 +44,7 @@ struct FlowSensitivityPage: View {
                     foregroundColor: fg,
                     style: .onboarding
                 )
+                .frame(maxWidth: .infinity)
 
                 Spacer()
 
