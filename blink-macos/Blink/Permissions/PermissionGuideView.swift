@@ -111,7 +111,7 @@ struct PermissionGuideView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(.white)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 32)
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(bgTop)
