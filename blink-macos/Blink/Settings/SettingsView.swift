@@ -269,9 +269,9 @@ struct SettingsView: View {
                 FlowLearnMoreWindowController.shared.show(theme: themeManager.current)
             } label: {
                 HStack(spacing: 4) {
-                    Image(systemName: "info.circle")
+                    Image(systemName: "slider.horizontal.3")
                         .font(.system(size: 11))
-                    Text("Learn more about flow detection")
+                    Text("See real-world impact of this sensitivity")
                         .font(.system(size: 12))
                 }
                 .foregroundStyle(accentColor)

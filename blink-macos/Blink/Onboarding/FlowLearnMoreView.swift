@@ -17,20 +17,48 @@ struct FlowLearnMoreView: View {
         let accent = theme.accent(for: colorScheme)
 
         VStack(spacing: 0) {
+            // Sticky header: title + slider
+            VStack(spacing: 12) {
+                HStack(spacing: 10) {
+                    Image(systemName: "brain.head.profile")
+                        .font(.system(size: 24, weight: .light))
+                        .foregroundStyle(accent)
+                    Text("How Flow Detection Works")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                }
+
+                VStack(spacing: 6) {
+                    HStack {
+                        Text("Low")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                        Slider(value: $sensitivity, in: 0.4...0.9, step: 0.05)
+                            .tint(accent)
+                        Text("High")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                    HStack(spacing: 8) {
+                        Text("Sensitivity: \(Int(sensitivity * 100))%")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        Text("·")
+                            .foregroundStyle(.secondary)
+                        Text("Pause tolerance: \(gapTolerance)s")
+                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(accent)
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
+            .background(.bar)
+
+            Divider()
+
+            // Scrollable content
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Header
-                    VStack(spacing: 8) {
-                        Image(systemName: "brain.head.profile")
-                            .font(.system(size: 36, weight: .light))
-                            .foregroundStyle(accent)
-
-                        Text("How Flow Detection Works")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.bottom, 4)
-
                     // Core concept
                     sectionHeader("The simple rule")
                     Text("If you've been continuously active — any keyboard or mouse input — with no long pauses, Blink considers you in flow and extends your break interval.")
@@ -43,36 +71,14 @@ struct FlowLearnMoreView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         ruleRow("Active for 3+ minutes", "→ Flow (breaks at 30 min)", accent: accent)
                         ruleRow("In flow for 15+ minutes", "→ Deep Flow (breaks at 40 min)", accent: accent)
-                        ruleRow("Pause too long", "→ Flow ends, back to 20 min", accent: accent)
-                    }
-                    .padding(14)
-                    .background(fg.opacity(0.04))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-
-                    // Interactive sensitivity
-                    sectionHeader("Try it — adjust sensitivity")
-
-                    VStack(spacing: 8) {
-                        HStack {
-                            Text("Low")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                            Slider(value: $sensitivity, in: 0.4...0.9, step: 0.05)
-                                .tint(accent)
-                            Text("High")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                        Text("Pause tolerance: \(gapTolerance)s")
-                            .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(accent)
+                        ruleRow("Pause > \(gapTolerance)s", "→ Flow ends, back to 20 min", accent: accent)
                     }
                     .padding(14)
                     .background(fg.opacity(0.04))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
                     // Dynamic scenarios
-                    sectionHeader("What happens at \(Int(sensitivity * 100))% sensitivity")
+                    sectionHeader("Real scenarios at \(Int(sensitivity * 100))%")
 
                     scenarioRow(
                         icon: "keyboard",

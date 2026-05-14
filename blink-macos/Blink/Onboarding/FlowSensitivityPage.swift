@@ -72,7 +72,7 @@ struct FlowSensitivityPage: View {
                         HStack(spacing: 4) {
                             Image(systemName: "info.circle")
                                 .font(.system(size: 13))
-                            Text("Learn more about flow detection")
+                            Text("See real-world scenarios for this sensitivity")
                                 .font(.system(size: 13, weight: .medium))
                         }
                         .foregroundStyle(fg.opacity(0.7))
