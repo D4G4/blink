@@ -83,7 +83,7 @@ struct FlowSensitivityPage: View {
                         .clipShape(Capsule())
                         .scaleEffect(pulsing ? 1.05 : 1.0)
                         .opacity(pulsing ? 1.0 : 0.85)
-                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: pulsing)
+                        .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulsing)
                         .onAppear { pulsing = true }
                     }
                     .buttonStyle(.plain)
