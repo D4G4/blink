@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// Shows the permission explanation screen after onboarding.
+/// Shows the permission explanation screen, then the step-by-step guide if needed.
 final class PermissionWindowController {
     private var window: NSWindow?
 
@@ -9,14 +9,26 @@ final class PermissionWindowController {
         guard let screen = NSScreen.main else { return }
 
         let windowWidth: CGFloat = 500
-        let windowHeight: CGFloat = 580
+        let windowHeight: CGFloat = 650
         let visible = screen.visibleFrame
         let x = visible.midX - windowWidth / 2
         let y = visible.midY - windowHeight / 2
 
         let view = PermissionOnboardingView(theme: theme) { [weak self] in
-            self?.dismiss()
-            onContinue()
+            // Try the system prompt first (works for unsandboxed/DMG builds)
+            PermissionManager.requestAccessibility()
+
+            // Check after a short delay if permission was granted
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                if PermissionManager.isAccessibilityGranted() {
+                    // System prompt worked (unsandboxed) — done
+                    self?.dismiss()
+                    onContinue()
+                } else {
+                    // Prompt didn't appear (sandboxed) — show step-by-step guide
+                    self?.showGuide(theme: theme, onContinue: onContinue)
+                }
+            }
         }
 
         let win = NSWindow(
@@ -42,6 +54,32 @@ final class PermissionWindowController {
         }
 
         self.window = win
+    }
+
+    private func showGuide(theme: BlinkTheme, onContinue: @escaping () -> Void) {
+        guard let win = window else { return }
+
+        let guideView = PermissionGuideView(
+            theme: theme,
+            onOpenSettings: {
+                PermissionManager.openAccessibilitySettings()
+            },
+            onDone: { [weak self] in
+                self?.dismiss()
+                onContinue()
+            }
+        )
+
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.2
+            win.animator().alphaValue = 0
+        }, completionHandler: {
+            win.contentView = NSHostingView(rootView: guideView)
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.2
+                win.animator().alphaValue = 1
+            }
+        })
     }
 
     private func dismiss() {

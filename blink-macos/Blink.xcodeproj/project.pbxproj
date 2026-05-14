@@ -15,6 +15,7 @@
 		285C0EFFE325468E346E69D5 /* MacInputMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 545B271DAD35F8C4FA3D7CCF /* MacInputMonitor.swift */; };
 		2A0582A72A1AAB4740356223 /* WhyExistWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */; };
 		35EA33C9B1B23682BB31DCED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4BF5F1BD395AB638696B46E9 /* Assets.xcassets */; };
+		379C438AB35FC1F051388A97 /* PermissionGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90526A63E832616BC379B327 /* PermissionGuideView.swift */; };
 		3A60C972DDC5C22A3F5471B4 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F26BF916A815637E47FA8E /* PermissionManager.swift */; };
 		489B49000BDC6DAC9E692730 /* ThemedToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5414954E7C64589362BB613F /* ThemedToggleStyle.swift */; };
 		51B85A79F15C502885A3F8C2 /* BlinkTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0886829FB1518795A9E605C /* BlinkTheme.swift */; };
@@ -62,6 +63,7 @@
 		71AF16B93A94215233284E2E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		73EF2DCF137E47C83983AFEB /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		8C3FE352EB3AFEEB76ECBD6B /* Blink.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Blink.entitlements; sourceTree = "<group>"; };
+		90526A63E832616BC379B327 /* PermissionGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionGuideView.swift; sourceTree = "<group>"; };
 		93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLearnMoreView.swift; sourceTree = "<group>"; };
 		977674318B8EB84E0DD3DE41 /* MacContextDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContextDetector.swift; sourceTree = "<group>"; };
 		989DBB159CA5CB427CCCADEF /* BlinkApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkApp.swift; sourceTree = "<group>"; };
@@ -133,6 +135,7 @@
 		96D4CE7352584A15028548A2 /* Permissions */ = {
 			isa = PBXGroup;
 			children = (
+				90526A63E832616BC379B327 /* PermissionGuideView.swift */,
 				10F26BF916A815637E47FA8E /* PermissionManager.swift */,
 				AF68C178E62F6093F4057913 /* PermissionOnboardingView.swift */,
 				1952E3C02F56495895D00BB8 /* PermissionWindowController.swift */,
@@ -305,6 +308,7 @@
 				721AB1C8176D69C9F1A07603 /* OnboardingView.swift in Sources */,
 				AF2AA32997C297584EE5186E /* OnboardingWindow.swift in Sources */,
 				CFB301E36AADFE6AB97FFCE5 /* OverlayWindow.swift in Sources */,
+				379C438AB35FC1F051388A97 /* PermissionGuideView.swift in Sources */,
 				3A60C972DDC5C22A3F5471B4 /* PermissionManager.swift in Sources */,
 				DEAF8705E1C91BA6128075DC /* PermissionOnboardingView.swift in Sources */,
 				722622A0B195340B20B82F9C /* PermissionWindowController.swift in Sources */,
@@ -448,7 +452,7 @@
 				CODE_SIGN_ENTITLEMENTS = Blink/Blink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -476,7 +480,7 @@
 				CODE_SIGN_ENTITLEMENTS = Blink/Blink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;

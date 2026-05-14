@@ -168,13 +168,11 @@ final class AppState: ObservableObject {
         } else {
             log.info("Waiting for Accessibility permission — showing explanation")
 
-            // Show themed permission explanation, then trigger system dialog
+            // Show permission explanation → tries system prompt → falls back to step-by-step guide
             permissionWindow = PermissionWindowController()
             permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
                 guard let self else { return }
                 self.permissionWindow = nil
-                log.info("User acknowledged — requesting Accessibility permission")
-                PermissionManager.requestAccessibility()
                 self.startPermissionPolling()
             }
         }
