@@ -56,7 +56,7 @@ struct FlowLearnMoreView: View {
                     sectionHeader("The simple rule")
                     Text("If you've been continuously active — any keyboard or mouse input — with no long pauses, Blink considers you in flow and extends your break interval.")
                         .font(.system(size: 13))
-                        .foregroundStyle(.primary.opacity(0.85))
+                        .foregroundStyle(.primary)
 
                     // How it works
                     sectionHeader("How it decides")
@@ -142,7 +142,7 @@ struct FlowLearnMoreView: View {
                             .foregroundStyle(accent)
                         Text("Blink reads input timing only — never keystrokes, window contents, or personal data.")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(fg.opacity(0.6))
+                            .foregroundStyle(.primary)
                     }
                     .padding(12)
                     .background(accent.opacity(0.08))
@@ -184,7 +184,7 @@ struct FlowLearnMoreView: View {
                 .foregroundStyle(.primary)
             Text(result)
                 .font(.system(size: 12))
-                .foregroundStyle(.primary.opacity(0.7))
+                .foregroundStyle(.primary)
         }
     }
 
@@ -203,7 +203,7 @@ struct FlowLearnMoreView: View {
             }
             Text(detail)
                 .font(.system(size: 12))
-                .foregroundStyle(.primary.opacity(0.75))
+                .foregroundStyle(.primary)
             HStack(spacing: 4) {
                 Image(systemName: "arrow.right")
                     .font(.system(size: 9, weight: .bold))
