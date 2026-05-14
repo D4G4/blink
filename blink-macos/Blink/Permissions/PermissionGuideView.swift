@@ -37,16 +37,39 @@ struct PermissionGuideView: View {
                     .padding(.bottom, 28)
 
                 // Steps
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Open Settings  →  click  +  →  find Blink  →  toggle on")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .multilineTextAlignment(.leading)
+                VStack(spacing: 0) {
+                    stepRow(
+                        icon: "gear",
+                        title: "Open Accessibility Settings",
+                        subtitle: "Click the button below to open the right page",
+                        fg: fg
+                    )
+                    stepConnector()
+                    stepRow(
+                        icon: "plus.circle.fill",
+                        title: "Click the  +  button",
+                        subtitle: "At the bottom-left of the app list",
+                        fg: fg
+                    )
+                    stepConnector()
+                    stepRow(
+                        icon: "folder.fill",
+                        title: "Find Blink in Applications",
+                        subtitle: "Applications → Blink → Open",
+                        fg: fg
+                    )
+                    stepConnector()
+                    stepRow(
+                        icon: "switch.2",
+                        title: "Toggle Blink on",
+                        subtitle: "You may need to enter your password",
+                        fg: fg
+                    )
                 }
-                .frame(maxWidth: 380, alignment: .leading)
-                .padding(24)
+                .padding(20)
                 .background(.white.opacity(0.15))
                 .clipShape(RoundedRectangle(cornerRadius: 16))
+                .frame(maxWidth: 400)
 
                 Spacer()
 
@@ -91,6 +114,38 @@ struct PermissionGuideView: View {
         }
     }
 
+    // MARK: - Step Components
+
+    private func stepRow(icon: String, title: String, subtitle: String, fg: Color) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                Text(subtitle)
+                    .font(.system(size: 12))
+                    .foregroundStyle(fg.opacity(0.75))
+            }
+
+            Spacer()
+        }
+        .padding(.vertical, 8)
+    }
+
+    private func stepConnector() -> some View {
+        HStack {
+            Rectangle()
+                .fill(.white.opacity(0.3))
+                .frame(width: 2, height: 16)
+                .padding(.leading, 15)
+            Spacer()
+        }
+    }
 }
 
 #Preview("Permission Guide — Peach") {
