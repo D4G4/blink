@@ -25,6 +25,16 @@
                        Text="Look at something far away" FontSize="24"
                        HorizontalAlignment="Center"/>
 
+            <!-- Walk suggestion (hidden by default, shown when breakNumber >= 4) -->
+            <StackPanel x:Name="WalkSuggestion" Orientation="Horizontal"
+                        HorizontalAlignment="Center" Spacing="8"
+                        Visibility="Collapsed">
+                <FontIcon x:Name="WalkIcon" Glyph="&#xE805;" FontSize="18"
+                          VerticalAlignment="Center"/>
+                <TextBlock x:Name="WalkText"
+                           FontSize="16" VerticalAlignment="Center"/>
+            </StackPanel>
+
             <!-- Timer display with circular progress -->
             <Grid HorizontalAlignment="Center" Width="160" Height="160">
                 <!-- Circular progress arc -->
@@ -42,18 +52,17 @@
             <!-- Extend feedback (hidden by default) -->
             <TextBlock x:Name="ExtendFeedback"
                        Text="+20s" FontSize="20" FontWeight="SemiBold"
-                       HorizontalAlignment="Center" Opacity="0"
-                       Foreground="#80FFFFFF"/>
+                       HorizontalAlignment="Center" Opacity="0"/>
         </StackPanel>
 
         <!-- Bottom hints -->
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom"
                     Margin="0,0,0,48" Spacing="4">
             <TextBlock x:Name="HintSkip"
-                       Text="esc = Skip break" FontSize="14" Opacity="0.5"
+                       Text="esc = Skip break" FontSize="14"
                        HorizontalAlignment="Center"/>
             <TextBlock x:Name="HintExtend"
-                       Text="&#x2192; = Extend 20s" FontSize="14" Opacity="0.5"
+                       Text="&#x2192; = Extend 20s" FontSize="14"
                        HorizontalAlignment="Center"/>
         </StackPanel>
     </Grid>

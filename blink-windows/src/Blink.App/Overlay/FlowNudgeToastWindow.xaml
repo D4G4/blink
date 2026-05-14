@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Blink.App.Overlay.FlowNudgeToastWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid x:Name="RootGrid" Padding="16,12" CornerRadius="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Brain icon -->
+        <FontIcon Grid.Column="0" Glyph="&#xE945;" FontSize="24"
+                  x:Name="IconElement" VerticalAlignment="Center"/>
+
+        <!-- Nudge message -->
+        <TextBlock Grid.Column="1" x:Name="MessageText"
+                   FontSize="14" FontWeight="SemiBold"
+                   VerticalAlignment="Center" Margin="12,0,0,0"
+                   TextTrimming="CharacterEllipsis"/>
+
+        <!-- Break button -->
+        <Button Grid.Column="2" x:Name="BreakButton"
+                Content="Break" Click="OnBreak"
+                FontSize="11" Padding="8,4"
+                VerticalAlignment="Center" Margin="8,0,0,0"/>
+    </Grid>
+</Window>

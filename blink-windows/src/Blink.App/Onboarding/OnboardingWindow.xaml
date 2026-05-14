@@ -6,51 +6,153 @@
     Title="Welcome to Blink">
 
     <Grid x:Name="RootGrid" Padding="40">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
 
-        <!-- Welcome text -->
-        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8">
-            <TextBlock Text="Welcome to Blink"
-                       FontSize="36" FontWeight="Bold"
-                       HorizontalAlignment="Center"/>
-            <TextBlock Text="Smart breaks for your eyes"
-                       FontSize="16" Opacity="0.7"
-                       HorizontalAlignment="Center"/>
-        </StackPanel>
+        <!-- Page 1: Theme Selection -->
+        <Grid x:Name="ThemePage">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <!-- Theme icon -->
-        <Image Grid.Row="1" x:Name="ThemeIcon"
-               Width="200" Height="200"
-               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <!-- Welcome text -->
+            <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8">
+                <TextBlock Text="Welcome to Blink"
+                           FontSize="36" FontWeight="Bold"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Smart breaks for your eyes"
+                           FontSize="16" Opacity="0.7"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
 
-        <!-- Theme name -->
-        <TextBlock Grid.Row="2" x:Name="ThemeName"
-                   FontSize="20" FontWeight="SemiBold"
-                   HorizontalAlignment="Center" Margin="0,16,0,0"/>
+            <!-- Theme icon -->
+            <Image Grid.Row="1" x:Name="ThemeIcon"
+                   Width="200" Height="200"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-        <!-- Navigation -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal"
-                    HorizontalAlignment="Center" Spacing="24" Margin="0,24,0,0">
-            <Button x:Name="PrevButton" Content="◀" Click="OnPrevious"
-                    FontSize="24" Width="48" Height="48"/>
-            <Button x:Name="NextButton" Content="▶" Click="OnNext"
-                    FontSize="24" Width="48" Height="48"/>
-        </StackPanel>
+            <!-- Theme name -->
+            <TextBlock Grid.Row="2" x:Name="ThemeName"
+                       FontSize="20" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" Margin="0,16,0,0"/>
 
-        <!-- Get Started -->
-        <StackPanel Grid.Row="4" HorizontalAlignment="Center" Spacing="12" Margin="0,32,0,0">
-            <Button Content="Get Started" Click="OnGetStarted"
-                    FontSize="16" FontWeight="SemiBold"
-                    Width="200" Height="48"
-                    HorizontalAlignment="Center"/>
-            <HyperlinkButton Content="Why do I exist?" Click="OnWhyExist"
-                             HorizontalAlignment="Center"/>
-        </StackPanel>
+            <!-- Navigation -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal"
+                        HorizontalAlignment="Center" Spacing="24" Margin="0,24,0,0">
+                <Button x:Name="PrevButton" Content="&#x25C0;" Click="OnPrevious"
+                        FontSize="24" Width="48" Height="48"/>
+                <Button x:Name="NextButton" Content="&#x25B6;" Click="OnNext"
+                        FontSize="24" Width="48" Height="48"/>
+            </StackPanel>
+
+            <!-- Continue -->
+            <StackPanel Grid.Row="4" HorizontalAlignment="Center" Spacing="12" Margin="0,32,0,0">
+                <Button Content="Continue" Click="OnContinueToFlow"
+                        FontSize="16" FontWeight="SemiBold"
+                        Width="200" Height="48"
+                        HorizontalAlignment="Center"/>
+                <HyperlinkButton Content="Why do I exist?" Click="OnWhyExist"
+                                 HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Page 2: Flow Sensitivity -->
+        <Grid x:Name="FlowPage" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Back button -->
+            <Button Grid.Row="0" Click="OnBackToThemes"
+                    Background="Transparent" BorderThickness="0"
+                    HorizontalAlignment="Left" VerticalAlignment="Top"
+                    Padding="8,6" Margin="-20,-20,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <FontIcon Glyph="&#xE76B;" FontSize="12" Opacity="0.7"/>
+                    <TextBlock x:Name="BackLabel" Text="Themes" FontSize="13" FontWeight="Medium" Opacity="0.7"/>
+                </StackPanel>
+            </Button>
+
+            <!-- Brain icon -->
+            <FontIcon Grid.Row="1" x:Name="FlowIcon" Glyph="&#xE945;"
+                      FontSize="60" Opacity="0.7"
+                      HorizontalAlignment="Center" Margin="0,20,0,0"/>
+
+            <!-- Title + subtitle -->
+            <StackPanel Grid.Row="2" HorizontalAlignment="Center" Spacing="6" Margin="0,20,0,0">
+                <TextBlock x:Name="FlowTitle" Text="Flow Detection"
+                           FontSize="28" FontWeight="Bold"
+                           HorizontalAlignment="Center"/>
+                <TextBlock x:Name="FlowSubtitle"
+                           Text="Blink detects when you're focused and extends break intervals"
+                           FontSize="15" Opacity="0.85"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="Wrap" MaxWidth="400"/>
+            </StackPanel>
+
+            <!-- Sensitivity slider card -->
+            <Border Grid.Row="3" x:Name="SliderCard"
+                    CornerRadius="14" Padding="20" Margin="0,24,0,0"
+                    MaxWidth="420" HorizontalAlignment="Center">
+                <StackPanel Spacing="10">
+                    <TextBlock x:Name="SliderTitle" Text="Flow Sensitivity"
+                               FontSize="14" FontWeight="SemiBold"
+                               HorizontalAlignment="Center"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="SliderLowLabel" Grid.Column="0" Text="Low" FontSize="12"
+                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <Slider Grid.Column="1" x:Name="FlowSlider"
+                                Minimum="40" Maximum="90" StepFrequency="5"
+                                ValueChanged="FlowSlider_ValueChanged"/>
+                        <TextBlock x:Name="SliderHighLabel" Grid.Column="2" Text="High" FontSize="12"
+                                   VerticalAlignment="Center" Margin="8,0,0,0"/>
+                    </Grid>
+
+                    <TextBlock x:Name="FlowPctLabel" FontSize="24" FontWeight="Light"
+                               FontFamily="Consolas"
+                               HorizontalAlignment="Center"/>
+
+                    <TextBlock x:Name="FlowDescLabel" FontSize="14" FontWeight="Medium"
+                               TextAlignment="Center" TextWrapping="Wrap"
+                               HorizontalAlignment="Center" MaxWidth="380"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Spacer -->
+            <Grid Grid.Row="4"/>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="5" HorizontalAlignment="Center" Spacing="20" Margin="0,0,0,20">
+                <Button x:Name="ExploreButton" Click="OnExploreHowItWorks"
+                        Background="Transparent" BorderThickness="0"
+                        HorizontalAlignment="Center" Padding="20,10">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE9E9;" FontSize="14"/>
+                        <TextBlock Text="Explore how it works" FontSize="14" FontWeight="Bold"/>
+                    </StackPanel>
+                </Button>
+
+                <Button x:Name="GetStartedButton" Click="OnGetStarted"
+                        FontSize="17" FontWeight="SemiBold"
+                        Width="200" Height="48"
+                        CornerRadius="24"
+                        HorizontalAlignment="Center">
+                    <TextBlock Text="Get Started"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
     </Grid>
 </Window>

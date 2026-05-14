@@ -14,7 +14,7 @@ public sealed partial class BreakTimerWindow : Window
     private int _remaining = 20;
     private int _total = 20;
 
-    public BreakTimerWindow(Action onComplete, Action onSkip)
+    public BreakTimerWindow(Action onComplete, Action onSkip, int breakNumber = 0)
     {
         _onComplete = onComplete;
         _onSkip = onSkip;
@@ -53,6 +53,16 @@ public sealed partial class BreakTimerWindow : Window
         BadgeText.Foreground = textColor;
         HintSkip.Foreground = textColor;
         HintExtend.Foreground = textColor;
+        ExtendFeedback.Foreground = textColor;
+        WalkIcon.Foreground = textColor;
+        WalkText.Foreground = textColor;
+
+        // Show walk suggestion when 4+ consecutive breaks
+        if (breakNumber >= 4)
+        {
+            WalkSuggestion.Visibility = Visibility.Visible;
+            WalkText.Text = $"You've taken {breakNumber}+ breaks \u2014 consider a quick walk!";
+        }
 
         // Ensure the Grid can receive keyboard focus
         RootGrid.IsTabStop = true;

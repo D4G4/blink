@@ -132,7 +132,9 @@
                             <TextBlock x:Name="FlowSensitivityLabel" VerticalAlignment="Center" Width="40"/>
                         </StackPanel>
                     </Grid>
-                    <TextBlock Text="Higher sensitivity means flow state is detected more easily" FontSize="12" Opacity="0.5"/>
+                    <TextBlock x:Name="FlowSensitivityDescription" FontSize="12" Opacity="0.5" TextWrapping="Wrap"/>
+                    <HyperlinkButton x:Name="FlowLearnMoreButton" Content="See real-world impact of this sensitivity"
+                                     Click="FlowLearnMore_Click" Padding="0"/>
 
                     <TextBlock Text="CURRENT STATE" FontSize="12" FontWeight="SemiBold" Opacity="0.5" Margin="0,16,0,0"/>
 

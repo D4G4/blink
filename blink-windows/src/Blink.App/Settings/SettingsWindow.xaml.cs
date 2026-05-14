@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Blink.App.Theme;
+using Blink.App.Onboarding;
 
 namespace Blink.App.Settings;
 
@@ -31,6 +32,7 @@ public sealed partial class SettingsWindow : Window
 
         FlowSensitivitySlider.Value = tm.FlowSensitivity * 100;
         FlowSensitivityLabel.Text = $"{(int)(tm.FlowSensitivity * 100)}%";
+        FlowSensitivityDescription.Text = GetFlowSensitivityDescription(tm.FlowSensitivity);
 
         FlowScoreValue.Text = $"{_appState.FlowScore:P0}";
         FlowStateValue.Text = _appState.CurrentFlowState.ToString();
@@ -134,7 +136,35 @@ public sealed partial class SettingsWindow : Window
         var value = pct / 100.0;
         ThemeManager.Instance.FlowSensitivity = value;
         FlowSensitivityLabel.Text = $"{pct}%";
+        FlowSensitivityDescription.Text = GetFlowSensitivityDescription(value);
         _appState.FlowStateMachine.FlowEntryThreshold = value;
+    }
+
+    private void FlowLearnMore_Click(object sender, RoutedEventArgs e)
+    {
+        var sensitivity = ThemeManager.Instance.FlowSensitivity;
+        var window = new FlowLearnMoreWindow(ThemeManager.Instance.Current, sensitivity);
+        window.Activate();
+    }
+
+    private static int GetGapTolerance(double sensitivity)
+    {
+        var t = (sensitivity - 0.4) / (0.9 - 0.4);
+        return (int)Math.Round(15 + t * 75);
+    }
+
+    private static string GetFlowSensitivityDescription(double sensitivity)
+    {
+        var gap = GetGapTolerance(sensitivity);
+        return sensitivity switch
+        {
+            < 0.5 => $"Strict \u2014 pauses over {gap}s break flow. Only continuous action counts.",
+            < 0.6 => $"Conservative \u2014 pauses up to {gap}s keep flow. Short thinking breaks are OK.",
+            < 0.7 => $"Balanced \u2014 pauses up to {gap}s keep flow. Brief reading won't interrupt.",
+            < 0.8 => $"Recommended \u2014 pauses up to {gap}s keep flow. Natural thinking stays in flow.",
+            < 0.9 => $"Relaxed \u2014 pauses up to {gap}s keep flow. Long reading sessions are fine.",
+            _ => $"Very relaxed \u2014 pauses up to {gap}s keep flow. Almost any activity counts."
+        };
     }
 
     private void UpdateButton_Click(object sender, RoutedEventArgs e)

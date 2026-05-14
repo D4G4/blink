@@ -22,8 +22,9 @@ public sealed class OverlayManager
 
     /// <summary>
     /// Starts the full break flow: toast -> break timer.
+    /// Pass breakNumber to show a walk suggestion when >= 4.
     /// </summary>
-    public void ShowBreak(Action onComplete, Action onSkip)
+    public void ShowBreak(Action onComplete, Action onSkip, int breakNumber = 0)
     {
         _dispatcher.TryEnqueue(() =>
         {
@@ -32,13 +33,13 @@ public sealed class OverlayManager
             {
                 _currentToast?.Close();
                 _currentToast = null;
-                ShowBreakTimer(onComplete, onSkip);
+                ShowBreakTimer(onComplete, onSkip, breakNumber);
             });
             _currentToast.Activate();
         });
     }
 
-    private void ShowBreakTimer(Action onComplete, Action onSkip)
+    private void ShowBreakTimer(Action onComplete, Action onSkip, int breakNumber)
     {
         _currentFullscreen = new BreakTimerWindow(
             onComplete: () =>
@@ -52,7 +53,8 @@ public sealed class OverlayManager
                 _currentFullscreen?.Close();
                 _currentFullscreen = null;
                 onSkip();
-            });
+            },
+            breakNumber: breakNumber);
         _currentFullscreen.Activate();
     }
 
@@ -68,6 +70,19 @@ public sealed class OverlayManager
             {
                 onTakeBreakNow();
             });
+            toast.Activate();
+        });
+    }
+
+    /// <summary>
+    /// Shows a gentle nudge toast during flow state instead of forcing the break overlay.
+    /// Auto-dismisses after 7 seconds; "Break" button triggers onTakeBreak.
+    /// </summary>
+    public void ShowFlowNudge(string message, Action onTakeBreak)
+    {
+        _dispatcher.TryEnqueue(() =>
+        {
+            var toast = new FlowNudgeToastWindow(message, () => { onTakeBreak(); });
             toast.Activate();
         });
     }
