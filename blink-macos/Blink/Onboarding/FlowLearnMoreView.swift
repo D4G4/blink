@@ -5,6 +5,12 @@ struct FlowLearnMoreView: View {
     let theme: BlinkTheme
     let onDismiss: () -> Void
     @Environment(\.colorScheme) private var colorScheme
+    @State private var sensitivity: Double = 0.7
+
+    private var gapTolerance: Int {
+        let t = (sensitivity - 0.4) / (0.9 - 0.4)
+        return Int((15 + t * 75).rounded())
+    }
 
     var body: some View {
         let fg = Color.primary
@@ -43,71 +49,80 @@ struct FlowLearnMoreView: View {
                     .background(fg.opacity(0.04))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
-                    // Real scenarios
-                    sectionHeader("Real scenarios")
+                    // Interactive sensitivity
+                    sectionHeader("Try it — adjust sensitivity")
+
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("Low")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                            Slider(value: $sensitivity, in: 0.4...0.9, step: 0.05)
+                                .tint(accent)
+                            Text("High")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
+                        Text("Pause tolerance: \(gapTolerance)s")
+                            .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(accent)
+                    }
+                    .padding(14)
+                    .background(fg.opacity(0.04))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                    // Dynamic scenarios
+                    sectionHeader("What happens at \(Int(sensitivity * 100))% sensitivity")
 
                     scenarioRow(
                         icon: "keyboard",
-                        title: "Coding for 10 minutes",
-                        detail: "You're typing steadily with short pauses to think (< 60s each). Blink detects flow after 3 minutes. Timer extends to 30 min. After 15 min, deep flow — 40 min.",
-                        result: "Break nudge at 30–40 min (gentle toast, not forced)",
+                        title: "Coding with \(gapTolerance - 10)s thinking pauses",
+                        detail: "You type, pause \(gapTolerance - 10)s to think, type again. Gap (\(gapTolerance - 10)s) is under your \(gapTolerance)s tolerance.",
+                        result: "Flow stays active — timer extends to 30–40 min",
                         accent: accent
                     )
                     scenarioRow(
                         icon: "doc.text",
-                        title: "Reading docs for 2 minutes, then coding",
-                        detail: "You read without touching keyboard for 90 seconds, then start typing. At default sensitivity (60s tolerance), the 90s pause breaks flow.",
-                        result: "Flow resets. Timer stays at 20 min until you're active for 3 min again",
+                        title: "Reading docs for \(gapTolerance + 15)s",
+                        detail: "You read without input for \(gapTolerance + 15)s, then start typing. Gap (\(gapTolerance + 15)s) exceeds your \(gapTolerance)s tolerance.",
+                        result: "Flow breaks. Timer resets to 20 min",
                         accent: accent
                     )
                     scenarioRow(
                         icon: "arrow.triangle.swap",
-                        title: "Switching between editor and browser",
-                        detail: "You switch apps frequently but keep typing and clicking. Every gap is under 60 seconds.",
-                        result: "Flow stays active — it's based on input gaps, not which app you're in",
+                        title: "Switching apps every \(max(gapTolerance - 20, 5))s",
+                        detail: "You switch between editor and browser, clicking every \(max(gapTolerance - 20, 5))s. All gaps under \(gapTolerance)s.",
+                        result: "Flow stays active — based on input gaps, not which app",
                         accent: accent
                     )
                     scenarioRow(
                         icon: "cup.and.saucer",
-                        title: "Getting coffee (away 5 minutes)",
-                        detail: "No input for 5 minutes. Blink detects you're away after 3 minutes.",
-                        result: "Timer resets silently. No break shown — you already rested your eyes",
+                        title: "Getting coffee (away 5 min)",
+                        detail: "No input for 5 minutes. Exceeds both \(gapTolerance)s tolerance and 3 min idle threshold.",
+                        result: "Timer resets silently — you already rested your eyes",
                         accent: accent
                     )
                     scenarioRow(
                         icon: "mic",
-                        title: "On a Zoom call",
-                        detail: "Microphone is active. Blink detects this immediately.",
-                        result: "Timer pauses completely. Resumes when the call ends",
-                        accent: accent
-                    )
-                    scenarioRow(
-                        icon: "play.rectangle",
-                        title: "Watching a YouTube video",
-                        detail: "Video is playing in the browser. No keyboard/mouse input.",
-                        result: "Timer pauses — you're already looking at a fixed point, not straining focus",
+                        title: "On a call",
+                        detail: "Mic active. Detected immediately regardless of sensitivity.",
+                        result: "Timer pauses. Resumes when call ends",
                         accent: accent
                     )
                     scenarioRow(
                         icon: "brain",
                         title: "Deep in flow, timer fires",
-                        detail: "You've been coding for 40 minutes straight. Timer reaches zero.",
-                        result: "Gentle toast: \"Focused for 40 min — time for a break?\" Auto-dismisses in 7s. Never forces a fullscreen overlay during flow",
+                        detail: "You've been coding for 40 min straight. Timer reaches zero.",
+                        result: "Gentle toast — never forces overlay during flow",
                         accent: accent
                     )
                     scenarioRow(
                         icon: "hand.raised",
                         title: "Not in flow, timer fires",
-                        detail: "You've been browsing casually for 20 minutes. Timer reaches zero.",
-                        result: "Fullscreen break overlay — 20 seconds. Esc to skip, → to extend",
+                        detail: "Browsing casually for 20 min. Timer reaches zero.",
+                        result: "Fullscreen break — 20s. Esc to skip, → to extend",
                         accent: accent
                     )
-                    
-                    // Sensitivity
-                    sectionHeader("What \"sensitivity\" controls")
-                    Text("The sensitivity slider sets how long you can pause between actions and still stay in flow. At the default (70%), you can think for up to 60 seconds without losing flow.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(fg.opacity(0.8))
 
                     // Timer summary
                     sectionHeader("Break intervals")
