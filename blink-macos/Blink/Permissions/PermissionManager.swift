@@ -1,17 +1,37 @@
 import Foundation
 import AppKit
+import CoreGraphics
 import UserNotifications
 
 /// Manages system permissions for Accessibility and Notifications.
 enum PermissionManager {
-    /// Check if Accessibility permission is currently granted.
+    /// Check if we can monitor input — works for both sandboxed and unsandboxed.
+    /// Tries AXIsProcessTrusted first (unsandboxed), falls back to CGEventTap probe (sandboxed).
     static func isAccessibilityGranted() -> Bool {
-        AXIsProcessTrusted()
+        // AXIsProcessTrusted works for unsandboxed builds
+        if AXIsProcessTrusted() { return true }
+
+        // For sandboxed builds, AXIsProcessTrusted always returns false.
+        // Try creating a CGEventTap — if it succeeds, we have permission.
+        let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
+        if let tap = CGEvent.tapCreate(
+            tap: .cgSessionEventTap,
+            place: .tailAppendEventTap,
+            options: .listenOnly,
+            eventsOfInterest: eventMask,
+            callback: { _, _, event, _ in Unmanaged.passUnretained(event) },
+            userInfo: nil
+        ) {
+            CGEvent.tapEnable(tap: tap, enable: false)
+            return true
+        }
+
+        return false
     }
 
     /// Request Accessibility permission (shows system prompt if not already granted).
     static func requestAccessibility() {
-        guard !isAccessibilityGranted() else { return }
+        guard !AXIsProcessTrusted() else { return }
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
         AXIsProcessTrustedWithOptions(options)
     }
