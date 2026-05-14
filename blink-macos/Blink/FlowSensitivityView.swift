@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Reusable flow sensitivity slider with dynamic description.
 /// Used in onboarding and Settings.
@@ -54,6 +55,21 @@ struct FlowSensitivityView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(minHeight: 32, alignment: .top)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
+
+            if researchWarningLevel == .caution {
+                Button {
+                    NSWorkspace.shared.open(URL(string: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8439964/")!)
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "book.closed")
+                            .font(.system(size: 10))
+                        Text("Read the research")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(foregroundColor.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+            }
         }
         .frame(maxWidth: 420)
         .padding(20)
@@ -75,8 +91,23 @@ struct FlowSensitivityView: View {
 
             Text(description)
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(researchWarningLevel == .caution ? .orange : .secondary)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
+
+            if researchWarningLevel == .caution {
+                Button {
+                    NSWorkspace.shared.open(URL(string: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8439964/")!)
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "book.closed")
+                            .font(.system(size: 10))
+                        Text("Read the research")
+                            .font(.system(size: 11))
+                    }
+                    .foregroundStyle(.orange)
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 
@@ -90,18 +121,30 @@ struct FlowSensitivityView: View {
     var description: String {
         switch sensitivity {
         case ..<0.5:
-            return "Strict — pauses over \(gapSeconds)s break flow. Only continuous action counts."
+            return "Strict — breaks come often. Good: your blink rate drops 69% during focus, so frequent breaks protect your eyes."
         case 0.5..<0.6:
-            return "Conservative — pauses up to \(gapSeconds)s keep flow. Short thinking breaks are OK."
+            return "Conservative — breaks at natural thought boundaries. Research shows blink rate drops from 15/min to 5/min during active screen work."
         case 0.6..<0.7:
-            return "Balanced — pauses up to \(gapSeconds)s keep flow. Brief reading won't interrupt."
+            return "Balanced — waits for you to finish a thought before reminding. Your eyes strain most during exactly this kind of focused work."
         case 0.7..<0.8:
-            return "Recommended — pauses up to \(gapSeconds)s keep flow. Natural thinking stays in flow."
+            return "Recommended — waits for natural pauses. Studies show incomplete blinks rise to 92% during focus, causing dry eyes."
         case 0.8..<0.9:
-            return "Relaxed — pauses up to \(gapSeconds)s keep flow. Long reading sessions are fine."
+            return "Relaxed — gentle reminders, easy to miss. ⚠️ Your eyes need breaks most when you're in deep focus."
         default:
-            return "Very relaxed — pauses up to \(gapSeconds)s keep flow. Almost any activity counts."
+            return "Very relaxed — minimal interruption. ⚠️ Research shows this is when your eyes strain the most — consider taking breaks when reminded."
         }
+    }
+
+    var researchWarningLevel: ResearchWarningLevel {
+        switch sensitivity {
+        case ..<0.6: return .safe
+        case 0.6..<0.8: return .neutral
+        default: return .caution
+        }
+    }
+
+    enum ResearchWarningLevel {
+        case safe, neutral, caution
     }
 }
 
