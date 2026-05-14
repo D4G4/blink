@@ -67,7 +67,7 @@ public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
     case intentionalWithEscalation = "v3_intentional_escalation"
 
     /// Current active strategy. Change this one line to switch.
-    public static let current: FlowDetectionStrategy = .activityGapAnyInput
+    public static let current: FlowDetectionStrategy = .intentionalWithEscalation
 
     /// Compute the full config for a given sensitivity (0.4–0.9).
     public func config(forSensitivity sensitivity: Double) -> StrategyConfig {
