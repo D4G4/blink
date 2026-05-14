@@ -30,7 +30,7 @@ targets:
         GENERATE_INFOPLIST_FILE: true
         PRODUCT_BUNDLE_IDENTIFIER: com.blink20.app
         MARKETING_VERSION: "1.6.0"
-        CURRENT_PROJECT_VERSION: "8"
+        CURRENT_PROJECT_VERSION: "9"
         INFOPLIST_KEY_LSUIElement: true
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false
         INFOPLIST_KEY_NSInputMonitoringUsageDescription: "Blink monitors keyboard and mouse timing to detect flow state and deliver breaks at the right moment. No keystrokes or content are recorded."
@@ -43,4 +43,6 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
     entitlements:
       path: Blink/Blink.entitlements
-      properties: {}
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
