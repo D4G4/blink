@@ -58,7 +58,7 @@ struct FlowSensitivityView: View {
 
             if researchWarningLevel == .caution {
                 Button {
-                    NSWorkspace.shared.open(URL(string: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8439964/")!)
+                    ResearchWindowController.shared.show(theme: BlinkTheme.named(UserDefaults.standard.string(forKey: "selectedTheme") ?? "peach"))
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "book.closed")
@@ -96,7 +96,7 @@ struct FlowSensitivityView: View {
 
             if researchWarningLevel == .caution {
                 Button {
-                    NSWorkspace.shared.open(URL(string: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8439964/")!)
+                    ResearchWindowController.shared.show(theme: BlinkTheme.named(UserDefaults.standard.string(forKey: "selectedTheme") ?? "peach"))
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "book.closed")

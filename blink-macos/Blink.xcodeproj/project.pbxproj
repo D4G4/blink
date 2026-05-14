@@ -26,8 +26,10 @@
 		722622A0B195340B20B82F9C /* PermissionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1952E3C02F56495895D00BB8 /* PermissionWindowController.swift */; };
 		72570C0C40040759FE52FBDF /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D286D81AEFFC707C40AF416D /* MenuBarView.swift */; };
 		78F685AF5FBDA94856623590 /* AllPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4978224F028FE729A5E799 /* AllPreviews.swift */; };
+		7D233C03212E195C2A96AAA8 /* ResearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */; };
 		8A0AFA5135D8FBEB7414E8FB /* MacIdleDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B2CC8BE1918B85F2A8165B5 /* MacIdleDetector.swift */; };
 		9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 216A16F819CB23807A4A69BF /* MacAppMonitor.swift */; };
+		A0462C64DCADDC43FA97B6D1 /* ResearchWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F839D2575DE2B8C9F7F320B9 /* ResearchWindowController.swift */; };
 		A4411B3A5D05D71332F0C539 /* FlowLearnMoreWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B64A6EE793C76CA223A1CDF /* FlowLearnMoreWindowController.swift */; };
 		AF2AA32997C297584EE5186E /* OnboardingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32296CA5F384757F2CCB9CDC /* OnboardingWindow.swift */; };
 		CBF502A96C4139DA82CA7235 /* PersistenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259BC5A29D8C29D30B7A8C1F /* PersistenceManager.swift */; };
@@ -72,8 +74,10 @@
 		BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistWindowController.swift; sourceTree = "<group>"; };
 		D286D81AEFFC707C40AF416D /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		E0886829FB1518795A9E605C /* BlinkTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkTheme.swift; sourceTree = "<group>"; };
+		E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchView.swift; sourceTree = "<group>"; };
 		EDA291436352B986E47616EA /* FlowSensitivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityView.swift; sourceTree = "<group>"; };
 		EDCB6EA78FBAD3A0E6F29598 /* OverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayWindow.swift; sourceTree = "<group>"; };
+		F839D2575DE2B8C9F7F320B9 /* ResearchWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchWindowController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,6 +136,15 @@
 			path = Persistence;
 			sourceTree = "<group>";
 		};
+		91CADECEB89E682897857F7D /* Research */ = {
+			isa = PBXGroup;
+			children = (
+				E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */,
+				F839D2575DE2B8C9F7F320B9 /* ResearchWindowController.swift */,
+			);
+			path = Research;
+			sourceTree = "<group>";
+		};
 		96D4CE7352584A15028548A2 /* Permissions */ = {
 			isa = PBXGroup;
 			children = (
@@ -159,6 +172,7 @@
 				96D4CE7352584A15028548A2 /* Permissions */,
 				8515D8F7F86994F9EE494B11 /* Persistence */,
 				BB1BE3CA5D65054DBB150A6A /* Platform */,
+				91CADECEB89E682897857F7D /* Research */,
 				082C8BA94E0BCFA337FD2181 /* Settings */,
 				73D24F7B2165BC5E03F1C38C /* Theme */,
 			);
@@ -314,6 +328,8 @@
 				722622A0B195340B20B82F9C /* PermissionWindowController.swift in Sources */,
 				CBF502A96C4139DA82CA7235 /* PersistenceManager.swift in Sources */,
 				E18997FAD5140713D3E5907B /* PreferencesWindowController.swift in Sources */,
+				7D233C03212E195C2A96AAA8 /* ResearchView.swift in Sources */,
+				A0462C64DCADDC43FA97B6D1 /* ResearchWindowController.swift in Sources */,
 				0AF1EB410D21A0FAD63E48EA /* SettingsView.swift in Sources */,
 				CEC516E6EED0DAFCDECC1AE9 /* ThemeManager.swift in Sources */,
 				489B49000BDC6DAC9E692730 /* ThemedToggleStyle.swift in Sources */,
