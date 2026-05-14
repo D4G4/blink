@@ -790,3 +790,74 @@ private struct DebugToastView: View {
     BreakPhaseView(theme: .sage, model: BreakPhaseModel(), onComplete: {}, onSkip: {})
         .frame(width: 600, height: 500)
 }
+
+// MARK: - Toast Previews
+
+#Preview("Timer Extended Toast - Peach") {
+    TimerExtendedToastView(theme: .peach, onDismiss: {}, onTakeBreak: {})
+        .frame(width: 280, height: 72)
+}
+
+#Preview("Timer Extended Toast - Midnight") {
+    TimerExtendedToastView(theme: .midnight, onDismiss: {}, onTakeBreak: {})
+        .frame(width: 280, height: 72)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Flow Nudge Toast - Peach") {
+    FlowNudgeToastView(theme: .peach, message: "You've been focused for 40 min — time for a break?", onDismiss: {}, onTakeBreak: {})
+        .frame(width: 320, height: 80)
+}
+
+#Preview("Flow Nudge Toast - Midnight") {
+    FlowNudgeToastView(theme: .midnight, message: "You've been focused for 30 min — time for a break?", onDismiss: {}, onTakeBreak: {})
+        .frame(width: 320, height: 80)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Flow Nudge Toast - Sage") {
+    FlowNudgeToastView(theme: .sage, message: "You've been focused for 40 min — time for a break?", onDismiss: {}, onTakeBreak: {})
+        .frame(width: 320, height: 80)
+}
+
+#Preview("Debug Toast") {
+    DebugToastView(message: "State: Normal → Flow")
+        .frame(width: 320, height: 44)
+}
+
+#Preview("Debug Toast - Dark") {
+    DebugToastView(message: "Timer reset: idle 185s >= 180s")
+        .frame(width: 320, height: 44)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("All Toasts - Light") {
+    VStack(spacing: 16) {
+        TimerExtendedToastView(theme: .peach, onDismiss: {}, onTakeBreak: {})
+            .frame(width: 280, height: 72)
+
+        FlowNudgeToastView(theme: .peach, message: "You've been focused for 40 min — time for a break?", onDismiss: {}, onTakeBreak: {})
+            .frame(width: 320, height: 80)
+
+        DebugToastView(message: "State: Normal → Flow")
+            .frame(width: 320, height: 44)
+    }
+    .padding(20)
+    .frame(width: 380, height: 300)
+}
+
+#Preview("All Toasts - Dark") {
+    VStack(spacing: 16) {
+        TimerExtendedToastView(theme: .midnight, onDismiss: {}, onTakeBreak: {})
+            .frame(width: 280, height: 72)
+
+        FlowNudgeToastView(theme: .midnight, message: "You've been focused for 30 min — time for a break?", onDismiss: {}, onTakeBreak: {})
+            .frame(width: 320, height: 80)
+
+        DebugToastView(message: "Timer reset: idle 185s >= 180s")
+            .frame(width: 320, height: 44)
+    }
+    .padding(20)
+    .frame(width: 380, height: 300)
+    .preferredColorScheme(.dark)
+}
