@@ -6,7 +6,7 @@ import AppKit
 final class PermissionWindowController {
     private var window: NSWindow?
 
-    func show(theme: BlinkTheme) {
+    func show(theme: BlinkTheme, onSettingsOpened: (() -> Void)? = nil) {
         guard let screen = NSScreen.main else { return }
 
         let windowWidth: CGFloat = 700
@@ -19,6 +19,8 @@ final class PermissionWindowController {
             theme: theme,
             onOpenSettings: {
                 PermissionManager.openAccessibilitySettings()
+                // Start polling only after user opens settings
+                onSettingsOpened?()
             }
         )
 

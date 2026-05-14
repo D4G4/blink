@@ -167,20 +167,32 @@ final class AppState: ObservableObject {
     }
 
     private func checkPermissionsAndStart() {
-        hasAccessibilityPermission = PermissionManager.isPermissionGranted()
-        log.info("Input permission: \(self.hasAccessibilityPermission)")
+        // On first launch, don't probe (CGEventTap probe triggers Input Monitoring prompt).
+        // If we've previously confirmed permission, probe to verify it's still valid.
+        let previouslyGranted = UserDefaults.standard.bool(forKey: "permissionGranted")
 
-        if hasAccessibilityPermission {
+        if previouslyGranted && PermissionManager.isPermissionGranted() {
+            hasAccessibilityPermission = true
             startMonitoring()
             startTimers()
-            log.info("Monitors and timers started")
-        } else {
-            log.info("Waiting for permission — showing guide")
-
-            // Show permission guide — user manually adds Blink in Accessibility settings
+            log.info("Permission confirmed — monitors and timers started")
+        } else if previouslyGranted {
+            // Was granted before but now revoked
+            hasAccessibilityPermission = false
+            UserDefaults.standard.set(false, forKey: "permissionGranted")
+            log.info("Permission revoked — showing guide")
             permissionWindow = PermissionWindowController()
             permissionWindow?.show(theme: ThemeManager.shared.current)
             startPermissionPolling()
+        } else {
+            // First launch — show guide, start polling only after user opens settings
+            hasAccessibilityPermission = false
+            log.info("First launch — showing permission guide")
+            permissionWindow = PermissionWindowController()
+            permissionWindow?.show(theme: ThemeManager.shared.current, onSettingsOpened: { [weak self] in
+                // Only start polling after user has opened settings and likely granted permission
+                self?.startPermissionPolling()
+            })
         }
     }
 
@@ -190,6 +202,7 @@ final class AppState: ObservableObject {
                 guard let self else { return }
                 if PermissionManager.isPermissionGranted() {
                     log.info("Permission granted — starting up")
+                    UserDefaults.standard.set(true, forKey: "permissionGranted")
                     self.permissionWindow?.dismiss()
                     self.permissionWindow = nil
                     self.hasAccessibilityPermission = true
