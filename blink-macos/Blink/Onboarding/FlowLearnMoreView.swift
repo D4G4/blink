@@ -197,6 +197,7 @@ struct FlowLearnMoreView: View {
                     .foregroundStyle(accent)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .background(Color.primary.opacity(0.03))
         .clipShape(RoundedRectangle(cornerRadius: 8))

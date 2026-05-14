@@ -729,10 +729,10 @@ private struct FlowNudgeToastView: View {
             } label: {
                 Text("Break")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(bg)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(fg)
+                    .background(accent)
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
