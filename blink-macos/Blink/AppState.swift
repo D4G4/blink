@@ -167,23 +167,20 @@ final class AppState: ObservableObject {
     }
 
     private func checkPermissionsAndStart() {
-        hasAccessibilityPermission = PermissionManager.isAccessibilityGranted()
-        log.info("Accessibility permission: \(self.hasAccessibilityPermission)")
+        hasAccessibilityPermission = PermissionManager.isPermissionGranted()
+        log.info("Input permission: \(self.hasAccessibilityPermission)")
 
         if hasAccessibilityPermission {
             startMonitoring()
             startTimers()
             log.info("Monitors and timers started")
         } else {
-            log.info("Waiting for Accessibility permission — showing explanation")
+            log.info("Waiting for permission — showing guide")
 
-            // Show permission explanation → tries system prompt → falls back to step-by-step guide
+            // Show permission guide — user manually adds Blink in Accessibility settings
             permissionWindow = PermissionWindowController()
-            permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
-                guard let self else { return }
-                self.permissionWindow = nil
-                self.startPermissionPolling()
-            }
+            permissionWindow?.show(theme: ThemeManager.shared.current)
+            startPermissionPolling()
         }
     }
 
@@ -191,8 +188,8 @@ final class AppState: ObservableObject {
         func poll() {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
                 guard let self else { return }
-                if PermissionManager.isAccessibilityGranted() {
-                    log.info("Accessibility permission granted — starting up")
+                if PermissionManager.isPermissionGranted() {
+                    log.info("Permission granted — starting up")
                     self.permissionWindow?.dismiss()
                     self.permissionWindow = nil
                     self.hasAccessibilityPermission = true

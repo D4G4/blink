@@ -3,16 +3,11 @@ import AppKit
 import CoreGraphics
 import UserNotifications
 
-/// Manages system permissions for Accessibility and Notifications.
+/// Manages system permissions for sandboxed (App Store/TestFlight) builds.
 enum PermissionManager {
-    /// Check if we can monitor input — works for both sandboxed and unsandboxed.
-    /// Tries AXIsProcessTrusted first (unsandboxed), falls back to CGEventTap probe (sandboxed).
-    static func isAccessibilityGranted() -> Bool {
-        // AXIsProcessTrusted works for unsandboxed builds
-        if AXIsProcessTrusted() { return true }
-
-        // For sandboxed builds, AXIsProcessTrusted always returns false.
-        // Try creating a CGEventTap — if it succeeds, we have permission.
+    /// Check if we have permission to monitor input.
+    /// Uses CGEventTap probe — works in sandbox where AXIsProcessTrusted always returns false.
+    static func isPermissionGranted() -> Bool {
         let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
         if let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
@@ -25,18 +20,10 @@ enum PermissionManager {
             CGEvent.tapEnable(tap: tap, enable: false)
             return true
         }
-
         return false
     }
 
-    /// Request Accessibility permission (shows system prompt if not already granted).
-    static func requestAccessibility() {
-        guard !AXIsProcessTrusted() else { return }
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
-        AXIsProcessTrustedWithOptions(options)
-    }
-
-    /// Opens System Settings to the Accessibility pane directly.
+    /// Opens System Settings to the Accessibility pane.
     static func openAccessibilitySettings() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }

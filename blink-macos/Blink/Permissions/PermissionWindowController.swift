@@ -1,31 +1,14 @@
 import SwiftUI
 import AppKit
 
-/// Shows the permission guide screen.
-/// Tries the system prompt first (works for unsandboxed/DMG builds).
-/// If sandboxed, shows step-by-step instructions.
+/// Shows the permission guide — user manually adds Blink in Accessibility settings.
+/// Auto-dismissed by AppState polling when permission is detected.
 final class PermissionWindowController {
     private var window: NSWindow?
 
-    func show(theme: BlinkTheme, onContinue: @escaping () -> Void) {
+    func show(theme: BlinkTheme) {
         guard let screen = NSScreen.main else { return }
 
-        // Try the system prompt first (works for unsandboxed/DMG builds)
-        PermissionManager.requestAccessibility()
-
-        // Check after a short delay if permission was granted
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            if PermissionManager.isAccessibilityGranted() {
-                // System prompt worked — done, no window needed
-                onContinue()
-            } else {
-                // Prompt didn't appear (sandboxed) — show step-by-step guide
-                self?.showGuide(theme: theme, screen: screen)
-            }
-        }
-    }
-
-    private func showGuide(theme: BlinkTheme, screen: NSScreen) {
         let windowWidth: CGFloat = 700
         let windowHeight: CGFloat = 420
         let visible = screen.visibleFrame
@@ -47,7 +30,7 @@ final class PermissionWindowController {
         )
         win.isOpaque = false
         win.backgroundColor = .clear
-        win.level = .normal  // don't stay on top — let user interact with Settings
+        win.level = .normal
         win.hasShadow = true
         win.appearance = NSApp.effectiveAppearance
         win.contentView = NSHostingView(rootView: guideView)
