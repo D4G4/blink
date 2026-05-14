@@ -109,12 +109,12 @@ struct PermissionGuideView: View {
     private func stepRow(icon: String, title: String, bgTop: Color) -> some View {
         HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 5)
+                RoundedRectangle(cornerRadius: 4)
                     .fill(.white.opacity(0.85))
-                    .frame(width: 38, height: 22)
+                    .frame(width: 32, height: 18)
                 Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(bgTop)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.black)
             }
             Text(title)
                 .font(.system(size: 14, weight: .bold))
