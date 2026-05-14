@@ -56,7 +56,7 @@ struct FlowLearnMoreView: View {
                     sectionHeader("The simple rule")
                     Text("If you've been continuously active — any keyboard or mouse input — with no long pauses, Blink considers you in flow and extends your break interval.")
                         .font(.system(size: 13))
-                        .foregroundStyle(fg.opacity(0.8))
+                        .foregroundStyle(.primary.opacity(0.85))
 
                     // How it works
                     sectionHeader("How it decides")
@@ -67,7 +67,7 @@ struct FlowLearnMoreView: View {
                         ruleRow("Pause > \(gapTolerance)s", "→ Flow ends, back to 20 min", accent: accent)
                     }
                     .padding(14)
-                    .background(fg.opacity(0.04))
+                    .background(Color.primary.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
                     // Dynamic scenarios
@@ -132,7 +132,7 @@ struct FlowLearnMoreView: View {
                         timerColumn(label: "Deep Flow", duration: "40 min", description: "15+ min active", accent: accent)
                     }
                     .padding(14)
-                    .background(fg.opacity(0.04))
+                    .background(Color.primary.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
                     // Privacy
@@ -180,10 +180,11 @@ struct FlowLearnMoreView: View {
     private func ruleRow(_ condition: String, _ result: String, accent: Color) -> some View {
         HStack(spacing: 8) {
             Text(condition)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.primary)
             Text(result)
                 .font(.system(size: 12))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary.opacity(0.7))
         }
     }
 
@@ -194,26 +195,27 @@ struct FlowLearnMoreView: View {
                     .font(.system(size: 13))
                     .foregroundStyle(accent)
                     .frame(width: 24, height: 24)
-                    .background(accent.opacity(0.1))
+                    .background(accent.opacity(0.15))
                     .clipShape(RoundedRectangle(cornerRadius: 5))
                 Text(title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(.primary)
             }
             Text(detail)
                 .font(.system(size: 12))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary.opacity(0.75))
             HStack(spacing: 4) {
                 Image(systemName: "arrow.right")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(accent)
                 Text(result)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(accent)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(Color.primary.opacity(0.03))
+        .background(Color.primary.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
