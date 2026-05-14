@@ -47,16 +47,18 @@ struct PermissionGuideView: View {
                     // LEFT: Hero screenshot
                     annotatedScreenshot(accent: accent, bgTop: bgTop)
 
-                    // RIGHT: Steps
-                    VStack(alignment: .leading, spacing: 0) {
+                    // RIGHT: Steps (centered)
+                    VStack(spacing: 0) {
                         Spacer()
-                        stepRow(icon: "gear", title: "Open Settings", bgTop: bgTop)
-                        stepConnector()
-                        stepRow(icon: "plus.circle.fill", title: "Click  +  button", bgTop: bgTop)
-                        stepConnector()
-                        blinkIconStep()
-                        stepConnector()
-                        stepRow(icon: "switch.2", title: "Toggle on", bgTop: bgTop)
+                        VStack(spacing: 0) {
+                            stepRow(icon: "gear", title: "Open Settings", bgTop: bgTop)
+                            stepConnector()
+                            stepRow(icon: "plus.circle.fill", title: "Click  +  button", bgTop: bgTop)
+                            stepConnector()
+                            blinkIconStep()
+                            stepConnector()
+                            stepRow(icon: "switch.2", title: "Toggle on", bgTop: bgTop)
+                        }
                         Spacer()
                     }
                     .padding(16)
@@ -108,29 +110,35 @@ struct PermissionGuideView: View {
                 )
                 .shadow(color: .black.opacity(0.35), radius: 20, y: 10)
 
-            // Highlight circle on "+" button
-            Circle()
-                .stroke(.white, lineWidth: 2.5)
-                .frame(width: 34, height: 34)
-                .background(Circle().fill(.white.opacity(0.25)))
-                .offset(x: 20, y: -12)
+            // Highlight + label overlaid using geometry-relative positioning
+            GeometryReader { geo in
+                let plusX: CGFloat = geo.size.width * 0.065
+                let plusY: CGFloat = geo.size.height - geo.size.height * 0.045
 
-            // "Click +" label with arrow curving toward the button
-            VStack(spacing: 2) {
-                Text("Click  +")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(bgTop)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(.white)
-                    .clipShape(Capsule())
-                    .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+                // Circle on "+" button
+                Circle()
+                    .stroke(.white, lineWidth: 2.5)
+                    .frame(width: 26, height: 26)
+                    .background(Circle().fill(.white.opacity(0.25)))
+                    .position(x: plusX, y: plusY)
 
-                Image(systemName: "arrow.down")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
+                // "Click +" label with arrow above the circle
+                VStack(spacing: 2) {
+                    Text("Click  +")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(bgTop)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(.white)
+                        .clipShape(Capsule())
+                        .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+                .position(x: plusX + 40, y: plusY - 40)
             }
-            .offset(x: 22, y: -52)
         }
     }
 
