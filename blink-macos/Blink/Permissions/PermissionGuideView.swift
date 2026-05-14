@@ -47,7 +47,11 @@ struct PermissionGuideView: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(.white.opacity(0.9))
                     .multilineTextAlignment(.center)
-                    .padding(.bottom, 32)
+                    .padding(.bottom, 24)
+
+                // Annotated screenshot
+                annotatedScreenshot(accent: accent, bgTop: bgTop)
+                    .padding(.bottom, 20)
 
                 // Steps card
                 VStack(spacing: 0) {
@@ -131,6 +135,44 @@ struct PermissionGuideView: View {
         }
     }
 
+    // MARK: - Annotated Screenshot
+
+    private func annotatedScreenshot(accent: Color, bgTop: Color) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            // Screenshot with theme tint
+            Image("AccessibilitySettings")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(accent.opacity(0.08))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(.white.opacity(0.2), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.3), radius: 16, y: 8)
+
+            // Arrow pointing to the "+" button
+            HStack(spacing: 4) {
+                Text("Click here")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(bgTop)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.white)
+                    .clipShape(Capsule())
+
+                Image(systemName: "arrow.down.left")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .offset(x: 50, y: -10)
+        }
+        .frame(maxWidth: 360)
+    }
+
     // MARK: - Step Components
 
     private func stepRow(icon: String, title: String, subtitle: String, bgTop: Color) -> some View {
@@ -172,16 +214,16 @@ struct PermissionGuideView: View {
 
 #Preview("Permission Guide — Peach") {
     PermissionGuideView(theme: .peach, onOpenSettings: {})
-        .frame(width: 500, height: 650)
+        .frame(width: 520, height: 820)
 }
 
 #Preview("Permission Guide — Midnight Dark") {
     PermissionGuideView(theme: .midnight, onOpenSettings: {})
-        .frame(width: 500, height: 650)
+        .frame(width: 520, height: 820)
         .preferredColorScheme(.dark)
 }
 
 #Preview("Permission Guide — Sage") {
     PermissionGuideView(theme: .sage, onOpenSettings: {})
-        .frame(width: 500, height: 650)
+        .frame(width: 520, height: 820)
 }
