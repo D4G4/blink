@@ -24,32 +24,21 @@ struct PermissionGuideView: View {
             )
 
             VStack(spacing: 0) {
-                // Top bar: icon + title
-                HStack(spacing: 12) {
-                    Image(systemName: "hand.raised.circle.fill")
-                        .font(.system(size: 28, weight: .light))
-                        .foregroundStyle(.white)
-
-                    VStack(alignment: .leading, spacing: 1) {
+                // Top bar: centered icon + title
+                VStack(spacing: 4) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "hand.raised.circle.fill")
+                            .font(.system(size: 24, weight: .light))
+                            .foregroundStyle(.white)
                         Text("Grant Accessibility Access")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                        Text("Blink needs this to detect your input timing")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.8))
                     }
-
-                    Spacer()
-
-                    HStack(spacing: 4) {
-                        Image(systemName: "lock.shield.fill")
-                            .font(.system(size: 10))
-                        Text("Timing only — never content")
-                            .font(.system(size: 10, weight: .medium))
-                    }
-                    .foregroundStyle(.white.opacity(0.6))
+                    Text("Blink needs this to detect your input timing")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.8))
                 }
-                .padding(.horizontal, 28)
+                .frame(maxWidth: .infinity)
                 .padding(.top, 20)
                 .padding(.bottom, 16)
 
@@ -79,31 +68,24 @@ struct PermissionGuideView: View {
 
                 Spacer()
 
-                // Bottom: full-width button
+                // Bottom: button
                 Button {
                     onOpenSettings()
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "gear")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                         Text("Open Accessibility Settings")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 15, weight: .bold))
                     }
                     .foregroundStyle(bgTop)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
+                    .frame(width: 280, height: 44)
                     .background(.white)
                     .clipShape(Capsule())
                     .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal, 28)
-
-                Text("Closes automatically once granted")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.white.opacity(0.4))
-                    .padding(.top, 6)
-                    .padding(.bottom, 16)
+                .padding(.bottom, 20)
             }
         }
     }
