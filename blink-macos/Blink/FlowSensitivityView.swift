@@ -35,10 +35,12 @@ struct FlowSensitivityView: View {
             HStack(spacing: 12) {
                 Text("Low")
                     .font(.system(size: 12))
+                    .foregroundStyle(foregroundColor)
                 Slider(value: $sensitivity, in: 0.4...0.9, step: 0.05)
                     .tint(accentColor)
                 Text("High")
                     .font(.system(size: 12))
+                    .foregroundStyle(foregroundColor)
             }
 
             Text(String(format: "%.0f%%", sensitivity * 100))
