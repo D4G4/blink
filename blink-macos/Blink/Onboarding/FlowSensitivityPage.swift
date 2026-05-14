@@ -4,6 +4,7 @@ import SwiftUI
 struct FlowSensitivityPage: View {
     let theme: BlinkTheme
     @Binding var sensitivity: Double
+    let onBack: () -> Void
     let onLearnMore: () -> Void
     let onGetStarted: () -> Void
 
@@ -13,9 +14,25 @@ struct FlowSensitivityPage: View {
         let fg = theme.onBackgroundText(for: colorScheme)
         let accent = theme.accent(for: colorScheme)
 
-        ZStack {
+        ZStack(alignment: .topLeading) {
             theme.backgroundGradient(for: colorScheme)
                 .ignoresSafeArea()
+
+            // Back button
+            Button {
+                onBack()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("Themes")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .foregroundStyle(fg.opacity(0.7))
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 20)
+            .padding(.leading, 24)
 
             VStack(spacing: 0) {
                 Image(systemName: "brain.head.profile")
@@ -103,6 +120,7 @@ struct FlowSensitivityPage: View {
     FlowSensitivityPage(
         theme: .peach,
         sensitivity: .constant(0.7),
+        onBack: {},
         onLearnMore: {},
         onGetStarted: {}
     )
@@ -113,6 +131,7 @@ struct FlowSensitivityPage: View {
     FlowSensitivityPage(
         theme: .sage,
         sensitivity: .constant(0.5),
+        onBack: {},
         onLearnMore: {},
         onGetStarted: {}
     )
@@ -123,6 +142,7 @@ struct FlowSensitivityPage: View {
     FlowSensitivityPage(
         theme: .midnight,
         sensitivity: .constant(0.9),
+        onBack: {},
         onLearnMore: {},
         onGetStarted: {}
     )

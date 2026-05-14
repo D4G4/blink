@@ -35,6 +35,7 @@ struct OnboardingView: View {
                 FlowSensitivityPage(
                     theme: selectedTheme,
                     sensitivity: $flowSensitivity,
+                    onBack: { withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = false } },
                     onLearnMore: { withAnimation(.spring(response: 0.4)) { showFlowLearnMore = true } },
                     onGetStarted: {
                         themeManager.hasCompletedOnboarding = true
