@@ -1,13 +1,21 @@
 import Foundation
 
 /// Manages flow state transitions using a configurable strategy.
-/// See `FlowDetectionStrategy` for documentation of each approach.
+/// All behavior is derived from `StrategyConfig` — no hardcoded logic per strategy.
 public final class FlowStateMachine {
     public private(set) var state: FlowState = .normal
     public var onStateChange: ((_ old: FlowState, _ new: FlowState) -> Void)?
 
-    /// Which detection strategy to use. Change this to switch between V1/V2/V3.
+    /// Which detection strategy to use.
     public var strategy: FlowDetectionStrategy = .current
+
+    /// Current sensitivity (0.4–0.9). Updated by the UI slider.
+    public var sensitivity: Double = 0.7 {
+        didSet { recomputeConfig() }
+    }
+
+    /// Derived config — recomputed when strategy or sensitivity changes.
+    public private(set) var config: StrategyConfig
 
     // MARK: - V1 state (score-based)
     private var scoreAboveFlowThresholdSince: TimeInterval?
@@ -20,37 +28,26 @@ public final class FlowStateMachine {
     private var flowEntrySince: TimeInterval?
     private var stateBeforePause: FlowState?
 
-    // Threshold defaults
-    public static let defaultFlowEntryThreshold: Double = 0.7
-    public static let defaultFlowExitThreshold: Double = 0.4
-    public static let defaultFlowEntryDuration: TimeInterval = 180    // 3 minutes
-    public static let defaultFlowExitDuration: TimeInterval = 120     // 2 minutes (V1 only)
-    public static let defaultDeepFlowDuration: TimeInterval = 900     // 15 minutes in flow
-    public static let defaultIdleThreshold: TimeInterval = 180        // 3 min idle = away
+    // Duration thresholds (not strategy-dependent)
+    public var flowEntryDuration: TimeInterval = 180     // 3 minutes
+    public var flowExitDuration: TimeInterval = 120      // 2 minutes (V1 hysteresis)
+    public var deepFlowDuration: TimeInterval = 900      // 15 minutes in flow
+    public var idleThreshold: TimeInterval = 180          // 3 min idle = away
 
-    // Configurable thresholds
-    public var flowEntryThreshold: Double = defaultFlowEntryThreshold
-    public var flowExitThreshold: Double = defaultFlowExitThreshold
-    public var flowEntryDuration: TimeInterval = defaultFlowEntryDuration
-    public var flowExitDuration: TimeInterval = defaultFlowExitDuration
-    public var deepFlowDuration: TimeInterval = defaultDeepFlowDuration
-    public var idleThreshold: TimeInterval = defaultIdleThreshold
+    public init() {
+        self.config = strategy.config(forSensitivity: sensitivity)
+    }
 
-    public init() {}
-
-    /// Gap tolerance in seconds for V2/V3. Derived from sensitivity slider (0.4–0.9).
-    public var gapTolerance: TimeInterval {
-        let t = (flowEntryThreshold - 0.4) / (0.9 - 0.4)
-        return 15 + t * 75
+    private func recomputeConfig() {
+        config = strategy.config(forSensitivity: sensitivity)
     }
 
     // MARK: - Tick
 
-    /// Called every 30 seconds by the app's tick loop.
-    /// - `flowScore`: composite score from FlowScoreCalculator (used by V1)
-    /// - `secondsSinceLastInput`: any input including mouse moves (used for idle detection, V2 flow)
-    /// - `secondsSinceLastIntentionalInput`: keyboard + clicks + scroll, no mouse moves (used by V3 flow)
-    /// - `isMicActive`/`isCameraActive`: meeting detection
+    /// Called every 30 seconds.
+    /// - `flowScore`: composite score (V1 uses this)
+    /// - `secondsSinceLastInput`: any input (idle detection, V2 flow)
+    /// - `secondsSinceLastIntentionalInput`: keyboard+clicks+scroll (V3 flow)
     public func tick(
         flowScore: Double,
         secondsSinceLastInput: TimeInterval,
@@ -59,7 +56,7 @@ public final class FlowStateMachine {
         isCameraActive: Bool,
         now: TimeInterval
     ) {
-        // Meeting detection — same for all strategies
+        // Meeting — same for all strategies
         if isMicActive || isCameraActive {
             if state != .meeting {
                 stateBeforePause = state
@@ -68,7 +65,7 @@ public final class FlowStateMachine {
             return
         }
 
-        // Idle detection — always uses any input (including mouse moves)
+        // Idle — always uses any input
         if secondsSinceLastInput >= idleThreshold {
             if state != .idle {
                 stateBeforePause = state
@@ -77,7 +74,7 @@ public final class FlowStateMachine {
             return
         }
 
-        // Returning from idle/meeting — same for all strategies
+        // Returning from idle/meeting
         if state == .idle || state == .meeting {
             stateBeforePause = nil
             resetFlowTracking()
@@ -86,33 +83,31 @@ public final class FlowStateMachine {
 
         if state == .breakPrompted { return }
 
-        // Strategy-specific flow detection
+        // Dispatch to strategy
         switch strategy {
         case .scoreBased:
-            tickV1ScoreBased(flowScore: flowScore, now: now)
+            tickScoreBased(flowScore: flowScore, now: now)
         case .activityGapAnyInput:
-            tickV2ActivityGap(idleTime: secondsSinceLastInput, now: now)
+            tickActivityGap(idleTime: secondsSinceLastInput, now: now)
         case .intentionalWithEscalation:
-            tickV3Intentional(idleTime: secondsSinceLastIntentionalInput, now: now)
+            tickActivityGap(idleTime: secondsSinceLastIntentionalInput, now: now)
         }
     }
 
     // MARK: - V1: Score-based
 
-    private func tickV1ScoreBased(flowScore: Double, now: TimeInterval) {
-        // Update hysteresis counters
-        if flowScore >= flowEntryThreshold {
-            if scoreAboveFlowThresholdSince == nil {
-                scoreAboveFlowThresholdSince = now
-            }
+    private func tickScoreBased(flowScore: Double, now: TimeInterval) {
+        let entryThreshold = config.flowEntryScoreThreshold
+        let exitThreshold = config.flowExitScoreThreshold
+
+        if flowScore >= entryThreshold {
+            scoreAboveFlowThresholdSince = scoreAboveFlowThresholdSince ?? now
             scoreBelowExitThresholdSince = nil
-        } else if flowScore < flowExitThreshold {
-            if scoreBelowExitThresholdSince == nil {
-                scoreBelowExitThresholdSince = now
-            }
+        } else if flowScore < exitThreshold {
+            scoreBelowExitThresholdSince = scoreBelowExitThresholdSince ?? now
             scoreAboveFlowThresholdSince = nil
         } else {
-            // Dead zone between thresholds — maintain current state
+            // Dead zone — maintain current state
             if state == .normal {
                 scoreBelowExitThresholdSince = nil
             } else {
@@ -127,38 +122,33 @@ public final class FlowStateMachine {
                 flowEntrySince = now
                 transition(to: .flow)
             }
-
         case .flow:
             if let since = scoreBelowExitThresholdSince,
                now - since >= flowExitDuration {
                 flowEntrySince = nil
                 transition(to: .normal)
-            } else if let flowStart = flowEntrySince,
-                      now - flowStart >= deepFlowDuration {
+            } else if let start = flowEntrySince,
+                      now - start >= deepFlowDuration {
                 transition(to: .deepFlow)
             }
-
         case .deepFlow:
             if let since = scoreBelowExitThresholdSince,
                now - since >= flowExitDuration {
                 flowEntrySince = nil
                 transition(to: .normal)
             }
-
         case .idle, .meeting, .breakPrompted:
             break
         }
     }
 
-    // MARK: - V2: Activity gap (any input)
+    // MARK: - V2/V3: Activity gap
 
-    private func tickV2ActivityGap(idleTime: TimeInterval, now: TimeInterval) {
-        let isActive = idleTime < gapTolerance
+    private func tickActivityGap(idleTime: TimeInterval, now: TimeInterval) {
+        let isActive = idleTime < config.gapTolerance
 
         if isActive {
-            if continuousActivityStart == nil {
-                continuousActivityStart = now
-            }
+            continuousActivityStart = continuousActivityStart ?? now
         } else {
             continuousActivityStart = nil
         }
@@ -170,35 +160,24 @@ public final class FlowStateMachine {
                 flowEntrySince = now
                 transition(to: .flow)
             }
-
         case .flow:
             if !isActive {
                 flowEntrySince = nil
                 continuousActivityStart = nil
                 transition(to: .normal)
-            } else if let flowStart = flowEntrySince,
-                      now - flowStart >= deepFlowDuration {
+            } else if let start = flowEntrySince,
+                      now - start >= deepFlowDuration {
                 transition(to: .deepFlow)
             }
-
         case .deepFlow:
             if !isActive {
                 flowEntrySince = nil
                 continuousActivityStart = nil
                 transition(to: .normal)
             }
-
         case .idle, .meeting, .breakPrompted:
             break
         }
-    }
-
-    // MARK: - V3: Intentional input with escalation (same gap logic, different input)
-
-    private func tickV3Intentional(idleTime: TimeInterval, now: TimeInterval) {
-        // Same gap logic as V2 but uses intentional input (keyboard + clicks + scroll)
-        // The escalation logic lives in AppState, not here
-        tickV2ActivityGap(idleTime: idleTime, now: now)
     }
 
     // MARK: - Public API

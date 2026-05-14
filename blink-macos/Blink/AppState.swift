@@ -64,6 +64,9 @@ final class AppState: ObservableObject {
     // Consecutive break tracking — resets after 30 min idle or walk-away
     private var consecutiveBreaksTaken: Int = 0
 
+    // Nudge escalation tracking (V3) — counts ignored nudges in current flow session
+    private var nudgesIgnoredInCurrentFlow: Int = 0
+
     // Break overlay
     private let overlayController = OverlayWindowController()
 
@@ -124,6 +127,11 @@ final class AppState: ObservableObject {
                     self.overlayController.showDebugToast("State: \(old.rawValue) → \(new.rawValue)")
                 }
                 self.flowState = new
+
+                // Reset nudge counter when exiting flow
+                if (old == .flow || old == .deepFlow) && (new != .flow && new != .deepFlow) {
+                    self.nudgesIgnoredInCurrentFlow = 0
+                }
 
                 let remainingAfter = self.timerStateMachine.remainingSeconds
                 if remainingAfter > remainingBefore + 1 {
@@ -266,6 +274,7 @@ final class AppState: ObservableObject {
     private func tickFlowScore() {
         let now = Date().timeIntervalSinceReferenceDate
         let idle = idleDetector?.secondsSinceLastInput() ?? 0
+        let intentionalIdle = idleDetector?.secondsSinceLastIntentionalInput() ?? 0
         let micActive = contextDetector?.isMicrophoneActive() ?? false
         let camActive = contextDetector?.isCameraActive() ?? false
 
@@ -298,6 +307,7 @@ final class AppState: ObservableObject {
         flowStateMachine.tick(
             flowScore: flowScore,
             secondsSinceLastInput: inGracePeriod ? 0 : idle,
+            secondsSinceLastIntentionalInput: inGracePeriod ? 0 : intentionalIdle,
             isMicActive: micActive,
             isCameraActive: camActive,
             now: now
@@ -316,23 +326,68 @@ final class AppState: ObservableObject {
     }
 
     private func handleBreakDue() {
-        // In flow/deep flow: show gentle nudge, don't force overlay
-        if flowState == .flow || flowState == .deepFlow {
-            let minutes = Int(timerStateMachine.timerDuration) / 60
-            log.info("Break due but in \(self.flowState.rawValue) — showing gentle nudge")
-            overlayController.showFlowNudge(
-                message: "You've been focused for \(minutes) min",
-                onTakeBreak: { [weak self] in
-                    Task { @MainActor in self?.showBreakPrompt() }
+        let config = flowStateMachine.config
+        let inFlow = flowState == .flow || flowState == .deepFlow
+
+        if inFlow {
+            switch config.breakDeliveryInFlow {
+            case .waitForPause:
+                // V1: wait for natural pause, then force overlay
+                log.info("Break due in \(self.flowState.rawValue) — waiting for natural pause")
+                breakDuePending = true
+                breakDueSince = Date()
+                return
+
+            case .nudge:
+                // V2: gentle nudge, never force during flow
+                let minutes = Int(timerStateMachine.timerDuration) / 60
+                log.info("Break due in \(self.flowState.rawValue) — showing nudge")
+                overlayController.showFlowNudge(
+                    message: "You've been focused for \(minutes) min",
+                    onTakeBreak: { [weak self] in
+                        Task { @MainActor in self?.showBreakPrompt() }
+                    }
+                )
+                timerStateMachine.resetAfterBreak()
+                remainingSeconds = timerStateMachine.remainingSeconds
+                return
+
+            case .nudgeWithEscalation:
+                // V3: nudge first, escalate after N ignored nudges
+                let maxNudges = config.maxNudgesBeforeForce
+
+                if let max = maxNudges, nudgesIgnoredInCurrentFlow >= max {
+                    // Escalate to forced break
+                    log.info("Break due in \(self.flowState.rawValue) — \(self.nudgesIgnoredInCurrentFlow) nudges ignored, escalating to overlay")
+                    nudgesIgnoredInCurrentFlow = 0
+                    breakDuePending = true
+                    breakDueSince = Date()
+                    return
                 }
-            )
-            // Reset timer for next nudge in 20 min
-            timerStateMachine.resetAfterBreak()
-            remainingSeconds = timerStateMachine.remainingSeconds
-            return
+
+                // Show nudge
+                nudgesIgnoredInCurrentFlow += 1
+                let minutes = Int(timerStateMachine.timerDuration) / 60
+                let remaining = maxNudges.map { $0 - nudgesIgnoredInCurrentFlow + 1 }
+                let suffix = remaining.map { " (\($0) left before forced)" } ?? ""
+                log.info("Break due in \(self.flowState.rawValue) — nudge #\(self.nudgesIgnoredInCurrentFlow)\(suffix)")
+                overlayController.showFlowNudge(
+                    message: "You've been focused for \(minutes) min",
+                    onTakeBreak: { [weak self] in
+                        Task { @MainActor in
+                            self?.nudgesIgnoredInCurrentFlow = 0
+                            self?.showBreakPrompt()
+                        }
+                    }
+                )
+                timerStateMachine.resetAfterBreak()
+                remainingSeconds = timerStateMachine.remainingSeconds
+                return
+            }
         }
 
-        // Normal state: wait for natural pause, then show overlay
+        // Not in flow: wait for natural pause, then show overlay
+        nudgesIgnoredInCurrentFlow = 0
         breakDuePending = true
         breakDueSince = Date()
     }

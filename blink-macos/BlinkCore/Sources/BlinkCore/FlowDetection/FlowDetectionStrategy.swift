@@ -1,61 +1,148 @@
 import Foundation
 
+// MARK: - Strategy Config
+
+/// Which input signals to use for flow detection.
+public enum FlowInputMethod: Sendable {
+    /// Keyboard, mouse moves, clicks, scroll — everything counts.
+    case anyInput
+    /// Keyboard + clicks + scroll only. Mouse moves excluded (ambient).
+    case intentionalOnly
+}
+
+/// How to deliver breaks when the user is in flow.
+public enum BreakDeliveryInFlow: Sendable {
+    /// Wait for a natural pause (6s idle), then force overlay. If no pause in 5 min, reset silently.
+    case waitForPause
+    /// Show gentle nudge toast. Timer resets for another 20 min. Never force.
+    case nudge
+    /// Nudge first, escalate to forced overlay after N ignored nudges.
+    case nudgeWithEscalation
+}
+
+/// Complete configuration derived from a strategy + sensitivity value.
+/// One source of truth — FlowStateMachine and AppState both read from this.
+public struct StrategyConfig: Sendable {
+    // Flow detection
+    public let flowEntryScoreThreshold: Double    // V1: score needed for flow
+    public let flowExitScoreThreshold: Double     // V1: score to exit flow
+    public let gapTolerance: TimeInterval         // V2/V3: seconds before gap breaks flow
+    public let flowInputMethod: FlowInputMethod
+
+    // Break delivery
+    public let breakDeliveryInFlow: BreakDeliveryInFlow
+    /// How many nudges before escalating to forced overlay. nil = never force.
+    public let maxNudgesBeforeForce: Int?
+}
+
+// MARK: - Strategy
+
 /// Flow detection strategy versions.
-/// Switch between these to test different approaches or revert regressions.
+/// See version history docs below. Switch via `FlowDetectionStrategy.current`.
 ///
 /// ## Version History
 ///
 /// ### V1 — Score-based (original)
-/// - 5 weighted scorers: app switches (35%), keystrokes (25%), mouse (20%),
-///   window stability (10%), context bonus (10%)
-/// - Flow entry: composite score > 0.7 sustained for 3 minutes
-/// - Flow exit: score < 0.4 sustained for 2 minutes (hysteresis prevents flapping)
-/// - Break during flow: waits for natural pause (6s idle), then forced overlay
-/// - If no pause within 5 min, timer resets silently
-/// - Pros: considers multiple signals, hysteresis prevents flapping
-/// - Cons: unpredictable — users couldn't understand why flow dropped.
-///   Score oscillated around thresholds during normal work patterns.
-///   App switches for reference material killed the score.
+/// - 5 weighted scorers with hysteresis
+/// - Sensitivity controls score threshold (high sensitivity → lower threshold → easier flow)
+/// - Breaks during flow: wait for natural pause, then forced overlay
 ///
 /// ### V2 — Activity gap, any input (current)
-/// - Single metric: time since last input (keyboard, mouse moves, clicks, scroll)
-/// - Gap tolerance controlled by sensitivity slider (40%=15s ... 90%=90s)
-/// - Flow entry: continuous activity (no gap > tolerance) for 3+ minutes
-/// - Flow exit: any single gap > tolerance
-/// - Break during flow: gentle nudge toast (7s auto-dismiss), not forced overlay
-/// - Timer resets for another 20 min after nudge
-/// - Pros: simple, predictable, one metric, sensitivity slider is intuitive
-/// - Cons: too permissive — mouse moves happen constantly, so everyone is
-///   "active" 100% of the time. Flow triggers for casual browsing.
-///   Users report it never interrupts them.
+/// - Single gap metric using all input (including mouse moves)
+/// - Sensitivity controls gap tolerance (high sensitivity → longer tolerance → easier flow)
+/// - Breaks during flow: gentle nudge, never forced
 ///
-/// ### V3 — Intentional input with keyboard entry + escalation (proposed)
-/// - Flow ENTRY: requires sustained keyboard activity for 3+ minutes
-///   (pure clicking/scrolling never enters flow — eliminates casual browsing)
-/// - Flow MAINTENANCE: keyboard + clicks + scroll within gap tolerance
-///   (excludes mouse moves which are ambient)
-/// - Idle detection: any input including mouse moves (to detect walk-away)
-/// - Escalation ladder for breaks during flow:
-///   - Nudge → wait 20 min → nudge again → eventually force overlay
-///   - Nudges before forcing depends on sensitivity:
-///     - 40% (strict): force after 1 ignored nudge
-///     - 70% (default): force after 3 ignored nudges
-///     - 90% (permissive): never force, nudge forever
-/// - Pros: keyboard is the strongest flow signal. Browsing correctly stays
-///   in normal mode. Designers enter flow via keyboard shortcuts.
-///   Sensitivity controls both flow detection AND break aggressiveness.
-/// - Cons: not yet built or tested
+/// ### V3 — Intentional input + escalation (proposed)
+/// - Keyboard + clicks + scroll for flow (mouse moves excluded)
+/// - Sensitivity controls gap tolerance AND escalation aggressiveness
+/// - Breaks during flow: nudge → escalate to forced overlay after N ignored nudges
 ///
 public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
-    /// V1: 5-scorer weighted system with hysteresis
     case scoreBased = "v1_score_based"
-
-    /// V2: Activity gap using any input (current default)
     case activityGapAnyInput = "v2_activity_gap"
-
-    /// V3: Keyboard entry, intentional maintenance, escalation ladder
     case intentionalWithEscalation = "v3_intentional_escalation"
 
-    /// Current active strategy
+    /// Current active strategy. Change this one line to switch.
     public static let current: FlowDetectionStrategy = .activityGapAnyInput
+
+    /// Compute the full config for a given sensitivity (0.4–0.9).
+    public func config(forSensitivity sensitivity: Double) -> StrategyConfig {
+        switch self {
+        case .scoreBased:
+            return configV1(sensitivity: sensitivity)
+        case .activityGapAnyInput:
+            return configV2(sensitivity: sensitivity)
+        case .intentionalWithEscalation:
+            return configV3(sensitivity: sensitivity)
+        }
+    }
+
+    // MARK: - V1 Config
+
+    /// V1: sensitivity inversely maps to score threshold.
+    /// High sensitivity (0.9) → low threshold (0.45) → easy to enter flow.
+    /// Low sensitivity (0.4) → high threshold (0.85) → hard to enter flow.
+    private func configV1(sensitivity: Double) -> StrategyConfig {
+        // Linear inverse: 0.4 → 0.85, 0.9 → 0.45
+        let entryThreshold = 1.25 - sensitivity
+        let exitThreshold = entryThreshold - 0.3
+
+        return StrategyConfig(
+            flowEntryScoreThreshold: entryThreshold,
+            flowExitScoreThreshold: max(exitThreshold, 0.1),
+            gapTolerance: 0, // not used in V1
+            flowInputMethod: .anyInput,
+            breakDeliveryInFlow: .waitForPause,
+            maxNudgesBeforeForce: nil // always forces (via natural pause)
+        )
+    }
+
+    // MARK: - V2 Config
+
+    /// V2: sensitivity maps to gap tolerance.
+    /// High sensitivity (0.9) → 90s tolerance → easy to stay in flow.
+    /// Low sensitivity (0.4) → 15s tolerance → hard to stay in flow.
+    private func configV2(sensitivity: Double) -> StrategyConfig {
+        let t = (sensitivity - 0.4) / (0.9 - 0.4)
+        let gap = 15.0 + t * 75.0
+
+        return StrategyConfig(
+            flowEntryScoreThreshold: 0, // not used in V2
+            flowExitScoreThreshold: 0,
+            gapTolerance: gap,
+            flowInputMethod: .anyInput,
+            breakDeliveryInFlow: .nudge,
+            maxNudgesBeforeForce: nil // never forces during flow
+        )
+    }
+
+    // MARK: - V3 Config
+
+    /// V3: sensitivity maps to gap tolerance AND escalation aggressiveness.
+    /// High sensitivity (0.9) → 90s tolerance, never force overlay.
+    /// Low sensitivity (0.4) → 15s tolerance, force after 1 ignored nudge.
+    private func configV3(sensitivity: Double) -> StrategyConfig {
+        let t = (sensitivity - 0.4) / (0.9 - 0.4)
+        let gap = 15.0 + t * 75.0
+
+        // Escalation: low sensitivity = aggressive, high = patient
+        // 0.4 → 1 nudge, 0.5 → 1, 0.6 → 2, 0.7 → 3, 0.8 → 5, 0.9 → nil (never)
+        let maxNudges: Int?
+        switch sensitivity {
+        case ..<0.55:  maxNudges = 1
+        case ..<0.65:  maxNudges = 2
+        case ..<0.75:  maxNudges = 3
+        case ..<0.85:  maxNudges = 5
+        default:       maxNudges = nil // never force
+        }
+
+        return StrategyConfig(
+            flowEntryScoreThreshold: 0,
+            flowExitScoreThreshold: 0,
+            gapTolerance: gap,
+            flowInputMethod: .intentionalOnly,
+            breakDeliveryInFlow: .nudgeWithEscalation,
+            maxNudgesBeforeForce: maxNudges
+        )
+    }
 }

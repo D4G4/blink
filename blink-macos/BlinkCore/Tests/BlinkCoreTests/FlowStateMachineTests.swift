@@ -138,20 +138,20 @@ struct FlowStateMachineTests {
     func gapToleranceScaling() {
         let sm = FlowStateMachine()
 
-        sm.flowEntryThreshold = 0.4
-        #expect(sm.gapTolerance == 15, "40% sensitivity → 15s tolerance")
+        sm.sensitivity = 0.4
+        #expect(sm.config.gapTolerance == 15, "40% sensitivity → 15s tolerance")
 
-        sm.flowEntryThreshold = 0.7
-        #expect(Int(sm.gapTolerance.rounded()) == 60, "70% sensitivity → 60s tolerance")
+        sm.sensitivity = 0.7
+        #expect(Int(sm.config.gapTolerance.rounded()) == 60, "70% sensitivity → 60s tolerance")
 
-        sm.flowEntryThreshold = 0.9
-        #expect(sm.gapTolerance == 90, "90% sensitivity → 90s tolerance")
+        sm.sensitivity = 0.9
+        #expect(sm.config.gapTolerance == 90, "90% sensitivity → 90s tolerance")
     }
 
     @Test("High sensitivity allows longer pauses in flow")
     func highSensitivityLongerPauses() {
         let sm = FlowStateMachine()
-        sm.flowEntryThreshold = 0.9 // 90s tolerance
+        sm.sensitivity = 0.9 // 90s tolerance
         let baseTime: TimeInterval = 1000
 
         // Enter flow
@@ -172,7 +172,7 @@ struct FlowStateMachineTests {
     @Test("Low sensitivity breaks flow on short pauses")
     func lowSensitivityShortPauses() {
         let sm = FlowStateMachine()
-        sm.flowEntryThreshold = 0.4 // 15s tolerance
+        sm.sensitivity = 0.4 // 15s tolerance
         let baseTime: TimeInterval = 1000
 
         // Enter flow

@@ -53,11 +53,12 @@ struct CoreModelTests {
 
     @Test("FlowStateMachine default constants are sane")
     func flowDefaults() {
-        #expect(FlowStateMachine.defaultFlowEntryThreshold > FlowStateMachine.defaultFlowExitThreshold)
-        #expect(FlowStateMachine.defaultFlowEntryDuration > 0)
-        #expect(FlowStateMachine.defaultFlowExitDuration > 0)
-        #expect(FlowStateMachine.defaultDeepFlowDuration > FlowStateMachine.defaultFlowEntryDuration)
-        #expect(FlowStateMachine.defaultIdleThreshold > 0)
+        let sm = FlowStateMachine()
+        #expect(sm.flowEntryDuration > 0)
+        #expect(sm.flowExitDuration > 0)
+        #expect(sm.deepFlowDuration > sm.flowEntryDuration)
+        #expect(sm.idleThreshold > 0)
+        #expect(sm.config.gapTolerance > 0)
     }
 
     @Test("FlowScoreCalculator reset clears all state")

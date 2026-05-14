@@ -261,7 +261,7 @@ struct SettingsView: View {
                     )
                 }
                 .onChange(of: flowSensitivity) { _, newValue in
-                    appState.flowStateMachine.flowEntryThreshold = newValue
+                    appState.flowStateMachine.sensitivity = newValue
                 }
             }
 
