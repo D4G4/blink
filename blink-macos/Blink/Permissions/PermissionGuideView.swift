@@ -50,14 +50,14 @@ struct PermissionGuideView: View {
                     // RIGHT: Steps (centered)
                     VStack(spacing: 0) {
                         Spacer()
-                        VStack(spacing: 0) {
+                        VStack(alignment: .leading, spacing: 0) {
                             stepRow(icon: "gear", title: "Open Settings", bgTop: bgTop)
                             stepConnector()
                             stepRow(icon: "plus.circle.fill", title: "Click  +  button", bgTop: bgTop)
                             stepConnector()
                             blinkIconStep()
                             stepConnector()
-                            stepRow(icon: "switch.2", title: "Toggle on", bgTop: bgTop)
+                            toggleStep(bgTop: bgTop)
                         }
                         Spacer()
                     }
@@ -144,7 +144,7 @@ struct PermissionGuideView: View {
 
     // MARK: - Step Components
 
-    private func stepRow(icon: String, title: String, bgTop: Color) -> some View {
+    private func stepRow(icon: String, title: String, bgTop: Color, customTrailing: AnyView? = nil) -> some View {
         HStack(spacing: 10) {
             ZStack {
                 Circle()
@@ -157,7 +157,6 @@ struct PermissionGuideView: View {
             Text(title)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(.white)
-            Spacer()
         }
         .padding(.vertical, 6)
     }
@@ -172,7 +171,26 @@ struct PermissionGuideView: View {
             Text("Find Blink → Open")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(.white)
-            Spacer()
+        }
+        .padding(.vertical, 6)
+    }
+
+    private func toggleStep(bgTop: Color) -> some View {
+        HStack(spacing: 10) {
+            // Mini macOS-style toggle (on state)
+            ZStack(alignment: .trailing) {
+                Capsule()
+                    .fill(Color.red.opacity(0.85))
+                    .frame(width: 28, height: 16)
+                Circle()
+                    .fill(.white)
+                    .frame(width: 14, height: 14)
+                    .shadow(color: .black.opacity(0.15), radius: 1, y: 1)
+                    .padding(.trailing, 1)
+            }
+            Text("Toggle on")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(.white)
         }
         .padding(.vertical, 6)
     }
