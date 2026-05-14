@@ -112,8 +112,8 @@ struct PermissionGuideView: View {
 
             // Highlight + label overlaid using geometry-relative positioning
             GeometryReader { geo in
-                let plusX: CGFloat = geo.size.width * 0.065
-                let plusY: CGFloat = geo.size.height - geo.size.height * 0.045
+                let plusX: CGFloat = geo.size.width * 0.08
+                let plusY: CGFloat = geo.size.height * 0.88
 
                 // Circle on "+" button
                 Circle()
