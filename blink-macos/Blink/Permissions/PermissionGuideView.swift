@@ -114,7 +114,7 @@ struct PermissionGuideView: View {
                     .frame(width: 32, height: 18)
                 Image(systemName: "plus")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.black.opacity(0.4))
             }
             Text(title)
                 .font(.system(size: 14, weight: .bold))
