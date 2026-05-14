@@ -73,7 +73,7 @@ struct FlowSensitivityPage: View {
                         HStack(spacing: 6) {
                             Image(systemName: "slider.horizontal.3")
                                 .font(.system(size: 14, weight: .semibold))
-                            Text("See real-world scenarios")
+                            Text("Explore how it works")
                                 .font(.system(size: 14, weight: .bold))
                         }
                         .foregroundStyle(.white)
