@@ -48,16 +48,12 @@ struct PermissionGuideView: View {
                     annotatedScreenshot(accent: accent, bgTop: bgTop)
 
                     // RIGHT: Steps (centered)
-                    VStack(spacing: 0) {
-                        Spacer()
-                        VStack(alignment: .leading, spacing: 0) {
-                            stepRow(icon: "plus.circle.fill", title: "Click  +  button", bgTop: bgTop)
-                            stepConnector()
-                            blinkIconStep()
-                            stepConnector()
-                            toggleStep(accent: accent)
-                        }
-                        Spacer()
+                    VStack(alignment: .leading, spacing: 0) {
+                        stepRow(icon: "plus.circle.fill", title: "Click  +  button", bgTop: bgTop)
+                        stepConnector()
+                        blinkIconStep()
+                        stepConnector()
+                        toggleStep(accent: accent)
                     }
                     .padding(16)
                     .background(.white.opacity(0.15))
