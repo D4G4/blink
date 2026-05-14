@@ -136,9 +136,9 @@ struct FlowSensitivityPage: View {
     .frame(width: 800, height: 600)
 }
 
-#Preview("Flow Sensitivity — Sage") {
+#Preview("Flow Sensitivity — Sand") {
     FlowSensitivityPage(
-        theme: .sage,
+        theme: .sand,
         sensitivity: .constant(0.5),
         onBack: {},
         onLearnMore: {},
