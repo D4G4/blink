@@ -46,8 +46,8 @@ struct FlowSensitivityView: View {
                 .foregroundStyle(foregroundColor)
 
             Text(description)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(foregroundColor.opacity(0.8))
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(foregroundColor)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(minHeight: 32, alignment: .top)
