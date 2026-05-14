@@ -9,6 +9,7 @@ struct FlowSensitivityPage: View {
     let onGetStarted: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @State private var pulsing = false
 
     var body: some View {
         let fg = theme.onBackgroundText(for: colorScheme)
@@ -80,6 +81,10 @@ struct FlowSensitivityPage: View {
                         .padding(.vertical, 10)
                         .background(.white.opacity(0.2))
                         .clipShape(Capsule())
+                        .scaleEffect(pulsing ? 1.05 : 1.0)
+                        .opacity(pulsing ? 1.0 : 0.85)
+                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: pulsing)
+                        .onAppear { pulsing = true }
                     }
                     .buttonStyle(.plain)
 
