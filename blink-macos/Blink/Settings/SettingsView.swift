@@ -257,7 +257,10 @@ struct SettingsView: View {
                         sensitivity: $flowSensitivity,
                         accentColor: accentColor,
                         foregroundColor: .primary,
-                        style: .settings
+                        style: .settings,
+                        onResearchTapped: {
+                            ResearchWindowController.shared.show(theme: themeManager.current)
+                        }
                     )
                 }
                 .onChange(of: flowSensitivity) { _, newValue in

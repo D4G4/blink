@@ -7,6 +7,14 @@ struct FlowLearnMoreView: View {
     @Environment(\.colorScheme) private var colorScheme
     @AppStorage("flowSensitivity") private var sensitivity: Double = 0.7
 
+    private var presetLabel: String {
+        switch sensitivity {
+        case ..<0.55: return "Eye health"
+        case ..<0.75: return "Balanced"
+        default: return "Deep work"
+        }
+    }
+
     private var gapTolerance: Int {
         let t = (sensitivity - 0.4) / (0.9 - 0.4)
         return Int((15 + t * 75).rounded())
@@ -29,16 +37,16 @@ struct FlowLearnMoreView: View {
 
                 VStack(spacing: 6) {
                     HStack {
-                        Text("Low")
+                        Text("Eye health")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                         Slider(value: $sensitivity, in: 0.4...0.9, step: 0.05)
                             .tint(accent)
-                        Text("High")
+                        Text("Deep work")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                     }
-                    Text("Sensitivity: \(Int(sensitivity * 100))%")
+                    Text(presetLabel)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(accent)
                 }

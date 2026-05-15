@@ -10,6 +10,7 @@ struct FlowSensitivityPage: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var pulsing = false
+    @State private var showResearch = false
 
     var body: some View {
         let fg = theme.onBackgroundText(for: colorScheme)
@@ -60,9 +61,14 @@ struct FlowSensitivityPage: View {
                     sensitivity: $sensitivity,
                     accentColor: accent,
                     foregroundColor: fg,
-                    style: .onboarding
+                    style: .onboarding,
+                    onResearchTapped: { showResearch = true }
                 )
                 .frame(maxWidth: .infinity)
+                .sheet(isPresented: $showResearch) {
+                    ResearchView(theme: theme, onDismiss: { showResearch = false })
+                        .frame(width: 480, height: 700)
+                }
 
                 Spacer()
 

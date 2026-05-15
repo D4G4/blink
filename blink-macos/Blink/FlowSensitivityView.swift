@@ -8,6 +8,7 @@ struct FlowSensitivityView: View {
     let accentColor: Color
     let foregroundColor: Color
     let style: Style
+    var onResearchTapped: (() -> Void)? = nil
 
     @State private var showFineTune = false
 
@@ -74,7 +75,7 @@ struct FlowSensitivityView: View {
     // MARK: - Onboarding Style
 
     private var onboardingLayout: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 30) {
             Text("Flow Sensitivity")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(foregroundColor)
@@ -94,52 +95,22 @@ struct FlowSensitivityView: View {
                 .frame(height: 36, alignment: .top)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
 
-            // Fine-tune expander
+
             Button {
-                withAnimation(.easeInOut(duration: 0.2)) { showFineTune.toggle() }
+                onResearchTapped?()
             } label: {
                 HStack(spacing: 4) {
-                    Image(systemName: showFineTune ? "chevron.up" : "slider.horizontal.3")
+                    Image(systemName: "book.closed")
                         .font(.system(size: 10))
-                    Text(showFineTune ? "Hide" : "Fine-tune")
+                    Text("Read the research")
                         .font(.system(size: 11, weight: .medium))
                 }
-                .foregroundStyle(foregroundColor.opacity(0.6))
+                .foregroundStyle(foregroundColor.opacity(0.7))
             }
             .buttonStyle(.plain)
-
-            if showFineTune {
-                HStack(spacing: 8) {
-                    Slider(value: $sensitivity, in: 0.4...0.9, step: 0.05)
-                        .tint(accentColor)
-                    Text(String(format: "%.0f%%", sensitivity * 100))
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(foregroundColor)
-                        .frame(width: 35)
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-
-            if researchWarningLevel == .caution {
-                Button {
-                    ResearchWindowController.shared.show(theme: BlinkTheme.named(UserDefaults.standard.string(forKey: "selectedTheme") ?? "peach"))
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "book.closed")
-                            .font(.system(size: 10))
-                        Text("Read the research")
-                            .font(.system(size: 11, weight: .medium))
-                    }
-                    .foregroundStyle(foregroundColor.opacity(0.7))
-                }
-                .buttonStyle(.plain)
-            }
+            
         }
-        .frame(maxWidth: 420)
-        .frame(height: 260, alignment: .top)
-        .padding(20)
-        .background(foregroundColor.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .frame(maxWidth: 560)
     }
 
     // MARK: - Settings Style
@@ -177,7 +148,7 @@ struct FlowSensitivityView: View {
                 Spacer()
 
                 Button {
-                    ResearchWindowController.shared.show(theme: BlinkTheme.named(UserDefaults.standard.string(forKey: "selectedTheme") ?? "peach"))
+                    onResearchTapped?()
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "book.closed")
@@ -209,34 +180,37 @@ struct FlowSensitivityView: View {
         let isSelected = selectedPreset == preset
 
         return Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 sensitivity = preset.value
             }
         } label: {
-            VStack(spacing: 6) {
+            VStack(spacing: 8) {
                 Image(systemName: preset.icon)
-                    .font(.system(size: 18))
+                    .font(.system(size: 28, weight: .light))
                 Text(preset.name)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 13, weight: .bold))
+                Text(preset.shortDescription)
+                    .font(.system(size: 10))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .opacity(0.8)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
+            .padding(.vertical, 16)
+            .padding(.horizontal, 8)
             .background(
                 themed
-                    ? (isSelected ? foregroundColor.opacity(0.2) : foregroundColor.opacity(0.08))
+                    ? (isSelected ? .white : .white.opacity(0.12))
                     : (isSelected ? accentColor.opacity(0.15) : Color.primary.opacity(0.04))
             )
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(
-                        isSelected
-                            ? (themed ? foregroundColor.opacity(0.5) : accentColor)
-                            : Color.clear,
-                        lineWidth: 1.5
-                    )
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .scaleEffect(isSelected ? 1.05 : 1.0)
+            .shadow(color: isSelected ? .black.opacity(0.2) : .clear, radius: 10, y: 5)
+            .foregroundStyle(
+                themed
+                    ? (isSelected ? accentColor : .white)
+                    : (isSelected ? accentColor : .primary)
             )
-            .foregroundStyle(themed ? foregroundColor : .primary)
         }
         .buttonStyle(.plain)
     }
@@ -246,11 +220,11 @@ struct FlowSensitivityView: View {
     var description: String {
         switch Preset.closest(to: sensitivity) {
         case .eyeHealth:
-            return "Blink prioritizes your eye health. Breaks come at 20 min unless your work rhythm is very intense."
+            return "Blink prioritizes your eye health.\nBreaks come at 20 min unless your work rhythm is very intense."
         case .balanced:
-            return "Blink learns your work rhythm and extends when you're truly focused. Recommended for most users."
+            return "Blink learns your work rhythm and extends when you're truly focused.\nRecommended for most users."
         case .deepWork:
-            return "Fewer interruptions during focus. Blink reminds you gently. Best if you're disciplined about breaks."
+            return "Fewer interruptions during focus. Blink reminds you gently.\nBest if you're disciplined about breaks."
         }
     }
 
@@ -289,13 +263,11 @@ private struct FlowSensitivityPreview: View {
 #Preview("Onboarding") {
     FlowSensitivityPreview()
         .padding(40)
-        .frame(width: 500, height: 350)
         .background(BlinkTheme.peach.backgroundGradient)
 }
 
 #Preview("Settings") {
     FlowSensitivityPreview(sensitivity: 0.65)
         .padding(20)
-        .frame(width: 440, height: 250)
         .environment(\.colorScheme, .light)
 }
