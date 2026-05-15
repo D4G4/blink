@@ -6,30 +6,8 @@ import os
 
 private let log = Logger(subsystem: "com.blink20.app", category: "Context")
 
-/// Detects meeting state, Focus mode, fullscreen apps, and video playback.
+/// Detects mic use, Focus mode, fullscreen apps, and video playback.
 final class MacContextDetector: ContextSource {
-    /// Dedicated meeting apps — running + mic in use = meeting
-    private static let dedicatedMeetingApps: Set<String> = [
-        "us.zoom.xos",
-        "com.microsoft.teams",
-        "com.microsoft.teams2",
-        "com.apple.FaceTime",
-        "com.webex.meetingmanager",
-        "com.cisco.webexmeetingsapp",
-    ]
-
-    /// Meeting title keywords for browser-based meetings (Google Meet, etc.)
-    private static let meetingTitleKeywords: [String] = [
-        "meet.google.com", "google meet",
-        "zoom.us",
-        "teams.microsoft.com", "teams.live.com",
-        "webex.com",
-    ]
-
-    /// Tracks whether a browser-based meeting was detected.
-    /// Stays true while mic remains active, even if user switches apps.
-    private var browserMeetingDetected = false
-
     /// Apps where being frontmost = watching video
     private static let videoApps: Set<String> = [
         "com.apple.TV",
@@ -62,10 +40,43 @@ final class MacContextDetector: ContextSource {
         "crunchyroll", "plex", "apple tv",
     ]
 
+    private var lastMicState = false
+
     func isMicrophoneActive() -> Bool {
-        let micInUse = isMicInUse()
-        if !micInUse { browserMeetingDetected = false }
-        return micInUse
+        let active = isMicInUse()
+        if active != lastMicState {
+            log.info("Mic state changed: \(active ? "ACTIVE" : "inactive")")
+            logAllDevices()
+            lastMicState = active
+        }
+        return active
+    }
+
+    /// Log all audio devices and their input/output stream counts for debugging.
+    private func logAllDevices() {
+        var size: UInt32 = 0
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDevices,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        guard AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size) == noErr else { return }
+        let count = Int(size) / MemoryLayout<AudioDeviceID>.size
+        var devices = [AudioDeviceID](repeating: 0, count: count)
+        guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size, &devices) == noErr else { return }
+
+        for device in devices {
+            var nameSize: UInt32 = 256
+            var nameAddr = AudioObjectPropertyAddress(
+                mSelector: kAudioObjectPropertyName, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain
+            )
+            var name: CFString = "" as CFString
+            AudioObjectGetPropertyData(device, &nameAddr, 0, nil, &nameSize, &name)
+
+            let inputOnly = isInputOnlyDevice(device)
+            let hasInput = hasInputStreams(device)
+            log.info("Device \(device): \(name as String), hasInput=\(hasInput), inputOnly=\(inputOnly)")
+        }
     }
 
     func isCameraActive() -> Bool {
@@ -75,60 +86,117 @@ final class MacContextDetector: ContextSource {
         return false
     }
 
-    /// Returns true if a dedicated meeting app is running, or a browser-based
-    /// meeting was detected. Browser meetings latch on (stay active) while the
-    /// mic remains in use, so switching to iTerm mid-call doesn't exit meeting state.
-    private func isMeetingAppActive() -> Bool {
-        // Dedicated meeting app running (doesn't need to be frontmost)
-        let runningApps = NSWorkspace.shared.runningApplications
-        let hasDedicatedApp = runningApps.contains { app in
-            guard let bundleID = app.bundleIdentifier else { return false }
-            return Self.dedicatedMeetingApps.contains(bundleID) && !app.isHidden
+    /// Check if the microphone is actively recording on any audio device.
+    ///
+    /// `kAudioDevicePropertyDeviceIsRunningSomewhere` with global scope returns true when
+    /// EITHER input or output is active — false positive when audio is just playing.
+    /// We use a two-pronged approach:
+    /// 1. Input-only devices (built-in mic): check `DeviceIsRunningSomewhere` — always reliable.
+    /// 2. Combination devices (AirPods, USB headsets): check if any input stream is active
+    ///    using `kAudioStreamPropertyIsActive` on input-scoped streams only.
+    private func isMicInUse() -> Bool {
+        var devicesSize: UInt32 = 0
+        var devicesAddr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDevices,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        guard AudioObjectGetPropertyDataSize(
+            AudioObjectID(kAudioObjectSystemObject), &devicesAddr, 0, nil, &devicesSize
+        ) == noErr, devicesSize > 0 else {
+            return false
         }
-        if hasDedicatedApp { return true }
 
-        // Browser frontmost with meeting title — latch on
-        if let frontApp = NSWorkspace.shared.frontmostApplication,
-           let bundleID = frontApp.bundleIdentifier,
-           Self.browsers.contains(bundleID),
-           let title = windowTitle(for: frontApp)?.lowercased() {
-            if Self.meetingTitleKeywords.contains(where: { title.contains($0) }) {
-                browserMeetingDetected = true
-                return true
+        let deviceCount = Int(devicesSize) / MemoryLayout<AudioDeviceID>.size
+        var devices = [AudioDeviceID](repeating: 0, count: deviceCount)
+        guard AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject), &devicesAddr, 0, nil, &devicesSize, &devices
+        ) == noErr else {
+            return false
+        }
+
+        for device in devices {
+            // Skip devices with no input capability
+            guard hasInputStreams(device) else { continue }
+
+            if isInputOnlyDevice(device) {
+                // Input-only device (e.g. built-in mic): DeviceIsRunningSomewhere is reliable
+                var isRunning: UInt32 = 0
+                var size = UInt32(MemoryLayout<UInt32>.size)
+                var addr = AudioObjectPropertyAddress(
+                    mSelector: kAudioDevicePropertyDeviceIsRunningSomewhere,
+                    mScope: kAudioObjectPropertyScopeGlobal,
+                    mElement: kAudioObjectPropertyElementMain
+                )
+                if AudioObjectGetPropertyData(device, &addr, 0, nil, &size, &isRunning) == noErr,
+                   isRunning != 0 {
+                    log.debug("Mic in use: input-only device \(device) is running")
+                    return true
+                }
+            } else {
+                // Combination device (AirPods, USB headset): check input streams individually
+                if hasActiveInputStream(device) {
+                    log.debug("Mic in use: combo device \(device) has active input stream")
+                    return true
+                }
             }
-        }
-
-        // Mic still active after browser meeting was detected — stay in meeting
-        if browserMeetingDetected {
-            return true
         }
 
         return false
     }
 
-    /// Check if the default audio input device is running (mic in use by any app).
-    private func isMicInUse() -> Bool {
-        var defaultDevice = AudioDeviceID(0)
-        var size = UInt32(MemoryLayout<AudioDeviceID>.size)
-        var address = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyDefaultInputDevice,
-            mScope: kAudioObjectPropertyScopeGlobal,
+    private func hasInputStreams(_ deviceID: AudioDeviceID) -> Bool {
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyStreams,
+            mScope: kAudioDevicePropertyScopeInput,
             mElement: kAudioObjectPropertyElementMain
         )
+        var size: UInt32 = 0
+        AudioObjectGetPropertyDataSize(deviceID, &addr, 0, nil, &size)
+        return size > 0
+    }
 
-        let err = AudioObjectGetPropertyData(
-            AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &defaultDevice
+    private func isInputOnlyDevice(_ deviceID: AudioDeviceID) -> Bool {
+        var outputAddr = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyStreams,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
         )
-        guard err == noErr, defaultDevice != 0 else { return false }
+        var outputSize: UInt32 = 0
+        AudioObjectGetPropertyDataSize(deviceID, &outputAddr, 0, nil, &outputSize)
+        return outputSize == 0
+    }
 
-        var isRunning: UInt32 = 0
-        size = UInt32(MemoryLayout<UInt32>.size)
-        address.mSelector = kAudioDevicePropertyDeviceIsRunningSomewhere
+    private func hasActiveInputStream(_ deviceID: AudioDeviceID) -> Bool {
+        var streamAddr = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyStreams,
+            mScope: kAudioDevicePropertyScopeInput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var streamSize: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(deviceID, &streamAddr, 0, nil, &streamSize) == noErr,
+              streamSize > 0 else { return false }
 
-        let err2 = AudioObjectGetPropertyData(defaultDevice, &address, 0, nil, &size, &isRunning)
-        guard err2 == noErr else { return false }
+        let count = Int(streamSize) / MemoryLayout<AudioStreamID>.size
+        var streams = [AudioStreamID](repeating: 0, count: count)
+        guard AudioObjectGetPropertyData(deviceID, &streamAddr, 0, nil, &streamSize, &streams) == noErr else {
+            return false
+        }
 
-        return isRunning != 0
+        for stream in streams {
+            var isActive: UInt32 = 0
+            var size = UInt32(MemoryLayout<UInt32>.size)
+            var activeAddr = AudioObjectPropertyAddress(
+                mSelector: kAudioStreamPropertyIsActive,
+                mScope: kAudioObjectPropertyScopeGlobal,
+                mElement: kAudioObjectPropertyElementMain
+            )
+            if AudioObjectGetPropertyData(stream, &activeAddr, 0, nil, &size, &isActive) == noErr,
+               isActive != 0 {
+                return true
+            }
+        }
+        return false
     }
 
     func isInFocusMode() -> Bool {

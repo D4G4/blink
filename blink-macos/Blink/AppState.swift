@@ -16,6 +16,7 @@ final class AppState: ObservableObject {
     @Published var breaksTakenToday: Int = 0
     @Published var breaksPromptedToday: Int = 0
     @Published var hasAccessibilityPermission: Bool = false
+    @Published var showTimerTemporarily: Bool = false
     @Published var isVideoPlaying: Bool = false
     @AppStorage("debugNotifications") var debugNotifications: Bool = false
 
@@ -113,6 +114,7 @@ final class AppState: ObservableObject {
 
         // Defer permissions/monitoring until after onboarding
         if ThemeManager.shared.hasCompletedOnboarding {
+            showTimerForStartup()
             checkPermissionsAndStart()
         } else {
             log.info("Onboarding not complete — deferring permissions")
@@ -124,12 +126,21 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Show timer in menu bar for 30s on every app start so user sees it working.
+    private func showTimerForStartup() {
+        showTimerTemporarily = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            self?.showTimerTemporarily = false
+        }
+    }
+
     /// Called after onboarding completes to start monitoring.
     func onboardingCompleted() {
         if let observer = onboardingObserver {
             NotificationCenter.default.removeObserver(observer)
             onboardingObserver = nil
         }
+        showTimerForStartup()
         checkPermissionsAndStart()
     }
 

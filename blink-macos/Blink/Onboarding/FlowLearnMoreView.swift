@@ -5,7 +5,18 @@ struct FlowLearnMoreView: View {
     let theme: BlinkTheme
     let onDismiss: () -> Void
     @Environment(\.colorScheme) private var colorScheme
-    @AppStorage("flowSensitivity") private var sensitivity: Double = 0.7
+    @AppStorage("flowSensitivity") private var storedSensitivity: Double = 0.7
+    @State private var sensitivity: Double = 0.7
+
+    /// Controls whether the header shows a slider or preset buttons.
+    enum PickerStyle { case slider, presets }
+    var pickerStyle: PickerStyle = .presets
+
+    private let presetOptions: [(label: String, value: Double, icon: String)] = [
+        ("Eye health", 0.45, "heart.circle.fill"),
+        ("Balanced", 0.65, "scale.3d"),
+        ("Deep work", 0.85, "brain.head.profile"),
+    ]
 
     private var presetLabel: String {
         switch sensitivity {
@@ -81,20 +92,50 @@ struct FlowLearnMoreView: View {
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                 }
 
-                VStack(spacing: 6) {
-                    HStack {
-                        Text("Eye health")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                        Slider(value: $sensitivity, in: 0.4...0.9, step: 0.05)
-                            .tint(accent)
-                        Text("Deep work")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
+                switch pickerStyle {
+                case .slider:
+                    VStack(spacing: 6) {
+                        HStack {
+                            Text("Eye health")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                            Slider(value: $sensitivity, in: 0.4...0.9, step: 0.05)
+                                .tint(accent)
+                            Text("Deep work")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
+                        Text(presetLabel)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(accent)
                     }
-                    Text(presetLabel)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(accent)
+                case .presets:
+                    HStack(spacing: 8) {
+                        ForEach(presetOptions, id: \.label) { option in
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    sensitivity = option.value
+                                }
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: option.icon)
+                                        .font(.system(size: 12))
+                                    Text(option.label)
+                                        .font(.system(size: 12, weight: .semibold))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 7)
+                                .background(presetLabel == option.label ? accent.opacity(0.15) : Color.primary.opacity(0.04))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(presetLabel == option.label ? accent : .clear, lineWidth: 1.5)
+                                )
+                                .foregroundStyle(presetLabel == option.label ? accent : .primary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
             }
             .padding(.horizontal, 24)
@@ -224,6 +265,7 @@ struct FlowLearnMoreView: View {
             Divider()
 
             Button {
+                storedSensitivity = sensitivity
                 onDismiss()
             } label: {
                 Text("Got it")
@@ -237,6 +279,7 @@ struct FlowLearnMoreView: View {
             .buttonStyle(.plain)
             .padding(16)
         }
+        .onAppear { sensitivity = storedSensitivity }
     }
 
     private func sectionHeader(_ title: String) -> some View {

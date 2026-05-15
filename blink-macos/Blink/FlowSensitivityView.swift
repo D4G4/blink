@@ -76,13 +76,10 @@ struct FlowSensitivityView: View {
     // MARK: - Onboarding Style
 
     private var onboardingLayout: some View {
-        VStack(spacing: 30) {
-            Text("Flow Sensitivity")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(foregroundColor)
-
+        VStack(spacing: 28) {
+            
             // Three preset cards
-            HStack(spacing: 10) {
+            HStack(spacing: 14) {
                 ForEach(Preset.allCases, id: \.name) { preset in
                     presetCard(preset, themed: true)
                 }
@@ -90,28 +87,13 @@ struct FlowSensitivityView: View {
 
             // Description of selected — fixed height to prevent layout shift
             Text(description)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(foregroundColor)
                 .multilineTextAlignment(.center)
-                .frame(height: 36, alignment: .top)
+                .frame(height: 40, alignment: .top)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
-
-
-            Button {
-                onResearchTapped?()
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "book.closed")
-                        .font(.system(size: 10))
-                    Text("Read the research")
-                        .font(.system(size: 11, weight: .medium))
-                }
-                .foregroundStyle(foregroundColor.opacity(0.7))
-            }
-            .buttonStyle(.plain)
-            
         }
-        .frame(maxWidth: 560)
+        .frame(maxWidth: 600)
     }
 
     // MARK: - Settings Style
@@ -233,20 +215,20 @@ struct FlowSensitivityView: View {
                 sensitivity = preset.value
             }
         } label: {
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 Image(systemName: preset.icon)
-                    .font(.system(size: 28, weight: .light))
+                    .font(.system(size: 32, weight: .light))
                 Text(preset.name)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 15, weight: .bold))
                 Text(preset.shortDescription)
-                    .font(.system(size: 10))
+                    .font(.system(size: 12))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .opacity(0.8)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .padding(.horizontal, 8)
+            .padding(.vertical, 20)
+            .padding(.horizontal, 10)
             .background(
                 themed
                     ? (isSelected ? .white : .white.opacity(0.12))
