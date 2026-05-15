@@ -13,7 +13,7 @@ struct BlinkApp: App {
                 .environmentObject(themeManager)
                 .environmentObject(UpdateChecker.shared)
         } label: {
-            if (showTimerInMenuBar || appState.showTimerTemporarily) && appState.hasAccessibilityPermission {
+            if showTimerInMenuBar && appState.hasAccessibilityPermission {
                 HStack(spacing: 4) {
                     menuBarIcon
                     Text(appState.formattedRemaining)

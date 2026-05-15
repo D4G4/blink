@@ -41,6 +41,7 @@
 		DE5BDA2DC244F80E4D05FDA7 /* BreakNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B15A88459421C77F80ACFC3 /* BreakNotificationManager.swift */; };
 		DEAF8705E1C91BA6128075DC /* PermissionOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF68C178E62F6093F4057913 /* PermissionOnboardingView.swift */; };
 		E18997FAD5140713D3E5907B /* PreferencesWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D2974278123650670528178 /* PreferencesWindowController.swift */; };
+		E2E2DC15A3B655161CF31EA3 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA5281E80D09549F7590353 /* MenuBarController.swift */; };
 		F82D96161BCBD00DDE686A88 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73EF2DCF137E47C83983AFEB /* UpdateChecker.swift */; };
 /* End PBXBuildFile section */
 
@@ -77,6 +78,7 @@
 		BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistWindowController.swift; sourceTree = "<group>"; };
 		D0FF6DFB2A34886365FDFBEE /* UIActionLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIActionLogger.swift; sourceTree = "<group>"; };
 		D286D81AEFFC707C40AF416D /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		DBA5281E80D09549F7590353 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		E0886829FB1518795A9E605C /* BlinkTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkTheme.swift; sourceTree = "<group>"; };
 		E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchView.swift; sourceTree = "<group>"; };
 		EDA291436352B986E47616EA /* FlowSensitivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityView.swift; sourceTree = "<group>"; };
@@ -222,6 +224,7 @@
 		C6B99614A55F03D45A44213D /* MenuBar */ = {
 			isa = PBXGroup;
 			children = (
+				DBA5281E80D09549F7590353 /* MenuBarController.swift */,
 				D286D81AEFFC707C40AF416D /* MenuBarView.swift */,
 			);
 			path = MenuBar;
@@ -325,6 +328,7 @@
 				D5C6DCF4BA41B2C014A4D3C8 /* MacContextDetector.swift in Sources */,
 				8A0AFA5135D8FBEB7414E8FB /* MacIdleDetector.swift in Sources */,
 				285C0EFFE325468E346E69D5 /* MacInputMonitor.swift in Sources */,
+				E2E2DC15A3B655161CF31EA3 /* MenuBarController.swift in Sources */,
 				72570C0C40040759FE52FBDF /* MenuBarView.swift in Sources */,
 				721AB1C8176D69C9F1A07603 /* OnboardingView.swift in Sources */,
 				AF2AA32997C297584EE5186E /* OnboardingWindow.swift in Sources */,

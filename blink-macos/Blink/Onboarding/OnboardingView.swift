@@ -42,7 +42,7 @@ struct OnboardingView: View {
                         onComplete()
                     }
                 )
-                .transition(.move(edge: .trailing).combined(with: .opacity))
+                .transition(.opacity)
             }
 
         }
