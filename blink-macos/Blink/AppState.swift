@@ -70,6 +70,7 @@ final class AppState: ObservableObject {
     // Break overlay
     private let overlayController = OverlayWindowController()
     private let breakpointDetector = BreakpointDetector()
+    public let breakDecisionEngine = BreakDecisionEngine()
 
     // Persistence
     private let persistence = PersistenceManager()
@@ -193,6 +194,11 @@ final class AppState: ObservableObject {
                 self.startMonitoring()
                 self.startTimers()
                 log.info("Permission granted — monitors and timers started")
+
+                // Show a toast pointing user to the menu bar
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.overlayController.showMenuBarWelcome()
+                }
             }
         }
     }
@@ -202,9 +208,15 @@ final class AppState: ObservableObject {
         let input = MacInputMonitor()
         input.onKeystroke = { [weak self] event in
             self?.flowScoreCalculator.ingestKeystroke(event)
+            self?.breakDecisionEngine.recordKeystroke()
         }
         input.onMouseEvent = { [weak self] event in
             self?.flowScoreCalculator.ingestMouseEvent(event)
+            switch event.kind {
+            case .click: self?.breakDecisionEngine.recordClick()
+            case .scroll(_): self?.breakDecisionEngine.recordScroll()
+            case .move(_, _): break // ambient, don't count
+            }
         }
         input.startMonitoring()
         self.inputMonitor = input
@@ -215,6 +227,7 @@ final class AppState: ObservableObject {
             log.debug("App switch → \(event.appBundleID)")
             self?.flowScoreCalculator.recordAppSwitch(event)
             self?.breakpointDetector.recordAppSwitch(at: event.timestamp)
+            self?.breakDecisionEngine.recordAppSwitch(bundleID: event.appBundleID)
         }
         appMon.onWindowTitleChange = { [weak self] in
             log.debug("Window title changed")
@@ -273,7 +286,8 @@ final class AppState: ObservableObject {
         let scrollIdle = idleDetector?.secondsSinceLastScroll() ?? 0
         let micActive = contextDetector?.isMicrophoneActive() ?? false
 
-        // Feed breakpoint detector
+        // Feed engines
+        breakDecisionEngine.tick(now: now)
         breakpointDetector.recordInput(
             secondsSinceLastKeystroke: keystrokeIdle,
             secondsSinceLastClick: clickIdle,
@@ -324,76 +338,41 @@ final class AppState: ObservableObject {
                 overlayController.showDebugToast("Timer reset: idle \(Int(idle))s ≥ \(Int(Self.idleBreakThreshold))s")
             }
             consecutiveBreaksTaken = 0  // walked away — reset streak
+            breakDecisionEngine.resetAll()  // reset signal window + extension count
             timerStateMachine.resetAfterBreak()
             remainingSeconds = timerStateMachine.remainingSeconds
         }
     }
 
     private func handleBreakDue() {
-        let config = flowStateMachine.config
-        let inFlow = flowState == .flow || flowState == .deepFlow
+        // Timer fired — evaluate 20 min of collected signals
+        let decision = breakDecisionEngine.decide()
 
-        if inFlow {
-            switch config.breakDeliveryInFlow {
-            case .waitForPause:
-                // V1: wait for natural pause, then force overlay
-                log.info("Break due in \(self.flowState.rawValue) — waiting for natural pause")
-                breakDuePending = true
-                breakDueSince = Date()
-                return
-
-            case .nudge:
-                // V2: gentle nudge, never force during flow
-                let minutes = Int(timerStateMachine.timerDuration) / 60
-                log.info("Break due in \(self.flowState.rawValue) — showing nudge")
-                overlayController.showFlowNudge(
-                    message: "You've been focused for \(minutes) min",
-                    onTakeBreak: { [weak self] in
-                        Task { @MainActor in self?.showBreakPrompt() }
-                    }
-                )
-                timerStateMachine.resetAfterBreak()
-                remainingSeconds = timerStateMachine.remainingSeconds
-                return
-
-            case .nudgeWithEscalation:
-                // V3: nudge first, escalate after N ignored nudges
-                let maxNudges = config.maxNudgesBeforeForce
-
-                if let max = maxNudges, nudgesIgnoredInCurrentFlow >= max {
-                    // Escalate to forced break
-                    log.info("Break due in \(self.flowState.rawValue) — \(self.nudgesIgnoredInCurrentFlow) nudges ignored, escalating to overlay")
-                    nudgesIgnoredInCurrentFlow = 0
-                    breakDuePending = true
-                    breakDueSince = Date()
-                    return
+        switch decision {
+        case .extend(let minutes, let reason):
+            // User is doing focused work — extend timer, show gentle nudge
+            log.info("Break decision: extend to \(minutes) min — \(reason)")
+            overlayController.showFlowNudge(
+                message: "\(reason) — extended to \(minutes) min",
+                onTakeBreak: { [weak self] in
+                    Task { @MainActor in self?.showBreakPrompt() }
                 }
+            )
+            // Reset timer to the remaining extension (10 or 20 min more)
+            let extraSeconds = Double((minutes - 20) * 60) - (Double(minutes * 60) - timerStateMachine.timerDuration)
+            timerStateMachine.resetAfterBreak()
+            // Override to the extension duration (10 min for first extension, 10 more for second)
+            timerStateMachine.reset(Int(10 * 60))
+            remainingSeconds = timerStateMachine.remainingSeconds
+            breakDecisionEngine.resetWindow() // start fresh window for next evaluation
 
-                // Show nudge
-                nudgesIgnoredInCurrentFlow += 1
-                let minutes = Int(timerStateMachine.timerDuration) / 60
-                let remaining = maxNudges.map { $0 - nudgesIgnoredInCurrentFlow + 1 }
-                let suffix = remaining.map { " (\($0) left before forced)" } ?? ""
-                log.info("Break due in \(self.flowState.rawValue) — nudge #\(self.nudgesIgnoredInCurrentFlow)\(suffix)")
-                overlayController.showFlowNudge(
-                    message: "You've been focused for \(minutes) min",
-                    onTakeBreak: { [weak self] in
-                        Task { @MainActor in
-                            self?.nudgesIgnoredInCurrentFlow = 0
-                            self?.showBreakPrompt()
-                        }
-                    }
-                )
-                timerStateMachine.resetAfterBreak()
-                remainingSeconds = timerStateMachine.remainingSeconds
-                return
-            }
+        case .showBreak:
+            // User is casual or max extensions reached — wait for natural pause, show overlay
+            log.info("Break decision: show break")
+            breakDecisionEngine.resetWindow()
+            breakDuePending = true
+            breakDueSince = Date()
         }
-
-        // Not in flow: wait for natural pause, then show overlay
-        nudgesIgnoredInCurrentFlow = 0
-        breakDuePending = true
-        breakDueSince = Date()
     }
 
     /// Check if a pending break can now be delivered at a natural boundary.

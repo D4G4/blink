@@ -30,9 +30,10 @@ struct FlowStateMachineTests {
         #expect(sm.state == .flow)
     }
 
-    @Test("Gap exceeding tolerance exits flow immediately")
+    @Test("V2: Gap exceeding tolerance exits flow immediately")
     func flowExitOnGap() {
         let sm = FlowStateMachine()
+        sm.strategy = .activityGapAnyInput
         let baseTime: TimeInterval = 1000
 
         // Enter flow
@@ -169,9 +170,10 @@ struct FlowStateMachineTests {
         #expect(sm.state == .flow, "80s pause should keep flow at 90% sensitivity")
     }
 
-    @Test("Low sensitivity breaks flow on short pauses")
+    @Test("V2: Low sensitivity breaks flow on short pauses")
     func lowSensitivityShortPauses() {
         let sm = FlowStateMachine()
+        sm.strategy = .activityGapAnyInput
         sm.sensitivity = 0.4 // 15s tolerance
         let baseTime: TimeInterval = 1000
 
