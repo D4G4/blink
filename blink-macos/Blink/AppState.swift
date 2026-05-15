@@ -364,7 +364,7 @@ final class AppState: ObservableObject {
             // Override to the extension duration (10 min for first extension, 10 more for second)
             timerStateMachine.reset(Int(10 * 60))
             remainingSeconds = timerStateMachine.remainingSeconds
-            breakDecisionEngine.resetWindow() // start fresh window for next evaluation
+            // Don't reset window — accumulate signals for richer next evaluation
 
         case .showBreak:
             // User has been actively using screen — wait for natural pause, show overlay
