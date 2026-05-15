@@ -175,7 +175,9 @@ struct ResearchView: View {
                 Spacer()
 
                 Button {
-                    NSWorkspace.shared.open(URL(string: url)!)
+                    if let paperURL = URL(string: url) {
+                        NSWorkspace.shared.open(paperURL)
+                    }
                 } label: {
                     HStack(spacing: 3) {
                         Text("Full paper")
