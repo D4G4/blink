@@ -335,9 +335,10 @@ struct SettingsView: View {
     }
 
     private func settingsRow(_ label: String, @ViewBuilder content: () -> some View) -> some View {
-        HStack {
+        HStack(alignment: .top) {
             Text(label)
                 .font(.system(size: 13))
+                .padding(.top, 4)
             Spacer()
             content()
         }
