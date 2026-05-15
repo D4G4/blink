@@ -31,8 +31,11 @@ final class FlowLearnMoreWindowController {
         NSApp.activate(ignoringOtherApps: true)
 
         closeDelegate = WindowCloseDelegate { [weak self] in
-            self?.window = nil
-            self?.closeDelegate = nil
+            // Defer cleanup to avoid deallocating the delegate while inside its own callback
+            DispatchQueue.main.async {
+                self?.window = nil
+                self?.closeDelegate = nil
+            }
         }
         win.delegate = closeDelegate
 
