@@ -6,6 +6,7 @@ final class PreferencesWindowController {
     static let shared = PreferencesWindowController()
 
     private var window: NSWindow?
+    private var closeObserver: NSObjectProtocol?
 
     func show(appState: AppState, themeManager: ThemeManager) {
         // If window exists, just bring it to front
@@ -35,7 +36,10 @@ final class PreferencesWindowController {
         NSApp.activate(ignoringOtherApps: true)
 
         // Go back to accessory when window closes
-        NotificationCenter.default.addObserver(
+        if let existing = closeObserver {
+            NotificationCenter.default.removeObserver(existing)
+        }
+        closeObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
             object: win,
             queue: .main
