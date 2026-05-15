@@ -9,6 +9,7 @@ struct FlowSensitivityView: View {
     let foregroundColor: Color
     let style: Style
     var onResearchTapped: (() -> Void)? = nil
+    var onLearnMoreTapped: (() -> Void)? = nil
 
     @State private var showFineTune = false
 
@@ -116,22 +117,42 @@ struct FlowSensitivityView: View {
     // MARK: - Settings Style
 
     private var settingsLayout: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Three preset buttons
+        VStack(alignment: .leading, spacing: 30) {
+            // Full-width preset buttons
             HStack(spacing: 8) {
                 ForEach(Preset.allCases, id: \.name) { preset in
-                    presetCard(preset, themed: false)
+                    settingsPresetButton(preset)
                 }
             }
 
             // Description
             Text(description)
                 .font(.system(size: 11))
-                .foregroundStyle(.primary)
+                .foregroundStyle(.secondary)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
 
-            // Fine-tune + research
-            HStack {
+            // Learn more button
+            if onLearnMoreTapped != nil {
+                Button {
+                    onLearnMoreTapped?()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "eye")
+                            .font(.system(size: 12))
+                        Text("How this affects your breaks")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundStyle(accentColor)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(accentColor.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Action links
+            HStack(spacing: 12) {
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) { showFineTune.toggle() }
                 } label: {
@@ -153,7 +174,7 @@ struct FlowSensitivityView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "book.closed")
                             .font(.system(size: 10))
-                        Text("Read the research")
+                        Text("Research")
                             .font(.system(size: 11))
                     }
                     .foregroundStyle(accentColor)
@@ -172,6 +193,34 @@ struct FlowSensitivityView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
+    }
+
+    // Compact settings preset button — icon + name, no description
+    private func settingsPresetButton(_ preset: Preset) -> some View {
+        let isSelected = selectedPreset == preset
+
+        return Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                sensitivity = preset.value
+            }
+        } label: {
+            VStack(spacing: 6) {
+                Image(systemName: preset.icon)
+                    .font(.system(size: 22, weight: .light))
+                Text(preset.name)
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(isSelected ? accentColor.opacity(0.12) : Color.primary.opacity(0.04))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12).stroke(isSelected ? accentColor : .clear, lineWidth: 1.5)
+            )
+            .scaleEffect(isSelected ? 1.03 : 1.0)
+            .foregroundStyle(isSelected ? accentColor : .primary)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Preset Card
@@ -267,7 +316,14 @@ private struct FlowSensitivityPreview: View {
 }
 
 #Preview("Settings") {
-    FlowSensitivityPreview(sensitivity: 0.65)
-        .padding(20)
-        .environment(\.colorScheme, .light)
+    FlowSensitivityView(
+        sensitivity: .constant(0.65),
+        accentColor: BlinkTheme.peach.accent,
+        foregroundColor: .primary,
+        style: .settings,
+        onResearchTapped: {},
+        onLearnMoreTapped: {}
+    )
+    .padding(20)
+    .frame(width: 400)
 }
