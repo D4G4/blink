@@ -1,88 +1,93 @@
 # How Flow Detection Works
 
-Blink detects focused work by tracking **intentional input** — typing, clicking, and scrolling. Mouse movement alone doesn't count (it's ambient — everyone moves their mouse constantly, even while browsing casually).
+Blink learns your work rhythm over 20 minutes. When the timer fires, it looks at how you've been working and makes one decision: extend your session, remind you to take a break, or stay quiet.
 
-## The Rule
+## What Blink Decides
 
-| State | How it's detected | Break interval |
-|-------|------------------|---------------|
-| Normal | Default | 20 min |
-| Flow | Sustained intentional input for 3+ min | 30 min |
-| Deep Flow | In flow for 15+ min | 40 min |
-| Idle | No input at all for 3 min | Timer resets silently |
-| Meeting | Mic or camera active | Timer pauses |
+| Your activity | What happens |
+|--------------|-------------|
+| Deep work (intense typing, low app switching) | Timer extended 10 min + gentle nudge |
+| Active but casual (browsing, email) | Break overlay (20 seconds) |
+| Light screen time (reading, occasional scrolling) | Gentle nudge toast |
+| Barely at screen (mostly away) | Silent reset — no interruption |
 
-## What Counts as "Intentional Input"
+## What Blink Looks At
 
-| Input | Counts for flow? | Counts for idle? |
-|-------|-----------------|-----------------|
-| Keyboard (typing) | **Yes** — strongest signal | Yes |
-| Mouse clicks | **Yes** — intentional interaction | Yes |
-| Scrolling | **Yes** — active engagement | Yes |
-| Mouse movement | **No** — ambient, constant | Yes |
+- **Typing intensity** — strongest signal of focused work
+- **Click frequency** — designers click a lot, that counts
+- **App switching** — fewer switches = more focused
+- **Which app you're in** — editors and design tools get a bonus
+- **Scrolling without typing** — consumption, not creation
 
-## Two-Tier Gap Tolerance
+Mouse movement is ignored — everyone moves their mouse constantly, even while casually browsing.
 
-Flow uses two different thresholds:
+## Sensitivity
 
-- **Entry tolerance**: how long you can pause and still build toward flow (stricter)
-- **Maintenance tolerance**: how long you can pause and stay in flow once entered (1.5x more forgiving)
+The sensitivity slider controls how easily Blink recognizes deep work:
 
-This handles agent/AI workflows: you type a prompt, wait 60-90 seconds while scrolling through the AI's response, then type again. The maintenance tolerance keeps you in flow during the wait.
+- **Low (40%)** — strict, prioritizes eye health. Only very intense work extends the timer.
+- **Default (70%)** — balanced. Most focused work extends, casual use gets breaks.
+- **High (90%)** — relaxed. Almost any sustained activity extends the timer.
 
-| Sensitivity | Entry tolerance | Maintenance tolerance |
-|-------------|---------------|----------------------|
-| 40% (strict) | 15s | 22s |
-| 50% | 30s | 45s |
-| 60% | 45s | 67s |
-| **70% (default)** | **60s** | **90s** |
-| 80% | 75s | 112s |
-| 90% (relaxed) | 90s | 135s |
+## Break Intervals
 
-## Natural Breakpoint Detection
+| | Duration | When |
+|---|----------|------|
+| Normal | 20 min | Default timer |
+| Extended | 30 min | 1st extension (deep work detected) |
+| Max | 40 min | 2nd extension (still deep work) |
 
-When a break is due during flow, Blink doesn't interrupt immediately. It waits for a **natural task boundary** — a moment between thoughts, not during one.
+After 40 minutes, Blink always reminds you — max 2 extensions per session.
 
-Research shows that 2-15 second pauses indicate active working memory processing (thinking about syntax, logic). Interrupting during these pauses costs 32% more cognitive recovery than interrupting at task boundaries.
+## Scenarios
 
-Blink detects breakpoints using compound signals:
+### Coding for 20 minutes
+Steady typing at 60+ keys/min. Low app switching. In VS Code.
+→ **Deep work detected. Timer extended to 30 min, gentle nudge.**
 
-| Signal | What it means |
-|--------|-------------|
-| Keyboard → mouse transition | Stopped typing, started clicking = finished a thought |
-| Typing burst → 30s+ silence | Completed a unit of work |
-| App switch after typing | Moved to different context |
+### Designing in Figma
+Lots of clicking and dragging. Some keyboard shortcuts. Low app switching.
+→ **Deep work detected. Timer extended to 30 min.**
 
-## Break Delivery
+### Browsing Reddit for 20 minutes
+Lots of scrolling, some clicks, barely any typing. Frequent tab switching.
+→ **Casual use. Break overlay at 20 min.**
 
-What happens when the timer fires depends on your state and sensitivity:
+### Chatting occasionally while away from desk
+A few messages typed, some scrolling. Mostly away from screen.
+→ **Too little activity. Silent reset — no interruption.**
 
-**Not in flow** → forced overlay (20s break). You're not deeply focused, so the interruption cost is low.
+### Reading a long document
+Occasional scrolling, no typing. Still staring at screen.
+→ **Light activity. Gentle nudge to rest your eyes.**
 
-**In flow** → Blink waits for a natural breakpoint, then:
-- At low sensitivity (40-50%): forced overlay after 1 ignored nudge
-- At default (70%): gentle nudge, forced overlay after 3 ignored nudges
-- At high sensitivity (90%): gentle nudge only, never forced
+### Getting coffee (away 3+ minutes)
+No input at all for 3 minutes.
+→ **Idle detected. Timer resets silently. Fresh start when you return.**
 
-## Walk Suggestion
+### On a Zoom call
+Mic active — detected immediately.
+→ **Timer pauses completely. Resumes when call ends.**
 
-After 4+ consecutive breaks without leaving your desk (no 3-minute idle period), the break overlay adds: "Consider a quick walk!" Resets when you step away.
+### Watching a YouTube video
+Video playing in the browser.
+→ **Timer pauses — you're already resting your focus.**
 
-## Why Breaks Matter During Flow
+## Why Breaks Matter During Focus
 
-Research shows your eyes strain **most** during exactly the kind of focused work that triggers flow:
+Research shows your eyes strain **most** during exactly the kind of focused work that extends the timer:
 
 - **Blink rate drops 69%** during active typing (5/min vs 15/min normal)
 - **92% of blinks become incomplete** during focused screen work
 - **4+ hours** of screen time nearly doubles dry eye risk
 
-This is why Blink's default (70%) still delivers breaks during flow — just at natural moments. Higher sensitivity settings reduce break frequency, but your eyes pay the cost.
+This is why Blink's default setting still delivers reminders during deep work — just gently, at natural moments.
 
 ## Privacy
 
-Blink monitors input **timing** only:
+Blink learns your work rhythm — never your content:
 - When keys are pressed (never which keys)
-- When clicks and scrolls happen (never where or what)
-- When you switch apps (never which apps — app identity is not used for flow detection in V3)
+- When clicks and scrolls happen (never where)
+- Which type of app is active (creative vs consumption)
 
 All data stays local. No analytics, no telemetry.

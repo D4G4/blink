@@ -53,73 +53,88 @@ struct FlowLearnMoreView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 20) {
                     // Core concept
-                    sectionHeader("The simple rule")
-                    Text("If you've been continuously active — any keyboard or mouse input — with no long pauses, Blink considers you in flow and extends your break interval.")
+                    sectionHeader("How it works")
+                    Text("Blink learns your work rhythm for 20 minutes. When the timer fires, it looks at how you've been working and makes one decision: extend your session, remind you to take a break, or stay quiet.")
                         .font(.system(size: 13))
                         .foregroundStyle(.primary)
 
-                    // How it works
-                    sectionHeader("How it decides")
+                    // Four decisions
+                    sectionHeader("What Blink decides")
 
                     VStack(alignment: .leading, spacing: 6) {
-                        ruleRow("Active for 3+ minutes", "→ Flow (breaks at 30 min)", accent: accent)
-                        ruleRow("In flow for 15+ minutes", "→ Deep Flow (breaks at 40 min)", accent: accent)
-                        ruleRow("Pause > \(gapTolerance)s", "→ Flow ends, back to 20 min", accent: accent)
+                        ruleRow("Deep work detected", "→ Extend 10 min + gentle nudge", accent: accent)
+                        ruleRow("Active but casual", "→ Break overlay (20s)", accent: accent)
+                        ruleRow("Light screen time", "→ Gentle nudge (toast)", accent: accent)
+                        ruleRow("Barely at screen", "→ Silent reset (no interruption)", accent: accent)
                     }
                     .padding(14)
                     .background(Color.primary.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
-                    // Dynamic scenarios
+                    // What it looks at
+                    sectionHeader("What Blink looks at")
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        ruleRow("Typing intensity", "→ Strongest signal of focused work", accent: accent)
+                        ruleRow("Click frequency", "→ Designers click a lot — that counts", accent: accent)
+                        ruleRow("App switching", "→ Fewer switches = more focused", accent: accent)
+                        ruleRow("What app you're in", "→ Editors and design tools get a bonus", accent: accent)
+                        ruleRow("Scroll without typing", "→ Consumption, not creation", accent: accent)
+                    }
+                    .padding(14)
+                    .background(Color.primary.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                    // Scenarios
                     sectionHeader("Real scenarios at \(Int(sensitivity * 100))%")
 
                     scenarioRow(
                         icon: "keyboard",
-                        title: "Coding with \(gapTolerance - 10)s thinking pauses",
-                        detail: "You type, pause \(gapTolerance - 10)s to think, type again. Gap (\(gapTolerance - 10)s) is under your \(gapTolerance)s tolerance.",
-                        result: "Flow stays active — timer extends to 30–40 min",
+                        title: "Coding for 20 minutes",
+                        detail: "Steady typing at 60+ keys/min. Low app switching. In VS Code.",
+                        result: "Deep work → timer extended to 30 min, gentle nudge",
+                        accent: accent
+                    )
+                    scenarioRow(
+                        icon: "paintbrush.pointed",
+                        title: "Designing in Figma",
+                        detail: "Lots of clicking and dragging. Some keyboard shortcuts. Low app switching.",
+                        result: "Deep work → timer extended to 30 min",
+                        accent: accent
+                    )
+                    scenarioRow(
+                        icon: "globe",
+                        title: "Browsing Reddit for 20 minutes",
+                        detail: "Lots of scrolling, some clicks, barely any typing. Frequent tab switching.",
+                        result: "Casual use → break overlay at 20 min",
+                        accent: accent
+                    )
+                    scenarioRow(
+                        icon: "message",
+                        title: "Chatting occasionally while away",
+                        detail: "A few messages typed, some scrolling. Mostly away from screen.",
+                        result: "Too little activity → silent reset, no interruption",
                         accent: accent
                     )
                     scenarioRow(
                         icon: "doc.text",
-                        title: "Reading docs for \(gapTolerance + 15)s",
-                        detail: "You read without input for \(gapTolerance + 15)s, then start typing. Gap (\(gapTolerance + 15)s) exceeds your \(gapTolerance)s tolerance.",
-                        result: "Flow breaks. Timer resets to 20 min",
-                        accent: accent
-                    )
-                    scenarioRow(
-                        icon: "arrow.triangle.swap",
-                        title: "Switching apps every \(max(gapTolerance - 20, 5))s",
-                        detail: "You switch between editor and browser, clicking every \(max(gapTolerance - 20, 5))s. All gaps under \(gapTolerance)s.",
-                        result: "Flow stays active — based on input gaps, not which app",
+                        title: "Reading a long document",
+                        detail: "Occasional scrolling, no typing. Still staring at screen.",
+                        result: "Light activity → gentle nudge to rest your eyes",
                         accent: accent
                     )
                     scenarioRow(
                         icon: "cup.and.saucer",
-                        title: "Getting coffee (away 5 min)",
-                        detail: "No input for 5 minutes. Exceeds both \(gapTolerance)s tolerance and 3 min idle threshold.",
-                        result: "Timer resets silently — you already rested your eyes",
+                        title: "Getting coffee (away 3+ min)",
+                        detail: "No input at all for 3 minutes.",
+                        result: "Idle detected → timer resets silently, fresh start when you return",
                         accent: accent
                     )
                     scenarioRow(
                         icon: "mic",
-                        title: "On a call",
-                        detail: "Mic active. Detected immediately regardless of sensitivity.",
-                        result: "Timer pauses. Resumes when call ends",
-                        accent: accent
-                    )
-                    scenarioRow(
-                        icon: "brain",
-                        title: "Deep in flow, timer fires",
-                        detail: "You've been coding for 40 min straight. Timer reaches zero.",
-                        result: "Gentle toast — never forces overlay during flow",
-                        accent: accent
-                    )
-                    scenarioRow(
-                        icon: "hand.raised",
-                        title: "Not in flow, timer fires",
-                        detail: "Browsing casually for 20 min. Timer reaches zero.",
-                        result: "Fullscreen break — 20s. Esc to skip, → to extend",
+                        title: "On a Zoom call",
+                        detail: "Mic active — detected immediately.",
+                        result: "Timer pauses completely. Resumes when call ends",
                         accent: accent
                     )
 
@@ -128,8 +143,8 @@ struct FlowLearnMoreView: View {
 
                     HStack(spacing: 0) {
                         timerColumn(label: "Normal", duration: "20 min", description: "Default", accent: accent)
-                        timerColumn(label: "Flow", duration: "30 min", description: "3+ min active", accent: accent)
-                        timerColumn(label: "Deep Flow", duration: "40 min", description: "15+ min active", accent: accent)
+                        timerColumn(label: "Extended", duration: "30 min", description: "1st extension", accent: accent)
+                        timerColumn(label: "Max", duration: "40 min", description: "2nd extension", accent: accent)
                     }
                     .padding(14)
                     .background(Color.primary.opacity(0.06))
@@ -140,7 +155,7 @@ struct FlowLearnMoreView: View {
                         Image(systemName: "lock.shield")
                             .font(.system(size: 16))
                             .foregroundStyle(accent)
-                        Text("Blink reads input timing only — never keystrokes, window contents, or personal data.")
+                        Text("Blink learns your work rhythm only — never keystrokes, window contents, or personal data.")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.primary)
                     }

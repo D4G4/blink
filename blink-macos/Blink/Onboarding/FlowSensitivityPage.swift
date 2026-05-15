@@ -49,7 +49,7 @@ struct FlowSensitivityPage: View {
                     .frame(maxWidth: .infinity)
                     .padding(.bottom, 6)
 
-                Text("Blink detects when you're focused and extends break intervals")
+                Text("Blink learns your work rhythm and decides when you truly need a break")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(fg.opacity(0.85))
                     .multilineTextAlignment(.center)
