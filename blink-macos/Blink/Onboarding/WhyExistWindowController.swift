@@ -6,6 +6,7 @@ final class WhyExistWindowController {
     static let shared = WhyExistWindowController()
 
     private var window: NSWindow?
+    private var closeObserver: NSObjectProtocol?
 
     func show() {
         if let win = window, win.isVisible {
@@ -39,7 +40,10 @@ final class WhyExistWindowController {
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
-        NotificationCenter.default.addObserver(
+        if let existing = closeObserver {
+            NotificationCenter.default.removeObserver(existing)
+        }
+        closeObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
             object: win,
             queue: .main

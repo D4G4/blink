@@ -6,7 +6,11 @@ final class PersistenceManager {
     private let baseURL: URL
 
     init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            baseURL = FileManager.default.temporaryDirectory.appendingPathComponent("Blink", isDirectory: true)
+            try? FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
+            return
+        }
         baseURL = appSupport.appendingPathComponent("Blink", isDirectory: true)
 
         // Create directory if needed

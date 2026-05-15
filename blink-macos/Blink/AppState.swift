@@ -74,6 +74,7 @@ final class AppState: ObservableObject {
 
     // Persistence
     private let persistence = PersistenceManager()
+    private var onboardingObserver: NSObjectProtocol?
 
     var formattedRemaining: String {
         let mins = Int(remainingSeconds) / 60
@@ -106,7 +107,7 @@ final class AppState: ObservableObject {
             checkPermissionsAndStart()
         } else {
             log.info("Onboarding not complete — deferring permissions")
-            NotificationCenter.default.addObserver(
+            onboardingObserver = NotificationCenter.default.addObserver(
                 forName: .onboardingCompleted, object: nil, queue: .main
             ) { [weak self] _ in
                 self?.onboardingCompleted()
@@ -116,6 +117,10 @@ final class AppState: ObservableObject {
 
     /// Called after onboarding completes to start monitoring.
     func onboardingCompleted() {
+        if let observer = onboardingObserver {
+            NotificationCenter.default.removeObserver(observer)
+            onboardingObserver = nil
+        }
         checkPermissionsAndStart()
     }
 

@@ -86,7 +86,74 @@ final class OverlayWindowController {
         }
     }
     
-    /// Show a debug toast with a reason for timer reset or state change.
+    /// Show a welcome toast near the menu bar after permission is granted.
+    func showMenuBarWelcome() {
+        dismissToast()
+
+        guard let screen = NSScreen.main else { return }
+
+        let toastWidth: CGFloat = 300
+        let toastHeight: CGFloat = 56
+        let padding: CGFloat = 16
+
+        // Position top-right, near the menu bar
+        let toastFrame = NSRect(
+            x: screen.visibleFrame.maxX - toastWidth - padding,
+            y: screen.visibleFrame.maxY - toastHeight - padding,
+            width: toastWidth,
+            height: toastHeight
+        )
+
+        let bg = theme.overlayBackground(for: NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? .dark : .light)
+        let fg = theme.overlayText(for: NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? .dark : .light)
+
+        let view = HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 20))
+                .foregroundStyle(.green)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Blink is running!")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(fg)
+                Text("Click the icon in your menu bar ↑")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(fg)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(bg)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+
+        let panel = NSPanel(
+            contentRect: toastFrame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.level = .floating
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        panel.hidesOnDeactivate = false
+        panel.contentView = NSHostingView(rootView: AnyView(view))
+
+        panel.alphaValue = 0
+        panel.orderFrontRegardless()
+
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.3
+            panel.animator().alphaValue = 1
+        }
+
+        self.toastWindow = panel
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            self?.dismissToast()
+        }
+    }
+
     /// Show a gentle nudge during flow — non-intrusive toast that auto-dismisses after 7s.
     func showFlowNudge(message: String, onTakeBreak: @escaping () -> Void) {
         dismissToast()
@@ -537,7 +604,11 @@ private final class BreakPhaseModel: ObservableObject {
     @Published var total: Int = 20
     @Published var showExtendHint: Bool = false
     var timer: Timer?
-    
+
+    deinit {
+        stopTimer()
+    }
+
     func extend() {
         remaining += 20
         total += 20

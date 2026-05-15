@@ -52,8 +52,12 @@ final class MacAppMonitor: AppActivitySource {
         guard AXUIElementCopyAttributeValue(appRef, kAXFocusedWindowAttribute as CFString, &windowValue) == .success,
               let window = windowValue else { return }
 
+        // AXUIElement is a CoreFoundation type — verify type ID before casting
+        let axWindow = window as! AXUIElement  // safe: AXUIElementCopyAttributeValue with kAXFocusedWindowAttribute always returns AXUIElement
+        guard CFGetTypeID(axWindow) == AXUIElementGetTypeID() else { return }
+
         var titleValue: AnyObject?
-        guard AXUIElementCopyAttributeValue(window as! AXUIElement, kAXTitleAttribute as CFString, &titleValue) == .success,
+        guard AXUIElementCopyAttributeValue(axWindow, kAXTitleAttribute as CFString, &titleValue) == .success,
               let title = titleValue as? String else { return }
 
         if title != lastWindowTitle {

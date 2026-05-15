@@ -145,9 +145,12 @@ final class MacContextDetector: ContextSource {
         guard AXUIElementCopyAttributeValue(appRef, kAXFocusedWindowAttribute as CFString, &windowValue) == .success,
               let window = windowValue else { return false }
 
+        let axWindow = window as! AXUIElement
+        guard CFGetTypeID(axWindow) == AXUIElementGetTypeID() else { return false }
+
         var fullscreenValue: AnyObject?
         guard AXUIElementCopyAttributeValue(
-            window as! AXUIElement,
+            axWindow,
             "AXFullScreen" as CFString,
             &fullscreenValue
         ) == .success else { return false }
@@ -180,8 +183,11 @@ final class MacContextDetector: ContextSource {
         guard AXUIElementCopyAttributeValue(appRef, kAXFocusedWindowAttribute as CFString, &windowValue) == .success,
               let window = windowValue else { return nil }
 
+        let axWindow = window as! AXUIElement
+        guard CFGetTypeID(axWindow) == AXUIElementGetTypeID() else { return nil }
+
         var titleValue: AnyObject?
-        guard AXUIElementCopyAttributeValue(window as! AXUIElement, kAXTitleAttribute as CFString, &titleValue) == .success,
+        guard AXUIElementCopyAttributeValue(axWindow, kAXTitleAttribute as CFString, &titleValue) == .success,
               let title = titleValue as? String else { return nil }
 
         return title
