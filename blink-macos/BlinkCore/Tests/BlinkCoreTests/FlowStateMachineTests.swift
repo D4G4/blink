@@ -30,25 +30,27 @@ struct FlowStateMachineTests {
         #expect(sm.state == .flow)
     }
 
-    @Test("V2: Gap exceeding tolerance exits flow immediately")
+    @Test("Gap exceeding maintenance tolerance exits flow")
     func flowExitOnGap() {
         let sm = FlowStateMachine()
-        sm.strategy = .activityGapAnyInput
+        sm.strategy = .breakDecisionEngine
         let baseTime: TimeInterval = 1000
 
         // Enter flow
         for i in 0..<8 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 5,
+            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                    secondsSinceLastIntentionalInput: 5,
                     isMicActive: false, isCameraActive: false,
                     now: baseTime + Double(i) * 30)
         }
         #expect(sm.state == .flow)
 
-        // Gap exceeds tolerance (60s at default 0.7 sensitivity)
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 65,
+        // Gap exceeds maintenance tolerance (90s at 0.7 sensitivity, 1.5x of 60s)
+        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                secondsSinceLastIntentionalInput: 95,
                 isMicActive: false, isCameraActive: false,
                 now: baseTime + 270)
-        #expect(sm.state == .normal, "Gap > tolerance should exit flow")
+        #expect(sm.state == .normal, "Gap > maintenance tolerance should exit flow")
     }
 
     @Test("Gap within tolerance keeps flow")
@@ -170,26 +172,28 @@ struct FlowStateMachineTests {
         #expect(sm.state == .flow, "80s pause should keep flow at 90% sensitivity")
     }
 
-    @Test("V2: Low sensitivity breaks flow on short pauses")
+    @Test("Low sensitivity breaks flow on short pauses")
     func lowSensitivityShortPauses() {
         let sm = FlowStateMachine()
-        sm.strategy = .activityGapAnyInput
-        sm.sensitivity = 0.4 // 15s tolerance
+        sm.strategy = .breakDecisionEngine
+        sm.sensitivity = 0.4 // 15s entry, 22s maintenance
         let baseTime: TimeInterval = 1000
 
         // Enter flow
         for i in 0..<8 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 5,
+            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                    secondsSinceLastIntentionalInput: 5,
                     isMicActive: false, isCameraActive: false,
                     now: baseTime + Double(i) * 30)
         }
         #expect(sm.state == .flow)
 
-        // 20s pause — exceeds 15s tolerance
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 20,
+        // 25s pause — exceeds 22s maintenance tolerance (15s * 1.5)
+        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
+                secondsSinceLastIntentionalInput: 25,
                 isMicActive: false, isCameraActive: false,
                 now: baseTime + 270)
-        #expect(sm.state == .normal, "20s pause should break flow at 40% sensitivity")
+        #expect(sm.state == .normal, "25s pause should break flow at 40% sensitivity")
     }
 
     // MARK: - V3 Two-tier tolerance
@@ -197,7 +201,7 @@ struct FlowStateMachineTests {
     @Test("V3: maintenance tolerance is more forgiving than entry")
     func v3TwoTierTolerance() {
         let sm = FlowStateMachine()
-        sm.strategy = .intentionalWithEscalation
+        sm.strategy = .breakDecisionEngine
         sm.sensitivity = 0.7 // entry=60s, maintenance=90s
         let baseTime: TimeInterval = 1000
 
@@ -221,7 +225,7 @@ struct FlowStateMachineTests {
     @Test("V3: pause exceeding maintenance tolerance exits flow")
     func v3MaintenanceToleranceExceeded() {
         let sm = FlowStateMachine()
-        sm.strategy = .intentionalWithEscalation
+        sm.strategy = .breakDecisionEngine
         sm.sensitivity = 0.7
         let baseTime: TimeInterval = 1000
 
@@ -245,7 +249,7 @@ struct FlowStateMachineTests {
     @Test("V3: agent workflow — scroll during AI wait keeps flow")
     func v3AgentWorkflow() {
         let sm = FlowStateMachine()
-        sm.strategy = .intentionalWithEscalation
+        sm.strategy = .breakDecisionEngine
         sm.sensitivity = 0.7 // entry=60s, maintenance=90s
         let baseTime: TimeInterval = 1000
 
@@ -277,7 +281,7 @@ struct FlowStateMachineTests {
     @Test("V3: mouse-only browsing never enters flow")
     func v3MouseOnlyNoFlow() {
         let sm = FlowStateMachine()
-        sm.strategy = .intentionalWithEscalation
+        sm.strategy = .breakDecisionEngine
         sm.sensitivity = 0.7
         let baseTime: TimeInterval = 1000
 

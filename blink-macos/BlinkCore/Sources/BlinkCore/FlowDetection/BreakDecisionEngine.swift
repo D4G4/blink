@@ -14,7 +14,9 @@ public final class BreakDecisionEngine {
         case extend(minutes: Int, reason: String)
         /// User has been actively using the screen — show break overlay
         case showBreak
-        /// Too little activity to warrant a break — silently reset timer
+        /// Low activity but still screen time — gentle nudge toast, not forced
+        case nudge
+        /// Barely any activity — silently reset timer
         case skip
     }
 
@@ -104,10 +106,17 @@ public final class BreakDecisionEngine {
         let isCreativeApp = Self.isCreativeApp(window.currentAppBundleID)
         let totalInputsPerMinute = kpm + cpm + spm
 
-        // Too little activity — user wasn't really at the screen
-        // Less than 5 intentional inputs per minute on average = not worth a break
-        if totalInputsPerMinute < 5 {
+        // Very little activity — user was barely at the screen
+        // Less than 1 input per minute = truly away, not worth any reminder
+        if totalInputsPerMinute < 1 {
             return .skip
+        }
+
+        // Low activity — some screen time but not intense
+        // 1-5 inputs per minute = reading, occasional scrolling
+        // Eyes still strain from staring — gentle nudge, not forced overlay
+        if totalInputsPerMinute < 5 {
+            return .nudge
         }
 
         // How many extensions already used
