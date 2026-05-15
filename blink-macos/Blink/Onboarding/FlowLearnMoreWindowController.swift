@@ -5,6 +5,7 @@ import AppKit
 final class FlowLearnMoreWindowController {
     static let shared = FlowLearnMoreWindowController()
     private var window: NSWindow?
+    private var closeDelegate: WindowCloseDelegate?  // strong reference to prevent deallocation
 
     func show(theme: BlinkTheme) {
         if let existing = window {
@@ -18,7 +19,7 @@ final class FlowLearnMoreWindowController {
         })
 
         let win = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 560),
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 700),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -29,9 +30,11 @@ final class FlowLearnMoreWindowController {
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
-        win.delegate = WindowCloseDelegate { [weak self] in
+        closeDelegate = WindowCloseDelegate { [weak self] in
             self?.window = nil
+            self?.closeDelegate = nil
         }
+        win.delegate = closeDelegate
 
         self.window = win
     }
@@ -39,10 +42,10 @@ final class FlowLearnMoreWindowController {
     private func dismiss() {
         window?.close()
         window = nil
+        closeDelegate = nil
     }
 }
 
-/// Simple delegate to clear the window reference on close.
 private class WindowCloseDelegate: NSObject, NSWindowDelegate {
     let onClose: () -> Void
     init(_ onClose: @escaping () -> Void) { self.onClose = onClose }
