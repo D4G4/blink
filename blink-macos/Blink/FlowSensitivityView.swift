@@ -91,7 +91,7 @@ struct FlowSensitivityView: View {
 
             Text(description)
                 .font(.system(size: 11))
-                .foregroundStyle(researchWarningLevel == .caution ? .orange : .secondary)
+                .foregroundStyle(.primary)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
 
             if researchWarningLevel == .caution {
