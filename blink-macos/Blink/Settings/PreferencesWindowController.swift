@@ -43,7 +43,8 @@ final class PreferencesWindowController {
             forName: NSWindow.willCloseNotification,
             object: win,
             queue: .main
-        ) { _ in
+        ) { [weak self] _ in
+            self?.window = nil
             NSApp.setActivationPolicy(.accessory)
         }
 

@@ -99,6 +99,15 @@ final class AppState: ObservableObject {
             return
         }
         log.info("Blink starting up")
+
+        // One-time: force re-onboarding for build 20 (new flow sensitivity UI)
+        let onboardingVersion = UserDefaults.standard.integer(forKey: "onboardingVersion")
+        if onboardingVersion < 2 {
+            ThemeManager.shared.hasCompletedOnboarding = false
+            UserDefaults.standard.set(2, forKey: "onboardingVersion")
+            log.info("Onboarding reset for new flow sensitivity UI")
+        }
+
         setupCallbacks()
         loadTodayStats()
 
@@ -173,22 +182,15 @@ final class AppState: ObservableObject {
     }
 
     private func checkPermissionsAndStart() {
-        // Check if previously granted — only probe if we expect it to succeed
-        let previouslyGranted = UserDefaults.standard.bool(forKey: "permissionGranted")
-
-        if previouslyGranted && PermissionManager.isPermissionGranted() {
+        // Always try the probe — handles updates where flag wasn't set
+        if PermissionManager.isPermissionGranted() {
             hasAccessibilityPermission = true
+            UserDefaults.standard.set(true, forKey: "permissionGranted")
             startMonitoring()
             startTimers()
             log.info("Permission confirmed — monitors and timers started")
         } else {
-            // Show guide — user manually grants, then clicks "I've granted access"
-            if previouslyGranted {
-                UserDefaults.standard.set(false, forKey: "permissionGranted")
-                log.info("Permission revoked — showing guide")
-            } else {
-                log.info("First launch — showing permission guide")
-            }
+            log.info("Permission not granted — showing guide")
             hasAccessibilityPermission = false
             permissionWindow = PermissionWindowController()
             permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in

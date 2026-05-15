@@ -36,7 +36,7 @@ struct OnboardingView: View {
                     theme: selectedTheme,
                     sensitivity: $flowSensitivity,
                     onBack: { withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = false } },
-                    onLearnMore: { withAnimation(.spring(response: 0.4)) { showFlowLearnMore = true } },
+                    onLearnMore: { withAnimation(.easeInOut(duration: 0.4)) { showFlowLearnMore = true } },
                     onGetStarted: {
                         themeManager.hasCompletedOnboarding = true
                         onComplete()
@@ -45,27 +45,18 @@ struct OnboardingView: View {
                 .transition(.move(edge: .trailing).combined(with: .opacity))
             }
 
-            if showWhySheet {
-                sheetOverlay {
-                    WhyExistView(theme: selectedTheme, onDismiss: {
-                        withAnimation(.spring(response: 0.3)) { showWhySheet = false }
-                    })
-                    .frame(width: 620, height: 560)
-                } onDismiss: {
-                    showWhySheet = false
-                }
-            }
-
-            if showFlowLearnMore {
-                sheetOverlay {
-                    FlowLearnMoreView(theme: selectedTheme, onDismiss: {
-                        withAnimation(.spring(response: 0.3)) { showFlowLearnMore = false }
-                    })
-                    .frame(width: 480, height: 560)
-                } onDismiss: {
-                    showFlowLearnMore = false
-                }
-            }
+        }
+        .sheet(isPresented: $showWhySheet) {
+            WhyExistView(theme: selectedTheme, onDismiss: {
+                showWhySheet = false
+            })
+            .frame(width: 620, height: 560)
+        }
+        .sheet(isPresented: $showFlowLearnMore) {
+            FlowLearnMoreView(theme: selectedTheme, onDismiss: {
+                showFlowLearnMore = false
+            })
+            .frame(width: 480, height: 700)
         }
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .onAppear {
@@ -222,25 +213,6 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: - Sheet Overlay
-
-    private func sheetOverlay<Content: View>(
-        @ViewBuilder content: () -> Content,
-        onDismiss: @escaping () -> Void
-    ) -> some View {
-        ZStack {
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
-                .onTapGesture { withAnimation(.spring(response: 0.3)) { onDismiss() } }
-
-            content()
-                .background(Color(nsColor: .windowBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .shadow(color: .black.opacity(0.3), radius: 30, y: 10)
-        }
-        .transition(.opacity.combined(with: .scale(scale: 0.95)))
-    }
 
     // MARK: - Navigation
 
