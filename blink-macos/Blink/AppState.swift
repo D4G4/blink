@@ -362,7 +362,7 @@ final class AppState: ObservableObject {
             let extraSeconds = Double((minutes - 20) * 60) - (Double(minutes * 60) - timerStateMachine.timerDuration)
             timerStateMachine.resetAfterBreak()
             // Override to the extension duration (10 min for first extension, 10 more for second)
-            timerStateMachine.reset(Int(10 * 60))
+            timerStateMachine.reset(duration: 10 * 60)
             remainingSeconds = timerStateMachine.remainingSeconds
             // Don't reset window — accumulate signals for richer next evaluation
 
@@ -407,12 +407,12 @@ final class AppState: ObservableObject {
 
         let isAtBreakpoint: Bool
         switch strategy {
-        case .scoreBased, .activityGapAnyInput:
-            // V1/V2: simple idle threshold
+        case .scoreBased:
+            // V1: simple idle threshold
             isAtBreakpoint = idle >= Self.naturalPauseThreshold
 
-        case .intentionalWithEscalation:
-            // V3: compound breakpoint detection (keyboard→mouse, typing burst→silence, app switch)
+        case .breakDecisionEngine:
+            // V2: compound breakpoint detection (keyboard→mouse, typing burst→silence, app switch)
             let keystrokeIdle = idleDetector?.secondsSinceLastKeystroke() ?? 0
             let clickIdle = idleDetector?.secondsSinceLastClick() ?? 0
             let scrollIdle = idleDetector?.secondsSinceLastScroll() ?? 0
