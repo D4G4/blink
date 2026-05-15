@@ -121,17 +121,17 @@ struct FlowSensitivityView: View {
     var description: String {
         switch sensitivity {
         case ..<0.5:
-            return "Strict — breaks come often. Good: your blink rate drops 69% during focus, so frequent breaks protect your eyes."
+            return "Strict — Blink prioritizes your eye health. Breaks come at 20 min unless your work rhythm is very intense."
         case 0.5..<0.6:
-            return "Conservative — breaks at natural thought boundaries. Research shows blink rate drops from 15/min to 5/min during active screen work."
+            return "Conservative — only sustained, focused work extends your timer. Casual browsing gets regular breaks."
         case 0.6..<0.7:
-            return "Balanced — waits for you to finish a thought before reminding. Your eyes strain most during exactly this kind of focused work."
+            return "Balanced — Blink recognizes most focused work and extends your timer. Light use gets breaks at 20 min."
         case 0.7..<0.8:
-            return "Recommended — waits for natural pauses. Studies show incomplete blinks rise to 92% during focus, causing dry eyes."
+            return "Recommended — Blink learns your work rhythm and extends when you're focused. Your blink rate drops 69% during deep work."
         case 0.8..<0.9:
-            return "Relaxed — gentle reminders, easy to miss. ⚠️ Your eyes need breaks most when you're in deep focus."
+            return "Relaxed — Blink extends your timer easily. ⚠️ Your eyes strain most during the focused work you're protecting."
         default:
-            return "Very relaxed — minimal interruption. ⚠️ Research shows this is when your eyes strain the most — consider taking breaks when reminded."
+            return "Very relaxed — almost any activity extends your timer. ⚠️ Research shows your blink rate drops to 5/min during focus."
         }
     }
 
