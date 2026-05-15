@@ -8,12 +8,14 @@ import Foundation
 /// signals for the full 20 minutes and make ONE decision at break time.
 public final class BreakDecisionEngine {
 
-    /// The decision: interrupt or extend?
+    /// The decision: interrupt, extend, or skip?
     public enum Decision: Equatable, Sendable {
         /// User is doing focused work — extend timer, show gentle nudge
         case extend(minutes: Int, reason: String)
-        /// User is casually browsing — show break overlay
+        /// User has been actively using the screen — show break overlay
         case showBreak
+        /// Too little activity to warrant a break — silently reset timer
+        case skip
     }
 
     /// Raw signal window collected over the timer period
@@ -100,6 +102,13 @@ public final class BreakDecisionEngine {
         let spm = window.scrollsPerMinute
         let switches = window.appSwitchesPerMinute
         let isCreativeApp = Self.isCreativeApp(window.currentAppBundleID)
+        let totalInputsPerMinute = kpm + cpm + spm
+
+        // Too little activity — user wasn't really at the screen
+        // Less than 5 intentional inputs per minute on average = not worth a break
+        if totalInputsPerMinute < 5 {
+            return .skip
+        }
 
         // How many extensions already used
         if extensionCount >= 2 {

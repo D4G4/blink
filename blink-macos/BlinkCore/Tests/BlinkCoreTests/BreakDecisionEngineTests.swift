@@ -5,14 +5,28 @@ import Testing
 @Suite("BreakDecisionEngine")
 struct BreakDecisionEngineTests {
 
-    @Test("No input → show break")
-    func noInputShowsBreak() {
+    @Test("No input → skip")
+    func noInputSkips() {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
         engine.tick(now: 1200) // 20 min
 
         let decision = engine.decide()
-        #expect(decision == .showBreak, "No input should show break")
+        #expect(decision == .skip, "No input should skip — not worth a break")
+    }
+
+    @Test("Very low activity → skip")
+    func veryLowActivitySkips() {
+        let engine = BreakDecisionEngine()
+        engine.tick(now: 0)
+
+        // 50 keystrokes + 30 scrolls in 20 min = ~4 inputs/min
+        for _ in 0..<50 { engine.recordKeystroke() }
+        for _ in 0..<30 { engine.recordScroll() }
+        engine.tick(now: 1200)
+
+        let decision = engine.decide()
+        #expect(decision == .skip, "Sporadic activity should skip")
     }
 
     @Test("Heavy typing → extend")
@@ -125,18 +139,35 @@ struct BreakDecisionEngineTests {
         }
     }
 
-    @Test("Casual chatting (few keystrokes, long gaps) → show break")
-    func casualChattingShowsBreak() {
+    @Test("Casual chatting (few keystrokes, long gaps) → skip")
+    func casualChattingSkips() {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
 
-        // 20 min of casual chat: ~50 keystrokes, some scrolls
+        // 20 min of casual chat: ~50 keystrokes, some scrolls = ~4 inputs/min
         for _ in 0..<50 { engine.recordKeystroke() }
         for _ in 0..<30 { engine.recordScroll() }
         engine.tick(now: 1200)
 
         let decision = engine.decide()
-        #expect(decision == .showBreak, "Casual chatting (2.5 kpm) should show break")
+        #expect(decision == .skip, "Casual chatting (4 inputs/min) should skip")
+    }
+
+    @Test("Moderate browsing (enough activity) → show break")
+    func moderateBrowsingShowsBreak() {
+        let engine = BreakDecisionEngine()
+        engine.tick(now: 0)
+
+        // 20 min of active browsing: clicks + scrolls + some typing
+        for _ in 0..<150 { engine.recordClick() }
+        for _ in 0..<200 { engine.recordScroll() }
+        for _ in 0..<50 { engine.recordKeystroke() }
+        engine.recordAppSwitch(bundleID: "com.apple.Safari")
+        for _ in 0..<15 { engine.recordAppSwitch(bundleID: "com.apple.Safari") }
+        engine.tick(now: 1200)
+
+        let decision = engine.decide()
+        #expect(decision == .showBreak, "Active browsing should show break")
     }
 
     @Test("Sensitivity affects threshold")

@@ -367,11 +367,18 @@ final class AppState: ObservableObject {
             breakDecisionEngine.resetWindow() // start fresh window for next evaluation
 
         case .showBreak:
-            // User is casual or max extensions reached — wait for natural pause, show overlay
+            // User has been actively using screen — wait for natural pause, show overlay
             log.info("Break decision: show break")
             breakDecisionEngine.resetWindow()
             breakDuePending = true
             breakDueSince = Date()
+
+        case .skip:
+            // Too little activity — silently reset, not worth interrupting
+            log.info("Break decision: skip — insufficient activity")
+            breakDecisionEngine.resetWindow()
+            timerStateMachine.resetAfterBreak()
+            remainingSeconds = timerStateMachine.remainingSeconds
         }
     }
 
