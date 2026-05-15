@@ -86,13 +86,12 @@ struct FlowSensitivityView: View {
                 }
             }
 
-            // Description of selected
+            // Description of selected — fixed height to prevent layout shift
             Text(description)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(foregroundColor)
                 .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(minHeight: 32, alignment: .top)
+                .frame(height: 36, alignment: .top)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
 
             // Fine-tune expander
@@ -137,6 +136,7 @@ struct FlowSensitivityView: View {
             }
         }
         .frame(maxWidth: 420)
+        .frame(height: showFineTune ? 260 : 210, alignment: .top)
         .padding(20)
         .background(foregroundColor.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 14))
