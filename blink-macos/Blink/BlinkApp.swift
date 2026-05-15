@@ -5,7 +5,7 @@ struct BlinkApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = AppState()
     @StateObject private var themeManager = ThemeManager.shared
-    @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = false
+    @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = true
 
     var body: some Scene {
         MenuBarExtra {
@@ -13,7 +13,7 @@ struct BlinkApp: App {
                 .environmentObject(themeManager)
                 .environmentObject(UpdateChecker.shared)
         } label: {
-            if showTimerInMenuBar && appState.hasAccessibilityPermission {
+            if (showTimerInMenuBar || appState.showTimerTemporarily) && appState.hasAccessibilityPermission {
                 HStack(spacing: 4) {
                     menuBarIcon
                     Text(appState.formattedRemaining)

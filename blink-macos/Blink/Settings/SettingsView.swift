@@ -8,7 +8,7 @@ struct SettingsView: View {
     @AppStorage("baseInterval") private var baseInterval: Double = 20
     @AppStorage("flowSensitivity") private var flowSensitivity: Double = 0.7
     @AppStorage("launchAtLogin") private var launchAtLogin: Bool = false
-    @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = false
+    @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = true
     @AppStorage("useDarkOverlay") private var useDarkOverlay: Bool = false
 
     @Environment(\.colorScheme) private var colorScheme
@@ -196,6 +196,21 @@ struct SettingsView: View {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.system(size: 11))
                         Text("Restart Onboarding")
+                            .font(.system(size: 12))
+                    }
+                    .foregroundStyle(accentColor)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+
+                Button {
+                    UIActionLogger.buttonTapped("Export Logs")
+                    LogExporter.exportToFile()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "doc.text")
+                            .font(.system(size: 11))
+                        Text("Export Logs")
                             .font(.system(size: 12))
                     }
                     .foregroundStyle(accentColor)

@@ -37,25 +37,20 @@ struct FlowSensitivityPage: View {
             .padding(.leading, 24)
 
             VStack(spacing: 0) {
+
                 Image(systemName: "brain.head.profile")
-                    .font(.system(size: 60, weight: .light))
+                    .font(.system(size: 56, weight: .light))
                     .foregroundStyle(fg.opacity(0.7))
                     .frame(maxWidth: .infinity)
-
-                Spacer()
+                    .padding(.bottom, 20)
 
                 Text("Flow Detection")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(fg)
                     .frame(maxWidth: .infinity)
                     .padding(.bottom, 6)
-
-                Text("Blink learns your work rhythm and decides when you truly need a break")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(fg.opacity(0.85))
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                    .padding(.bottom, 24)
+                
+                Spacer()
 
                 FlowSensitivityView(
                     sensitivity: $sensitivity,
