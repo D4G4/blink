@@ -6,7 +6,9 @@ import SwiftUI
 struct PermissionGuideView: View {
     let theme: BlinkTheme
     let onOpenSettings: () -> Void
+    let onConfirmGranted: () -> Void
     @Environment(\.colorScheme) private var colorScheme
+    @State private var showError = false
 
     var body: some View {
         let accent = theme.accent(for: colorScheme)
@@ -64,24 +66,53 @@ struct PermissionGuideView: View {
 
                 Spacer()
 
-                // Bottom: button
-                Button {
-                    onOpenSettings()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 13, weight: .semibold))
-                        Text("Open Accessibility Settings")
-                            .font(.system(size: 15, weight: .bold))
+                // Bottom: two buttons
+                HStack(spacing: 12) {
+                    Button {
+                        onOpenSettings()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "gear")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text("Open Settings")
+                                .font(.system(size: 14, weight: .bold))
+                        }
+                        .foregroundStyle(bgTop)
+                        .frame(height: 40)
+                        .padding(.horizontal, 20)
+                        .background(.white)
+                        .clipShape(Capsule())
+                        .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
                     }
-                    .foregroundStyle(bgTop)
-                    .frame(width: 280, height: 44)
-                    .background(.white)
-                    .clipShape(Capsule())
-                    .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+                    .buttonStyle(.plain)
+
+                    Button {
+                        onConfirmGranted()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text("I've granted access")
+                                .font(.system(size: 14, weight: .bold))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(height: 40)
+                        .padding(.horizontal, 20)
+                        .background(.white.opacity(0.25))
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-                .padding(.bottom, 20)
+
+                if showError {
+                    Text("Permission not detected — make sure Blink is toggled on in Accessibility")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.white)
+                        .padding(.top, 6)
+                }
+
+                Spacer()
+                    .frame(height: 20)
             }
         }
     }
@@ -166,17 +197,17 @@ struct PermissionGuideView: View {
 }
 
 #Preview("Permission Guide — Peach") {
-    PermissionGuideView(theme: .peach, onOpenSettings: {})
+    PermissionGuideView(theme: .peach, onOpenSettings: {}, onConfirmGranted: {})
         .frame(width: 700, height: 420)
 }
 
 #Preview("Permission Guide — Midnight") {
-    PermissionGuideView(theme: .midnight, onOpenSettings: {})
+    PermissionGuideView(theme: .midnight, onOpenSettings: {}, onConfirmGranted: {})
         .frame(width: 700, height: 420)
         .preferredColorScheme(.dark)
 }
 
 #Preview("Permission Guide — Sage") {
-    PermissionGuideView(theme: .sage, onOpenSettings: {})
+    PermissionGuideView(theme: .sage, onOpenSettings: {}, onConfirmGranted: {})
         .frame(width: 700, height: 420)
 }

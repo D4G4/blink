@@ -167,8 +167,7 @@ final class AppState: ObservableObject {
     }
 
     private func checkPermissionsAndStart() {
-        // On first launch, don't probe (CGEventTap probe triggers Input Monitoring prompt).
-        // If we've previously confirmed permission, probe to verify it's still valid.
+        // Check if previously granted — only probe if we expect it to succeed
         let previouslyGranted = UserDefaults.standard.bool(forKey: "permissionGranted")
 
         if previouslyGranted && PermissionManager.isPermissionGranted() {
@@ -176,44 +175,26 @@ final class AppState: ObservableObject {
             startMonitoring()
             startTimers()
             log.info("Permission confirmed — monitors and timers started")
-        } else if previouslyGranted {
-            // Was granted before but now revoked
-            hasAccessibilityPermission = false
-            UserDefaults.standard.set(false, forKey: "permissionGranted")
-            log.info("Permission revoked — showing guide")
-            permissionWindow = PermissionWindowController()
-            permissionWindow?.show(theme: ThemeManager.shared.current)
-            startPermissionPolling()
         } else {
-            // First launch — show guide, start polling only after user opens settings
+            // Show guide — user manually grants, then clicks "I've granted access"
+            if previouslyGranted {
+                UserDefaults.standard.set(false, forKey: "permissionGranted")
+                log.info("Permission revoked — showing guide")
+            } else {
+                log.info("First launch — showing permission guide")
+            }
             hasAccessibilityPermission = false
-            log.info("First launch — showing permission guide")
             permissionWindow = PermissionWindowController()
-            permissionWindow?.show(theme: ThemeManager.shared.current, onSettingsOpened: { [weak self] in
-                // Only start polling after user has opened settings and likely granted permission
-                self?.startPermissionPolling()
-            })
-        }
-    }
-
-    private func startPermissionPolling() {
-        func poll() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
                 guard let self else { return }
-                if PermissionManager.isPermissionGranted() {
-                    log.info("Permission granted — starting up")
-                    UserDefaults.standard.set(true, forKey: "permissionGranted")
-                    self.permissionWindow?.dismiss()
-                    self.permissionWindow = nil
-                    self.hasAccessibilityPermission = true
-                    self.startMonitoring()
-                    self.startTimers()
-                } else {
-                    poll()
-                }
+                UserDefaults.standard.set(true, forKey: "permissionGranted")
+                self.permissionWindow = nil
+                self.hasAccessibilityPermission = true
+                self.startMonitoring()
+                self.startTimers()
+                log.info("Permission granted — monitors and timers started")
             }
         }
-        poll()
     }
 
     private func startMonitoring() {
