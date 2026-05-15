@@ -136,7 +136,7 @@ struct FlowSensitivityView: View {
             }
         }
         .frame(maxWidth: 420)
-        .frame(height: showFineTune ? 260 : 210, alignment: .top)
+        .frame(height: 260, alignment: .top)
         .padding(20)
         .background(foregroundColor.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 14))
