@@ -16,7 +16,6 @@ final class AppState: ObservableObject {
     @Published var breaksTakenToday: Int = 0
     @Published var breaksPromptedToday: Int = 0
     @Published var hasAccessibilityPermission: Bool = false
-    @Published var showTimerTemporarily: Bool = false
     @Published var isVideoPlaying: Bool = false
     @AppStorage("debugNotifications") var debugNotifications: Bool = false
 
@@ -121,16 +120,32 @@ final class AppState: ObservableObject {
             onboardingObserver = NotificationCenter.default.addObserver(
                 forName: .onboardingCompleted, object: nil, queue: .main
             ) { [weak self] _ in
-                self?.onboardingCompleted()
+                Task { @MainActor in
+                    self?.onboardingCompleted()
+                }
             }
         }
     }
 
-    /// Show timer in menu bar for 30s on every app start so user sees it working.
+    /// Open the menu bar popup on startup so user sees Blink is running.
     private func showTimerForStartup() {
-        showTimerTemporarily = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-            self?.showTimerTemporarily = false
+        findStatusItemAndOpen(attempts: 0)
+    }
+
+    private func findStatusItemAndOpen(attempts: Int) {
+        guard attempts < 10 else {
+            log.info("MenuBarController: gave up finding status item after 10 attempts")
+            return
+        }
+        let delay = 0.3 * Double(attempts + 1)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            MenuBarController.shared.findStatusItem()
+            if MenuBarController.shared.statusItem != nil {
+                log.info("MenuBarController: found status item on attempt \(attempts + 1)")
+                MenuBarController.shared.open()
+            } else {
+                self.findStatusItemAndOpen(attempts: attempts + 1)
+            }
         }
     }
 
@@ -376,8 +391,6 @@ final class AppState: ObservableObject {
                     Task { @MainActor in self?.showBreakPrompt() }
                 }
             )
-            // Reset timer to the remaining extension (10 or 20 min more)
-            let extraSeconds = Double((minutes - 20) * 60) - (Double(minutes * 60) - timerStateMachine.timerDuration)
             timerStateMachine.resetAfterBreak()
             // Override to the extension duration (10 min for first extension, 10 more for second)
             timerStateMachine.reset(duration: 10 * 60)
