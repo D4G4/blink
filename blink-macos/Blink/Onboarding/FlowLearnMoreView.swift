@@ -58,34 +58,7 @@ struct FlowLearnMoreView: View {
                         .font(.system(size: 13))
                         .foregroundStyle(.primary)
 
-                    // Four decisions
-                    sectionHeader("What Blink decides")
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        ruleRow("Deep work detected", "→ Extend 10 min + gentle nudge", accent: accent)
-                        ruleRow("Active but casual", "→ Break overlay (20s)", accent: accent)
-                        ruleRow("Light screen time", "→ Gentle nudge (toast)", accent: accent)
-                        ruleRow("Barely at screen", "→ Silent reset (no interruption)", accent: accent)
-                    }
-                    .padding(14)
-                    .background(Color.primary.opacity(0.06))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-
-                    // What it looks at
-                    sectionHeader("What Blink looks at")
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        ruleRow("Typing intensity", "→ Strongest signal of focused work", accent: accent)
-                        ruleRow("Click frequency", "→ Designers click a lot — that counts", accent: accent)
-                        ruleRow("App switching", "→ Fewer switches = more focused", accent: accent)
-                        ruleRow("What app you're in", "→ Editors and design tools get a bonus", accent: accent)
-                        ruleRow("Scroll without typing", "→ Consumption, not creation", accent: accent)
-                    }
-                    .padding(14)
-                    .background(Color.primary.opacity(0.06))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-
-                    // Scenarios
+                    // Scenarios first — most useful
                     sectionHeader("Real scenarios at \(Int(sensitivity * 100))%")
 
                     scenarioRow(
@@ -137,6 +110,33 @@ struct FlowLearnMoreView: View {
                         result: "Timer pauses completely. Resumes when call ends",
                         accent: accent
                     )
+
+                    // What it decides
+                    sectionHeader("What Blink decides")
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        ruleRow("Deep work detected", "→ Extend 10 min + gentle nudge", accent: accent)
+                        ruleRow("Active but casual", "→ Break overlay (20s)", accent: accent)
+                        ruleRow("Light screen time", "→ Gentle nudge (toast)", accent: accent)
+                        ruleRow("Barely at screen", "→ Silent reset (no interruption)", accent: accent)
+                    }
+                    .padding(14)
+                    .background(Color.primary.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                    // What it looks at
+                    sectionHeader("What Blink looks at")
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        ruleRow("Typing intensity", "→ Strongest signal of focused work", accent: accent)
+                        ruleRow("Click frequency", "→ Designers click a lot — that counts", accent: accent)
+                        ruleRow("App switching", "→ Fewer switches = more focused", accent: accent)
+                        ruleRow("What app you're in", "→ Editors and design tools get a bonus", accent: accent)
+                        ruleRow("Scroll without typing", "→ Consumption, not creation", accent: accent)
+                    }
+                    .padding(14)
+                    .background(Color.primary.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
 
                     // Timer summary
                     sectionHeader("Break intervals")
