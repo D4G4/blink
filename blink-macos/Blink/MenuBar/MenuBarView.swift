@@ -77,6 +77,7 @@ struct MenuBarView: View {
             // Take Break Now button
             if appState.hasAccessibilityPermission && !appState.isBreakPrompted {
                 Button {
+                    UIActionLogger.buttonTapped("Take Break Now", context: "MenuBar")
                     appState.showBreakPrompt()
                 } label: {
                     HStack(spacing: 6) {
@@ -99,6 +100,7 @@ struct MenuBarView: View {
             // Bottom buttons
             HStack(spacing: 12) {
                 Button {
+                    UIActionLogger.buttonTapped("About", context: "MenuBar")
                     WhyExistWindowController.shared.show()
                 } label: {
                     HStack(spacing: 4) {
@@ -112,6 +114,7 @@ struct MenuBarView: View {
                 .buttonStyle(.plain)
 
                 Button {
+                    UIActionLogger.buttonTapped("Preferences", context: "MenuBar")
                     PreferencesWindowController.shared.show(
                         appState: appState,
                         themeManager: themeManager
@@ -130,6 +133,7 @@ struct MenuBarView: View {
                 Spacer()
 
                 Button {
+                    UIActionLogger.buttonTapped("Quit", context: "MenuBar")
                     NSApp.terminate(nil)
                 } label: {
                     Text("Quit")

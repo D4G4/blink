@@ -39,6 +39,7 @@ final class WhyExistWindowController {
         NSApp.setActivationPolicy(.regular)
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        UIActionLogger.windowOpened("WhyExist")
 
         if let existing = closeObserver {
             NotificationCenter.default.removeObserver(existing)
@@ -48,6 +49,7 @@ final class WhyExistWindowController {
             object: win,
             queue: .main
         ) { [weak self] _ in
+            UIActionLogger.windowClosed("WhyExist")
             self?.window = nil
             NSApp.setActivationPolicy(.accessory)
         }

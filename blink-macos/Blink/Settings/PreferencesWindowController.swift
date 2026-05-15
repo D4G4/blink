@@ -20,7 +20,7 @@ final class PreferencesWindowController {
             .environmentObject(themeManager)
 
         let win = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 440, height: 380),
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 450),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -34,6 +34,7 @@ final class PreferencesWindowController {
         NSApp.setActivationPolicy(.regular)
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        UIActionLogger.windowOpened("Preferences")
 
         // Go back to accessory when window closes
         if let existing = closeObserver {
@@ -44,6 +45,7 @@ final class PreferencesWindowController {
             object: win,
             queue: .main
         ) { [weak self] _ in
+            UIActionLogger.windowClosed("Preferences")
             self?.window = nil
             NSApp.setActivationPolicy(.accessory)
         }

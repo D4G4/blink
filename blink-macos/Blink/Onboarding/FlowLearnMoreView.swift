@@ -15,9 +15,55 @@ struct FlowLearnMoreView: View {
         }
     }
 
-    private var gapTolerance: Int {
-        let t = (sensitivity - 0.4) / (0.9 - 0.4)
-        return Int((15 + t * 75).rounded())
+    // Threshold for extension: inputs/min needed to count as focused work
+    private var extensionThreshold: Int {
+        Int((sensitivity * 10).rounded()) // Eye health ~5, Balanced ~7, Deep work ~9
+    }
+
+    // How many extensions allowed
+    private var maxExtensions: Int {
+        sensitivity < 0.55 ? 0 : sensitivity < 0.75 ? 1 : 2
+    }
+
+    private var maxTimer: String {
+        switch maxExtensions {
+        case 0: return "20 min"
+        case 1: return "30 min"
+        default: return "40 min"
+        }
+    }
+
+    // Sensitivity-dependent scenario results
+    private var codingResult: String {
+        switch sensitivity {
+        case ..<0.55: return "Break at 20 min — eye health prioritized"
+        case ..<0.75: return "Extended to 30 min → gentle nudge when ready"
+        default:      return "Extended up to 40 min → minimal interruption"
+        }
+    }
+
+    private var designResult: String {
+        switch sensitivity {
+        case ..<0.55: return "Break at 20 min — clicks alone don't extend"
+        case ..<0.75: return "Extended to 30 min — creative app detected"
+        default:      return "Extended up to 40 min — deep creative work"
+        }
+    }
+
+    private var browsingResult: String {
+        switch sensitivity {
+        case ..<0.55: return "Break overlay at 20 min"
+        case ..<0.75: return "Break overlay at 20 min — scrolling isn't focus"
+        default:      return "Gentle nudge — low activity, not worth interrupting"
+        }
+    }
+
+    private var readingResult: String {
+        switch sensitivity {
+        case ..<0.55: return "Break at 20 min — your eyes still need rest"
+        case ..<0.75: return "Gentle nudge to rest your eyes"
+        default:      return "Silent — barely any input detected"
+        }
     }
 
     var body: some View {
@@ -67,27 +113,27 @@ struct FlowLearnMoreView: View {
                         .foregroundStyle(.primary)
 
                     // Scenarios first — most useful
-                    sectionHeader("Real scenarios at \(Int(sensitivity * 100))%")
+                    sectionHeader("Real scenarios — \(presetLabel) (\(Int(sensitivity * 100))%)")
 
                     scenarioRow(
                         icon: "keyboard",
                         title: "Coding for 20 minutes",
-                        detail: "Steady typing at 60+ keys/min. Low app switching. In VS Code.",
-                        result: "Deep work → timer extended to 30 min, gentle nudge",
+                        detail: "~\(extensionThreshold + 3) inputs/min — steady typing, low app switching. Easily above the \(extensionThreshold)/min threshold.",
+                        result: codingResult,
                         accent: accent
                     )
                     scenarioRow(
                         icon: "paintbrush.pointed",
                         title: "Designing in Figma",
-                        detail: "Lots of clicking and dragging. Some keyboard shortcuts. Low app switching.",
-                        result: "Deep work → timer extended to 30 min",
+                        detail: "~\(extensionThreshold + 1) inputs/min — clicks and drags in a creative app. Clears \(extensionThreshold)/min with app bonus.",
+                        result: designResult,
                         accent: accent
                     )
                     scenarioRow(
                         icon: "globe",
                         title: "Browsing Reddit for 20 minutes",
-                        detail: "Lots of scrolling, some clicks, barely any typing. Frequent tab switching.",
-                        result: "Casual use → break overlay at 20 min",
+                        detail: "~\(max(extensionThreshold - 3, 2)) inputs/min — mostly scrolling, some clicks. Below \(extensionThreshold)/min threshold.",
+                        result: browsingResult,
                         accent: accent
                     )
                     scenarioRow(
@@ -101,7 +147,7 @@ struct FlowLearnMoreView: View {
                         icon: "doc.text",
                         title: "Reading a long document",
                         detail: "Occasional scrolling, no typing. Still staring at screen.",
-                        result: "Light activity → gentle nudge to rest your eyes",
+                        result: readingResult,
                         accent: accent
                     )
                     scenarioRow(
@@ -123,10 +169,10 @@ struct FlowLearnMoreView: View {
                     sectionHeader("What Blink decides")
 
                     VStack(alignment: .leading, spacing: 6) {
-                        ruleRow("Deep work detected", "→ Extend 10 min + gentle nudge", accent: accent)
-                        ruleRow("Active but casual", "→ Break overlay (20s)", accent: accent)
-                        ruleRow("Light screen time", "→ Gentle nudge (toast)", accent: accent)
-                        ruleRow("Barely at screen", "→ Silent reset (no interruption)", accent: accent)
+                        ruleRow(">\(extensionThreshold) inputs/min + focused", "→ Extend to \(maxTimer) (max \(maxExtensions) extensions)", accent: accent)
+                        ruleRow("5–\(extensionThreshold) inputs/min", "→ Break overlay (20s)", accent: accent)
+                        ruleRow("1–5 inputs/min", "→ Gentle nudge (toast)", accent: accent)
+                        ruleRow("<1 input/min", "→ Silent reset (no interruption)", accent: accent)
                     }
                     .padding(14)
                     .background(Color.primary.opacity(0.06))

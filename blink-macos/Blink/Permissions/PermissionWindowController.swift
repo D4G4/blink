@@ -33,6 +33,7 @@ final class PermissionWindowController {
             backing: .buffered,
             defer: false
         )
+        win.isReleasedWhenClosed = false
         win.isOpaque = false
         win.backgroundColor = .clear
         win.level = .normal
@@ -43,6 +44,7 @@ final class PermissionWindowController {
         win.alphaValue = 0
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        UIActionLogger.windowOpened("PermissionGuide")
 
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.3
@@ -82,6 +84,7 @@ final class PermissionWindowController {
 
     func dismiss() {
         guard let win = window else { return }
+        UIActionLogger.windowClosed("PermissionGuide")
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.3
             win.animator().alphaValue = 0

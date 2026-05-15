@@ -25,12 +25,15 @@ final class FlowLearnMoreWindowController {
             defer: false
         )
         win.title = "Flow Detection"
+        win.isReleasedWhenClosed = false
         win.center()
         win.contentView = NSHostingView(rootView: view)
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        UIActionLogger.windowOpened("FlowLearnMore")
 
         closeDelegate = WindowCloseDelegate { [weak self] in
+            UIActionLogger.windowClosed("FlowLearnMore")
             // Defer cleanup to avoid deallocating the delegate while inside its own callback
             DispatchQueue.main.async {
                 self?.window = nil

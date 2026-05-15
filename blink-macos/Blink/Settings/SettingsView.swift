@@ -54,6 +54,7 @@ struct SettingsView: View {
 
     private func tabButton(icon: String, label: String, index: Int) -> some View {
         Button {
+            UIActionLogger.tabSelected(label)
             withAnimation(.easeInOut(duration: 0.15)) { selectedTab = index }
         } label: {
             VStack(spacing: 4) {
@@ -106,6 +107,7 @@ struct SettingsView: View {
             settingsSection("System") {
                 settingsToggle("Launch at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, newValue in
+                        UIActionLogger.settingChanged("launchAtLogin", value: "\(newValue)")
                         updateLaunchAtLogin(newValue)
                     }
 
@@ -127,6 +129,7 @@ struct SettingsView: View {
                         }
                     } else {
                         Button("Grant") {
+                            UIActionLogger.buttonTapped("Grant Accessibility")
                             PermissionManager.openAccessibilitySettings()
                         }
                         .font(.system(size: 12))
@@ -139,6 +142,7 @@ struct SettingsView: View {
                 if !UpdateChecker.isAppStore {
                     HStack(spacing: 8) {
                         Button {
+                            UIActionLogger.buttonTapped("Check for Updates")
                             UpdateChecker.shared.checkForUpdate()
                         } label: {
                             HStack(spacing: 4) {
@@ -179,6 +183,7 @@ struct SettingsView: View {
                 }
 
                 Button {
+                    UIActionLogger.buttonTapped("Restart Onboarding")
                     themeManager.hasCompletedOnboarding = false
                     let path = Bundle.main.bundleURL.absoluteString
                     let task = Process()
@@ -252,34 +257,24 @@ struct SettingsView: View {
     private var flowContent: some View {
         VStack(alignment: .leading, spacing: 20) {
             settingsSection("Flow Detection") {
-                settingsRow("Sensitivity") {
-                    FlowSensitivityView(
-                        sensitivity: $flowSensitivity,
-                        accentColor: accentColor,
-                        foregroundColor: .primary,
-                        style: .settings,
-                        onResearchTapped: {
-                            ResearchWindowController.shared.show(theme: themeManager.current)
-                        }
-                    )
-                }
+                FlowSensitivityView(
+                    sensitivity: $flowSensitivity,
+                    accentColor: accentColor,
+                    foregroundColor: .primary,
+                    style: .settings,
+                    onResearchTapped: { [weak themeManager] in
+                        UIActionLogger.buttonTapped("Read the Research", context: "Settings")
+                        ResearchWindowController.shared.show(theme: themeManager?.current ?? .peach)
+                    },
+                    onLearnMoreTapped: {
+                        UIActionLogger.buttonTapped("See impact", context: "Settings")
+                        FlowLearnMoreWindowController.shared.show(theme: ThemeManager.shared.current)
+                    }
+                )
                 .onChange(of: flowSensitivity) { _, newValue in
                     appState.flowStateMachine.sensitivity = newValue
                 }
             }
-
-            Button {
-                FlowLearnMoreWindowController.shared.show(theme: themeManager.current)
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 11))
-                    Text("See real-world impact of this sensitivity")
-                        .font(.system(size: 12))
-                }
-                .foregroundStyle(accentColor)
-            }
-            .buttonStyle(.plain)
         }
     }
 

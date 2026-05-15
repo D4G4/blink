@@ -25,12 +25,15 @@ final class ResearchWindowController {
             defer: false
         )
         win.title = "Research"
+        win.isReleasedWhenClosed = false
         win.center()
         win.contentView = NSHostingView(rootView: view)
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        UIActionLogger.windowOpened("Research")
 
         closeDelegate = WindowCloseDelegate { [weak self] in
+            UIActionLogger.windowClosed("Research")
             DispatchQueue.main.async {
                 self?.window = nil
                 self?.closeDelegate = nil
