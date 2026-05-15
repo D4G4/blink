@@ -15,8 +15,8 @@ struct BreakDecisionEngineTests {
         #expect(decision == .skip, "No input should skip — not worth a break")
     }
 
-    @Test("Very low activity → skip")
-    func veryLowActivitySkips() {
+    @Test("Very low activity → nudge (still screen time)")
+    func veryLowActivityNudges() {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
 
@@ -26,7 +26,7 @@ struct BreakDecisionEngineTests {
         engine.tick(now: 1200)
 
         let decision = engine.decide()
-        #expect(decision == .skip, "Sporadic activity should skip")
+        #expect(decision == .nudge, "Low activity should nudge — eyes still strain")
     }
 
     @Test("Heavy typing → extend")
@@ -139,8 +139,8 @@ struct BreakDecisionEngineTests {
         }
     }
 
-    @Test("Casual chatting (few keystrokes, long gaps) → skip")
-    func casualChattingSkips() {
+    @Test("Casual chatting (few keystrokes, long gaps) → nudge")
+    func casualChattingNudges() {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
 
@@ -150,7 +150,7 @@ struct BreakDecisionEngineTests {
         engine.tick(now: 1200)
 
         let decision = engine.decide()
-        #expect(decision == .skip, "Casual chatting (4 inputs/min) should skip")
+        #expect(decision == .nudge, "Casual chatting should nudge — still screen time")
     }
 
     @Test("Moderate browsing (enough activity) → show break")

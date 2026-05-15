@@ -87,9 +87,9 @@ public final class FlowStateMachine {
         switch strategy {
         case .scoreBased:
             tickScoreBased(flowScore: flowScore, now: now)
-        case .activityGapAnyInput:
-            tickActivityGap(idleTime: secondsSinceLastInput, now: now)
-        case .intentionalWithEscalation:
+        case .breakDecisionEngine:
+            // V2: FlowStateMachine still tracks state for display purposes
+            // but break decisions are made by BreakDecisionEngine in AppState
             tickActivityGapTwoTier(idleTime: secondsSinceLastIntentionalInput, now: now)
         }
     }

@@ -373,9 +373,22 @@ final class AppState: ObservableObject {
             breakDuePending = true
             breakDueSince = Date()
 
+        case .nudge:
+            // Low activity but still screen time — gentle reminder
+            log.info("Break decision: nudge — low activity but eyes still need rest")
+            overlayController.showFlowNudge(
+                message: "You've been at your screen for 20 min — rest your eyes",
+                onTakeBreak: { [weak self] in
+                    Task { @MainActor in self?.showBreakPrompt() }
+                }
+            )
+            breakDecisionEngine.resetWindow()
+            timerStateMachine.resetAfterBreak()
+            remainingSeconds = timerStateMachine.remainingSeconds
+
         case .skip:
-            // Too little activity — silently reset, not worth interrupting
-            log.info("Break decision: skip — insufficient activity")
+            // Barely any activity — silently reset
+            log.info("Break decision: skip — barely any activity")
             breakDecisionEngine.resetWindow()
             timerStateMachine.resetAfterBreak()
             remainingSeconds = timerStateMachine.remainingSeconds

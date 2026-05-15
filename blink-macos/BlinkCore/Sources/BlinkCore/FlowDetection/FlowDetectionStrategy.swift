@@ -21,73 +21,68 @@ public enum BreakDeliveryInFlow: Sendable {
 }
 
 /// Complete configuration derived from a strategy + sensitivity value.
-/// One source of truth — FlowStateMachine and AppState both read from this.
 public struct StrategyConfig: Sendable {
     // Flow detection
-    public let flowEntryScoreThreshold: Double    // V1: score needed for flow
-    public let flowExitScoreThreshold: Double     // V1: score to exit flow
-    public let entryGapTolerance: TimeInterval    // V3: stricter tolerance for entering flow
-    public let maintenanceGapTolerance: TimeInterval // V3: more forgiving for staying in flow
+    public let flowEntryScoreThreshold: Double
+    public let flowExitScoreThreshold: Double
+    public let entryGapTolerance: TimeInterval
+    public let maintenanceGapTolerance: TimeInterval
     public let flowInputMethod: FlowInputMethod
 
     // Break delivery
     public let breakDeliveryInFlow: BreakDeliveryInFlow
-    /// How many nudges before escalating to forced overlay. nil = never force.
     public let maxNudgesBeforeForce: Int?
 
-    /// Convenience: single gap tolerance for V2 (entry == maintenance)
     public var gapTolerance: TimeInterval { entryGapTolerance }
 }
 
 // MARK: - Strategy
 
 /// Flow detection strategy versions.
-/// See version history docs below. Switch via `FlowDetectionStrategy.current`.
 ///
 /// ## Version History
 ///
 /// ### V1 — Score-based (original)
 /// - 5 weighted scorers with hysteresis
-/// - Sensitivity controls score threshold (high sensitivity → lower threshold → easier flow)
+/// - Sensitivity controls score threshold
 /// - Breaks during flow: wait for natural pause, then forced overlay
+/// - Problem: unpredictable, users couldn't understand why flow dropped
 ///
-/// ### V2 — Activity gap, any input (current)
-/// - Single gap metric using all input (including mouse moves)
-/// - Sensitivity controls gap tolerance (high sensitivity → longer tolerance → easier flow)
-/// - Breaks during flow: gentle nudge, never forced
-///
-/// ### V3 — Intentional input + escalation (proposed)
-/// - Keyboard + clicks + scroll for flow (mouse moves excluded)
-/// - Sensitivity controls gap tolerance AND escalation aggressiveness
-/// - Breaks during flow: nudge → escalate to forced overlay after N ignored nudges
+/// ### V2 — Break Decision Engine (current)
+/// - Timer always runs 20 min — NO premature flow extension
+/// - Collects signals (keystrokes, clicks, scrolls, app switches) for full 20 min
+/// - At break time, evaluates signal density and makes ONE decision:
+///   - Skip: < 1 input/min (barely at screen, silent reset)
+///   - Nudge: 1-5 inputs/min (low activity, gentle toast)
+///   - Show break: 5+ inputs/min, low score (casual use, forced overlay)
+///   - Extend: 5+ inputs/min, high score (deep work, extend 10 min + nudge)
+/// - Max 2 extensions (20 → 30 → 40 min)
+/// - Signals accumulate across extensions for richer evaluation
+/// - Uses BreakpointDetector for natural pause detection when delivering breaks
 ///
 public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
+    /// V1: 5-scorer weighted system with hysteresis
     case scoreBased = "v1_score_based"
-    case activityGapAnyInput = "v2_activity_gap"
-    case intentionalWithEscalation = "v3_intentional_escalation"
 
-    /// Current active strategy. Change this one line to switch.
-    public static let current: FlowDetectionStrategy = .intentionalWithEscalation
+    /// V2: Break Decision Engine — evaluate 20 min of signals at break time
+    case breakDecisionEngine = "v2_break_decision"
+
+    /// Current active strategy.
+    public static let current: FlowDetectionStrategy = .breakDecisionEngine
 
     /// Compute the full config for a given sensitivity (0.4–0.9).
     public func config(forSensitivity sensitivity: Double) -> StrategyConfig {
         switch self {
         case .scoreBased:
             return configV1(sensitivity: sensitivity)
-        case .activityGapAnyInput:
+        case .breakDecisionEngine:
             return configV2(sensitivity: sensitivity)
-        case .intentionalWithEscalation:
-            return configV3(sensitivity: sensitivity)
         }
     }
 
     // MARK: - V1 Config
 
-    /// V1: sensitivity inversely maps to score threshold.
-    /// High sensitivity (0.9) → low threshold (0.45) → easy to enter flow.
-    /// Low sensitivity (0.4) → high threshold (0.85) → hard to enter flow.
     private func configV1(sensitivity: Double) -> StrategyConfig {
-        // Linear inverse: 0.4 → 0.85, 0.9 → 0.45
         let entryThreshold = 1.25 - sensitivity
         let exitThreshold = entryThreshold - 0.3
 
@@ -102,11 +97,11 @@ public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
         )
     }
 
-    // MARK: - V2 Config
+    // MARK: - V2 Config (Break Decision Engine)
 
-    /// V2: sensitivity maps to gap tolerance.
-    /// High sensitivity (0.9) → 90s tolerance → easy to stay in flow.
-    /// Low sensitivity (0.4) → 15s tolerance → hard to stay in flow.
+    /// V2 doesn't use gap tolerance for continuous flow detection.
+    /// The sensitivity controls the score threshold in BreakDecisionEngine.decide().
+    /// Config here is for the FlowStateMachine which still runs for state display.
     private func configV2(sensitivity: Double) -> StrategyConfig {
         let t = (sensitivity - 0.4) / (0.9 - 0.4)
         let gap = 15.0 + t * 75.0
@@ -115,45 +110,10 @@ public enum FlowDetectionStrategy: String, CaseIterable, Sendable {
             flowEntryScoreThreshold: 0,
             flowExitScoreThreshold: 0,
             entryGapTolerance: gap,
-            maintenanceGapTolerance: gap, // same for V2
-            flowInputMethod: .anyInput,
-            breakDeliveryInFlow: .nudge,
-            maxNudgesBeforeForce: nil
-        )
-    }
-
-    // MARK: - V3 Config
-
-    /// V3: sensitivity maps to gap tolerance AND escalation aggressiveness.
-    /// High sensitivity (0.9) → 90s tolerance, never force overlay.
-    /// Low sensitivity (0.4) → 15s tolerance, force after 1 ignored nudge.
-    /// V3: two-tier tolerance + escalation.
-    /// Entry is stricter (keyboard-focused), maintenance is 1.5x more forgiving.
-    /// This handles agent workflows: type a prompt, wait 90s for response while
-    /// scrolling — maintenance tolerance keeps flow alive during the wait.
-    private func configV3(sensitivity: Double) -> StrategyConfig {
-        let t = (sensitivity - 0.4) / (0.9 - 0.4)
-        let entryGap = 15.0 + t * 75.0              // same base as V2
-        let maintenanceGap = entryGap * 1.5          // 1.5x more forgiving
-
-        // Escalation: low sensitivity = aggressive, high = patient
-        let maxNudges: Int?
-        switch sensitivity {
-        case ..<0.55:  maxNudges = 1
-        case ..<0.65:  maxNudges = 2
-        case ..<0.75:  maxNudges = 3
-        case ..<0.85:  maxNudges = 5
-        default:       maxNudges = nil // never force
-        }
-
-        return StrategyConfig(
-            flowEntryScoreThreshold: 0,
-            flowExitScoreThreshold: 0,
-            entryGapTolerance: entryGap,
-            maintenanceGapTolerance: maintenanceGap,
+            maintenanceGapTolerance: gap * 1.5,
             flowInputMethod: .intentionalOnly,
             breakDeliveryInFlow: .nudgeWithEscalation,
-            maxNudgesBeforeForce: maxNudges
+            maxNudgesBeforeForce: nil
         )
     }
 }
