@@ -94,20 +94,18 @@ struct FlowSensitivityView: View {
                 .foregroundStyle(.primary)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
 
-            if researchWarningLevel == .caution {
-                Button {
-                    ResearchWindowController.shared.show(theme: BlinkTheme.named(UserDefaults.standard.string(forKey: "selectedTheme") ?? "peach"))
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "book.closed")
-                            .font(.system(size: 10))
-                        Text("Read the research")
-                            .font(.system(size: 11))
-                    }
-                    .foregroundStyle(.orange)
+            Button {
+                ResearchWindowController.shared.show(theme: BlinkTheme.named(UserDefaults.standard.string(forKey: "selectedTheme") ?? "peach"))
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "book.closed")
+                        .font(.system(size: 10))
+                    Text("Read the research")
+                        .font(.system(size: 11))
                 }
-                .buttonStyle(.plain)
+                .foregroundStyle(accentColor)
             }
+            .buttonStyle(.plain)
         }
     }
 
