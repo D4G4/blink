@@ -59,26 +59,16 @@ final class PermissionWindowController {
             dismiss()
             onPermissionGranted?()
         } else {
-            // Show error in the guide — update the view's showError state
-            // Since we can't easily update SwiftUI state from here,
-            // re-create the view with error showing
             guard let win = window else { return }
-            let theme = ThemeManager.shared.current
-            let errorView = PermissionGuideView(
-                theme: theme,
-                onOpenSettings: {
-                    PermissionManager.openAccessibilitySettings()
-                },
-                onConfirmGranted: { [weak self] in
-                    self?.checkAndDismiss()
+            // Shake the window to indicate permission not yet granted
+            let origin = win.frame.origin
+            let offsets: [CGFloat] = [-8, 8, -6, 6, -3, 3, 0]
+            let step = 0.4 / Double(offsets.count)
+            for (i, dx) in offsets.enumerated() {
+                DispatchQueue.main.asyncAfter(deadline: .now() + step * Double(i)) {
+                    win.setFrameOrigin(NSPoint(x: origin.x + dx, y: origin.y))
                 }
-            )
-            // We need to trigger the error state — pass it as a binding or just shake the window
-            let animation = CAKeyframeAnimation(keyPath: "position.x")
-            animation.values = [0, -8, 8, -6, 6, -3, 3, 0].map { win.frame.origin.x + $0 }
-            animation.duration = 0.4
-            win.animations = ["frameOrigin": animation]
-            win.animator().setFrameOrigin(win.frame.origin)
+            }
         }
     }
 
