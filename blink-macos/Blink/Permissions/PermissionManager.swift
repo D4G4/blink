@@ -8,14 +8,29 @@ enum PermissionManager {
     private static let log = BlinkLog.permission
 
     /// Check if we have permission to monitor input.
-    /// Tries CGEventTap probe first (proves we can actually create a tap),
-    /// then falls back to AXIsProcessTrusted (reflects TCC grant immediately,
-    /// even in sandbox on macOS 15+, without needing a relaunch).
+    /// Checks AXIsProcessTrusted first (lightweight, no system prompts),
+    /// then tries CGEventTap probe only if AX reports trusted (to verify
+    /// we can actually create a tap). This avoids triggering the
+    /// "Keystroke Receiving" system dialog on macOS 26 when permission
+    /// hasn't been granted yet.
     static func isPermissionGranted() -> Bool {
         let pid = ProcessInfo.processInfo.processIdentifier
         let path = Bundle.main.bundlePath
         log.info("Checking permission (pid=\(pid), path=\(path))")
 
+        // Check AXIsProcessTrusted first — it's a lightweight TCC query
+        // that never triggers system prompts.
+        let axTrusted = AXIsProcessTrusted()
+        log.info("AXIsProcessTrusted = \(axTrusted)")
+
+        if !axTrusted {
+            // Don't attempt CGEvent.tapCreate() — on macOS 26 it triggers
+            // a "Keystroke Receiving" system dialog when not yet authorized.
+            log.info("Permission DENIED (skipping CGEventTap probe to avoid system prompt)")
+            return false
+        }
+
+        // AX says trusted — verify we can actually create an event tap.
         let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
         if let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
@@ -30,18 +45,11 @@ enum PermissionManager {
             return true
         }
 
-        log.info("CGEventTap probe failed (cached denial likely)")
-
-        // CGEventTap can fail even after permission is granted because the running
-        // process has a cached denial from before the TCC grant. AXIsProcessTrusted
-        // reflects the updated grant immediately without requiring a relaunch.
-        let axTrusted = AXIsProcessTrusted()
-        if axTrusted {
-            log.info("AXIsProcessTrusted fallback — GRANTED")
-        } else {
-            log.info("AXIsProcessTrusted fallback — DENIED")
-        }
-        return axTrusted
+        // AXIsProcessTrusted is true but CGEventTap failed — cached denial.
+        // Trust AX; the real tap in MacInputMonitor will likely succeed
+        // since it's created after TCC propagation.
+        log.info("CGEventTap probe failed (cached denial) but AXIsProcessTrusted=true — GRANTED")
+        return true
     }
 
     /// Opens System Settings to the Accessibility pane.
