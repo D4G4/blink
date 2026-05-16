@@ -280,6 +280,11 @@ final class AppState: ObservableObject {
         }
         self.contextDetector = ctx
         BlinkLog.app.info("All monitors active")
+
+        // Check mic immediately so Dictation/Siri warning shows at launch
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            _ = self?.contextDetector?.isMicrophoneActive()
+        }
     }
 
     private func startTimers() {
