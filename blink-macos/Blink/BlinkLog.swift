@@ -9,6 +9,7 @@ enum BlinkLog {
     static let ui       = BlinkLogger("UI")
     static let menuBar  = BlinkLogger("MenuBar")
     static let update   = BlinkLogger("Update")
+    static let permission = BlinkLogger("Permission")
 
     /// In-memory log entries for export. Thread-safe.
     private(set) static var entries: [String] = []

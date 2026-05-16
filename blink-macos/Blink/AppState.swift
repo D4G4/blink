@@ -113,7 +113,6 @@ final class AppState: ObservableObject {
 
         // Defer permissions/monitoring until after onboarding
         if ThemeManager.shared.hasCompletedOnboarding {
-            showTimerForStartup()
             checkPermissionsAndStart()
         } else {
             BlinkLog.app.info("Onboarding not complete — deferring permissions")
@@ -155,7 +154,9 @@ final class AppState: ObservableObject {
             NotificationCenter.default.removeObserver(observer)
             onboardingObserver = nil
         }
-        showTimerForStartup()
+        // Don't open menu bar yet — wait until permission is confirmed.
+        // showTimerForStartup() is called inside checkPermissionsAndStart()
+        // only after the user grants accessibility permission.
         checkPermissionsAndStart()
     }
 
@@ -209,11 +210,14 @@ final class AppState: ObservableObject {
 
     private func checkPermissionsAndStart() {
         // Always try the probe — handles updates where flag wasn't set
-        if PermissionManager.isPermissionGranted() {
+        let granted = PermissionManager.isPermissionGranted()
+        BlinkLog.app.info("Permission probe result: \(granted)")
+        if granted {
             hasAccessibilityPermission = true
             UserDefaults.standard.set(true, forKey: "permissionGranted")
             startMonitoring()
             startTimers()
+            showTimerForStartup()
             BlinkLog.app.info("Permission confirmed — monitors and timers started")
         } else {
             BlinkLog.app.info("Permission not granted — showing guide")
@@ -226,12 +230,8 @@ final class AppState: ObservableObject {
                 self.hasAccessibilityPermission = true
                 self.startMonitoring()
                 self.startTimers()
+                self.showTimerForStartup()
                 BlinkLog.app.info("Permission granted — monitors and timers started")
-
-                // Show a toast pointing user to the menu bar
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    self.overlayController.showMenuBarWelcome()
-                }
             }
         }
     }
