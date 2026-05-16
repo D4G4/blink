@@ -42,6 +42,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var onboardingController: OnboardingWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        UserDefaults.standard.register(defaults: [
+            "pauseDuringCalls": true,
+            "showTimerInMenuBar": true,
+        ])
         let themeManager = ThemeManager.shared
         if !themeManager.hasCompletedOnboarding {
             NSApp.setActivationPolicy(.regular)
