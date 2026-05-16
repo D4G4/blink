@@ -6,40 +6,11 @@ import os
 
 /// Detects mic use, Focus mode, fullscreen apps, and video playback.
 final class MacContextDetector: ContextSource {
-    /// Built-in meeting/call apps — mic active + one of these running = on a call.
-    /// Mic alone isn't enough because Dictation/Siri keep the mic open permanently.
-    private static let builtInCallApps: Set<String> = [
-        "us.zoom.xos",
-        "com.microsoft.teams",
-        "com.microsoft.teams2",
-        "com.apple.FaceTime",
-        "com.webex.meetingmanager",
-        "com.cisco.webexmeetingsapp",
-        "com.slack.Slack",
-        "com.tinyspeck.slackmacgap",
-        "com.discord.Discord",
-        "com.skype.skype",
-    ]
-
-    /// All call apps: built-in + user-added
-    private var callApps: Set<String> {
-        var apps = Self.builtInCallApps
-        let custom = UserDefaults.standard.stringArray(forKey: "customCallApps") ?? []
-        for app in custom { apps.insert(app) }
-        return apps
+    /// When true, mic detection is disabled (user has Dictation/Siri keeping mic open).
+    /// Stored in UserDefaults so user can toggle in Settings.
+    private var micDetectionDisabled: Bool {
+        !UserDefaults.standard.bool(forKey: "pauseDuringCalls")
     }
-
-    /// Browser title keywords for web-based meetings (Google Meet, Zoom web, etc.)
-    private static let meetingTitleKeywords: [String] = [
-        "meet.google.com", "google meet",
-        "zoom.us",
-        "teams.microsoft.com", "teams.live.com",
-        "webex.com",
-    ]
-
-    /// Latches on when a browser-based meeting is detected — stays true while mic is active
-    /// so switching away from browser mid-call doesn't exit meeting state.
-    private var browserMeetingDetected = false
 
     /// Apps where being frontmost = watching video
     private static let videoApps: Set<String> = [
@@ -76,60 +47,14 @@ final class MacContextDetector: ContextSource {
     private var lastMicState = false
 
     func isMicrophoneActive() -> Bool {
-        let micInUse = isMicInUse()
-
-        // Mic not in use at all — clear browser meeting latch
-        if !micInUse {
-            browserMeetingDetected = false
-            if lastMicState {
-                BlinkLog.context.info("Mic inactive — no audio input running")
-                lastMicState = false
-            }
-            return false
+        guard !micDetectionDisabled else { return false }
+        let active = isMicInUse()
+        if active != lastMicState {
+            BlinkLog.context.info("Mic state changed: \(active ? "ACTIVE" : "inactive")")
+            if active { logAllDevices() }
+            lastMicState = active
         }
-
-        // Mic is in use — check if a call app is running
-        let onCall = isCallAppActive()
-        if onCall != lastMicState {
-            if onCall {
-                BlinkLog.context.info("Mic ACTIVE + call app detected → meeting")
-            } else {
-                BlinkLog.context.info("Mic active but no call app (likely Dictation/Siri) → ignoring")
-            }
-            logAllDevices()
-            lastMicState = onCall
-        }
-        return onCall
-    }
-
-    /// Returns true if a known call/meeting app is running, or a browser-based meeting was detected.
-    private func isCallAppActive() -> Bool {
-        let runningApps = NSWorkspace.shared.runningApplications
-
-        // Check dedicated call apps (don't need to be frontmost)
-        let allCallApps = callApps
-        let hasCallApp = runningApps.contains { app in
-            guard let bundleID = app.bundleIdentifier else { return false }
-            return allCallApps.contains(bundleID) && !app.isTerminated
-        }
-        if hasCallApp { return true }
-
-        // Check browser frontmost with meeting title — latch on
-        if let frontApp = NSWorkspace.shared.frontmostApplication,
-           let bundleID = frontApp.bundleIdentifier,
-           Self.browsers.contains(bundleID),
-           let title = windowTitle(for: frontApp)?.lowercased() {
-            if Self.meetingTitleKeywords.contains(where: { title.contains($0) }) {
-                browserMeetingDetected = true
-                BlinkLog.context.info("Browser meeting detected: \(title)")
-                return true
-            }
-        }
-
-        // Browser meeting was detected earlier — stay in meeting while mic is active
-        if browserMeetingDetected { return true }
-
-        return false
+        return active
     }
 
     /// Log all audio devices and their input/output stream counts for debugging.
