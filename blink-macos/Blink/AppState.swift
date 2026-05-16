@@ -50,8 +50,10 @@ final class AppState: ObservableObject {
     /// Grace period after a break — ignore idle detection so user can settle back in
     private static let postBreakGraceSeconds: TimeInterval = 60
 
-    /// Score tick interval
-    private static let scoreTickInterval: TimeInterval = 30
+    /// Score tick interval — 5s in debug mode for faster mic detection testing, 30s normal
+    private var scoreTickInterval: TimeInterval {
+        debugNotifications ? 5 : 30
+    }
 
     // Natural pause detection for flow states
     private var breakDuePending: Bool = false
@@ -282,7 +284,7 @@ final class AppState: ObservableObject {
         }
 
         // Periodic tick for flow score
-        scoreTimer = Timer.scheduledTimer(withTimeInterval: Self.scoreTickInterval, repeats: true) { [weak self] _ in
+        scoreTimer = Timer.scheduledTimer(withTimeInterval: scoreTickInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.tickFlowScore()
             }
