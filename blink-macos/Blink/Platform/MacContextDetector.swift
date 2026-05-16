@@ -8,7 +8,9 @@ import os
 final class MacContextDetector: ContextSource {
     /// When true, mic detection is disabled (user has Dictation/Siri keeping mic open).
     private var micDetectionDisabled: Bool {
-        !UserDefaults.standard.bool(forKey: "pauseDuringCalls")
+        // Key absent = nil = default to enabled. Only disabled when explicitly set to false.
+        UserDefaults.standard.object(forKey: "pauseDuringCalls") != nil
+            && !UserDefaults.standard.bool(forKey: "pauseDuringCalls")
     }
 
     private var isFirstMicCheck = true
