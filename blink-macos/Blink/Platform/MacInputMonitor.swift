@@ -31,7 +31,7 @@ final class MacInputMonitor: InputEventSource {
             callback: MacInputMonitor.eventCallback,
             userInfo: selfPtr
         ) else {
-            print("[Blink] Failed to create CGEventTap — Input Monitoring permission may not be granted")
+            BlinkLog.permission.error("CGEventTap creation failed in MacInputMonitor — input monitoring will NOT work this session")
             return
         }
 
@@ -41,6 +41,7 @@ final class MacInputMonitor: InputEventSource {
         self.runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
+        BlinkLog.permission.info("CGEventTap created and enabled in MacInputMonitor — input monitoring active")
     }
 
     func stopMonitoring() {
