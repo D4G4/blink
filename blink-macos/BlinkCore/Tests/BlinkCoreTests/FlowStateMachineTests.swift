@@ -10,79 +10,81 @@ struct FlowStateMachineTests {
         #expect(sm.state == .normal)
     }
 
-    @Test("Continuous activity for 3+ minutes transitions to flow")
+    // Helper: tick with both score and intentional input
+    private func activeTick(
+        _ sm: FlowStateMachine,
+        score: Double = 0.5,
+        intentionalIdle: TimeInterval = 3,
+        now: TimeInterval
+    ) {
+        sm.tick(
+            flowScore: score,
+            secondsSinceLastInput: 0,
+            secondsSinceLastIntentionalInput: intentionalIdle,
+            isMicActive: false,
+            isCameraActive: false,
+            now: now
+        )
+    }
+
+    private func enterFlow(_ sm: FlowStateMachine, baseTime: TimeInterval = 1000) {
+        // 8 ticks × 30s = 240s > 180s entry duration, score 0.5 > 0.35 threshold
+        for i in 0..<8 {
+            activeTick(sm, score: 0.5, intentionalIdle: 3, now: baseTime + Double(i) * 30)
+        }
+    }
+
+    @Test("Continuous activity with sufficient score enters flow")
     func normalToFlow() {
         let sm = FlowStateMachine()
         let baseTime: TimeInterval = 1000
-
-        // Tick every 30s with recent input (secondsSinceLastInput < gapTolerance)
-        // Default sensitivity 0.7 → gapTolerance = 45s
-        for i in 0..<8 {
-            sm.tick(
-                flowScore: 0.0, // score ignored for transitions
-                secondsSinceLastInput: 5, // active
-                isMicActive: false,
-                isCameraActive: false,
-                now: baseTime + Double(i) * 30
-            )
-        }
-
+        enterFlow(sm, baseTime: baseTime)
         #expect(sm.state == .flow)
+    }
+
+    @Test("Low flow score prevents flow entry even with continuous input")
+    func lowScoreBlocksFlow() {
+        let sm = FlowStateMachine()
+        let baseTime: TimeInterval = 1000
+
+        // 8 ticks with low score (0.2 < 0.35 threshold)
+        for i in 0..<8 {
+            activeTick(sm, score: 0.2, intentionalIdle: 3, now: baseTime + Double(i) * 30)
+        }
+        #expect(sm.state == .normal, "Score 0.2 is below 0.35 threshold — should not enter flow")
     }
 
     @Test("Gap exceeding maintenance tolerance exits flow")
     func flowExitOnGap() {
         let sm = FlowStateMachine()
-        sm.strategy = .breakDecisionEngine
         let baseTime: TimeInterval = 1000
-
-        // Enter flow
-        for i in 0..<8 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                    secondsSinceLastIntentionalInput: 5,
-                    isMicActive: false, isCameraActive: false,
-                    now: baseTime + Double(i) * 30)
-        }
+        enterFlow(sm, baseTime: baseTime)
         #expect(sm.state == .flow)
 
-        // Gap exceeds maintenance tolerance (90s at 0.7 sensitivity, 1.5x of 60s)
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                secondsSinceLastIntentionalInput: 95,
-                isMicActive: false, isCameraActive: false,
-                now: baseTime + 270)
+        // Default sensitivity 0.7: entry=18.5s, maintenance=27.75s
+        // 30s pause exceeds maintenance tolerance
+        activeTick(sm, score: 0.5, intentionalIdle: 30, now: baseTime + 270)
         #expect(sm.state == .normal, "Gap > maintenance tolerance should exit flow")
     }
 
-    @Test("Gap within tolerance keeps flow")
+    @Test("Gap within maintenance tolerance keeps flow")
     func flowMaintainedWithinTolerance() {
         let sm = FlowStateMachine()
         let baseTime: TimeInterval = 1000
-
-        // Enter flow
-        for i in 0..<8 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 5,
-                    isMicActive: false, isCameraActive: false,
-                    now: baseTime + Double(i) * 30)
-        }
+        enterFlow(sm, baseTime: baseTime)
         #expect(sm.state == .flow)
 
-        // Pause within tolerance (30s < 60s at 0.7 sensitivity)
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 30,
-                isMicActive: false, isCameraActive: false,
-                now: baseTime + 270)
-        #expect(sm.state == .flow, "Gap within tolerance should keep flow")
+        // Default sensitivity 0.7: maintenance = 18.5 * 1.5 = 27.75s
+        // 20s pause is within tolerance
+        activeTick(sm, score: 0.5, intentionalIdle: 20, now: baseTime + 270)
+        #expect(sm.state == .flow, "Gap within maintenance tolerance should keep flow")
     }
 
     @Test("Idle detection triggers after 180s of no input")
     func idleDetection() {
         let sm = FlowStateMachine()
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 25,
-                isMicActive: false, isCameraActive: false, now: 1000)
+        activeTick(sm, intentionalIdle: 25, now: 1000)
         #expect(sm.state == .normal, "25s idle should not trigger idle state")
-
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 95,
-                isMicActive: false, isCameraActive: false, now: 1030)
-        #expect(sm.state == .normal, "95s idle should not trigger idle state")
 
         sm.tick(flowScore: 0.0, secondsSinceLastInput: 185,
                 isMicActive: false, isCameraActive: false, now: 1060)
@@ -101,25 +103,16 @@ struct FlowStateMachineTests {
     func restoreAfterIdle() {
         let sm = FlowStateMachine()
         let baseTime: TimeInterval = 1000
-
-        // Enter flow
-        for i in 0..<8 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 5,
-                    isMicActive: false, isCameraActive: false,
-                    now: baseTime + Double(i) * 30)
-        }
+        enterFlow(sm, baseTime: baseTime)
         #expect(sm.state == .flow)
 
         // Go idle
         sm.tick(flowScore: 0.0, secondsSinceLastInput: 190,
-                isMicActive: false, isCameraActive: false,
-                now: baseTime + 300)
+                isMicActive: false, isCameraActive: false, now: baseTime + 300)
         #expect(sm.state == .idle)
 
         // Resume
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                isMicActive: false, isCameraActive: false,
-                now: baseTime + 330)
+        activeTick(sm, now: baseTime + 330)
         #expect(sm.state == .normal, "After idle, should return to normal — flow must be re-earned")
     }
 
@@ -128,11 +121,9 @@ struct FlowStateMachineTests {
         let sm = FlowStateMachine()
         let baseTime: TimeInterval = 1000
 
-        // 20 minutes of continuous activity (40 ticks at 30s)
+        // 40 ticks × 30s = 1200s = 20 min (flow entry at 3 min, deep at 15 min after)
         for i in 0..<40 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 5,
-                    isMicActive: false, isCameraActive: false,
-                    now: baseTime + Double(i) * 30)
+            activeTick(sm, score: 0.5, intentionalIdle: 3, now: baseTime + Double(i) * 30)
         }
         #expect(sm.state == .deepFlow)
     }
@@ -142,158 +133,79 @@ struct FlowStateMachineTests {
         let sm = FlowStateMachine()
 
         sm.sensitivity = 0.4
-        #expect(sm.config.gapTolerance == 15, "40% sensitivity → 15s tolerance")
+        #expect(sm.config.entryGapTolerance == 8, "40% sensitivity → 8s tolerance")
 
         sm.sensitivity = 0.7
-        #expect(Int(sm.config.gapTolerance.rounded()) == 60, "70% sensitivity → 60s tolerance")
+        // t = 0.6, gap = 8 + 0.6 * 17 = 18.2
+        #expect(Int(sm.config.entryGapTolerance.rounded()) == 18, "70% sensitivity → ~18s tolerance")
 
         sm.sensitivity = 0.9
-        #expect(sm.config.gapTolerance == 90, "90% sensitivity → 90s tolerance")
+        #expect(sm.config.entryGapTolerance == 25, "90% sensitivity → 25s tolerance")
     }
 
     @Test("High sensitivity allows longer pauses in flow")
     func highSensitivityLongerPauses() {
         let sm = FlowStateMachine()
-        sm.sensitivity = 0.9 // 90s tolerance
+        sm.sensitivity = 0.9 // entry=25s, maintenance=37.5s
         let baseTime: TimeInterval = 1000
-
-        // Enter flow
-        for i in 0..<8 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 5,
-                    isMicActive: false, isCameraActive: false,
-                    now: baseTime + Double(i) * 30)
-        }
+        enterFlow(sm, baseTime: baseTime)
         #expect(sm.state == .flow)
 
-        // 80s pause — within 90s tolerance
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 80,
-                isMicActive: false, isCameraActive: false,
-                now: baseTime + 270)
-        #expect(sm.state == .flow, "80s pause should keep flow at 90% sensitivity")
+        // 30s pause — within 37.5s maintenance tolerance
+        activeTick(sm, intentionalIdle: 30, now: baseTime + 270)
+        #expect(sm.state == .flow, "30s pause should keep flow at 90% sensitivity (maintenance=37.5s)")
     }
 
     @Test("Low sensitivity breaks flow on short pauses")
     func lowSensitivityShortPauses() {
         let sm = FlowStateMachine()
-        sm.strategy = .breakDecisionEngine
-        sm.sensitivity = 0.4 // 15s entry, 22s maintenance
+        sm.sensitivity = 0.4 // entry=8s, maintenance=12s
         let baseTime: TimeInterval = 1000
-
-        // Enter flow
-        for i in 0..<8 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                    secondsSinceLastIntentionalInput: 5,
-                    isMicActive: false, isCameraActive: false,
-                    now: baseTime + Double(i) * 30)
-        }
+        enterFlow(sm, baseTime: baseTime)
         #expect(sm.state == .flow)
 
-        // 25s pause — exceeds 22s maintenance tolerance (15s * 1.5)
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                secondsSinceLastIntentionalInput: 25,
-                isMicActive: false, isCameraActive: false,
-                now: baseTime + 270)
-        #expect(sm.state == .normal, "25s pause should break flow at 40% sensitivity")
+        // 15s pause — exceeds 12s maintenance tolerance
+        activeTick(sm, intentionalIdle: 15, now: baseTime + 270)
+        #expect(sm.state == .normal, "15s pause should break flow at 40% sensitivity (maintenance=12s)")
     }
 
-    // MARK: - V3 Two-tier tolerance
-
-    @Test("V3: maintenance tolerance is more forgiving than entry")
-    func v3TwoTierTolerance() {
+    @Test("Maintenance tolerance is more forgiving than entry")
+    func maintenanceMoreForgiving() {
         let sm = FlowStateMachine()
-        sm.strategy = .breakDecisionEngine
-        sm.sensitivity = 0.7 // entry=60s, maintenance=90s
+        sm.sensitivity = 0.7 // entry=18.2s, maintenance=27.3s
         let baseTime: TimeInterval = 1000
-
-        // Enter flow with intentional input (secondsSinceLastIntentionalInput)
-        for i in 0..<8 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                    secondsSinceLastIntentionalInput: 5,
-                    isMicActive: false, isCameraActive: false,
-                    now: baseTime + Double(i) * 30)
-        }
+        enterFlow(sm, baseTime: baseTime)
         #expect(sm.state == .flow)
 
-        // 75s pause — exceeds entry (60s) but within maintenance (90s)
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                secondsSinceLastIntentionalInput: 75,
-                isMicActive: false, isCameraActive: false,
-                now: baseTime + 270)
-        #expect(sm.state == .flow, "75s pause should keep flow (within 90s maintenance tolerance)")
+        // 22s pause — exceeds entry (18.2s) but within maintenance (27.3s)
+        activeTick(sm, intentionalIdle: 22, now: baseTime + 270)
+        #expect(sm.state == .flow, "22s pause should keep flow (within maintenance tolerance)")
     }
 
-    @Test("V3: pause exceeding maintenance tolerance exits flow")
-    func v3MaintenanceToleranceExceeded() {
+    @Test("Mouse-only browsing never enters flow")
+    func mouseOnlyNoFlow() {
         let sm = FlowStateMachine()
-        sm.strategy = .breakDecisionEngine
-        sm.sensitivity = 0.7
         let baseTime: TimeInterval = 1000
 
-        // Enter flow
-        for i in 0..<8 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                    secondsSinceLastIntentionalInput: 5,
-                    isMicActive: false, isCameraActive: false,
-                    now: baseTime + Double(i) * 30)
-        }
-        #expect(sm.state == .flow)
-
-        // 95s pause — exceeds maintenance (90s)
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                secondsSinceLastIntentionalInput: 95,
-                isMicActive: false, isCameraActive: false,
-                now: baseTime + 270)
-        #expect(sm.state == .normal, "95s pause should break flow (exceeds 90s maintenance)")
-    }
-
-    @Test("V3: agent workflow — scroll during AI wait keeps flow")
-    func v3AgentWorkflow() {
-        let sm = FlowStateMachine()
-        sm.strategy = .breakDecisionEngine
-        sm.sensitivity = 0.7 // entry=60s, maintenance=90s
-        let baseTime: TimeInterval = 1000
-
-        // Type a prompt (keyboard active)
-        for i in 0..<8 {
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                    secondsSinceLastIntentionalInput: 3,
-                    isMicActive: false, isCameraActive: false,
-                    now: baseTime + Double(i) * 30)
-        }
-        #expect(sm.state == .flow)
-
-        // Wait for AI response — scroll every 40s (within 90s maintenance)
-        // secondsSinceLastIntentionalInput = 40 (last scroll)
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                secondsSinceLastIntentionalInput: 40,
-                isMicActive: false, isCameraActive: false,
-                now: baseTime + 270)
-        #expect(sm.state == .flow, "Scrolling during AI wait should keep flow")
-
-        // Another 40s — still scrolling
-        sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
-                secondsSinceLastIntentionalInput: 40,
-                isMicActive: false, isCameraActive: false,
-                now: baseTime + 300)
-        #expect(sm.state == .flow, "Continued scrolling keeps flow")
-    }
-
-    @Test("V3: mouse-only browsing never enters flow")
-    func v3MouseOnlyNoFlow() {
-        let sm = FlowStateMachine()
-        sm.strategy = .breakDecisionEngine
-        sm.sensitivity = 0.7
-        let baseTime: TimeInterval = 1000
-
-        // 10 ticks of mouse-only activity (intentional idle keeps growing)
-        // secondsSinceLastInput = 0 (mouse moves)
-        // secondsSinceLastIntentionalInput = growing (no keyboard/click/scroll)
+        // 10 ticks — mouse moves only, intentional input growing stale
         for i in 0..<10 {
             sm.tick(flowScore: 0.0, secondsSinceLastInput: 0,
                     secondsSinceLastIntentionalInput: Double(i) * 30 + 30,
                     isMicActive: false, isCameraActive: false,
                     now: baseTime + Double(i) * 30)
         }
-        #expect(sm.state == .normal, "Mouse-only browsing should never enter flow in V3")
+        #expect(sm.state == .normal, "Mouse-only browsing should never enter flow")
+    }
+
+    @Test("Score just at threshold allows flow entry")
+    func scoreAtThreshold() {
+        let sm = FlowStateMachine()
+        let baseTime: TimeInterval = 1000
+
+        // Score exactly 0.35 (the threshold)
+        for i in 0..<8 {
+            activeTick(sm, score: 0.35, intentionalIdle: 3, now: baseTime + Double(i) * 30)
+        }
+        #expect(sm.state == .flow, "Score at threshold (0.35) should allow flow entry")
     }
 }

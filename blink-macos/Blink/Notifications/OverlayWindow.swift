@@ -418,31 +418,35 @@ final class OverlayWindowController {
 private struct ToastView: View {
     let theme: BlinkTheme
     let onDone: () -> Void
-    
+    @Environment(\.colorScheme) private var colorScheme
+
     @State private var count: Int = 3
     @State private var timer: Timer?
-    
+
     var body: some View {
+        let bg = theme.overlayBackground(for: colorScheme)
+        let fg = theme.overlayText(for: colorScheme)
+        let accent = theme.accent(for: colorScheme)
         HStack(spacing: 12) {
             Image(systemName: "eye")
                 .font(.system(size: 20))
-                .foregroundStyle(.primary)
-            
+                .foregroundStyle(fg)
+
             VStack(alignment: .leading, spacing: 2) {
                 Text("Break in \(count)s")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(fg)
             }
-            
+
             Spacer()
-            
+
             ZStack {
                 Circle()
-                    .stroke(theme.accent.opacity(0.3), lineWidth: 2)
+                    .stroke(accent.opacity(0.3), lineWidth: 2)
                     .frame(width: 28, height: 28)
                 Circle()
                     .trim(from: 0, to: CGFloat(count) / 3.0)
-                    .stroke(theme.accent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .stroke(accent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                     .frame(width: 28, height: 28)
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 1), value: count)
@@ -450,7 +454,7 @@ private struct ToastView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(.ultraThinMaterial)
+        .background(bg)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .onAppear { startTimer() }
         .onDisappear { stopTimer() }
@@ -475,19 +479,22 @@ private struct TimerExtendedToastView: View {
     let onDismiss: () -> Void
     let onTakeBreak: () -> Void
     @Environment(\.colorScheme) private var colorScheme
-    
+
     var body: some View {
+        let bg = theme.overlayBackground(for: colorScheme)
+        let fg = theme.overlayText(for: colorScheme)
+        let accent = theme.accent(for: colorScheme)
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: "brain.head.profile")
                     .font(.system(size: 14))
-                    .foregroundStyle(theme.accent(for: colorScheme))
-                
+                    .foregroundStyle(accent)
+
                 Text("In flow — timer extended")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(fg)
             }
-            
+
             HStack {
                 Spacer()
                 Button {
@@ -498,7 +505,7 @@ private struct TimerExtendedToastView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(theme.accent(for: colorScheme))
+                        .background(accent)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -506,7 +513,7 @@ private struct TimerExtendedToastView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
+        .background(bg)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
@@ -835,7 +842,7 @@ private struct FlowNudgeToastView: View {
 
 private struct DebugToastView: View {
     let message: String
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "ant")
@@ -843,12 +850,12 @@ private struct DebugToastView: View {
                 .foregroundStyle(.orange)
             Text(message)
                 .font(.system(size: 12, weight: .medium, design: .monospaced))
-                .foregroundStyle(.primary)
+                .foregroundStyle(.white)
                 .lineLimit(2)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
+        .background(Color.black.opacity(0.9))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }

@@ -153,14 +153,15 @@ struct IntegrationTests {
         let base: TimeInterval = 1000
 
         // User typed a prompt, now scrolling through output
-        // All gaps < 60s (default tolerance) → continuous activity → enters flow after 3 min
+        // All gaps < 18s (default entry tolerance at 0.7) + score 0.5 > 0.35 threshold
         for i in 0..<10 {
             let idle = Double([5, 3, 8, 2, 12, 4, 6, 15, 3, 7][i])
-            sm.tick(flowScore: 0.0, secondsSinceLastInput: idle,
+            sm.tick(flowScore: 0.5, secondsSinceLastInput: 0,
+                    secondsSinceLastIntentionalInput: idle,
                     isMicActive: false, isCameraActive: false,
                     now: base + Double(i) * 30)
         }
-        #expect(sm.state == .flow, "5 min of continuous activity should enter flow")
+        #expect(sm.state == .flow, "5 min of continuous activity with good score should enter flow")
     }
 
     @Test("Waiting for agent response sitting perfectly still triggers idle after 180s")
@@ -183,6 +184,7 @@ struct IntegrationTests {
         // 20 minutes of sustained high score (40 ticks at 30s)
         for i in 0..<40 {
             sm.tick(flowScore: 0.85, secondsSinceLastInput: 0,
+                    secondsSinceLastIntentionalInput: 3,
                     isMicActive: false, isCameraActive: false,
                     now: base + Double(i) * 30)
         }
@@ -197,6 +199,7 @@ struct IntegrationTests {
         // Build deep flow
         for i in 0..<40 {
             sm.tick(flowScore: 0.85, secondsSinceLastInput: 0,
+                    secondsSinceLastIntentionalInput: 3,
                     isMicActive: false, isCameraActive: false,
                     now: base + Double(i) * 30)
         }
@@ -210,6 +213,7 @@ struct IntegrationTests {
 
         // Come back — should be normal, not deep flow
         sm.tick(flowScore: 0.85, secondsSinceLastInput: 0,
+                secondsSinceLastIntentionalInput: 0,
                 isMicActive: false, isCameraActive: false,
                 now: base + 1280)
         #expect(sm.state == .normal)
