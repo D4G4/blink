@@ -82,6 +82,7 @@ Update later with `brew upgrade --cask blink`.
 - **🎬 Video awareness** — Watching YouTube or Netflix? Timer pauses — you're already resting your focus.
 - **🎙️ Meeting detection** — Mic or camera active? Timer pauses. No interruptions during calls.
 - **🤖 Agent workflow aware** — Waiting for an AI response while scrolling? Timer keeps running. Sitting perfectly still for 3 minutes? That's a walk-away.
+- **👁️ Gabor patch exercises** — Built-in vision training with three scientifically studied exercise types. Train your visual cortex to detect subtler contrasts — right from the menu bar or during a break.
 
 ## How it works
 
@@ -100,6 +101,22 @@ You work normally
 ```
 
 The app lives in your menu bar (macOS) or system tray (Windows). Click to see your timer, flow state, and break stats.
+
+## Eye exercises
+
+Blink includes Gabor patch exercises — a form of vision training backed by research from UC Riverside, RevitalVision, and peer-reviewed studies in Nature Scientific Reports. These exercises don't change your eye's optics; they train your visual cortex to better process low-contrast and fine-detail signals.
+
+Three exercise types, all with adaptive difficulty:
+
+| Exercise | What you do | What it trains |
+|----------|------------|----------------|
+| **Contrast Detection** | Two circles — one has a faint pattern, one is plain gray. Click the one with the pattern. | Contrast sensitivity — detecting subtle differences |
+| **Orientation** | A single pattern appears, tilted slightly left or right. Identify the tilt. | Orientation discrimination — reading fine angular details |
+| **Flanker Masking** | Three patterns in a row — identify the center one's tilt while ignoring the distracting outer patterns. | Selective attention — focusing through visual noise |
+
+Each exercise uses a 2-down-1-up adaptive staircase that converges to your contrast threshold — the faintest pattern you can reliably detect. Launch anytime from the menu bar, or tap "Train Eyes" during a break.
+
+*For wellness purposes only — not a medical device or substitute for professional eye care.*
 
 ## Themes
 
