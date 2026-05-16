@@ -170,22 +170,11 @@ final class AppState: ObservableObject {
         flowStateMachine.onStateChange = { [weak self] old, new in
             Task { @MainActor in
                 guard let self else { return }
-                let remainingBefore = self.timerStateMachine.remainingSeconds
-                BlinkLog.app.info("Flow state: \(old.rawValue) → \(new.rawValue)")
+                BlinkLog.app.info("State: \(old.rawValue) → \(new.rawValue)")
                 if self.debugNotifications {
                     self.overlayController.showDebugToast("State: \(old.rawValue) → \(new.rawValue)")
                 }
                 self.flowState = new
-
-                // Reset nudge counter when exiting flow
-                if (old == .flow || old == .deepFlow) && (new != .flow && new != .deepFlow) {
-                    self.nudgesIgnoredInCurrentFlow = 0
-                }
-
-                let remainingAfter = self.timerStateMachine.remainingSeconds
-                if remainingAfter > remainingBefore + 1 {
-                    BlinkLog.app.info("⏱️ Timer extended: \(String(format: "%.0f", remainingBefore))s → \(String(format: "%.0f", remainingAfter))s (entered \(new.rawValue))")
-                }
 
                 if new == .breakPrompted {
                     self.isBreakPrompted = true

@@ -371,8 +371,7 @@ struct MenuBarView: View {
     private var flowStateColor: Color {
         if appState.isVideoPlaying { return .green }
         switch appState.flowState {
-        case .normal: return .gray
-        case .flow, .deepFlow: return accentColor
+        case .normal, .flow, .deepFlow: return .gray
         case .idle: return .orange
         case .meeting: return .red
         case .breakPrompted: return accentColor
@@ -382,9 +381,7 @@ struct MenuBarView: View {
     private var flowStateBadgeLabel: String {
         if appState.isVideoPlaying { return "Video" }
         switch appState.flowState {
-        case .normal: return "Working"
-        case .flow: return "In flow"
-        case .deepFlow: return "Deep flow"
+        case .normal, .flow, .deepFlow: return "Working"
         case .idle: return "Away"
         case .meeting: return "Mic active"
         case .breakPrompted: return "Break"
@@ -394,9 +391,7 @@ struct MenuBarView: View {
     private var flowStateLabel: String {
         if appState.isVideoPlaying { return "Video playing — timer paused" }
         switch appState.flowState {
-        case .normal: return "Timer running"
-        case .flow: return "In flow — may extend at break time"
-        case .deepFlow: return "Deep focus — may extend at break time"
+        case .normal, .flow, .deepFlow: return "Timer running"
         case .idle: return "Away — timer paused"
         case .meeting: return "Mic active — timer paused"
         case .breakPrompted: return "Break time"

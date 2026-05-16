@@ -50,18 +50,18 @@ struct IntegrationTests {
 
     // MARK: - Flow detection with idle interaction
 
-    @Test("Flow is NOT preserved after idle — must be re-earned")
-    func flowLostAfterIdle() {
+    @Test("Idle resets to normal after input resumes")
+    func idleResetsToNormal() {
         let sm = FlowStateMachine()
         let base: TimeInterval = 1000
 
-        // Build up flow over 4 minutes
+        // Active for a while
         for i in 0..<8 {
             sm.tick(flowScore: 0.8, secondsSinceLastInput: 0,
                     isMicActive: false, isCameraActive: false,
                     now: base + Double(i) * 30)
         }
-        #expect(sm.state == .flow)
+        #expect(sm.state == .normal)
 
         // Go idle for 3+ minutes
         sm.tick(flowScore: 0.8, secondsSinceLastInput: 190,
@@ -69,17 +69,11 @@ struct IntegrationTests {
                 now: base + 360)
         #expect(sm.state == .idle)
 
-        // Come back — should be normal, not flow
+        // Come back — should be normal
         sm.tick(flowScore: 0.8, secondsSinceLastInput: 0,
                 isMicActive: false, isCameraActive: false,
                 now: base + 390)
-        #expect(sm.state == .normal, "Flow should not be restored after idle")
-
-        // Need 3+ minutes of high score to re-enter flow
-        sm.tick(flowScore: 0.8, secondsSinceLastInput: 0,
-                isMicActive: false, isCameraActive: false,
-                now: base + 420)
-        #expect(sm.state == .normal, "Should still be normal — not enough time to re-enter flow")
+        #expect(sm.state == .normal)
     }
 
     @Test("High flow score during idle does NOT count toward flow entry")
@@ -147,23 +141,6 @@ struct IntegrationTests {
 
     // MARK: - Agent workflow (waiting for AI response)
 
-    @Test("Waiting for agent response with occasional scrolling enters flow")
-    func agentWorkflowWithScrolling() {
-        let sm = FlowStateMachine()
-        let base: TimeInterval = 1000
-
-        // User typed a prompt, now scrolling through output
-        // All gaps < 18s (default entry tolerance at 0.7) + score 0.5 > 0.35 threshold
-        for i in 0..<10 {
-            let idle = Double([5, 3, 8, 2, 12, 4, 6, 15, 3, 7][i])
-            sm.tick(flowScore: 0.5, secondsSinceLastInput: 0,
-                    secondsSinceLastIntentionalInput: idle,
-                    isMicActive: false, isCameraActive: false,
-                    now: base + Double(i) * 30)
-        }
-        #expect(sm.state == .flow, "5 min of continuous activity with good score should enter flow")
-    }
-
     @Test("Waiting for agent response sitting perfectly still triggers idle after 180s")
     func agentWorkflowSittingStill() {
         let sm = FlowStateMachine()
@@ -174,49 +151,19 @@ struct IntegrationTests {
         #expect(sm.state == .idle, "185s of zero input should trigger idle")
     }
 
-    // MARK: - Deep flow
-
-    @Test("Deep flow requires 15+ sustained minutes of flow")
-    func deepFlowRequiresSustainedFlow() {
+    @Test("Continuous activity stays normal — flow detection is deferred to BreakDecisionEngine")
+    func continuousActivityStaysNormal() {
         let sm = FlowStateMachine()
         let base: TimeInterval = 1000
 
-        // 20 minutes of sustained high score (40 ticks at 30s)
+        // 20 minutes of continuous activity — should NOT enter flow
         for i in 0..<40 {
             sm.tick(flowScore: 0.85, secondsSinceLastInput: 0,
                     secondsSinceLastIntentionalInput: 3,
                     isMicActive: false, isCameraActive: false,
                     now: base + Double(i) * 30)
         }
-        #expect(sm.state == .deepFlow)
-    }
-
-    @Test("Deep flow lost after idle, cannot skip back to deep flow")
-    func deepFlowLostAfterIdle() {
-        let sm = FlowStateMachine()
-        let base: TimeInterval = 1000
-
-        // Build deep flow
-        for i in 0..<40 {
-            sm.tick(flowScore: 0.85, secondsSinceLastInput: 0,
-                    secondsSinceLastIntentionalInput: 3,
-                    isMicActive: false, isCameraActive: false,
-                    now: base + Double(i) * 30)
-        }
-        #expect(sm.state == .deepFlow)
-
-        // Go idle (3+ min no input)
-        sm.tick(flowScore: 0.85, secondsSinceLastInput: 190,
-                isMicActive: false, isCameraActive: false,
-                now: base + 1250)
-        #expect(sm.state == .idle)
-
-        // Come back — should be normal, not deep flow
-        sm.tick(flowScore: 0.85, secondsSinceLastInput: 0,
-                secondsSinceLastIntentionalInput: 0,
-                isMicActive: false, isCameraActive: false,
-                now: base + 1280)
-        #expect(sm.state == .normal)
+        #expect(sm.state == .normal, "FlowStateMachine no longer detects flow — only idle/meeting")
     }
 
     // MARK: - Meeting detection
@@ -226,13 +173,13 @@ struct IntegrationTests {
         let sm = FlowStateMachine()
         let base: TimeInterval = 1000
 
-        // Build flow
+        // Active for a while
         for i in 0..<8 {
             sm.tick(flowScore: 0.8, secondsSinceLastInput: 0,
                     isMicActive: false, isCameraActive: false,
                     now: base + Double(i) * 30)
         }
-        #expect(sm.state == .flow)
+        #expect(sm.state == .normal)
 
         // Meeting starts
         sm.tick(flowScore: 0.8, secondsSinceLastInput: 0,

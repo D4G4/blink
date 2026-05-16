@@ -105,25 +105,25 @@ struct EdgeCaseTests {
         #expect(sm.state == .normal)
     }
 
-    @Test("Flow state machine exitBreakPrompted resets hysteresis")
-    func exitBreakResetsHysteresis() {
+    @Test("Flow state machine exitBreakPrompted returns to normal")
+    func exitBreakResetsToNormal() {
         let sm = FlowStateMachine()
         let base: TimeInterval = 1000
 
-        // Build flow
+        // Active for a while
         for i in 0..<8 {
             sm.tick(flowScore: 0.8, secondsSinceLastInput: 0,
                     isMicActive: false, isCameraActive: false,
                     now: base + Double(i) * 30)
         }
-        #expect(sm.state == .flow)
+        #expect(sm.state == .normal, "No flow detection — stays normal")
 
         // Break
         sm.enterBreakPrompted()
         sm.exitBreakPrompted()
         #expect(sm.state == .normal)
 
-        // One tick of high score should NOT immediately re-enter flow
+        // More activity — still normal (no flow detection)
         sm.tick(flowScore: 0.9, secondsSinceLastInput: 0,
                 isMicActive: false, isCameraActive: false,
                 now: base + 300)
