@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin: Bool = false
     @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = true
     @AppStorage("useDarkOverlay") private var useDarkOverlay: Bool = false
+    @AppStorage("pauseDuringCalls") private var pauseDuringCalls: Bool = true
 
     @Environment(\.colorScheme) private var colorScheme
     private var theme: BlinkTheme { themeManager.current }
@@ -100,6 +101,14 @@ struct SettingsView: View {
             settingsSection("Break Screen") {
                 settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
                 Text("Pure black background instead of themed colors")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
+                    .padding(.leading, 4)
+            }
+
+            settingsSection("Mic Detection") {
+                settingsToggle("Pause timer during calls", isOn: $pauseDuringCalls)
+                Text("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)
                     .padding(.leading, 4)
