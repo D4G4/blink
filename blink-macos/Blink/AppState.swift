@@ -67,6 +67,12 @@ final class AppState: ObservableObject {
     // Nudge escalation tracking (V3) — counts ignored nudges in current flow session
     private var nudgesIgnoredInCurrentFlow: Int = 0
 
+    /// Wall-clock time of last real user input (keystroke, click, scroll — NOT mouse move,
+    /// NOT system wake events). Used to detect idle across Mac sleep cycles, since
+    /// CGEventSource counters reset on wake.
+    private var lastRealInputTime: Date = Date()
+    private var sleepWakeObserver: NSObjectProtocol?
+
     // Break overlay
     private let overlayController = OverlayWindowController()
     private let breakpointDetector = BreakpointDetector()
@@ -240,14 +246,19 @@ final class AppState: ObservableObject {
         BlinkLog.app.info("Starting input monitoring (CGEventTap)")
         let input = MacInputMonitor()
         input.onKeystroke = { [weak self] event in
+            self?.lastRealInputTime = Date()
             self?.flowScoreCalculator.ingestKeystroke(event)
             self?.breakDecisionEngine.recordKeystroke()
         }
         input.onMouseEvent = { [weak self] event in
             self?.flowScoreCalculator.ingestMouseEvent(event)
             switch event.kind {
-            case .click: self?.breakDecisionEngine.recordClick()
-            case .scroll(_): self?.breakDecisionEngine.recordScroll()
+            case .click:
+                self?.lastRealInputTime = Date()
+                self?.breakDecisionEngine.recordClick()
+            case .scroll(_):
+                self?.lastRealInputTime = Date()
+                self?.breakDecisionEngine.recordScroll()
             case .move(_, _): break // ambient, don't count
             }
         }
@@ -270,6 +281,16 @@ final class AppState: ObservableObject {
         }
         appMon.startMonitoring()
         self.appMonitor = appMon
+
+        // Detect Mac wake from sleep — CGEventSource idle counters reset on wake,
+        // so we check wall-clock time since last real input instead.
+        sleepWakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleWakeFromSleep()
+        }
 
         self.idleDetector = MacIdleDetector()
         let ctx = MacContextDetector()
@@ -315,10 +336,36 @@ final class AppState: ObservableObject {
         remainingSeconds = timerStateMachine.remainingSeconds
     }
 
+    /// Called on NSWorkspace.didWakeNotification. CGEventSource idle counters reset
+    /// on wake (trackpad touch to see lock screen counts as input), so we check
+    /// wall-clock time since the last real keystroke/click/scroll instead.
+    private func handleWakeFromSleep() {
+        let realIdle = Date().timeIntervalSince(lastRealInputTime)
+        BlinkLog.app.info("Wake from sleep — \(String(format: "%.0f", realIdle))s since last real input")
+        if realIdle >= Self.idleBreakThreshold {
+            // User was away long enough — force idle state so timer pauses
+            BlinkLog.app.info("Real idle \(String(format: "%.0f", realIdle))s >= \(Int(Self.idleBreakThreshold))s — entering idle")
+            flowStateMachine.tick(
+                flowScore: 0,
+                secondsSinceLastInput: realIdle,
+                secondsSinceLastIntentionalInput: realIdle,
+                isMicActive: false,
+                isCameraActive: false,
+                now: Date().timeIntervalSinceReferenceDate
+            )
+            flowState = flowStateMachine.state
+        }
+    }
+
     private func tickFlowScore() {
         let now = Date().timeIntervalSinceReferenceDate
-        let idle = idleDetector?.secondsSinceLastInput() ?? 0
-        let intentionalIdle = idleDetector?.secondsSinceLastIntentionalInput() ?? 0
+        // Use the larger of CGEventSource idle and wall-clock idle, so sleep
+        // cycles that reset CGEventSource counters don't mask true idle time.
+        let cgIdle = idleDetector?.secondsSinceLastInput() ?? 0
+        let realIdle = Date().timeIntervalSince(lastRealInputTime)
+        let idle = max(cgIdle, realIdle)
+        let cgIntentionalIdle = idleDetector?.secondsSinceLastIntentionalInput() ?? 0
+        let intentionalIdle = max(cgIntentionalIdle, realIdle)
         let keystrokeIdle = idleDetector?.secondsSinceLastKeystroke() ?? 0
         let clickIdle = idleDetector?.secondsSinceLastClick() ?? 0
         let scrollIdle = idleDetector?.secondsSinceLastScroll() ?? 0
@@ -384,7 +431,7 @@ final class AppState: ObservableObject {
 
     private func handleBreakDue() {
         // Timer fired — evaluate 20 min of collected signals
-        let decision = breakDecisionEngine.decide()
+        let decision = breakDecisionEngine.decide(maxExtensions: flowStateMachine.config.maxExtensions)
 
         switch decision {
         case .extend(let minutes, let reason):

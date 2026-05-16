@@ -97,8 +97,8 @@ public final class BreakDecisionEngine {
     // MARK: - Decide
 
     /// Called when the timer fires. Evaluates all collected signals.
-    /// Returns whether to extend the timer or show a break.
-    public func decide() -> Decision {
+    /// `maxExtensions`: 0 for Eye Health (never extend), 1 for Balanced, 2 for Deep Work.
+    public func decide(maxExtensions: Int = 2) -> Decision {
         let kpm = window.keystrokesPerMinute
         let cpm = window.clicksPerMinute
         let spm = window.scrollsPerMinute
@@ -112,6 +112,11 @@ public final class BreakDecisionEngine {
             return .skip
         }
 
+        // Eye Health: no extensions, no nudges. If at screen, show break.
+        if maxExtensions == 0 {
+            return .showBreak
+        }
+
         // Low activity — some screen time but not intense
         // 1-5 inputs per minute = reading, occasional scrolling
         // Eyes still strain from staring — gentle nudge, not forced overlay
@@ -120,8 +125,7 @@ public final class BreakDecisionEngine {
         }
 
         // How many extensions already used
-        if extensionCount >= 2 {
-            // Max 2 extensions (20 → 30 → 40 min). No more.
+        if extensionCount >= maxExtensions {
             return .showBreak
         }
 
