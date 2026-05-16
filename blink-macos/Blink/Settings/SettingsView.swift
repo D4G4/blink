@@ -8,7 +8,7 @@ struct SettingsView: View {
     @AppStorage("baseInterval") private var baseInterval: Double = 20
     @AppStorage("flowSensitivity") private var flowSensitivity: Double = 0.7
     @AppStorage("launchAtLogin") private var launchAtLogin: Bool = false
-    @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = true
+    @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = false
     @AppStorage("useDarkOverlay") private var useDarkOverlay: Bool = false
     @AppStorage("pauseDuringCalls") private var pauseDuringCalls: Bool = true
     

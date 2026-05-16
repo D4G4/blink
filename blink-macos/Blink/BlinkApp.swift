@@ -5,7 +5,7 @@ struct BlinkApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = AppState()
     @StateObject private var themeManager = ThemeManager.shared
-    @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = true
+    @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = false
 
     var body: some Scene {
         MenuBarExtra {
@@ -44,7 +44,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         UserDefaults.standard.register(defaults: [
             "pauseDuringCalls": true,
-            "showTimerInMenuBar": true,
         ])
         let themeManager = ThemeManager.shared
         if !themeManager.hasCompletedOnboarding {
