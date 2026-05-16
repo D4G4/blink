@@ -1,7 +1,4 @@
 import AppKit
-import os
-
-private let log = Logger(subsystem: "com.blink20.app", category: "Update")
 
 /// Checks GitHub Releases for a newer version on launch.
 @MainActor
@@ -32,7 +29,7 @@ final class UpdateChecker: ObservableObject {
 
     func startPeriodicChecks() {
         guard !Self.isAppStore else {
-            log.info("App Store install — skipping update checks")
+            BlinkLog.update.info("App Store install — skipping update checks")
             return
         }
         checkForUpdate()
@@ -63,7 +60,7 @@ final class UpdateChecker: ObservableObject {
                 let current = Self.currentVersion
 
                 if isNewer(latest, than: current) {
-                    log.info("Update available: \(current) → \(latest)")
+                    BlinkLog.update.info("Update available: \(current) → \(latest)")
                     latestVersion = latest
                     updateAvailable = true
                     lastCheckResult = .available(latest)
@@ -84,11 +81,11 @@ final class UpdateChecker: ObservableObject {
                         downloadURL = URL(string: htmlURL)
                     }
                 } else {
-                    log.info("Up to date: \(current)")
+                    BlinkLog.update.info("Up to date: \(current)")
                     lastCheckResult = .upToDate
                 }
             } catch {
-                log.debug("Update check failed: \(error.localizedDescription)")
+                BlinkLog.update.debug("Update check failed: \(error.localizedDescription)")
                 lastCheckResult = .failed
             }
             isChecking = false
