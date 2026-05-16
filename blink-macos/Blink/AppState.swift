@@ -1,9 +1,6 @@
 import SwiftUI
 import Combine
-import os
 import BlinkCore
-
-private let log = Logger(subsystem: "com.blink20.app", category: "AppState")
 
 /// Central app state that coordinates all subsystems.
 @MainActor
@@ -98,14 +95,14 @@ final class AppState: ObservableObject {
             hasAccessibilityPermission = true
             return
         }
-        log.info("Blink starting up")
+        BlinkLog.app.info("Blink starting up")
 
         // One-time: force re-onboarding for build 20 (new flow sensitivity UI)
         let onboardingVersion = UserDefaults.standard.integer(forKey: "onboardingVersion")
         if onboardingVersion < 2 {
             ThemeManager.shared.hasCompletedOnboarding = false
             UserDefaults.standard.set(2, forKey: "onboardingVersion")
-            log.info("Onboarding reset for new flow sensitivity UI")
+            BlinkLog.app.info("Onboarding reset for new flow sensitivity UI")
         }
 
         setupCallbacks()
@@ -116,7 +113,7 @@ final class AppState: ObservableObject {
             showTimerForStartup()
             checkPermissionsAndStart()
         } else {
-            log.info("Onboarding not complete — deferring permissions")
+            BlinkLog.app.info("Onboarding not complete — deferring permissions")
             onboardingObserver = NotificationCenter.default.addObserver(
                 forName: .onboardingCompleted, object: nil, queue: .main
             ) { [weak self] _ in
@@ -134,14 +131,14 @@ final class AppState: ObservableObject {
 
     private func findStatusItemAndOpen(attempts: Int) {
         guard attempts < 10 else {
-            log.info("MenuBarController: gave up finding status item after 10 attempts")
+            BlinkLog.app.info("MenuBarController: gave up finding status item after 10 attempts")
             return
         }
         let delay = 0.3 * Double(attempts + 1)
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             MenuBarController.shared.findStatusItem()
             if MenuBarController.shared.statusItem != nil {
-                log.info("MenuBarController: found status item on attempt \(attempts + 1)")
+                BlinkLog.app.info("MenuBarController: found status item on attempt \(attempts + 1)")
                 MenuBarController.shared.open()
             } else {
                 self.findStatusItemAndOpen(attempts: attempts + 1)
@@ -164,7 +161,7 @@ final class AppState: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 let remainingBefore = self.timerStateMachine.remainingSeconds
-                log.info("Flow state: \(old.rawValue) → \(new.rawValue)")
+                BlinkLog.app.info("Flow state: \(old.rawValue) → \(new.rawValue)")
                 if self.debugNotifications {
                     self.overlayController.showDebugToast("State: \(old.rawValue) → \(new.rawValue)")
                 }
@@ -177,7 +174,7 @@ final class AppState: ObservableObject {
 
                 let remainingAfter = self.timerStateMachine.remainingSeconds
                 if remainingAfter > remainingBefore + 1 {
-                    log.notice("⏱️ Timer extended: \(String(format: "%.0f", remainingBefore))s → \(String(format: "%.0f", remainingAfter))s (entered \(new.rawValue))")
+                    BlinkLog.app.info("⏱️ Timer extended: \(String(format: "%.0f", remainingBefore))s → \(String(format: "%.0f", remainingAfter))s (entered \(new.rawValue))")
                 }
 
                 if new == .breakPrompted {
@@ -188,14 +185,14 @@ final class AppState: ObservableObject {
 
         timerStateMachine.onBreakDue = { [weak self] in
             Task { @MainActor in
-                log.notice("⏰ Timer reached zero — break due")
+                BlinkLog.app.info("⏰ Timer reached zero — break due")
                 self?.handleBreakDue()
             }
         }
 
         complianceTracker.onBreakRecorded = { [weak self] record in
             Task { @MainActor in
-                log.info("Break recorded: compliance=\(record.compliance.rawValue), flowState=\(record.flowStateWhenPrompted.rawValue), score=\(String(format: "%.2f", record.flowScore))")
+                BlinkLog.app.info("Break recorded: compliance=\(record.compliance.rawValue), flowState=\(record.flowStateWhenPrompted.rawValue), score=\(String(format: "%.2f", record.flowScore))")
                 self?.persistence.saveBreakRecord(record)
                 if record.compliance == .taken || record.compliance == .delayed {
                     self?.breaksTakenToday += 1
@@ -214,9 +211,9 @@ final class AppState: ObservableObject {
             UserDefaults.standard.set(true, forKey: "permissionGranted")
             startMonitoring()
             startTimers()
-            log.info("Permission confirmed — monitors and timers started")
+            BlinkLog.app.info("Permission confirmed — monitors and timers started")
         } else {
-            log.info("Permission not granted — showing guide")
+            BlinkLog.app.info("Permission not granted — showing guide")
             hasAccessibilityPermission = false
             permissionWindow = PermissionWindowController()
             permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
@@ -226,7 +223,7 @@ final class AppState: ObservableObject {
                 self.hasAccessibilityPermission = true
                 self.startMonitoring()
                 self.startTimers()
-                log.info("Permission granted — monitors and timers started")
+                BlinkLog.app.info("Permission granted — monitors and timers started")
 
                 // Show a toast pointing user to the menu bar
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -237,7 +234,7 @@ final class AppState: ObservableObject {
     }
 
     private func startMonitoring() {
-        log.info("Starting input monitoring (CGEventTap)")
+        BlinkLog.app.info("Starting input monitoring (CGEventTap)")
         let input = MacInputMonitor()
         input.onKeystroke = { [weak self] event in
             self?.flowScoreCalculator.ingestKeystroke(event)
@@ -254,16 +251,16 @@ final class AppState: ObservableObject {
         input.startMonitoring()
         self.inputMonitor = input
 
-        log.info("Starting app monitor (NSWorkspace)")
+        BlinkLog.app.info("Starting app monitor (NSWorkspace)")
         let appMon = MacAppMonitor()
         appMon.onAppSwitch = { [weak self] event in
-            log.debug("App switch → \(event.appBundleID)")
+            BlinkLog.app.debug("App switch → \(event.appBundleID)")
             self?.flowScoreCalculator.recordAppSwitch(event)
             self?.breakpointDetector.recordAppSwitch(at: event.timestamp)
             self?.breakDecisionEngine.recordAppSwitch(bundleID: event.appBundleID)
         }
         appMon.onWindowTitleChange = { [weak self] in
-            log.debug("Window title changed")
+            BlinkLog.app.debug("Window title changed")
             self?.flowScoreCalculator.recordWindowTitleChange(
                 at: Date().timeIntervalSinceReferenceDate
             )
@@ -273,7 +270,7 @@ final class AppState: ObservableObject {
 
         self.idleDetector = MacIdleDetector()
         self.contextDetector = MacContextDetector()
-        log.info("All monitors active")
+        BlinkLog.app.info("All monitors active")
     }
 
     private func startTimers() {
@@ -303,7 +300,7 @@ final class AppState: ObservableObject {
 
         // Timer extended due to flow state change — notify user
         if remainingSeconds > before + 1 {
-            log.notice("⏱️ Timer extended: \(String(format: "%.0f", before))s → \(String(format: "%.0f", self.remainingSeconds))s (state=\(self.flowState.rawValue))")
+            BlinkLog.app.info("⏱️ Timer extended: \(String(format: "%.0f", before))s → \(String(format: "%.0f", self.remainingSeconds))s (state=\(self.flowState.rawValue))")
             overlayController.showTimerExtendedToast { [weak self] in
                 self?.showBreakPrompt()
             }
@@ -333,7 +330,7 @@ final class AppState: ObservableObject {
         let videoPlaying = contextDetector?.isMediaPlaying() ?? false
 
         if videoPlaying != isVideoPlaying {
-            log.info("Video playback: \(videoPlaying ? "started" : "stopped")")
+            BlinkLog.app.info("Video playback: \(videoPlaying ? "started" : "stopped")")
             if debugNotifications {
                 overlayController.showDebugToast("Video \(videoPlaying ? "started" : "stopped")")
             }
@@ -342,7 +339,7 @@ final class AppState: ObservableObject {
 
         // Video playback = user is not doing close-up screen work → reset timer
         if videoPlaying {
-            log.debug("Video playing — timer reset")
+            BlinkLog.app.debug("Video playing — timer reset")
             if debugNotifications {
                 overlayController.showDebugToast("Timer reset: video playing")
             }
@@ -353,7 +350,7 @@ final class AppState: ObservableObject {
 
         flowScore = flowScoreCalculator.currentScore(now: now)
         let inGracePeriod = lastBreakEndedAt.map { Date().timeIntervalSince($0) < Self.postBreakGraceSeconds } ?? false
-        log.debug("Tick: score=\(String(format: "%.2f", self.flowScore)), idle=\(String(format: "%.0f", idle))s, state=\(self.flowState.rawValue), remaining=\(String(format: "%.0f", self.remainingSeconds))s\(inGracePeriod ? " [grace]" : "")")
+        BlinkLog.app.debug("Tick: score=\(String(format: "%.2f", self.flowScore)), idle=\(String(format: "%.0f", idle))s, state=\(self.flowState.rawValue), remaining=\(String(format: "%.0f", self.remainingSeconds))s\(inGracePeriod ? " [grace]" : "")")
 
         flowStateMachine.tick(
             flowScore: flowScore,
@@ -366,7 +363,7 @@ final class AppState: ObservableObject {
 
         // Idle ≥ threshold = eyes already rested, reset timer
         if hasAccessibilityPermission && idle >= Self.idleBreakThreshold && !isBreakPrompted && !inGracePeriod {
-            log.info("Idle \(String(format: "%.0f", idle))s ≥ \(String(format: "%.0f", Self.idleBreakThreshold))s — eyes rested, timer reset")
+            BlinkLog.app.info("Idle \(String(format: "%.0f", idle))s ≥ \(String(format: "%.0f", Self.idleBreakThreshold))s — eyes rested, timer reset")
             if debugNotifications {
                 overlayController.showDebugToast("Timer reset: idle \(Int(idle))s ≥ \(Int(Self.idleBreakThreshold))s")
             }
@@ -384,7 +381,7 @@ final class AppState: ObservableObject {
         switch decision {
         case .extend(let minutes, let reason):
             // User is doing focused work — extend timer, show gentle nudge
-            log.info("Break decision: extend to \(minutes) min — \(reason)")
+            BlinkLog.app.info("Break decision: extend to \(minutes) min — \(reason)")
             overlayController.showFlowNudge(
                 message: "\(reason) — extended to \(minutes) min",
                 onTakeBreak: { [weak self] in
@@ -399,14 +396,14 @@ final class AppState: ObservableObject {
 
         case .showBreak:
             // User has been actively using screen — wait for natural pause, show overlay
-            log.info("Break decision: show break")
+            BlinkLog.app.info("Break decision: show break")
             breakDecisionEngine.resetWindow()
             breakDuePending = true
             breakDueSince = Date()
 
         case .nudge:
             // Low activity but still screen time — gentle reminder
-            log.info("Break decision: nudge — low activity but eyes still need rest")
+            BlinkLog.app.info("Break decision: nudge — low activity but eyes still need rest")
             overlayController.showFlowNudge(
                 message: "You've been at your screen for 20 min — rest your eyes",
                 onTakeBreak: { [weak self] in
@@ -419,7 +416,7 @@ final class AppState: ObservableObject {
 
         case .skip:
             // Barely any activity — silently reset
-            log.info("Break decision: skip — barely any activity")
+            BlinkLog.app.info("Break decision: skip — barely any activity")
             breakDecisionEngine.resetWindow()
             timerStateMachine.resetAfterBreak()
             remainingSeconds = timerStateMachine.remainingSeconds
@@ -457,7 +454,7 @@ final class AppState: ObservableObject {
         }
 
         if isAtBreakpoint {
-            log.info("Breakpoint detected after \(String(format: "%.0f", waited))s wait — showing break")
+            BlinkLog.app.info("Breakpoint detected after \(String(format: "%.0f", waited))s wait — showing break")
             breakDuePending = false
             breakDueSince = nil
             showBreakPrompt()
@@ -466,7 +463,7 @@ final class AppState: ObservableObject {
 
         // Max wait exceeded — show nudge (not mid-keystroke, just between keystrokes)
         if waited >= Self.maxPauseWaitSeconds {
-            log.info("Waited \(String(format: "%.0f", waited))s for breakpoint — delivering nudge")
+            BlinkLog.app.info("Waited \(String(format: "%.0f", waited))s for breakpoint — delivering nudge")
             breakDuePending = false
             breakDueSince = nil
             timerStateMachine.resetAfterBreak()
@@ -475,7 +472,7 @@ final class AppState: ObservableObject {
     }
 
     func showBreakPrompt() {
-        log.notice("🔔 Showing break overlay (score=\(String(format: "%.2f", self.flowScore)), state=\(self.flowState.rawValue))")
+        BlinkLog.app.info("🔔 Showing break overlay (score=\(String(format: "%.2f", self.flowScore)), state=\(self.flowState.rawValue))")
         flowStateMachine.enterBreakPrompted()
         isBreakPrompted = true
         breaksPromptedToday += 1
@@ -499,20 +496,20 @@ final class AppState: ObservableObject {
     }
 
     func takeBreak() {
-        log.info("✅ Break taken")
+        BlinkLog.app.info("✅ Break taken")
         consecutiveBreaksTaken += 1
         complianceTracker.breakTaken(at: Date(), idleDuration: 20)
         finishBreak()
     }
 
     func dismissBreak() {
-        log.info("⏭️ Break skipped")
+        BlinkLog.app.info("⏭️ Break skipped")
         complianceTracker.breakDismissed(at: Date())
         finishBreak()
     }
 
     func snoozeBreak(minutes: Int) {
-        log.info("💤 Break snoozed for \(minutes) min")
+        BlinkLog.app.info("💤 Break snoozed for \(minutes) min")
         isBreakPrompted = false
         flowStateMachine.exitBreakPrompted()
         timerStateMachine.reset(duration: TimeInterval(minutes * 60))
@@ -522,7 +519,7 @@ final class AppState: ObservableObject {
 
     private func finishBreak() {
         lastBreakEndedAt = Date()
-        log.info("Timer reset to \(String(format: "%.0f", self.timerStateMachine.normalDuration))s")
+        BlinkLog.app.info("Timer reset to \(String(format: "%.0f", self.timerStateMachine.normalDuration))s")
         isBreakPrompted = false
         flowStateMachine.exitBreakPrompted()
         timerStateMachine.resetAfterBreak()
@@ -534,6 +531,6 @@ final class AppState: ObservableObject {
         let records = persistence.loadTodayRecords()
         breaksPromptedToday = records.count
         breaksTakenToday = records.filter { $0.compliance == .taken || $0.compliance == .delayed }.count
-        log.info("Loaded today's stats: \(self.breaksTakenToday)/\(self.breaksPromptedToday) breaks taken")
+        BlinkLog.app.info("Loaded today's stats: \(self.breaksTakenToday)/\(self.breaksPromptedToday) breaks taken")
     }
 }
