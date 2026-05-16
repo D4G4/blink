@@ -22,6 +22,9 @@
 
 > Why commit messages don't follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)? --
 I wanted at least one project where I don't have to think of what tags to use in my commit :p
+>
+>  [Update] I don't like it - I should have used conventional commits from the get go :|
+> Don't be like me!
 
 ---
 
