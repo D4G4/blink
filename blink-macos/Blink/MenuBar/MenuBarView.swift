@@ -124,6 +124,35 @@ struct MenuBarView: View {
                 .padding(.top, 4)
             }
 
+            Spacer()
+                .frame(height: 4)
+
+            // Eye Exercise button
+            Button {
+                UIActionLogger.buttonTapped("Eye Exercise", context: "MenuBar")
+                let currentTheme = themeManager.current
+                // Dismiss the MenuBarExtra popover
+                dismissMenuBarPopover()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    GaborExerciseWindowController.shared.show(theme: currentTheme)
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "eye.circle")
+                        .font(.system(size: 12))
+                    Text("Eye Exercise")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundStyle(accentColor)
+                .frame(maxWidth: .infinity)
+                .frame(height: 30)
+                .background(accentColor.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.top, 4)
+
             // Bottom buttons
             HStack(spacing: 12) {
                 Button {
@@ -173,6 +202,16 @@ struct MenuBarView: View {
             .padding(.vertical, 10)
         }
         .frame(width: 280)
+    }
+
+    private func dismissMenuBarPopover() {
+        // The MenuBarExtra popover is the key window when interacting with it.
+        // Close it, then fall back to MenuBarController if needed.
+        if let keyWindow = NSApp.keyWindow, keyWindow is NSPanel {
+            keyWindow.close()
+            return
+        }
+        MenuBarController.shared.close()
     }
 
     // MARK: - Timer Card

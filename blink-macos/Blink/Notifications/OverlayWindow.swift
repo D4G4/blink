@@ -723,9 +723,27 @@ private struct BreakPhaseView: View {
                     KeyHintView(key: "esc", label: "Skip break", theme: theme)
                     KeyHintView(key: "→", label: "Extend 20s", theme: theme)
                 }
+
+                Button {
+                    onSkip()
+                    GaborExerciseWindowController.shared.show(theme: theme)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "eye.circle")
+                            .font(.system(size: 12))
+                        Text("Train Eyes")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(fg.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 30)
                 
                 Spacer()
-                    .frame(height: 40)
+                    .frame(height: 20)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
