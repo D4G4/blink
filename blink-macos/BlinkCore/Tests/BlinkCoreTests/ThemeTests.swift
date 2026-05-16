@@ -55,10 +55,9 @@ struct CoreModelTests {
     func flowDefaults() {
         let sm = FlowStateMachine()
         #expect(sm.flowEntryDuration > 0)
-        #expect(sm.flowExitDuration > 0)
         #expect(sm.deepFlowDuration > sm.flowEntryDuration)
         #expect(sm.idleThreshold > 0)
-        #expect(sm.config.gapTolerance > 0)
+        #expect(sm.config.entryGapTolerance > 0)
     }
 
     @Test("FlowScoreCalculator reset clears all state")

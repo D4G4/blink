@@ -436,29 +436,19 @@ final class AppState: ObservableObject {
     private func checkPendingBreak() {
         guard breakDuePending else { return }
 
-        let idle = idleDetector?.secondsSinceLastInput() ?? 0
         let waited = Date().timeIntervalSince(breakDueSince ?? Date())
-        let strategy = flowStateMachine.strategy
 
-        let isAtBreakpoint: Bool
-        switch strategy {
-        case .scoreBased:
-            // V1: simple idle threshold
-            isAtBreakpoint = idle >= Self.naturalPauseThreshold
-
-        case .breakDecisionEngine:
-            // V2: compound breakpoint detection (keyboard→mouse, typing burst→silence, app switch)
-            let keystrokeIdle = idleDetector?.secondsSinceLastKeystroke() ?? 0
-            let clickIdle = idleDetector?.secondsSinceLastClick() ?? 0
-            let scrollIdle = idleDetector?.secondsSinceLastScroll() ?? 0
-            let now = Date().timeIntervalSinceReferenceDate
-            isAtBreakpoint = breakpointDetector.isAtBreakpoint(
-                secondsSinceLastKeystroke: keystrokeIdle,
-                secondsSinceLastClick: clickIdle,
-                secondsSinceLastScroll: scrollIdle,
-                now: now
-            )
-        }
+        // Compound breakpoint detection (keyboard→mouse, typing burst→silence, app switch)
+        let keystrokeIdle = idleDetector?.secondsSinceLastKeystroke() ?? 0
+        let clickIdle = idleDetector?.secondsSinceLastClick() ?? 0
+        let scrollIdle = idleDetector?.secondsSinceLastScroll() ?? 0
+        let now = Date().timeIntervalSinceReferenceDate
+        let isAtBreakpoint = breakpointDetector.isAtBreakpoint(
+            secondsSinceLastKeystroke: keystrokeIdle,
+            secondsSinceLastClick: clickIdle,
+            secondsSinceLastScroll: scrollIdle,
+            now: now
+        )
 
         if isAtBreakpoint {
             BlinkLog.app.info("Breakpoint detected after \(String(format: "%.0f", waited))s wait — showing break")
