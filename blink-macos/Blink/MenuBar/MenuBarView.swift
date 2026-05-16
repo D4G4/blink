@@ -350,7 +350,7 @@ struct MenuBarView: View {
                     .font(.system(size: 14))
                     .foregroundStyle(.orange)
 
-                Text("Your mic is always on (Dictation or Siri). Blink's timer is paused because it thinks you're on a call.")
+                Text("Your mic is on — possibly Dictation or Siri. Blink pauses during calls, so your timer won't run until this is resolved.")
                     .font(.system(size: 11))
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -360,7 +360,7 @@ struct MenuBarView: View {
                 UserDefaults.standard.set(false, forKey: "pauseDuringCalls")
                 appState.micAlwaysOnWarning = false
             } label: {
-                Text("Disable call detection")
+                Text("Turn off mic detection")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
