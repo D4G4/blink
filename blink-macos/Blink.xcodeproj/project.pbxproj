@@ -76,7 +76,7 @@
 		4BF5F1BD395AB638696B46E9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5414954E7C64589362BB613F /* ThemedToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemedToggleStyle.swift; sourceTree = "<group>"; };
 		545B271DAD35F8C4FA3D7CCF /* MacInputMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacInputMonitor.swift; sourceTree = "<group>"; };
-		5E0407B1C17D7A7BCEE6E63B /* BlinkCore */ = {isa = PBXFileReference; lastKnownFileType = folder; path = BlinkCore; sourceTree = SOURCE_ROOT; };
+		5E0407B1C17D7A7BCEE6E63B /* BlinkCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BlinkCore; path = BlinkCore; sourceTree = SOURCE_ROOT; };
 		71AF16B93A94215233284E2E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		73EF2DCF137E47C83983AFEB /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		7BDF5153E498B2DEFD9EAEBF /* LogExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogExporter.swift; sourceTree = "<group>"; };
@@ -520,7 +520,7 @@
 				CODE_SIGN_ENTITLEMENTS = Blink/Blink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 29;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -548,7 +548,7 @@
 				CODE_SIGN_ENTITLEMENTS = Blink/Blink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 29;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
