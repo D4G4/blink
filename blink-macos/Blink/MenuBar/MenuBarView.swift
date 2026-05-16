@@ -348,8 +348,8 @@ struct MenuBarView: View {
         if appState.isVideoPlaying { return "Video playing — timer paused" }
         switch appState.flowState {
         case .normal: return "Timer running"
-        case .flow: return "In flow — extended to 30 min"
-        case .deepFlow: return "Deep flow — extended to 40 min"
+        case .flow: return "In flow — may extend at break time"
+        case .deepFlow: return "Deep focus — may extend at break time"
         case .idle: return "Away — timer paused"
         case .meeting: return "Mic active — timer paused"
         case .breakPrompted: return "Break time"
