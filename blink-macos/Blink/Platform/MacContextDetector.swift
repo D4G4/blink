@@ -4,8 +4,6 @@ import CoreAudio
 import BlinkCore
 import os
 
-private let log = Logger(subsystem: "com.blink20.app", category: "Context")
-
 /// Detects mic use, Focus mode, fullscreen apps, and video playback.
 final class MacContextDetector: ContextSource {
     /// Apps where being frontmost = watching video
@@ -45,7 +43,7 @@ final class MacContextDetector: ContextSource {
     func isMicrophoneActive() -> Bool {
         let active = isMicInUse()
         if active != lastMicState {
-            log.info("Mic state changed: \(active ? "ACTIVE" : "inactive")")
+            BlinkLog.context.info("Mic state changed: \(active ? "ACTIVE" : "inactive")")
             logAllDevices()
             lastMicState = active
         }
@@ -75,7 +73,7 @@ final class MacContextDetector: ContextSource {
 
             let inputOnly = isInputOnlyDevice(device)
             let hasInput = hasInputStreams(device)
-            log.info("Device \(device): \(name as String), hasInput=\(hasInput), inputOnly=\(inputOnly)")
+            BlinkLog.context.info("Device \(device): \(name as String), hasInput=\(hasInput), inputOnly=\(inputOnly)")
         }
     }
 
@@ -130,13 +128,13 @@ final class MacContextDetector: ContextSource {
                 )
                 if AudioObjectGetPropertyData(device, &addr, 0, nil, &size, &isRunning) == noErr,
                    isRunning != 0 {
-                    log.debug("Mic in use: input-only device \(device) is running")
+                    BlinkLog.context.debug("Mic in use: input-only device \(device) is running")
                     return true
                 }
             } else {
                 // Combination device (AirPods, USB headset): check input streams individually
                 if hasActiveInputStream(device) {
-                    log.debug("Mic in use: combo device \(device) has active input stream")
+                    BlinkLog.context.debug("Mic in use: combo device \(device) has active input stream")
                     return true
                 }
             }
