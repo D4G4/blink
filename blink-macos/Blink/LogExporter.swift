@@ -44,23 +44,11 @@ enum LogExporter {
         }
     }
 
-    /// Exports logs to a temp file and opens a save panel.
+    /// Copies logs to the clipboard.
     static func exportToFile() {
         let content = exportLogs()
-
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.plainText]
-        panel.nameFieldStringValue = "blink-logs-\(dateStamp()).txt"
-        panel.title = "Export Blink Logs"
-
-        panel.begin { response in
-            guard response == .OK, let url = panel.url else { return }
-            do {
-                try content.write(to: url, atomically: true, encoding: .utf8)
-            } catch {
-                print("[Blink] Failed to write log file: \(error)")
-            }
-        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(content, forType: .string)
     }
 
     private static func dateStamp() -> String {
