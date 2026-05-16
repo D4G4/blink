@@ -47,11 +47,31 @@ struct MenuBarView: View {
                     .padding(.bottom, 4)
             }
 
-            // Mic always-on warning
+            // Mic always-on — small link, opens detail window
             if appState.micAlwaysOnWarning {
-                micWarningBanner
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 4)
+                Button {
+                    MicWarningWindowController.shared.show(appState: appState)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.orange)
+                        Text("Mic always on — tap for details")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.orange.opacity(0.6))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.orange.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.bottom, 4)
             }
 
             // Timer card
@@ -341,39 +361,7 @@ struct MenuBarView: View {
         return "\(total / 60) min"
     }
 
-    // MARK: - Mic Warning Banner
 
-    private var micWarningBanner: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: "mic.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.orange)
-
-                Text("Your mic is always on — likely Dictation or Siri. Blink pauses during calls, so your timer won't run.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Button {
-                UserDefaults.standard.set(false, forKey: "pauseDuringCalls")
-                appState.micAlwaysOnWarning = false
-            } label: {
-                Text("Turn off — breaks will show even during calls")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 26)
-                    .background(.orange)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(10)
-        .background(.orange.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-    }
 
     // MARK: - Permission Banner
 
