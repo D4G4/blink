@@ -14,6 +14,7 @@ final class AppState: ObservableObject {
     @Published var breaksPromptedToday: Int = 0
     @Published var hasAccessibilityPermission: Bool = false
     @Published var isVideoPlaying: Bool = false
+    @Published var micAlwaysOnWarning: Bool = false
     @AppStorage("debugNotifications") var debugNotifications: Bool = false
 
     // Core engine
@@ -274,7 +275,7 @@ final class AppState: ObservableObject {
         let ctx = MacContextDetector()
         ctx.onMicActiveAtLaunch = { [weak self] in
             DispatchQueue.main.async {
-                self?.overlayController.showDebugToast("Mic always on (Dictation?) — call detection disabled. Re-enable in Settings.")
+                self?.micAlwaysOnWarning = true
             }
         }
         self.contextDetector = ctx

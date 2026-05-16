@@ -47,6 +47,13 @@ struct MenuBarView: View {
                     .padding(.bottom, 4)
             }
 
+            // Mic always-on warning
+            if appState.micAlwaysOnWarning {
+                micWarningBanner
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 4)
+            }
+
             // Timer card
             VStack(spacing: 12) {
                 if !appState.hasAccessibilityPermission {
@@ -332,6 +339,40 @@ struct MenuBarView: View {
     private var timerDurationLabel: String {
         let total = Int(appState.timerStateMachine.timerDuration)
         return "\(total / 60) min"
+    }
+
+    // MARK: - Mic Warning Banner
+
+    private var micWarningBanner: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "mic.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.orange)
+
+                Text("Your mic is always on (Dictation or Siri). Blink's timer is paused because it thinks you're on a call.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Button {
+                UserDefaults.standard.set(false, forKey: "pauseDuringCalls")
+                appState.micAlwaysOnWarning = false
+            } label: {
+                Text("Disable call detection")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 26)
+                    .background(.orange)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(10)
+        .background(.orange.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     // MARK: - Permission Banner
