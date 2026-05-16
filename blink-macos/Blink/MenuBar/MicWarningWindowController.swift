@@ -78,7 +78,7 @@ private struct MicWarningView: View {
             VStack(alignment: .leading, spacing: 12) {
                 explanationRow(
                     icon: "waveform",
-                    text: "Blink detected your mic is active. This usually means Dictation, Siri, or Voice Control is enabled."
+                    text: "Blink detected your mic is active during the startup. This usually means Dictation, Siri, or Voice Control is enabled."
                 )
                 explanationRow(
                     icon: "pause.circle",
@@ -97,7 +97,7 @@ private struct MicWarningView: View {
                 Button {
                     onDisable()
                 } label: {
-                    Text("Turn off mic detection")
+                    Text("Turn off Blink's mic detection")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -110,15 +110,6 @@ private struct MicWarningView: View {
                 Text("Breaks will show even during calls")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
-
-                Button {
-                    onDismiss()
-                } label: {
-                    Text("I'll turn off Dictation myself")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.primary.opacity(0.6))
-                }
-                .buttonStyle(.plain)
             }
         }
         .padding(24)
