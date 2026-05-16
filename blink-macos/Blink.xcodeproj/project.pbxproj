@@ -43,6 +43,7 @@
 		CD85665E518B19F7BBB58D1F /* GaborExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */; };
 		CEC516E6EED0DAFCDECC1AE9 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454E601831980C64BDA0BDD1 /* ThemeManager.swift */; };
 		CFB301E36AADFE6AB97FFCE5 /* OverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDCB6EA78FBAD3A0E6F29598 /* OverlayWindow.swift */; };
+		D4C7B9C1BE451DB94C843A92 /* GaborDisplayConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7812EFC9F08563A52F81AA7 /* GaborDisplayConfig.swift */; };
 		D5C6DCF4BA41B2C014A4D3C8 /* MacContextDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 977674318B8EB84E0DD3DE41 /* MacContextDetector.swift */; };
 		DE5BDA2DC244F80E4D05FDA7 /* BreakNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B15A88459421C77F80ACFC3 /* BreakNotificationManager.swift */; };
 		DEAF8705E1C91BA6128075DC /* PermissionOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF68C178E62F6093F4057913 /* PermissionOnboardingView.swift */; };
@@ -89,6 +90,7 @@
 		989DBB159CA5CB427CCCADEF /* BlinkApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkApp.swift; sourceTree = "<group>"; };
 		A04C1C6827F429B94B7B265B /* GaborRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborRenderer.swift; sourceTree = "<group>"; };
 		A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborExerciseView.swift; sourceTree = "<group>"; };
+		A7812EFC9F08563A52F81AA7 /* GaborDisplayConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborDisplayConfig.swift; sourceTree = "<group>"; };
 		A8919A95A03586CABD364494 /* WhyExistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistView.swift; sourceTree = "<group>"; };
 		AF68C178E62F6093F4057913 /* PermissionOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionOnboardingView.swift; sourceTree = "<group>"; };
 		BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistWindowController.swift; sourceTree = "<group>"; };
@@ -243,6 +245,7 @@
 			isa = PBXGroup;
 			children = (
 				06436D890269E4C851271B66 /* AdaptiveStaircase.swift */,
+				A7812EFC9F08563A52F81AA7 /* GaborDisplayConfig.swift */,
 				04E55AA4F9D3F6C46BB8F0D1 /* GaborExerciseState.swift */,
 				A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */,
 				3FAFF7F938EE92646B112B6B /* GaborExerciseWindowController.swift */,
@@ -357,6 +360,7 @@
 				A4411B3A5D05D71332F0C539 /* FlowLearnMoreWindowController.swift in Sources */,
 				71DDA90772E11550128D362D /* FlowSensitivityPage.swift in Sources */,
 				015614087E1362D0362B4424 /* FlowSensitivityView.swift in Sources */,
+				D4C7B9C1BE451DB94C843A92 /* GaborDisplayConfig.swift in Sources */,
 				77928BBBF428D817C890540F /* GaborExerciseState.swift in Sources */,
 				CD85665E518B19F7BBB58D1F /* GaborExerciseView.swift in Sources */,
 				1F3B28A4230B4EA81B7BCD0C /* GaborExerciseWindowController.swift in Sources */,
@@ -520,7 +524,7 @@
 				CODE_SIGN_ENTITLEMENTS = Blink/Blink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -548,7 +552,7 @@
 				CODE_SIGN_ENTITLEMENTS = Blink/Blink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;

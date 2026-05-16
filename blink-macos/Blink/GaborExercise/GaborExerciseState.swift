@@ -96,7 +96,7 @@ final class GaborExerciseState: ObservableObject {
     // Trial-specific state
     @Published var targetPosition: Int = 0         // 0 = left, 1 = right (contrast detection)
     @Published var targetOrientation: Double = 0    // radians (orientation / flanker)
-    @Published var flankerDistance: CGFloat = 60     // points between patches (flanker)
+    @Published var flankerDistanceLevel: Int = 1      // 0/1/2 → close/medium/far (resolved by view via config)
 
     let totalTrials: Int
     let staircase = AdaptiveStaircase()
@@ -151,8 +151,7 @@ final class GaborExerciseState: ObservableObject {
         case .flankerMasking:
             let tiltDegrees: Double = Bool.random() ? 15 : -15
             targetOrientation = tiltDegrees * .pi / 180.0
-            // Vary flanker distance: 40, 60, or 80 points
-            flankerDistance = [40, 60, 80].randomElement() ?? 60
+            flankerDistanceLevel = Int.random(in: 0...2)
         }
 
         phase = .presenting

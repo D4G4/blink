@@ -31,6 +31,10 @@ final class GaborExerciseWindowController: NSObject, NSWindowDelegate {
         )
         win.title = "Eye Exercise"
         win.isReleasedWhenClosed = false
+        win.titlebarAppearsTransparent = true
+        win.titleVisibility = .hidden
+        win.styleMask.insert(.fullSizeContentView)
+        win.backgroundColor = .black
         win.center()
         win.contentView = NSHostingView(rootView: view)
         win.delegate = self
