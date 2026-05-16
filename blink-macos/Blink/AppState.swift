@@ -294,17 +294,9 @@ final class AppState: ObservableObject {
         checkPendingBreak()
 
         guard !isBreakPrompted && !breakDuePending else { return }
-        let before = timerStateMachine.remainingSeconds
-        timerStateMachine.tick(flowState: flowState, deltaSeconds: 1.0)
+        // Always tick as normal state — BreakDecisionEngine handles extensions at break time
+        timerStateMachine.tick(flowState: .normal, deltaSeconds: 1.0)
         remainingSeconds = timerStateMachine.remainingSeconds
-
-        // Timer extended due to flow state change — notify user
-        if remainingSeconds > before + 1 {
-            BlinkLog.app.info("⏱️ Timer extended: \(String(format: "%.0f", before))s → \(String(format: "%.0f", self.remainingSeconds))s (state=\(self.flowState.rawValue))")
-            overlayController.showTimerExtendedToast { [weak self] in
-                self?.showBreakPrompt()
-            }
-        }
     }
 
     private func tickFlowScore() {
@@ -380,16 +372,15 @@ final class AppState: ObservableObject {
 
         switch decision {
         case .extend(let minutes, let reason):
-            // User is doing focused work — extend timer, show gentle nudge
+            // User is doing focused work — extend by 10 min, show gentle nudge
             BlinkLog.app.info("Break decision: extend to \(minutes) min — \(reason)")
             overlayController.showFlowNudge(
-                message: "\(reason) — extended to \(minutes) min",
+                message: "\(reason) — +10 min",
                 onTakeBreak: { [weak self] in
                     Task { @MainActor in self?.showBreakPrompt() }
                 }
             )
-            timerStateMachine.resetAfterBreak()
-            // Override to the extension duration (10 min for first extension, 10 more for second)
+            // Add 10 minutes, not reset to 10
             timerStateMachine.reset(duration: 10 * 60)
             remainingSeconds = timerStateMachine.remainingSeconds
             // Don't reset window — accumulate signals for richer next evaluation
