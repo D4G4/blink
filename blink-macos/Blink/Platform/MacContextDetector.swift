@@ -7,10 +7,15 @@ import os
 /// Detects mic use, Focus mode, fullscreen apps, and video playback.
 final class MacContextDetector: ContextSource {
     /// When true, mic detection is disabled (user has Dictation/Siri keeping mic open).
-    /// Stored in UserDefaults so user can toggle in Settings.
     private var micDetectionDisabled: Bool {
         !UserDefaults.standard.bool(forKey: "pauseDuringCalls")
     }
+
+    private var isFirstMicCheck = true
+
+    /// Called when mic is detected as active on first check (likely Dictation/Siri).
+    /// Set by AppState to show a warning.
+    var onMicActiveAtLaunch: (() -> Void)?
 
     /// Apps where being frontmost = watching video
     private static let videoApps: Set<String> = [
@@ -49,6 +54,20 @@ final class MacContextDetector: ContextSource {
     func isMicrophoneActive() -> Bool {
         guard !micDetectionDisabled else { return false }
         let active = isMicInUse()
+
+        // First check: if mic is already active at launch, it's likely Dictation/Siri.
+        // Warn the user once and auto-disable mic detection.
+        if isFirstMicCheck {
+            isFirstMicCheck = false
+            if active {
+                BlinkLog.context.info("Mic active at launch — likely Dictation/Siri, disabling mic detection")
+                UserDefaults.standard.set(false, forKey: "pauseDuringCalls")
+                onMicActiveAtLaunch?()
+                lastMicState = false
+                return false
+            }
+        }
+
         if active != lastMicState {
             BlinkLog.context.info("Mic state changed: \(active ? "ACTIVE" : "inactive")")
             if active { logAllDevices() }
