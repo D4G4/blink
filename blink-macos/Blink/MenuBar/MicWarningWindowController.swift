@@ -24,7 +24,7 @@ final class MicWarningWindowController {
         })
 
         let win = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 360),
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 420),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -122,7 +122,7 @@ private struct MicWarningView: View {
             }
         }
         .padding(24)
-        .frame(width: 420, height: 360)
+        .frame(width: 480, height: 420)
     }
 
     private func explanationRow(icon: String, text: String) -> some View {
