@@ -58,15 +58,12 @@ final class MacContextDetector: ContextSource {
         let active = isMicInUse()
 
         // First check: if mic is already active at launch, it's likely Dictation/Siri.
-        // Warn the user once and auto-disable mic detection.
+        // Warn the user but DON'T auto-disable — let them see the paused state and decide.
         if isFirstMicCheck {
             isFirstMicCheck = false
             if active {
-                BlinkLog.context.info("Mic active at launch — likely Dictation/Siri, disabling mic detection")
-                UserDefaults.standard.set(false, forKey: "pauseDuringCalls")
+                BlinkLog.context.info("Mic active at launch — likely Dictation/Siri")
                 onMicActiveAtLaunch?()
-                lastMicState = false
-                return false
             }
         }
 
