@@ -11,14 +11,14 @@ struct SettingsView: View {
     @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = true
     @AppStorage("useDarkOverlay") private var useDarkOverlay: Bool = false
     @AppStorage("pauseDuringCalls") private var pauseDuringCalls: Bool = true
-
+    
     @Environment(\.colorScheme) private var colorScheme
     private var theme: BlinkTheme { themeManager.current }
     private var accentColor: Color { theme.accent(for: colorScheme) }
-
+    
     @State private var selectedTab: Int = 0
     @State private var logsCopied: Bool = false
-
+    
     var body: some View {
         VStack(spacing: 0) {
             // Custom tab bar
@@ -31,9 +31,9 @@ struct SettingsView: View {
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .padding(.bottom, 8)
-
+            
             Divider()
-
+            
             // Content
             ScrollView {
                 Group {
@@ -51,9 +51,9 @@ struct SettingsView: View {
         .frame(width: 440, height: 380)
         .tint(accentColor)
     }
-
+    
     // MARK: - Tab Button
-
+    
     private func tabButton(icon: String, label: String, index: Int) -> some View {
         Button {
             UIActionLogger.tabSelected(label)
@@ -70,18 +70,26 @@ struct SettingsView: View {
             .foregroundStyle(selectedTab == index ? accentColor : .secondary)
             .background(
                 selectedTab == index
-                    ? accentColor.opacity(0.1)
-                    : Color.clear
+                ? accentColor.opacity(0.1)
+                : Color.clear
             )
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
     }
-
+    
     // MARK: - General
-
+    
     private var generalContent: some View {
         VStack(alignment: .leading, spacing: 20) {
+            settingsSection("Mic Detection") {
+                settingsToggle("Pause timer during calls", isOn: $pauseDuringCalls)
+                Text("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
+                    .padding(.leading, 4)
+            }
+            
             settingsSection("Timer") {
                 settingsRow("Base interval") {
                     HStack {
@@ -93,11 +101,11 @@ struct SettingsView: View {
                     }
                 }
             }
-
+            
             settingsSection("Menu Bar") {
                 settingsToggle("Show countdown timer", isOn: $showTimerInMenuBar)
             }
-
+            
             settingsSection("Break Screen") {
                 settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
                 Text("Pure black background instead of themed colors")
@@ -105,28 +113,20 @@ struct SettingsView: View {
                     .foregroundStyle(.tertiary)
                     .padding(.leading, 4)
             }
-
-            settingsSection("Mic Detection") {
-                settingsToggle("Pause timer during calls", isOn: $pauseDuringCalls)
-                Text("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
-                    .padding(.leading, 4)
-            }
-
+            
             settingsSection("System") {
                 settingsToggle("Launch at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, newValue in
                         UIActionLogger.settingChanged("launchAtLogin", value: "\(newValue)")
                         updateLaunchAtLogin(newValue)
                     }
-
+                
                 settingsToggle("Debug notifications", isOn: $appState.debugNotifications)
                 Text("Show toasts for timer resets, state changes, and idle detection")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 4)
-
+                
                 settingsRow("Accessibility") {
                     if appState.hasAccessibilityPermission {
                         HStack(spacing: 4) {
@@ -148,7 +148,7 @@ struct SettingsView: View {
                         .controlSize(.small)
                     }
                 }
-
+                
                 if !UpdateChecker.isAppStore {
                     HStack(spacing: 8) {
                         Button {
@@ -171,7 +171,7 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.plain)
                         .disabled(UpdateChecker.shared.isChecking)
-
+                        
                         if let result = UpdateChecker.shared.lastCheckResult {
                             switch result {
                             case .upToDate:
@@ -191,7 +191,7 @@ struct SettingsView: View {
                     }
                     .padding(.top, 4)
                 }
-
+                
                 Button {
                     UIActionLogger.buttonTapped("Restart Onboarding")
                     themeManager.hasCompletedOnboarding = false
@@ -212,7 +212,7 @@ struct SettingsView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 4)
-
+                
                 Button {
                     UIActionLogger.buttonTapped("Copy Logs")
                     LogExporter.exportToFile()
@@ -232,14 +232,14 @@ struct SettingsView: View {
             }
         }
     }
-
+    
     // MARK: - Theme
-
+    
     private var themeContent: some View {
         VStack(spacing: 24) {
             Text("Choose your theme")
                 .font(.system(size: 16, weight: .semibold))
-
+            
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 20), count: 3), spacing: 20) {
                 ForEach(BlinkTheme.all) { t in
                     VStack(spacing: 8) {
@@ -247,7 +247,7 @@ struct SettingsView: View {
                             RoundedRectangle(cornerRadius: 18, style: .continuous)
                                 .fill(t.backgroundTop)
                                 .frame(width: 76, height: 76)
-
+                            
                             Image(t.iconAsset)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
@@ -264,7 +264,7 @@ struct SettingsView: View {
                         .shadow(color: theme.id == t.id ? accentColor.opacity(0.3) : .clear, radius: 8)
                         .scaleEffect(theme.id == t.id ? 1.05 : 1.0)
                         .animation(.easeOut(duration: 0.2), value: theme.id)
-
+                        
                         Text(t.name)
                             .font(.system(size: 12, weight: theme.id == t.id ? .semibold : .regular))
                             .foregroundStyle(theme.id == t.id ? .primary : .secondary)
@@ -278,9 +278,9 @@ struct SettingsView: View {
             }
         }
     }
-
+    
     // MARK: - Flow
-
+    
     private var flowContent: some View {
         VStack(alignment: .leading, spacing: 20) {
             settingsSection("Flow Detection") {
@@ -304,13 +304,13 @@ struct SettingsView: View {
             }
         }
     }
-
+    
     // MARK: - About
-
+    
     private var aboutContent: some View {
         VStack(spacing: 16) {
             Spacer()
-
+            
             ZStack {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(theme.backgroundTop)
@@ -324,31 +324,31 @@ struct SettingsView: View {
                     .clipped()
             }
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-
+            
             Text("Blink")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
-
+            
             Text("Smart 20-20-20 Break Reminder")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
-
+            
             Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0")")
                 .font(.system(size: 11))
                 .foregroundStyle(.tertiary)
-
+            
             Spacer()
         }
     }
-
+    
     // MARK: - Reusable Components
-
+    
     private func settingsSection(_ title: String, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(accentColor)
                 .padding(.leading, 4)
-
+            
             VStack(alignment: .leading, spacing: 12) {
                 content()
             }
@@ -358,7 +358,7 @@ struct SettingsView: View {
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
     }
-
+    
     private func settingsRow(_ label: String, @ViewBuilder content: () -> some View) -> some View {
         HStack(alignment: .top) {
             Text(label)
@@ -368,13 +368,13 @@ struct SettingsView: View {
             content()
         }
     }
-
+    
     private func settingsToggle(_ label: String, isOn: Binding<Bool>) -> some View {
         Toggle(label, isOn: isOn)
             .font(.system(size: 13))
             .toggleStyle(ThemedToggleStyle(theme: theme))
     }
-
+    
     private func stateRow(_ label: String, value: String) -> some View {
         HStack {
             Text(label)
@@ -385,7 +385,7 @@ struct SettingsView: View {
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
         }
     }
-
+    
     private func updateLaunchAtLogin(_ enabled: Bool) {
         do {
             if enabled {

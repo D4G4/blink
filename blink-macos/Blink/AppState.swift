@@ -273,7 +273,9 @@ final class AppState: ObservableObject {
         self.idleDetector = MacIdleDetector()
         let ctx = MacContextDetector()
         ctx.onMicActiveAtLaunch = { [weak self] in
-            self?.overlayController.showDebugToast("Mic always on (Dictation?) — call detection disabled. Re-enable in Settings.")
+            DispatchQueue.main.async {
+                self?.overlayController.showDebugToast("Mic always on (Dictation?) — call detection disabled. Re-enable in Settings.")
+            }
         }
         self.contextDetector = ctx
         BlinkLog.app.info("All monitors active")
