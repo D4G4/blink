@@ -4,15 +4,16 @@ import SwiftUI
 /// Generates Gabor patch images using Core Graphics.
 ///
 /// A Gabor patch is a sinusoidal grating multiplied by a Gaussian envelope:
-/// `G(x,y) = 0.5 + contrast * exp(-(x'² + y'²)/(2σ²)) * cos(2πfx' + φ)`
+/// `G(x,y) = 0.5 * (1 + contrast * exp(-(x'² + y'²)/(2σ²)) * cos(2πfx' + φ))`
 /// where x' and y' are coordinates rotated by the orientation angle.
+/// Contrast is Michelson contrast (0–1): at 1.0 the grating spans the full 0–1 range.
 enum GaborRenderer {
 
     /// Render a Gabor patch as a `CGImage`.
     ///
     /// - Parameters:
     ///   - pixelSize: Width/height in pixels. Use `pointSize * backingScaleFactor` for Retina.
-    ///   - contrast: Peak contrast of the sinusoid (0...1). Controls visibility.
+    ///   - contrast: Michelson contrast (0...1). At 1.0 grating spans full black–white range.
     ///   - spatialFrequency: Cycles per pixel. Typical: 0.04–0.08.
     ///   - orientation: Grating orientation in radians. 0 = vertical stripes.
     ///   - phase: Phase offset of the sinusoid in radians.
@@ -55,7 +56,7 @@ enum GaborRenderer {
                 let yPrime = -x * sinTheta + y * cosTheta
                 let gaussian = exp(-(xPrime * xPrime + yPrime * yPrime) / twoSigmaSq)
                 let sinusoidal = cos(twoPiF * xPrime + phase)
-                let value = 0.5 + contrast * gaussian * sinusoidal
+                let value = 0.5 + 0.5 * contrast * gaussian * sinusoidal
                 let clamped = min(max(value, 0.0), 1.0)
                 buffer[rowOffset + px] = UInt8(clamped * 255.0)
             }
@@ -68,7 +69,7 @@ enum GaborRenderer {
     ///
     /// - Parameters:
     ///   - pointSize: Desired display size in points. Rendered at Retina resolution.
-    ///   - contrast: Peak contrast (0...1).
+    ///   - contrast: Michelson contrast (0...1).
     ///   - spatialFrequency: Cycles per pixel.
     ///   - orientation: Grating angle in radians.
     ///   - phase: Phase offset in radians.

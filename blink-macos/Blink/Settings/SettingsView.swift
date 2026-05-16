@@ -68,6 +68,7 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
             .foregroundStyle(selectedTab == index ? accentColor : .secondary)
+            .contentShape(Rectangle())
             .background(
                 selectedTab == index
                 ? accentColor.opacity(0.1)

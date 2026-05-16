@@ -209,6 +209,7 @@ struct MenuBarView: View {
             .padding(.vertical, 10)
         }
         .frame(width: 280)
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     private func dismissMenuBarPopover() {

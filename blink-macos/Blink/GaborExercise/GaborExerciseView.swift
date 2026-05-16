@@ -45,10 +45,11 @@ private struct DisclaimerCard: View {
 
             Image(systemName: "eye.trianglebadge.exclamationmark")
                 .font(.system(size: 48))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white)
 
             Text("Before You Start")
                 .font(.system(size: 26, weight: .semibold))
+                .foregroundStyle(.white)
 
             Text("""
                 This exercise is for general wellness and entertainment purposes only. \
@@ -58,11 +59,11 @@ private struct DisclaimerCard: View {
                 Consult an eye care professional before starting any vision training \
                 program. Results may vary. If you experience discomfort, stop immediately.
                 """)
-                .font(.system(size: 14))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 16))
+                .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 500)
-                .lineSpacing(3)
+                .frame(maxWidth: 540)
+                .lineSpacing(5)
 
             Button("I Understand") {
                 onAccept()
@@ -309,6 +310,7 @@ private struct TrialPhase: View {
     var feedbackCorrect: Bool?
 
     private let fg: Color = .white
+    private let config = GaborDisplayConfig.current()
 
     var body: some View {
         VStack(spacing: 24) {
@@ -325,7 +327,7 @@ private struct TrialPhase: View {
             .padding(.horizontal, 60)
             .padding(.top, 20)
 
-            ProgressDots(current: state.currentTrial, total: state.totalTrials, theme: theme)
+            ProgressDots(current: state.currentTrial, total: state.totalTrials, theme: theme, trialResults: state.staircase.trialResults)
                 .padding(.horizontal, 60)
 
             Spacer()
@@ -364,11 +366,11 @@ private struct TrialPhase: View {
     private var stimulusContent: some View {
         switch state.exerciseType {
         case .contrastDetection:
-            ContrastDetectionStimulus(state: state)
+            ContrastDetectionStimulus(state: state, config: config)
         case .orientationDiscrimination:
-            OrientationStimulus(state: state)
+            OrientationStimulus(state: state, config: config)
         case .flankerMasking:
-            FlankerStimulus(state: state)
+            FlankerStimulus(state: state, config: config)
         }
     }
 
@@ -402,30 +404,32 @@ private struct TrialPhase: View {
 
 private struct ContrastDetectionStimulus: View {
     @ObservedObject var state: GaborExerciseState
-    private let patchPointSize: CGFloat = 110
+    let config: GaborDisplayConfig
 
     var body: some View {
+        let size = config.patchPointSize
         HStack(spacing: 100) {
-            patchCircle(hasGabor: state.targetPosition == 0)
-            patchCircle(hasGabor: state.targetPosition == 1)
+            patchCircle(hasGabor: state.targetPosition == 0, size: size)
+            patchCircle(hasGabor: state.targetPosition == 1, size: size)
         }
     }
 
-    private func patchCircle(hasGabor: Bool) -> some View {
+    private func patchCircle(hasGabor: Bool, size: CGFloat) -> some View {
         Group {
             if hasGabor {
                 GaborRenderer.asImage(
-                    pointSize: patchPointSize,
+                    pointSize: size,
                     contrast: state.staircase.currentContrast,
-                    spatialFrequency: 0.05,
+                    spatialFrequency: config.spatialFrequencyCPP,
                     orientation: Double.random(in: 0...(.pi)),
-                    phase: Double.random(in: 0...(2 * .pi))
+                    phase: Double.random(in: 0...(2 * .pi)),
+                    sigma: config.sigmaPixels
                 )
             } else {
-                GaborRenderer.plainGrayImage(pointSize: patchPointSize)
+                GaborRenderer.plainGrayImage(pointSize: size)
             }
         }
-        .frame(width: patchPointSize, height: patchPointSize)
+        .frame(width: size, height: size)
         .clipShape(Circle())
         .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
     }
@@ -433,16 +437,18 @@ private struct ContrastDetectionStimulus: View {
 
 private struct OrientationStimulus: View {
     @ObservedObject var state: GaborExerciseState
-    private let patchPointSize: CGFloat = 120
+    let config: GaborDisplayConfig
 
     var body: some View {
+        let size = config.patchPointSize
         GaborRenderer.asImage(
-            pointSize: patchPointSize,
+            pointSize: size,
             contrast: state.staircase.currentContrast,
-            spatialFrequency: 0.05,
-            orientation: state.targetOrientation
+            spatialFrequency: config.spatialFrequencyCPP,
+            orientation: state.targetOrientation,
+            sigma: config.sigmaPixels
         )
-        .frame(width: patchPointSize, height: patchPointSize)
+        .frame(width: size, height: size)
         .clipShape(Circle())
         .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
     }
@@ -450,33 +456,38 @@ private struct OrientationStimulus: View {
 
 private struct FlankerStimulus: View {
     @ObservedObject var state: GaborExerciseState
-    private let patchPointSize: CGFloat = 100
+    let config: GaborDisplayConfig
     private let flankerContrast: Double = 0.8
 
     var body: some View {
-        HStack(spacing: state.flankerDistance) {
-            flankerPatch
+        let size = config.patchPointSize
+        let gaps = config.flankerGapPoints
+        let gap = gaps.indices.contains(state.flankerDistanceLevel) ? gaps[state.flankerDistanceLevel] : gaps[1]
+        HStack(spacing: gap) {
+            flankerPatch(size: size)
             GaborRenderer.asImage(
-                pointSize: patchPointSize,
+                pointSize: size,
                 contrast: state.staircase.currentContrast,
-                spatialFrequency: 0.05,
-                orientation: state.targetOrientation
+                spatialFrequency: config.spatialFrequencyCPP,
+                orientation: state.targetOrientation,
+                sigma: config.sigmaPixels
             )
-            .frame(width: patchPointSize, height: patchPointSize)
+            .frame(width: size, height: size)
             .clipShape(Circle())
             .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
-            flankerPatch
+            flankerPatch(size: size)
         }
     }
 
-    private var flankerPatch: some View {
+    private func flankerPatch(size: CGFloat) -> some View {
         GaborRenderer.asImage(
-            pointSize: patchPointSize,
+            pointSize: size,
             contrast: flankerContrast,
-            spatialFrequency: 0.05,
-            orientation: 0
+            spatialFrequency: config.spatialFrequencyCPP,
+            orientation: 0,
+            sigma: config.sigmaPixels
         )
-        .frame(width: patchPointSize, height: patchPointSize)
+        .frame(width: size, height: size)
         .clipShape(Circle())
         .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
     }
@@ -603,20 +614,28 @@ private struct ProgressDots: View {
     let current: Int
     let total: Int
     let theme: BlinkTheme
+    let trialResults: [(contrast: Double, correct: Bool)]
 
     var body: some View {
         HStack(spacing: 4) {
             ForEach(0..<min(total, 30), id: \.self) { index in
                 Circle()
-                    .fill(index < current ? theme.accent : theme.accent.opacity(0.2))
+                    .fill(dotColor(for: index))
                     .frame(width: dotSize, height: dotSize)
             }
             if total > 30 {
                 Text("+\(total - 30)")
                     .font(.system(size: 9))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.4))
             }
         }
+    }
+
+    private func dotColor(for index: Int) -> Color {
+        guard index < trialResults.count else {
+            return theme.accent.opacity(0.2)
+        }
+        return trialResults[index].correct ? .green : .red
     }
 
     private var dotSize: CGFloat { total > 25 ? 4 : 6 }
