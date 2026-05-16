@@ -9,15 +9,19 @@ final class PreferencesWindowController {
     private var closeObserver: NSObjectProtocol?
 
     func show(appState: AppState, themeManager: ThemeManager) {
+        BlinkLog.ui.info("Preferences.show() called")
+
         // If window exists, just bring it to front
         if let win = window, win.isVisible {
             win.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
+            BlinkLog.ui.info("Preferences: reusing existing window")
             return
         }
 
         let prefsView = SettingsView(appState: appState)
             .environmentObject(themeManager)
+        BlinkLog.ui.info("Preferences: view created")
 
         let win = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 520, height: 450),
@@ -29,6 +33,7 @@ final class PreferencesWindowController {
         win.contentView = NSHostingView(rootView: prefsView)
         win.center()
         win.isReleasedWhenClosed = false
+        BlinkLog.ui.info("Preferences: window created")
 
         // Bring to front
         NSApp.setActivationPolicy(.regular)

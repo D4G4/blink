@@ -43,6 +43,7 @@
 		DEAF8705E1C91BA6128075DC /* PermissionOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF68C178E62F6093F4057913 /* PermissionOnboardingView.swift */; };
 		E18997FAD5140713D3E5907B /* PreferencesWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D2974278123650670528178 /* PreferencesWindowController.swift */; };
 		E2E2DC15A3B655161CF31EA3 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA5281E80D09549F7590353 /* MenuBarController.swift */; };
+		EA6F6BD4A96C0F66254A6167 /* MicWarningWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BC933707696BDE8C0788B9 /* MicWarningWindowController.swift */; };
 		F82D96161BCBD00DDE686A88 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73EF2DCF137E47C83983AFEB /* UpdateChecker.swift */; };
 /* End PBXBuildFile section */
 
@@ -74,6 +75,7 @@
 		90526A63E832616BC379B327 /* PermissionGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionGuideView.swift; sourceTree = "<group>"; };
 		93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLearnMoreView.swift; sourceTree = "<group>"; };
 		977674318B8EB84E0DD3DE41 /* MacContextDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContextDetector.swift; sourceTree = "<group>"; };
+		97BC933707696BDE8C0788B9 /* MicWarningWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicWarningWindowController.swift; sourceTree = "<group>"; };
 		989DBB159CA5CB427CCCADEF /* BlinkApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkApp.swift; sourceTree = "<group>"; };
 		A8919A95A03586CABD364494 /* WhyExistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistView.swift; sourceTree = "<group>"; };
 		AF68C178E62F6093F4057913 /* PermissionOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionOnboardingView.swift; sourceTree = "<group>"; };
@@ -229,6 +231,7 @@
 			children = (
 				DBA5281E80D09549F7590353 /* MenuBarController.swift */,
 				D286D81AEFFC707C40AF416D /* MenuBarView.swift */,
+				97BC933707696BDE8C0788B9 /* MicWarningWindowController.swift */,
 			);
 			path = MenuBar;
 			sourceTree = "<group>";
@@ -334,6 +337,7 @@
 				285C0EFFE325468E346E69D5 /* MacInputMonitor.swift in Sources */,
 				E2E2DC15A3B655161CF31EA3 /* MenuBarController.swift in Sources */,
 				72570C0C40040759FE52FBDF /* MenuBarView.swift in Sources */,
+				EA6F6BD4A96C0F66254A6167 /* MicWarningWindowController.swift in Sources */,
 				721AB1C8176D69C9F1A07603 /* OnboardingView.swift in Sources */,
 				AF2AA32997C297584EE5186E /* OnboardingWindow.swift in Sources */,
 				CFB301E36AADFE6AB97FFCE5 /* OverlayWindow.swift in Sources */,

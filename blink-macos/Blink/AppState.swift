@@ -308,8 +308,10 @@ final class AppState: ObservableObject {
         checkPendingBreak()
 
         guard !isBreakPrompted && !breakDuePending else { return }
-        // Always tick as normal state — BreakDecisionEngine handles extensions at break time
-        timerStateMachine.tick(flowState: .normal, deltaSeconds: 1.0)
+        // Pass real state for pause (idle/meeting) but clamp flow/deepFlow to normal
+        // so TimerStateMachine doesn't do V1 proportional extension — BreakDecisionEngine handles that
+        let timerState: FlowState = (flowState == .idle || flowState == .meeting) ? flowState : .normal
+        timerStateMachine.tick(flowState: timerState, deltaSeconds: 1.0)
         remainingSeconds = timerStateMachine.remainingSeconds
     }
 
