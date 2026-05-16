@@ -100,18 +100,12 @@ final class AppState: ObservableObject {
         }
         BlinkLog.app.info("Blink starting up")
 
-        // One-time migrations
+        // One-time: force re-onboarding for build 20 (new flow sensitivity UI)
         let onboardingVersion = UserDefaults.standard.integer(forKey: "onboardingVersion")
         if onboardingVersion < 2 {
             ThemeManager.shared.hasCompletedOnboarding = false
             UserDefaults.standard.set(2, forKey: "onboardingVersion")
             BlinkLog.app.info("Onboarding reset for new flow sensitivity UI")
-        }
-        // Build 27 bug auto-disabled mic detection — reset it
-        if !UserDefaults.standard.bool(forKey: "micMigrationV1") {
-            UserDefaults.standard.set(true, forKey: "pauseDuringCalls")
-            UserDefaults.standard.set(true, forKey: "micMigrationV1")
-            BlinkLog.app.info("Reset pauseDuringCalls to true (migration)")
         }
 
         setupCallbacks()
