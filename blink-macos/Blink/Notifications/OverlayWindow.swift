@@ -80,8 +80,8 @@ final class OverlayWindowController {
         
         self.toastWindow = win
         
-        // Auto-dismiss after 5 seconds if not interacted with
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+        // Auto-dismiss after 7 seconds if not interacted with
+        DispatchQueue.main.asyncAfter(deadline: .now() + 7) { [weak self] in
             self?.dismissToast()
         }
     }
@@ -481,18 +481,16 @@ private struct TimerExtendedToastView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        let bg = theme.overlayBackground(for: colorScheme)
-        let fg = theme.overlayText(for: colorScheme)
         let accent = theme.accent(for: colorScheme)
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: "brain.head.profile")
                     .font(.system(size: 14))
-                    .foregroundStyle(accent)
+                    .foregroundStyle(.white)
 
                 Text("In flow — timer extended")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(fg)
+                    .foregroundStyle(.white)
             }
 
             HStack {
@@ -502,10 +500,10 @@ private struct TimerExtendedToastView: View {
                 } label: {
                     Text("Take break now")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(accent)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(accent)
+                        .background(.white)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -513,7 +511,7 @@ private struct TimerExtendedToastView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(bg)
+        .background(accent)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
@@ -802,19 +800,17 @@ private struct FlowNudgeToastView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        let bg = theme.overlayBackground(for: colorScheme)
-        let fg = theme.overlayText(for: colorScheme)
         let accent = theme.accent(for: colorScheme)
 
         HStack(spacing: 12) {
             Image(systemName: "brain.head.profile")
                 .font(.system(size: 20))
-                .foregroundStyle(accent)
+                .foregroundStyle(.white)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(message)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(fg)
+                    .foregroundStyle(.white)
                     .lineLimit(2)
             }
 
@@ -825,17 +821,17 @@ private struct FlowNudgeToastView: View {
             } label: {
                 Text("Break")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(accent)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(accent)
+                    .background(.white)
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(bg)
+        .background(accent)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
