@@ -40,9 +40,13 @@ class SnapshotTestCase: XCTestCase {
         file: StaticString = #filePath,
         line: UInt = #line
     ) {
-        let wrapped = view
-            .frame(width: width, height: height)
-            .environment(\.colorScheme, colorScheme)
+        let bgColor: Color = colorScheme == .dark ? Color(nsColor: NSColor(white: 0.12, alpha: 1)) : .white
+        let wrapped = ZStack {
+            bgColor
+            view
+        }
+        .frame(width: width, height: height)
+        .environment(\.colorScheme, colorScheme)
 
         let renderer = ImageRenderer(content: wrapped)
         renderer.scale = 2.0
