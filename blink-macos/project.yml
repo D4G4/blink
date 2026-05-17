@@ -15,6 +15,10 @@ schemes:
     build:
       targets:
         Blink: all
+        BlinkSnapshotTests: [test]
+    test:
+      targets:
+        - BlinkSnapshotTests
     archive:
       config: Release
 
@@ -47,3 +51,21 @@ targets:
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
+
+  BlinkSnapshotTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - BlinkSnapshotTests
+    dependencies:
+      - target: Blink
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Blink.app/Contents/MacOS/Blink"
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 6V6FZW3FFN
+        ENABLE_APP_SANDBOX: false
