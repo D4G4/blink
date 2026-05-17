@@ -23,19 +23,27 @@ public sealed class OverlayManager
     /// <summary>
     /// Starts the full break flow: toast -> break timer.
     /// Pass breakNumber to show a walk suggestion when >= 4.
+    /// When skipToast is true (manual trigger), goes directly to break timer.
     /// </summary>
-    public void ShowBreak(Action onComplete, Action onSkip, int breakNumber = 0)
+    public void ShowBreak(Action onComplete, Action onSkip, int breakNumber = 0, bool skipToast = false)
     {
         _dispatcher.TryEnqueue(() =>
         {
             DismissAll();
-            _currentToast = new ToastWindow(() =>
+            if (skipToast)
             {
-                _currentToast?.Close();
-                _currentToast = null;
                 ShowBreakTimer(onComplete, onSkip, breakNumber);
-            });
-            _currentToast.Activate();
+            }
+            else
+            {
+                _currentToast = new ToastWindow(() =>
+                {
+                    _currentToast?.Close();
+                    _currentToast = null;
+                    ShowBreakTimer(onComplete, onSkip, breakNumber);
+                });
+                _currentToast.Activate();
+            }
         });
     }
 

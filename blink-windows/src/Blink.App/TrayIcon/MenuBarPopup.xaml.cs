@@ -125,16 +125,20 @@ public sealed partial class MenuBarPopup : Window
         var accentSoft = new SolidColorBrush(Color.FromArgb(15, accent.R, accent.G, accent.B));
         var accentMid = new SolidColorBrush(Color.FromArgb(38, accent.R, accent.G, accent.B));
 
+        var textOnAccent = new SolidColorBrush(theme.TextOnAccent(isDark));
+
         IconBackground.Background = new SolidColorBrush(top);
         TimerCard.Background = accentSoft;
         ProgressTrack.Fill = accentMid;
         ProgressFill.Fill = accentBrush;
         StatsIcon.Foreground = accentBrush;
         TakeBreakButton.Background = accentBrush;
+        TakeBreakButton.Foreground = textOnAccent;
 
         UpdateBanner.Background = new SolidColorBrush(Color.FromArgb(20, accent.R, accent.G, accent.B));
         UpdateBannerIcon.Foreground = accentBrush;
         UpdateDownloadButton.Background = accentBrush;
+        UpdateDownloadButton.Foreground = textOnAccent;
 
         var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", $"theme-{theme.Id}.png");
         if (File.Exists(iconPath))

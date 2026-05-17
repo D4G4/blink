@@ -35,9 +35,27 @@ public sealed record BlinkTheme(
     public Color Accent(bool isDark) =>
         InvertInDarkMode && isDark ? Colors.White : AccentLight;
 
+    /// <summary>
+    /// Text color for content on an accent-colored background.
+    /// Returns black when accent resolves to white (Dark theme, Mono in dark mode), white otherwise.
+    /// </summary>
+    public Color TextOnAccent(bool isDark)
+    {
+        if (Id == "dark" || (InvertInDarkMode && isDark)) return C(0x00, 0x00, 0x00);
+        return Colors.White;
+    }
+
     private static Color C(byte r, byte g, byte b) => Color.FromArgb(255, r, g, b);
 
     // ── Themes ──
+
+    /// <summary>Pure dark theme — used when "Use dark overlay" is enabled.</summary>
+    public static readonly BlinkTheme Dark = new(
+        "dark", "Dark",
+        C(0x00, 0x00, 0x00), C(0x00, 0x00, 0x00), Colors.White,
+        Color.FromArgb(242, 0x00, 0x00, 0x00), Color.FromArgb(242, 0x00, 0x00, 0x00),
+        Colors.White, Colors.White,
+        Colors.White, Colors.White, false);
 
     public static readonly BlinkTheme Peach = new(
         "peach", "Peach",

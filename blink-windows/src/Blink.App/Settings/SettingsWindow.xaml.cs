@@ -9,6 +9,7 @@ public sealed partial class SettingsWindow : Window
 {
     private readonly AppState _appState;
     private bool _isLoading = true;
+    private string _currentFlowPreset = "balanced";
 
     public SettingsWindow(AppState appState)
     {
@@ -30,9 +31,10 @@ public sealed partial class SettingsWindow : Window
         LaunchAtLoginToggle.IsOn = tm.LaunchAtLogin;
         DebugToggle.IsOn = tm.DebugNotifications;
 
+        _currentFlowPreset = ClosestPreset(tm.FlowSensitivity);
         FlowSensitivitySlider.Value = tm.FlowSensitivity * 100;
         FlowSensitivityLabel.Text = $"{(int)(tm.FlowSensitivity * 100)}%";
-        FlowSensitivityDescription.Text = GetFlowSensitivityDescription(tm.FlowSensitivity);
+        UpdateFlowPresetUI();
 
         FlowScoreValue.Text = "—";
         FlowStateValue.Text = _appState.DisplayStateName;
@@ -129,6 +131,23 @@ public sealed partial class SettingsWindow : Window
         ThemeManager.Instance.DebugNotifications = DebugToggle.IsOn;
     }
 
+    private void OnFlowPresetSelected(object sender, RoutedEventArgs e)
+    {
+        if (_isLoading) return;
+        if (sender is Button btn && btn.Tag is string tag)
+        {
+            _currentFlowPreset = tag;
+            var value = PresetToValue(tag);
+            ThemeManager.Instance.FlowSensitivity = value;
+            _appState.Engine.Sensitivity = value;
+            _isLoading = true;
+            FlowSensitivitySlider.Value = value * 100;
+            FlowSensitivityLabel.Text = $"{(int)(value * 100)}%";
+            _isLoading = false;
+            UpdateFlowPresetUI();
+        }
+    }
+
     private void FlowSensitivitySlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
     {
         if (_isLoading) return;
@@ -136,8 +155,48 @@ public sealed partial class SettingsWindow : Window
         var value = pct / 100.0;
         ThemeManager.Instance.FlowSensitivity = value;
         FlowSensitivityLabel.Text = $"{pct}%";
-        FlowSensitivityDescription.Text = GetFlowSensitivityDescription(value);
         _appState.Engine.Sensitivity = value;
+        _currentFlowPreset = ClosestPreset(value);
+        UpdateFlowPresetUI();
+    }
+
+    private void FineTuneToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (FineTunePanel.Visibility == Visibility.Collapsed)
+        {
+            FineTunePanel.Visibility = Visibility.Visible;
+            FineTuneButton.Content = "Hide";
+        }
+        else
+        {
+            FineTunePanel.Visibility = Visibility.Collapsed;
+            FineTuneButton.Content = "Fine-tune";
+        }
+    }
+
+    private void UpdateFlowPresetUI()
+    {
+        var theme = ThemeManager.Instance.Current;
+        var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
+        var accent = theme.Accent(isDark);
+        var accentBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(accent);
+        var normalBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+            Windows.UI.Color.FromArgb(10, 0, 0, 0));
+
+        PresetEyeHealthBtn.Background = _currentFlowPreset == "eyeHealth" ? accentBrush : normalBrush;
+        PresetEyeHealthBtn.Foreground = _currentFlowPreset == "eyeHealth"
+            ? new Microsoft.UI.Xaml.Media.SolidColorBrush(theme.TextOnAccent(isDark))
+            : null;
+        PresetBalancedBtn.Background = _currentFlowPreset == "balanced" ? accentBrush : normalBrush;
+        PresetBalancedBtn.Foreground = _currentFlowPreset == "balanced"
+            ? new Microsoft.UI.Xaml.Media.SolidColorBrush(theme.TextOnAccent(isDark))
+            : null;
+        PresetDeepWorkBtn.Background = _currentFlowPreset == "deepWork" ? accentBrush : normalBrush;
+        PresetDeepWorkBtn.Foreground = _currentFlowPreset == "deepWork"
+            ? new Microsoft.UI.Xaml.Media.SolidColorBrush(theme.TextOnAccent(isDark))
+            : null;
+
+        FlowSensitivityDescription.Text = GetPresetDescription(_currentFlowPreset);
     }
 
     private void FlowLearnMore_Click(object sender, RoutedEventArgs e)
@@ -147,25 +206,28 @@ public sealed partial class SettingsWindow : Window
         window.Activate();
     }
 
-    private static int GetGapTolerance(double sensitivity)
+    private static double PresetToValue(string preset) => preset switch
     {
-        var t = (sensitivity - 0.4) / (0.9 - 0.4);
-        return (int)Math.Round(15 + t * 75);
+        "eyeHealth" => 0.45,
+        "balanced" => 0.65,
+        "deepWork" => 0.85,
+        _ => 0.65
+    };
+
+    private static string ClosestPreset(double sensitivity)
+    {
+        if (sensitivity <= 0.55) return "eyeHealth";
+        if (sensitivity <= 0.75) return "balanced";
+        return "deepWork";
     }
 
-    private static string GetFlowSensitivityDescription(double sensitivity)
+    private static string GetPresetDescription(string preset) => preset switch
     {
-        var gap = GetGapTolerance(sensitivity);
-        return sensitivity switch
-        {
-            < 0.5 => $"Strict \u2014 pauses over {gap}s break flow. Only continuous action counts.",
-            < 0.6 => $"Conservative \u2014 pauses up to {gap}s keep flow. Short thinking breaks are OK.",
-            < 0.7 => $"Balanced \u2014 pauses up to {gap}s keep flow. Brief reading won't interrupt.",
-            < 0.8 => $"Recommended \u2014 pauses up to {gap}s keep flow. Natural thinking stays in flow.",
-            < 0.9 => $"Relaxed \u2014 pauses up to {gap}s keep flow. Long reading sessions are fine.",
-            _ => $"Very relaxed \u2014 pauses up to {gap}s keep flow. Almost any activity counts."
-        };
-    }
+        "eyeHealth" => "Blink prioritizes your eye health. Breaks come at 20 min unless your work rhythm is very intense.",
+        "balanced" => "Blink learns your work rhythm and extends when you're truly focused. Recommended for most users.",
+        "deepWork" => "Fewer interruptions during focus. Blink reminds you gently. Best if you're disciplined about breaks.",
+        _ => ""
+    };
 
     private void UpdateButton_Click(object sender, RoutedEventArgs e)
     {

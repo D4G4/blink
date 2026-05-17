@@ -39,8 +39,7 @@
                             HorizontalAlignment="Stretch"
                             Padding="10,4"
                             CornerRadius="999"
-                            FontSize="11" FontWeight="SemiBold"
-                            Foreground="White">
+                            FontSize="11" FontWeight="SemiBold">
                         <TextBlock Text="Download"/>
                     </Button>
                 </StackPanel>
@@ -80,8 +79,7 @@
                     Margin="12,12,12,4"
                     HorizontalAlignment="Stretch"
                     Height="32"
-                    CornerRadius="8"
-                    Foreground="White">
+                    CornerRadius="8">
                 <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
                     <FontIcon Glyph="&#xE7B3;" FontSize="12"/>
                     <TextBlock Text="Take Break Now" FontSize="12" FontWeight="Medium"/>

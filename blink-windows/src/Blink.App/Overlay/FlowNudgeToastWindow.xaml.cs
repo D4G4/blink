@@ -34,16 +34,23 @@ public sealed partial class FlowNudgeToastWindow : Window
             workArea.Width - 320 - 16,
             workArea.Height - 80 - 16));
 
-        // Apply theme colors
-        var theme = ThemeManager.Instance.Current;
+        // Apply theme colors (swap to Dark theme when "use dark overlay" is on)
+        var theme = ThemeManager.Instance.UseDarkOverlay
+            ? BlinkTheme.Dark
+            : ThemeManager.Instance.Current;
         var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
         var bgColor = theme.OverlayBackground(isDark);
         var textColor = theme.OverlayText(isDark);
+        var accent = theme.Accent(isDark);
 
         RootGrid.Background = new SolidColorBrush(bgColor);
         MessageText.Foreground = new SolidColorBrush(textColor);
         IconElement.Foreground = new SolidColorBrush(textColor);
         MessageText.Text = message;
+
+        // Button: accent background + contrasting text
+        BreakButton.Background = new SolidColorBrush(accent);
+        BreakButton.Foreground = new SolidColorBrush(theme.TextOnAccent(isDark));
 
         // Auto-dismiss after 7 seconds
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(7) };

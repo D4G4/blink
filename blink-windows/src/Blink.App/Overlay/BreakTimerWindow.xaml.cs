@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 using Blink.App.Theme;
 
 namespace Blink.App.Overlay;
@@ -21,7 +22,6 @@ public sealed partial class BreakTimerWindow : Window
         InitializeComponent();
 
         ExtendsContentIntoTitleBar = true;
-        SystemBackdrop = new DesktopAcrylicBackdrop();
 
         // Configure window: fullscreen, borderless, topmost
         var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -39,15 +39,18 @@ public sealed partial class BreakTimerWindow : Window
         appWindow.Move(new Windows.Graphics.PointInt32(0, 0));
         appWindow.Resize(new Windows.Graphics.SizeInt32(display.OuterBounds.Width, display.OuterBounds.Height));
 
-        // Apply theme tint (with alpha) over the acrylic backdrop, matching macOS overlayBackground.
-        var theme = ThemeManager.Instance.Current;
+        // Use the full theme gradient as break background (matches macOS BreakPhaseView).
+        // When "Use dark overlay" is on, swap to the pure-black Dark theme.
+        var theme = ThemeManager.Instance.UseDarkOverlay
+            ? BlinkTheme.Dark
+            : ThemeManager.Instance.Current;
         var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
 
-        var overlayColor = theme.OverlayBackground(isDark);
-        GradientTop.Color = overlayColor;
-        GradientBottom.Color = overlayColor;
+        GradientTop.Color = theme.BackgroundTop(isDark);
+        GradientBottom.Color = theme.BackgroundBottom(isDark);
 
-        var textColor = new SolidColorBrush(theme.OverlayText(isDark));
+        var fg = theme.OnBackgroundText(isDark);
+        var textColor = new SolidColorBrush(fg);
         TitleText.Foreground = textColor;
         TimerText.Foreground = textColor;
         BadgeText.Foreground = textColor;
@@ -56,6 +59,14 @@ public sealed partial class BreakTimerWindow : Window
         ExtendFeedback.Foreground = textColor;
         WalkIcon.Foreground = textColor;
         WalkText.Foreground = textColor;
+
+        // Badge background (fg at 12% opacity, matching macOS)
+        BadgeBorder.Background = new SolidColorBrush(
+            Color.FromArgb(30, fg.R, fg.G, fg.B));
+
+        // Progress ring accent
+        var accent = theme.Accent(isDark);
+        ProgressIndicator.Foreground = new SolidColorBrush(accent);
 
         // Show walk suggestion when 4+ consecutive breaks
         if (breakNumber >= 4)

@@ -13,9 +13,8 @@
         </Grid.Background>
 
         <!-- 20 ft badge — top-right corner -->
-        <Border HorizontalAlignment="Right" VerticalAlignment="Top"
-                Margin="0,40,40,0" Padding="12,6" CornerRadius="8"
-                Background="#33FFFFFF">
+        <Border x:Name="BadgeBorder" HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="0,40,40,0" Padding="12,6" CornerRadius="8">
             <TextBlock x:Name="BadgeText" Text="20 ft" FontSize="16" FontWeight="SemiBold"/>
         </Border>
 

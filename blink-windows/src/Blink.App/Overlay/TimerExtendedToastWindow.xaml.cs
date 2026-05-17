@@ -34,15 +34,22 @@ public sealed partial class TimerExtendedToastWindow : Window
             workArea.Width - 280 - 16,
             workArea.Height - 72 - 16));
 
-        // Apply theme colors
-        var theme = ThemeManager.Instance.Current;
+        // Apply theme colors (swap to Dark theme when "use dark overlay" is on)
+        var theme = ThemeManager.Instance.UseDarkOverlay
+            ? BlinkTheme.Dark
+            : ThemeManager.Instance.Current;
         var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
         var bgColor = theme.OverlayBackground(isDark);
         var textColor = theme.OverlayText(isDark);
+        var accent = theme.Accent(isDark);
 
         RootGrid.Background = new SolidColorBrush(bgColor);
         MessageText.Foreground = new SolidColorBrush(textColor);
         IconElement.Foreground = new SolidColorBrush(textColor);
+
+        // Button: accent background + contrasting text
+        TakeBreakButton.Background = new SolidColorBrush(accent);
+        TakeBreakButton.Foreground = new SolidColorBrush(theme.TextOnAccent(isDark));
 
         // Auto-dismiss after 5 seconds
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };

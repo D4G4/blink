@@ -64,6 +64,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
@@ -96,45 +97,71 @@
                            TextWrapping="Wrap" MaxWidth="400"/>
             </StackPanel>
 
-            <!-- Sensitivity slider card -->
-            <Border Grid.Row="3" x:Name="SliderCard"
-                    CornerRadius="14" Padding="20" Margin="0,24,0,0"
-                    MaxWidth="420" HorizontalAlignment="Center">
-                <StackPanel Spacing="10">
-                    <TextBlock x:Name="SliderTitle" Text="Flow Sensitivity"
-                               FontSize="14" FontWeight="SemiBold"
-                               HorizontalAlignment="Center"/>
+            <!-- Preset cards -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="14"
+                        HorizontalAlignment="Center" Margin="0,24,0,0">
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock x:Name="SliderLowLabel" Grid.Column="0" Text="Low" FontSize="12"
-                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <Slider Grid.Column="1" x:Name="FlowSlider"
-                                Minimum="40" Maximum="90" StepFrequency="5"
-                                ValueChanged="FlowSlider_ValueChanged"/>
-                        <TextBlock x:Name="SliderHighLabel" Grid.Column="2" Text="High" FontSize="12"
-                                   VerticalAlignment="Center" Margin="8,0,0,0"/>
-                    </Grid>
+                <Button x:Name="PresetEyeHealth" Click="OnPresetSelected"
+                        Tag="eyeHealth" Background="Transparent" BorderThickness="0"
+                        Padding="0" CornerRadius="14">
+                    <Border x:Name="CardEyeHealth" CornerRadius="14" Padding="16,20"
+                            Width="150" MinHeight="130">
+                        <StackPanel Spacing="10" HorizontalAlignment="Center">
+                            <FontIcon x:Name="IconEyeHealth" Glyph="&#xEB51;" FontSize="32"/>
+                            <TextBlock x:Name="NameEyeHealth" Text="Eye health"
+                                       FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="DescEyeHealth" Text="Regular breaks. Only intense work extends."
+                                       FontSize="12" TextAlignment="Center" TextWrapping="Wrap"
+                                       Opacity="0.8" MaxWidth="130"/>
+                        </StackPanel>
+                    </Border>
+                </Button>
 
-                    <TextBlock x:Name="FlowPctLabel" FontSize="24" FontWeight="Light"
-                               FontFamily="Consolas"
-                               HorizontalAlignment="Center"/>
+                <Button x:Name="PresetBalanced" Click="OnPresetSelected"
+                        Tag="balanced" Background="Transparent" BorderThickness="0"
+                        Padding="0" CornerRadius="14">
+                    <Border x:Name="CardBalanced" CornerRadius="14" Padding="16,20"
+                            Width="150" MinHeight="130">
+                        <StackPanel Spacing="10" HorizontalAlignment="Center">
+                            <FontIcon x:Name="IconBalanced" Glyph="&#xE912;" FontSize="32"/>
+                            <TextBlock x:Name="NameBalanced" Text="Balanced"
+                                       FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="DescBalanced" Text="Smart timing. Extends for focused work."
+                                       FontSize="12" TextAlignment="Center" TextWrapping="Wrap"
+                                       Opacity="0.8" MaxWidth="130"/>
+                        </StackPanel>
+                    </Border>
+                </Button>
 
-                    <TextBlock x:Name="FlowDescLabel" FontSize="14" FontWeight="Medium"
-                               TextAlignment="Center" TextWrapping="Wrap"
-                               HorizontalAlignment="Center" MaxWidth="380"/>
-                </StackPanel>
-            </Border>
+                <Button x:Name="PresetDeepWork" Click="OnPresetSelected"
+                        Tag="deepWork" Background="Transparent" BorderThickness="0"
+                        Padding="0" CornerRadius="14">
+                    <Border x:Name="CardDeepWork" CornerRadius="14" Padding="16,20"
+                            Width="150" MinHeight="130">
+                        <StackPanel Spacing="10" HorizontalAlignment="Center">
+                            <FontIcon x:Name="IconDeepWork" Glyph="&#xE945;" FontSize="32"/>
+                            <TextBlock x:Name="NameDeepWork" Text="Deep work"
+                                       FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="DescDeepWork" Text="Fewer interruptions. Gentle reminders."
+                                       FontSize="12" TextAlignment="Center" TextWrapping="Wrap"
+                                       Opacity="0.8" MaxWidth="130"/>
+                        </StackPanel>
+                    </Border>
+                </Button>
+            </StackPanel>
+
+            <!-- Description for selected preset -->
+            <TextBlock Grid.Row="4" x:Name="FlowDescLabel"
+                       FontSize="15" FontWeight="Medium"
+                       TextAlignment="Center" TextWrapping="Wrap"
+                       HorizontalAlignment="Center" MaxWidth="420"
+                       VerticalAlignment="Top" Margin="0,20,0,0"/>
 
             <!-- Spacer -->
-            <Grid Grid.Row="4"/>
+            <Grid Grid.Row="5"/>
 
             <!-- Buttons -->
-            <StackPanel Grid.Row="5" HorizontalAlignment="Center" Spacing="20" Margin="0,0,0,20">
+            <StackPanel Grid.Row="6" HorizontalAlignment="Center" Spacing="20" Margin="0,0,0,20">
                 <Button x:Name="ExploreButton" Click="OnExploreHowItWorks"
                         Background="Transparent" BorderThickness="0"
                         HorizontalAlignment="Center" Padding="20,10">

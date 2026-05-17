@@ -120,21 +120,56 @@
                 <StackPanel x:Name="FlowPanel" Spacing="16" MaxWidth="500" Visibility="Collapsed">
                     <TextBlock Text="FLOW DETECTION" FontSize="12" FontWeight="SemiBold" Opacity="0.5"/>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Sensitivity" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                            <Slider x:Name="FlowSensitivitySlider" Width="160" Minimum="40" Maximum="90" StepFrequency="5"
-                                    ValueChanged="FlowSensitivitySlider_ValueChanged"/>
-                            <TextBlock x:Name="FlowSensitivityLabel" VerticalAlignment="Center" Width="40"/>
-                        </StackPanel>
-                    </Grid>
+                    <!-- Three preset buttons -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="PresetEyeHealthBtn" Click="OnFlowPresetSelected"
+                                Tag="eyeHealth" HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center" Padding="0,10" CornerRadius="10">
+                            <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                <FontIcon x:Name="FlowIconEyeHealth" Glyph="&#xEB51;" FontSize="20"/>
+                                <TextBlock x:Name="FlowNameEyeHealth" Text="Eye health"
+                                           FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="PresetBalancedBtn" Click="OnFlowPresetSelected"
+                                Tag="balanced" HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center" Padding="0,10" CornerRadius="10">
+                            <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                <FontIcon x:Name="FlowIconBalanced" Glyph="&#xE912;" FontSize="20"/>
+                                <TextBlock x:Name="FlowNameBalanced" Text="Balanced"
+                                           FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="PresetDeepWorkBtn" Click="OnFlowPresetSelected"
+                                Tag="deepWork" HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center" Padding="0,10" CornerRadius="10">
+                            <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                <FontIcon x:Name="FlowIconDeepWork" Glyph="&#xE945;" FontSize="20"/>
+                                <TextBlock x:Name="FlowNameDeepWork" Text="Deep work"
+                                           FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
                     <TextBlock x:Name="FlowSensitivityDescription" FontSize="12" Opacity="0.5" TextWrapping="Wrap"/>
-                    <HyperlinkButton x:Name="FlowLearnMoreButton" Content="See real-world impact of this sensitivity"
-                                     Click="FlowLearnMore_Click" Padding="0"/>
+
+                    <!-- Fine-tune slider (collapsed by default) -->
+                    <StackPanel x:Name="FineTunePanel" Spacing="4" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Slider x:Name="FlowSensitivitySlider" Width="200" Minimum="40" Maximum="90" StepFrequency="5"
+                                    ValueChanged="FlowSensitivitySlider_ValueChanged"/>
+                            <TextBlock x:Name="FlowSensitivityLabel" VerticalAlignment="Center" Width="40"
+                                       FontFamily="Consolas" FontSize="12"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Action links -->
+                    <StackPanel Orientation="Horizontal" Spacing="16">
+                        <HyperlinkButton x:Name="FineTuneButton" Content="Fine-tune"
+                                         Click="FineTuneToggle_Click" Padding="0" FontSize="11"/>
+                        <HyperlinkButton x:Name="FlowLearnMoreButton" Content="How this affects your breaks"
+                                         Click="FlowLearnMore_Click" Padding="0" FontSize="11"/>
+                    </StackPanel>
 
                     <TextBlock Text="CURRENT STATE" FontSize="12" FontWeight="SemiBold" Opacity="0.5" Margin="0,16,0,0"/>
 

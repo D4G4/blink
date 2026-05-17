@@ -94,7 +94,7 @@ public sealed class AppState : INotifyPropertyChanged
 
         Engine.OnShowExtendToast = reason =>
         {
-            _overlayManager?.ShowFlowNudgeToast(
+            _overlayManager?.ShowFlowNudge(
                 $"{reason} — extended 10 min",
                 () => Engine.UserTookBreak());
         };
@@ -158,7 +158,22 @@ public sealed class AppState : INotifyPropertyChanged
 
     public void ShowBreakPrompt()
     {
-        Engine.OnShowBreak?.Invoke(Engine.CurrentBreakStreak + 1);
+        IsBreakPrompted = true;
+        BreaksPromptedToday++;
+        _overlayManager?.ShowBreak(
+            onComplete: () =>
+            {
+                Engine.UserTookBreak();
+                IsBreakPrompted = false;
+                BreaksTakenToday++;
+            },
+            onSkip: () =>
+            {
+                Engine.UserSkippedBreak();
+                IsBreakPrompted = false;
+            },
+            breakNumber: Engine.CurrentBreakStreak + 1,
+            skipToast: true);
     }
 
     private void LoadTodayStats()
