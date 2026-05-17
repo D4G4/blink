@@ -44,6 +44,15 @@ final class MacInputMonitor: InputEventSource {
         BlinkLog.permission.info("CGEventTap created and enabled in MacInputMonitor — input monitoring active")
     }
 
+    /// Re-enable the event tap if macOS disabled it (happens after long sleep).
+    func reEnableTapIfNeeded() {
+        guard let tap = eventTap else { return }
+        if !CGEvent.tapIsEnabled(tap: tap) {
+            BlinkLog.permission.info("CGEventTap was disabled — re-enabling after wake")
+            CGEvent.tapEnable(tap: tap, enable: true)
+        }
+    }
+
     func stopMonitoring() {
         if let tap = eventTap {
             CGEvent.tapEnable(tap: tap, enable: false)

@@ -258,6 +258,9 @@ final class AppState: ObservableObject {
         let appMon = MacAppMonitor()
         appMon.onAppSwitch = { [weak self] event in
             BlinkLog.app.debug("App switch → \(event.appBundleID)")
+            // App switches come from NSWorkspace (not CGEventTap) — they prove the user
+            // is at the computer even if the event tap died during sleep.
+            self?.lastRealInputTime = Date()
             self?.flowScoreCalculator.recordAppSwitch(event)
             self?.breakpointDetector.recordAppSwitch(at: event.timestamp)
             self?.breakDecisionEngine.recordAppSwitch(bundleID: event.appBundleID)
@@ -329,6 +332,9 @@ final class AppState: ObservableObject {
     /// on wake (trackpad touch to see lock screen counts as input), so we check
     /// wall-clock time since the last real keystroke/click/scroll instead.
     private func handleWakeFromSleep() {
+        // macOS can disable CGEventTaps after prolonged sleep — re-enable
+        inputMonitor?.reEnableTapIfNeeded()
+
         let realIdle = Date().timeIntervalSince(lastRealInputTime)
         BlinkLog.app.info("Wake from sleep — \(String(format: "%.0f", realIdle))s since last real input")
         if realIdle >= Self.idleBreakThreshold {
