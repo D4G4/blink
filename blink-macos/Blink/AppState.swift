@@ -231,6 +231,13 @@ final class AppState: ObservableObject {
         ) { [weak self] _ in
             BlinkLog.app.info("Wake from sleep")
             self?.inputMonitor?.reEnableTapIfNeeded()
+            // If break overlay was showing before sleep, dismiss it — user was away
+            if self?.isBreakPrompted == true {
+                BlinkLog.app.info("Break overlay was showing before sleep — dismissing")
+                self?.engine.userTookBreak()
+                self?.isBreakPrompted = false
+                self?.overlayController.dismiss()
+            }
             self?.engine.wakeFromSleep()
         }
 

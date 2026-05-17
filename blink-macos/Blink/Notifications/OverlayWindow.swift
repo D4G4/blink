@@ -370,6 +370,15 @@ final class OverlayWindowController {
         globalKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             _ = self?.currentKeyHandler?.handle(event)
         }
+        // Click anywhere on the overlay after countdown reaches 0 → skip break
+        // This works even when keyboard is blocked by secure input
+        NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self, weak breakModel] event in
+            if breakModel?.remaining ?? 1 <= 0 {
+                skipAction()
+                return nil
+            }
+            return event
+        }
         
         win.contentView = NSHostingView(rootView: AnyView(breakView))
         win.makeKeyAndOrderFront(nil)
@@ -622,10 +631,23 @@ final class BreakPhaseModel: ObservableObject {
         }
     }
     
+    /// Seconds since the countdown reached 0. Used for auto-dismiss.
+    private var secondsAtZero: Int = 0
+
     func startTimer(onComplete: @escaping () -> Void) {
+        secondsAtZero = 0
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self else { return }
-            if self.remaining > 0 { self.remaining -= 1 } else { self.stopTimer(); onComplete() }
+            if self.remaining > 0 {
+                self.remaining -= 1
+            } else {
+                // Count time spent at 0 — auto-dismiss after 60s with no interaction
+                self.secondsAtZero += 1
+                if self.secondsAtZero >= 60 {
+                    self.stopTimer()
+                    onComplete()
+                }
+            }
         }
     }
     
