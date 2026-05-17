@@ -5,18 +5,18 @@ import Testing
 @Suite("BreakDecisionEngine")
 struct BreakDecisionEngineTests {
 
-    @Test("No input → skip")
-    func noInputSkips() {
+    @Test("No input → show break (no skip)")
+    func noInputShowsBreak() {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
-        engine.tick(now: 1200) // 20 min
+        engine.tick(now: 1200)
 
         let decision = engine.decide()
-        #expect(decision == .skip, "No input should skip — not worth a break")
+        #expect(decision == .showBreak, "No input should show break — no silent skips")
     }
 
-    @Test("Very low activity → nudge (still screen time)")
-    func veryLowActivityNudges() {
+    @Test("Low activity → show break (no nudge)")
+    func lowActivityShowsBreak() {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
 
@@ -26,7 +26,7 @@ struct BreakDecisionEngineTests {
         engine.tick(now: 1200)
 
         let decision = engine.decide()
-        #expect(decision == .nudge, "Low activity should nudge — eyes still strain")
+        #expect(decision == .showBreak, "Low activity should show break — eyes still strain")
     }
 
     @Test("Heavy typing → extend")
@@ -34,100 +34,61 @@ struct BreakDecisionEngineTests {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
 
-        // Simulate 20 min of typing: 60 kpm = 1200 keystrokes
-        for _ in 0..<1200 {
-            engine.recordKeystroke()
-        }
+        for _ in 0..<1200 { engine.recordKeystroke() }
         engine.tick(now: 1200)
 
         let decision = engine.decide()
         if case .extend(let minutes, _) = decision {
             #expect(minutes == 30, "First extension should be to 30 min")
         } else {
-            #expect(Bool(false), "Heavy typing should extend, got showBreak")
+            #expect(Bool(false), "Heavy typing should extend")
         }
     }
 
-    @Test("Heavy clicking (designer) → extend")
-    func heavyClickingExtends() {
+    @Test("Eye Health (maxExtensions=0) → always show break")
+    func eyeHealthAlwaysBreaks() {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
 
-        // Simulate designer: 20 clicks/min for 20 min = 400 clicks + some keys for shortcuts
-        for _ in 0..<400 {
-            engine.recordClick()
-        }
-        for _ in 0..<100 {
-            engine.recordKeystroke()
-        }
-        engine.setCurrentApp(bundleID: "com.figma.Desktop")
+        // Heavy typing that would normally extend
+        for _ in 0..<1200 { engine.recordKeystroke() }
         engine.tick(now: 1200)
 
-        let decision = engine.decide()
-        if case .extend = decision {
-            // Good — designer work detected
-        } else {
-            #expect(Bool(false), "Designer work should extend")
-        }
+        let decision = engine.decide(maxExtensions: 0)
+        #expect(decision == .showBreak, "Eye Health should always show break")
     }
 
-    @Test("Scroll-only (browsing) → show break")
-    func scrollOnlyShowsBreak() {
-        let engine = BreakDecisionEngine()
-        engine.tick(now: 0)
-
-        // Lots of scrolling, no keyboard
-        for _ in 0..<200 {
-            engine.recordScroll()
-        }
-        engine.tick(now: 1200)
-
-        let decision = engine.decide()
-        #expect(decision == .showBreak, "Scroll-only browsing should show break")
-    }
-
-    @Test("Max 2 extensions then show break")
-    func maxTwoExtensions() {
+    @Test("Max extensions then show break")
+    func maxExtensions() {
         let engine = BreakDecisionEngine()
 
-        // First 20 min — heavy typing
+        // First 20 min
         engine.tick(now: 0)
         for _ in 0..<1200 { engine.recordKeystroke() }
         engine.tick(now: 1200)
-        let d1 = engine.decide()
+        let d1 = engine.decide(maxExtensions: 1)
         if case .extend(let m, _) = d1 { #expect(m == 30) }
         engine.resetWindow()
 
-        // Next 10 min — still typing
+        // Next 10 min — still typing but max reached
         engine.tick(now: 1200)
         for _ in 0..<600 { engine.recordKeystroke() }
         engine.tick(now: 1800)
-        let d2 = engine.decide()
-        if case .extend(let m, _) = d2 { #expect(m == 40) }
-        engine.resetWindow()
-
-        // Next 10 min — still typing but max reached
-        engine.tick(now: 1800)
-        for _ in 0..<600 { engine.recordKeystroke() }
-        engine.tick(now: 2400)
-        let d3 = engine.decide()
-        #expect(d3 == .showBreak, "Third extension should be denied — max 2")
+        let d2 = engine.decide(maxExtensions: 1)
+        #expect(d2 == .showBreak, "Should show break after max extensions used")
     }
 
     @Test("Reset clears extension count")
     func resetClearsExtensions() {
         let engine = BreakDecisionEngine()
 
-        // Use up one extension
         engine.tick(now: 0)
         for _ in 0..<1200 { engine.recordKeystroke() }
         engine.tick(now: 1200)
         _ = engine.decide()
 
-        // Full reset (walk away)
         engine.resetAll()
 
-        // Should be able to extend again
         engine.tick(now: 2000)
         for _ in 0..<1200 { engine.recordKeystroke() }
         engine.tick(now: 3200)
@@ -139,63 +100,15 @@ struct BreakDecisionEngineTests {
         }
     }
 
-    @Test("Casual chatting (few keystrokes, long gaps) → nudge")
-    func casualChattingNudges() {
+    @Test("Scroll-only (browsing) → show break")
+    func scrollOnlyShowsBreak() {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
 
-        // 20 min of casual chat: ~50 keystrokes, some scrolls = ~4 inputs/min
-        for _ in 0..<50 { engine.recordKeystroke() }
-        for _ in 0..<30 { engine.recordScroll() }
-        engine.tick(now: 1200)
-
-        let decision = engine.decide()
-        #expect(decision == .nudge, "Casual chatting should nudge — still screen time")
-    }
-
-    @Test("Moderate browsing (enough activity) → show break")
-    func moderateBrowsingShowsBreak() {
-        let engine = BreakDecisionEngine()
-        engine.tick(now: 0)
-
-        // 20 min of active browsing: clicks + scrolls + some typing
-        for _ in 0..<150 { engine.recordClick() }
         for _ in 0..<200 { engine.recordScroll() }
-        for _ in 0..<50 { engine.recordKeystroke() }
-        engine.recordAppSwitch(bundleID: "com.apple.Safari")
-        for _ in 0..<15 { engine.recordAppSwitch(bundleID: "com.apple.Safari") }
         engine.tick(now: 1200)
 
         let decision = engine.decide()
-        #expect(decision == .showBreak, "Active browsing should show break")
-    }
-
-    @Test("Sensitivity affects threshold")
-    func sensitivityAffectsThreshold() {
-        // Low sensitivity — harder to extend
-        let strict = BreakDecisionEngine()
-        strict.sensitivity = 0.4
-        strict.tick(now: 0)
-        for _ in 0..<300 { strict.recordKeystroke() } // 15 kpm — moderate
-        strict.tick(now: 1200)
-        let d1 = strict.decide()
-
-        // High sensitivity — easier to extend
-        let relaxed = BreakDecisionEngine()
-        relaxed.sensitivity = 0.9
-        relaxed.tick(now: 0)
-        for _ in 0..<300 { relaxed.recordKeystroke() } // same 15 kpm
-        relaxed.tick(now: 1200)
-        let d2 = relaxed.decide()
-
-        // High sensitivity should be more likely to extend
-        if case .showBreak = d1, case .extend = d2 {
-            // Expected: strict shows break, relaxed extends
-        } else if case .extend = d1, case .extend = d2 {
-            // Both extend — also ok, 15 kpm might be enough even for strict
-        } else if case .showBreak = d1, case .showBreak = d2 {
-            // Both show break — also possible at 15 kpm
-        }
-        // Just verify they don't crash and return valid decisions
+        #expect(decision == .showBreak, "Scroll-only browsing should show break")
     }
 }

@@ -59,32 +59,23 @@ struct FlowSensitivityTests {
         }
     }
 
-    // MARK: - Skip / Nudge / Break boundaries
+    // MARK: - Break boundaries
 
-    @Test("Zero inputs → skip")
-    func zeroInputsSkip() {
+    @Test("Zero inputs → show break")
+    func zeroInputsShowBreak() {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
         engine.tick(now: 1200)
-        #expect(engine.decide() == .skip)
+        #expect(engine.decide() == .showBreak)
     }
 
-    @Test("Under 1 input/min → skip")
-    func veryLowSkip() {
-        let engine = BreakDecisionEngine()
-        engine.tick(now: 0)
-        for _ in 0..<15 { engine.recordKeystroke() }
-        engine.tick(now: 1200) // 15 inputs in 20 min = 0.75/min
-        #expect(engine.decide() == .skip)
-    }
-
-    @Test("1-5 inputs/min → nudge")
-    func lowActivityNudge() {
+    @Test("Low activity → show break")
+    func lowActivityShowBreak() {
         let engine = BreakDecisionEngine()
         engine.tick(now: 0)
         for _ in 0..<60 { engine.recordKeystroke() }
         engine.tick(now: 1200) // 60 inputs in 20 min = 3/min
-        #expect(engine.decide() == .nudge)
+        #expect(engine.decide() == .showBreak)
     }
 
     @Test("5+ inputs/min with low score → show break")

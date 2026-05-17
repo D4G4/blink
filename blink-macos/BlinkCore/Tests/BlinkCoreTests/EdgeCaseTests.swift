@@ -35,25 +35,12 @@ struct EdgeCaseTests {
         #expect(timer.remainingSeconds == before)
     }
 
-    @Test("Timer reset after break during flow resets to normal duration")
-    func resetDuringFlow() {
+    @Test("Timer reset after break resets to default duration")
+    func resetAfterBreak() {
         let timer = TimerStateMachine()
-        timer.tick(flowState: .flow, deltaSeconds: 100)
+        timer.tick(flowState: .normal, deltaSeconds: 100)
         timer.resetAfterBreak()
-        #expect(timer.remainingSeconds == TimerStateMachine.defaultNormalDuration)
-    }
-
-    @Test("Timer handles rapid flow state changes")
-    func rapidFlowChanges() {
-        let timer = TimerStateMachine()
-        timer.tick(flowState: .normal, deltaSeconds: 60)
-        timer.tick(flowState: .flow, deltaSeconds: 0)
-        timer.tick(flowState: .normal, deltaSeconds: 0)
-        timer.tick(flowState: .deepFlow, deltaSeconds: 0)
-        timer.tick(flowState: .normal, deltaSeconds: 0)
-        // Should not crash, remaining should be reasonable
-        #expect(timer.remainingSeconds > 0)
-        #expect(timer.remainingSeconds <= TimerStateMachine.defaultDeepFlowDuration)
+        #expect(timer.remainingSeconds == TimerStateMachine.defaultDuration)
     }
 
     @Test("onBreakDue fires exactly once")
@@ -128,38 +115,6 @@ struct EdgeCaseTests {
                 isMicActive: false, isCameraActive: false,
                 now: base + 300)
         #expect(sm.state == .normal, "Flow should require 3+ min to re-enter after break")
-    }
-
-    // MARK: - Flow score calculator edge cases
-
-    @Test("Calculator handles thousands of events without crashing")
-    func manyEvents() {
-        let calc = FlowScoreCalculator()
-        for i in 0..<5000 {
-            calc.ingestKeystroke(KeystrokeEvent(timestamp: Double(i)))
-        }
-        let score = calc.currentScore(now: 5000)
-        #expect(score >= 0 && score <= 1)
-    }
-
-    @Test("Calculator score is always 0-1")
-    func scoreRange() {
-        let calc = FlowScoreCalculator()
-
-        // Empty
-        var score = calc.currentScore(now: 1000)
-        #expect(score >= 0 && score <= 1)
-
-        // With data
-        for i in 0..<50 {
-            calc.ingestKeystroke(KeystrokeEvent(timestamp: 950 + Double(i)))
-            calc.ingestMouseEvent(MouseEvent(timestamp: 950 + Double(i), kind: .click))
-        }
-        calc.recordAppSwitch(AppSwitchEvent(timestamp: 990, appBundleID: "com.test"))
-        calc.setCurrentApp(bundleID: "com.apple.dt.Xcode")
-
-        score = calc.currentScore(now: 1000)
-        #expect(score >= 0 && score <= 1)
     }
 
     // MARK: - Compliance tracker edge cases

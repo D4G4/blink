@@ -98,17 +98,16 @@ struct IntegrationTests {
 
     // MARK: - Timer behavior with flow state changes
 
-    @Test("Timer extends proportionally when entering flow")
-    func timerExtendsOnFlow() {
+    @Test("Timer does not scale on flow state change")
+    func timerNoFlowScaling() {
         let timer = TimerStateMachine()
 
-        // 10 minutes of normal countdown (50% elapsed)
         timer.tick(flowState: .normal, deltaSeconds: 600)
         #expect(timer.remainingSeconds == 600)
 
-        // Enter flow — should scale to 50% of 30-min flow duration = 15 min remaining
+        // Flow state doesn't change remaining — BreakDecisionEngine handles extensions
         timer.tick(flowState: .flow, deltaSeconds: 0)
-        #expect(timer.remainingSeconds == 900)
+        #expect(timer.remainingSeconds == 600)
     }
 
     @Test("Timer pauses during idle")
@@ -129,14 +128,11 @@ struct IntegrationTests {
     func timerResetsAfterBreak() {
         let timer = TimerStateMachine()
 
-        // Enter flow, timer extends
         timer.tick(flowState: .normal, deltaSeconds: 300)
-        timer.tick(flowState: .flow, deltaSeconds: 0)
-        #expect(timer.remainingSeconds > 600, "Should be extended for flow")
 
-        // Reset after break — should go back to normal 20 min
+        // Reset after break — should go back to 20 min
         timer.resetAfterBreak()
-        #expect(timer.remainingSeconds == TimerStateMachine.defaultNormalDuration)
+        #expect(timer.remainingSeconds == TimerStateMachine.defaultDuration)
     }
 
     // MARK: - Agent workflow (waiting for AI response)

@@ -53,13 +53,13 @@ struct TimerStateMachineTests {
     @Test("Adjusts proportionally when entering flow")
     func adjustsForFlow() {
         let timer = TimerStateMachine()
-        // Spend 10 minutes (50%) of 20-minute normal timer
+        // Spend 10 minutes of 20-minute timer
         timer.tick(flowState: .normal, deltaSeconds: 600)
         #expect(timer.remainingSeconds == 600)
 
-        // Enter flow — 30 min timer, should be at 50% = 15 min remaining
+        // Timer no longer scales — flow detection is handled by BreakDecisionEngine
         timer.tick(flowState: .flow, deltaSeconds: 0)
-        #expect(timer.remainingSeconds == 900, "Should scale to 50% of flow duration (30min), got \(timer.remainingSeconds)")
+        #expect(timer.remainingSeconds == 600, "Timer should not scale on flow state change")
     }
 
     @Test("Reset after break restores default")

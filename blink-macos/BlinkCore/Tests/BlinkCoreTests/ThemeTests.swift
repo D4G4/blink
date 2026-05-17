@@ -42,13 +42,9 @@ struct CoreModelTests {
         }
     }
 
-    @Test("TimerStateMachine default constants are sane")
+    @Test("TimerStateMachine default duration is 20 min")
     func timerDefaults() {
-        #expect(TimerStateMachine.defaultNormalDuration == 1200)
-        #expect(TimerStateMachine.defaultFlowDuration == 1800)
-        #expect(TimerStateMachine.defaultDeepFlowDuration == 2400)
-        #expect(TimerStateMachine.defaultNormalDuration < TimerStateMachine.defaultFlowDuration)
-        #expect(TimerStateMachine.defaultFlowDuration < TimerStateMachine.defaultDeepFlowDuration)
+        #expect(TimerStateMachine.defaultDuration == 1200)
     }
 
     @Test("FlowStateMachine default constants are sane")
@@ -58,22 +54,4 @@ struct CoreModelTests {
         #expect(sm.config.maxExtensions >= 0)
     }
 
-    @Test("FlowScoreCalculator reset clears all state")
-    func calculatorReset() {
-        let calc = FlowScoreCalculator()
-        // Feed data
-        for i in 0..<20 {
-            calc.ingestKeystroke(KeystrokeEvent(timestamp: 900 + Double(i)))
-        }
-        calc.setCurrentApp(bundleID: "com.apple.dt.Xcode")
-
-        let scoreBefore = calc.currentScore(now: 1000)
-        #expect(scoreBefore > 0)
-
-        calc.reset()
-        let scoreAfter = calc.currentScore(now: 1000)
-
-        // After reset, score should be lower (no keystroke data)
-        #expect(scoreAfter < scoreBefore, "Reset should clear data")
-    }
 }

@@ -8,16 +8,12 @@ import Foundation
 /// signals for the full 20 minutes and make ONE decision at break time.
 public final class BreakDecisionEngine {
 
-    /// The decision: interrupt, extend, or skip?
+    /// The decision: show break or extend?
     public enum Decision: Equatable, Sendable {
-        /// User is doing focused work — extend timer, show gentle nudge
+        /// User is doing focused work — extend timer, show toast
         case extend(minutes: Int, reason: String)
-        /// User has been actively using the screen — show break overlay
+        /// Show break overlay
         case showBreak
-        /// Low activity but still screen time — gentle nudge toast, not forced
-        case nudge
-        /// Barely any activity — silently reset timer
-        case skip
     }
 
     /// Raw signal window collected over the timer period
@@ -106,26 +102,8 @@ public final class BreakDecisionEngine {
         let isCreativeApp = Self.isCreativeApp(window.currentAppBundleID)
         let totalInputsPerMinute = kpm + cpm + spm
 
-        // Very little activity — user was barely at the screen
-        // Less than 1 input per minute = truly away, not worth any reminder
-        if totalInputsPerMinute < 1 {
-            return .skip
-        }
-
-        // Eye Health: no extensions, no nudges. If at screen, show break.
-        if maxExtensions == 0 {
-            return .showBreak
-        }
-
-        // Low activity — some screen time but not intense
-        // 1-5 inputs per minute = reading, occasional scrolling
-        // Eyes still strain from staring — gentle nudge, not forced overlay
-        if totalInputsPerMinute < 5 {
-            return .nudge
-        }
-
-        // How many extensions already used
-        if extensionCount >= maxExtensions {
+        // No extensions allowed (Eye Health) or already used all extensions
+        if maxExtensions == 0 || extensionCount >= maxExtensions {
             return .showBreak
         }
 
