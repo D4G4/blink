@@ -75,7 +75,6 @@
 		4BF5F1BD395AB638696B46E9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5414954E7C64589362BB613F /* ThemedToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemedToggleStyle.swift; sourceTree = "<group>"; };
 		545B271DAD35F8C4FA3D7CCF /* MacInputMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacInputMonitor.swift; sourceTree = "<group>"; };
-		5E0407B1C17D7A7BCEE6E63B /* BlinkCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BlinkCore; path = BlinkCore; sourceTree = SOURCE_ROOT; };
 		71AF16B93A94215233284E2E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		73EF2DCF137E47C83983AFEB /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		7BDF5153E498B2DEFD9EAEBF /* LogExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogExporter.swift; sourceTree = "<group>"; };
@@ -121,14 +120,6 @@
 				3D310BA2552802E7D6905702 /* SettingsView.swift */,
 			);
 			path = Settings;
-			sourceTree = "<group>";
-		};
-		312B6FAA8805FF783F2E36F0 /* Packages */ = {
-			isa = PBXGroup;
-			children = (
-				5E0407B1C17D7A7BCEE6E63B /* BlinkCore */,
-			);
-			name = Packages;
 			sourceTree = "<group>";
 		};
 		57EF48B0C782CFEFFFE18294 /* Notifications */ = {
@@ -223,7 +214,6 @@
 			isa = PBXGroup;
 			children = (
 				A668A2BE284733E6CF606FC7 /* Blink */,
-				312B6FAA8805FF783F2E36F0 /* Packages */,
 				E370FA75E2B9CA960A6CB41D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -318,7 +308,7 @@
 			mainGroup = B23DD3B5EFB562B7C2FAEE85;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				E05E96A5DD343DF7FA2A8D13 /* XCLocalSwiftPackageReference "BlinkCore" */,
+				F19323D0B64EC70C5FF30812 /* XCRemoteSwiftPackageReference "blink-core" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E370FA75E2B9CA960A6CB41D /* Products */;
@@ -592,16 +582,21 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		E05E96A5DD343DF7FA2A8D13 /* XCLocalSwiftPackageReference "BlinkCore" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = BlinkCore;
+/* Begin XCRemoteSwiftPackageReference section */
+		F19323D0B64EC70C5FF30812 /* XCRemoteSwiftPackageReference "blink-core" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "git@github-d4g4:D4G4/blink-core.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		B3D1D1183FB72FCF22C0F8F6 /* BlinkCore */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = F19323D0B64EC70C5FF30812 /* XCRemoteSwiftPackageReference "blink-core" */;
 			productName = BlinkCore;
 		};
 /* End XCSwiftPackageProductDependency section */

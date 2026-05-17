@@ -133,7 +133,8 @@ final class AppState: ObservableObject {
             guard let self else { return }
             BlinkLog.app.info("Break decision: extend — \(reason)")
             self.overlayController.showFlowNudge(
-                message: "\(reason) — +10 min",
+                message: "\(reason) — extended 10 min",
+                // e.g. "Focused — extended 10 min"
                 onTakeBreak: { [weak self] in
                     Task { @MainActor in
                         self?.engine.userTookBreak()

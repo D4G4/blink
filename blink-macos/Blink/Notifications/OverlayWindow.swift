@@ -482,7 +482,7 @@ private struct TimerExtendedToastView: View {
 
     var body: some View {
         let accent = theme.accent(for: colorScheme)
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "brain.head.profile")
                     .font(.system(size: 14))
@@ -493,21 +493,18 @@ private struct TimerExtendedToastView: View {
                     .foregroundStyle(.white)
             }
 
-            HStack {
-                Spacer()
-                Button {
-                    onTakeBreak()
-                } label: {
-                    Text("Take break now")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(accent)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(.white)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
+            Button {
+                onTakeBreak()
+            } label: {
+                Text("Take break now")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(accent)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 5)
+                    .background(.white)
+                    .clipShape(Capsule())
             }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -897,18 +894,18 @@ private struct DebugToastView: View {
 }
 
 #Preview("Flow Nudge Toast - Peach") {
-    FlowNudgeToastView(theme: .peach, message: "You've been focused for 40 min — time for a break?", onDismiss: {}, onTakeBreak: {})
+    FlowNudgeToastView(theme: .peach, message: "Focused — extended 10 min", onDismiss: {}, onTakeBreak: {})
         .frame(width: 320, height: 80)
 }
 
 #Preview("Flow Nudge Toast - Midnight") {
-    FlowNudgeToastView(theme: .midnight, message: "You've been focused for 30 min — time for a break?", onDismiss: {}, onTakeBreak: {})
+    FlowNudgeToastView(theme: .midnight, message: "Focused for 30 min — extended 10 min", onDismiss: {}, onTakeBreak: {})
         .frame(width: 320, height: 80)
         .preferredColorScheme(.dark)
 }
 
 #Preview("Flow Nudge Toast - Sage") {
-    FlowNudgeToastView(theme: .sage, message: "You've been focused for 40 min — time for a break?", onDismiss: {}, onTakeBreak: {})
+    FlowNudgeToastView(theme: .sage, message: "Focused for 40 min — extended 10 min", onDismiss: {}, onTakeBreak: {})
         .frame(width: 320, height: 80)
 }
 
@@ -928,7 +925,7 @@ private struct DebugToastView: View {
         TimerExtendedToastView(theme: .peach, onDismiss: {}, onTakeBreak: {})
             .frame(width: 280, height: 72)
 
-        FlowNudgeToastView(theme: .peach, message: "You've been focused for 40 min — time for a break?", onDismiss: {}, onTakeBreak: {})
+        FlowNudgeToastView(theme: .peach, message: "Focused — extended 10 min", onDismiss: {}, onTakeBreak: {})
             .frame(width: 320, height: 80)
 
         DebugToastView(message: "State: Normal → Flow")
@@ -943,7 +940,7 @@ private struct DebugToastView: View {
         TimerExtendedToastView(theme: .midnight, onDismiss: {}, onTakeBreak: {})
             .frame(width: 280, height: 72)
 
-        FlowNudgeToastView(theme: .midnight, message: "You've been focused for 30 min — time for a break?", onDismiss: {}, onTakeBreak: {})
+        FlowNudgeToastView(theme: .midnight, message: "Focused for 30 min — extended 10 min", onDismiss: {}, onTakeBreak: {})
             .frame(width: 320, height: 80)
 
         DebugToastView(message: "Timer reset: idle 185s >= 180s")
