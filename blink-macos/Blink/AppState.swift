@@ -259,11 +259,8 @@ final class AppState: ObservableObject {
                 self.engine.setVideoPlaying(video)
                 self.isVideoPlaying = video
 
-                // Tap health check
-                if let tap = self.inputMonitor?.eventTap, !CGEvent.tapIsEnabled(tap: tap) {
-                    BlinkLog.app.info("CGEventTap disabled — re-enabling")
-                    self.inputMonitor?.reEnableTapIfNeeded()
-                }
+                // Tap health check — reEnableTapIfNeeded handles logging internally
+                self.inputMonitor?.reEnableTapIfNeeded()
 
                 self.engine.tick()
             }

@@ -45,12 +45,20 @@ final class MacInputMonitor: InputEventSource {
         BlinkLog.permission.info("CGEventTap created and enabled in MacInputMonitor — input monitoring active")
     }
 
-    /// Re-enable the event tap if macOS disabled it (happens after long sleep).
+    private var tapDeathLogged = false
+
+    /// Re-enable the event tap if macOS disabled it.
+    /// Logs only once to avoid spamming the log buffer.
     func reEnableTapIfNeeded() {
         guard let tap = eventTap else { return }
-        if !CGEvent.tapIsEnabled(tap: tap) {
-            BlinkLog.permission.info("CGEventTap was disabled — re-enabling after wake")
-            CGEvent.tapEnable(tap: tap, enable: true)
+        if CGEvent.tapIsEnabled(tap: tap) {
+            tapDeathLogged = false  // tap is alive, reset
+            return
+        }
+        CGEvent.tapEnable(tap: tap, enable: true)
+        if !tapDeathLogged {
+            tapDeathLogged = true
+            BlinkLog.permission.info("CGEventTap was disabled — attempted re-enable")
         }
     }
 
@@ -67,6 +75,22 @@ final class MacInputMonitor: InputEventSource {
 
     // C-compatible callback
     private static let eventCallback: CGEventTapCallBack = { _, type, event, userInfo in
+        // macOS sends these when it kills the tap — log the actual reason
+        if type == .tapDisabledByTimeout {
+            BlinkLog.permission.info("CGEventTap KILLED: tapDisabledByTimeout — callback was too slow")
+            if let userInfo {
+                let monitor = Unmanaged<MacInputMonitor>.fromOpaque(userInfo).takeUnretainedValue()
+                if let tap = monitor.eventTap {
+                    CGEvent.tapEnable(tap: tap, enable: true)
+                }
+            }
+            return Unmanaged.passUnretained(event)
+        }
+        if type == .tapDisabledByUserInput {
+            BlinkLog.permission.info("CGEventTap KILLED: tapDisabledByUserInput — secure input active")
+            return Unmanaged.passUnretained(event)
+        }
+
         guard let userInfo else { return Unmanaged.passUnretained(event) }
         let monitor = Unmanaged<MacInputMonitor>.fromOpaque(userInfo).takeUnretainedValue()
         let timestamp = Date().timeIntervalSinceReferenceDate
