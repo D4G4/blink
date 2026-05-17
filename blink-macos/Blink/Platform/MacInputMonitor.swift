@@ -8,7 +8,8 @@ final class MacInputMonitor: InputEventSource {
     var onKeystroke: ((KeystrokeEvent) -> Void)?
     var onMouseEvent: ((MouseEvent) -> Void)?
 
-    private var eventTap: CFMachPort?
+    /// Exposed for tap liveness check via `CGEvent.tapIsEnabled(tap:)`.
+    private(set) var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
     func startMonitoring() {

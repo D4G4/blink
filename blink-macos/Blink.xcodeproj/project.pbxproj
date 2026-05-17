@@ -33,7 +33,6 @@
 		77928BBBF428D817C890540F /* GaborExerciseState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E55AA4F9D3F6C46BB8F0D1 /* GaborExerciseState.swift */; };
 		78F685AF5FBDA94856623590 /* AllPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4978224F028FE729A5E799 /* AllPreviews.swift */; };
 		7D233C03212E195C2A96AAA8 /* ResearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */; };
-		8A0AFA5135D8FBEB7414E8FB /* MacIdleDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B2CC8BE1918B85F2A8165B5 /* MacIdleDetector.swift */; };
 		9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 216A16F819CB23807A4A69BF /* MacAppMonitor.swift */; };
 		9F0CE1946691CF2FE32D1528 /* GaborRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04C1C6827F429B94B7B265B /* GaborRenderer.swift */; };
 		A0462C64DCADDC43FA97B6D1 /* ResearchWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F839D2575DE2B8C9F7F320B9 /* ResearchWindowController.swift */; };
@@ -72,7 +71,6 @@
 		4489BDE637012610175AC573 /* FlowSensitivityPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityPage.swift; sourceTree = "<group>"; };
 		454E601831980C64BDA0BDD1 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		48431B2C296BDB92BF0BB93C /* Blink.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blink.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4B2CC8BE1918B85F2A8165B5 /* MacIdleDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacIdleDetector.swift; sourceTree = "<group>"; };
 		4BB2FCB3D4A937B4DF52593C /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		4BF5F1BD395AB638696B46E9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5414954E7C64589362BB613F /* ThemedToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemedToggleStyle.swift; sourceTree = "<group>"; };
@@ -235,7 +233,6 @@
 			children = (
 				216A16F819CB23807A4A69BF /* MacAppMonitor.swift */,
 				977674318B8EB84E0DD3DE41 /* MacContextDetector.swift */,
-				4B2CC8BE1918B85F2A8165B5 /* MacIdleDetector.swift */,
 				545B271DAD35F8C4FA3D7CCF /* MacInputMonitor.swift */,
 			);
 			path = Platform;
@@ -369,7 +366,6 @@
 				2FF43ACECCF77373C5EFCCA4 /* LogExporter.swift in Sources */,
 				9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */,
 				D5C6DCF4BA41B2C014A4D3C8 /* MacContextDetector.swift in Sources */,
-				8A0AFA5135D8FBEB7414E8FB /* MacIdleDetector.swift in Sources */,
 				285C0EFFE325468E346E69D5 /* MacInputMonitor.swift in Sources */,
 				E2E2DC15A3B655161CF31EA3 /* MenuBarController.swift in Sources */,
 				72570C0C40040759FE52FBDF /* MenuBarView.swift in Sources */,
