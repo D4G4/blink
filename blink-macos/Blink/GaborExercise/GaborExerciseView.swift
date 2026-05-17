@@ -96,7 +96,7 @@ private struct ReadyPhase: View {
                     .foregroundStyle(fg)
                 Text("beta")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(.white.opacity(0.15))
@@ -132,9 +132,9 @@ private struct ReadyPhase: View {
             } label: {
                 Text("Continue")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
                     .frame(width: 180, height: 44)
-                    .background(theme.accent)
+                    .background(theme.accent(for: colorScheme))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             }
             .buttonStyle(.plain)
@@ -288,9 +288,9 @@ private struct InstructionsPhase: View {
                 } label: {
                     Text("Start \(state.totalTrials) Trials")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(theme.textOnAccent(for: colorScheme))
                         .frame(width: 180, height: 44)
-                        .background(theme.accent)
+                        .background(theme.accent(for: colorScheme))
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
@@ -318,11 +318,11 @@ private struct TrialPhase: View {
             HStack {
                 Text("Trial \(state.currentTrial) of \(state.totalTrials)")
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(fg.opacity(0.6))
+                    .foregroundStyle(fg)
                 Spacer()
                 Text("Score: \(state.score)/\(state.currentTrial)")
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(fg.opacity(0.6))
+                    .foregroundStyle(fg)
             }
             .padding(.horizontal, 60)
             .padding(.top, 20)
@@ -347,7 +347,7 @@ private struct TrialPhase: View {
             // Instruction hint
             Text(state.exerciseType.howToPlay)
                 .font(.system(size: 13))
-                .foregroundStyle(fg.opacity(0.4))
+                .foregroundStyle(fg)
 
             // Response buttons
             if feedbackCorrect == nil {
@@ -546,9 +546,9 @@ private struct CompletePhase: View {
                 } label: {
                     Text("Done")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(theme.textOnAccent(for: colorScheme))
                         .frame(width: 120, height: 44)
-                        .background(theme.accent)
+                        .background(theme.accent(for: colorScheme))
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
@@ -626,7 +626,7 @@ private struct ProgressDots: View {
             if total > 30 {
                 Text("+\(total - 30)")
                     .font(.system(size: 9))
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(.white)
             }
         }
     }
@@ -656,7 +656,7 @@ private struct ExerciseFooter: View {
     let onShowDisclaimer: () -> Void
 
     var body: some View {
-        let footerColor: Color = .white.opacity(0.4)
+        let footerColor: Color = .white
         HStack {
             Text("For wellness purposes only \u{2014} not medical advice")
                 .font(.system(size: 10))

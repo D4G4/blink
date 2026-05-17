@@ -47,6 +47,16 @@ struct BlinkTheme: Identifiable, Equatable {
         return .white
     }
 
+    /// Text color for content displayed on an accent-colored background.
+    /// Returns black when accent resolves to white (Dark theme, Mono in dark mode),
+    /// white for all other themes.
+    func textOnAccent(for colorScheme: ColorScheme) -> Color {
+        if id == "dark" || (invertInDarkMode && colorScheme == .dark) {
+            return .black
+        }
+        return .white
+    }
+
     /// System-aware overlay background
     func overlayBackground(for colorScheme: ColorScheme) -> Color {
         colorScheme == .dark ? overlayBackgroundDark : overlayBackgroundLight

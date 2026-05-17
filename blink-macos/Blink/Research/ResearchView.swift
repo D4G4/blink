@@ -113,7 +113,7 @@ struct ResearchView: View {
             } label: {
                 Text("Got it")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
                     .frame(maxWidth: .infinity)
                     .frame(height: 36)
                     .background(accent)

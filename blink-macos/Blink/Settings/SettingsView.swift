@@ -48,7 +48,7 @@ struct SettingsView: View {
                 .padding(20)
             }
         }
-        .frame(width: 440, height: 380)
+        .frame(width: 440, height: 440)
         .tint(accentColor)
     }
     
@@ -355,7 +355,7 @@ struct SettingsView: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.primary.opacity(0.04))
+            .background(Color(nsColor: .controlBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
     }

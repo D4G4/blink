@@ -231,7 +231,7 @@ struct FlowSensitivityView: View {
             .padding(.horizontal, 10)
             .background(
                 themed
-                    ? (isSelected ? .white : .white.opacity(0.12))
+                    ? (isSelected ? .white : foregroundColor.opacity(0.12))
                     : (isSelected ? accentColor.opacity(0.15) : Color.primary.opacity(0.04))
             )
             .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -239,7 +239,7 @@ struct FlowSensitivityView: View {
             .shadow(color: isSelected ? .black.opacity(0.2) : .clear, radius: 10, y: 5)
             .foregroundStyle(
                 themed
-                    ? (isSelected ? accentColor : .white)
+                    ? (isSelected ? accentColor : foregroundColor)
                     : (isSelected ? accentColor : .primary)
             )
         }

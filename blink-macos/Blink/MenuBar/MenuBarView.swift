@@ -62,7 +62,7 @@ struct MenuBarView: View {
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.system(size: 9))
-                            .foregroundStyle(.orange.opacity(0.6))
+                            .foregroundStyle(.orange)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
@@ -91,7 +91,7 @@ struct MenuBarView: View {
                     .foregroundStyle(accentColor)
                 Text("\(appState.breaksTakenToday) breaks today")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.primary.opacity(0.7))
+                    .foregroundStyle(.secondary)
                 Spacer()
             }
             .padding(.horizontal, 16)
@@ -113,7 +113,7 @@ struct MenuBarView: View {
                         Text("Take Break Now")
                             .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
                     .frame(maxWidth: .infinity)
                     .frame(height: 30)
                     .background(accentColor)
@@ -144,7 +144,7 @@ struct MenuBarView: View {
                         .font(.system(size: 12, weight: .medium))
                     Text("beta")
                         .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(accentColor.opacity(0.7))
+                        .foregroundStyle(accentColor)
                         .padding(.horizontal, 4)
                         .padding(.vertical, 1)
                         .background(accentColor.opacity(0.12))
@@ -172,7 +172,7 @@ struct MenuBarView: View {
                         Text("About")
                             .font(.system(size: 12))
                     }
-                    .foregroundStyle(.primary.opacity(0.6))
+                    .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
 
@@ -189,7 +189,7 @@ struct MenuBarView: View {
                         Text("Preferences")
                             .font(.system(size: 12))
                     }
-                    .foregroundStyle(.primary.opacity(0.6))
+                    .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
 
@@ -201,7 +201,7 @@ struct MenuBarView: View {
                 } label: {
                     Text("Quit")
                         .font(.system(size: 12))
-                        .foregroundStyle(.primary.opacity(0.4))
+                        .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
             }
@@ -288,7 +288,7 @@ struct MenuBarView: View {
                 } label: {
                     Text("Homebrew")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(theme.textOnAccent(for: colorScheme))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
                         .frame(maxWidth: .infinity)
@@ -364,7 +364,7 @@ struct MenuBarView: View {
                 .frame(width: 6, height: 6)
             Text(flowStateBadgeLabel)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.primary.opacity(0.7))
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -428,7 +428,7 @@ struct MenuBarView: View {
             } label: {
                 Text("Open Settings")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
                     .frame(maxWidth: .infinity)
                     .frame(height: 28)
                     .background(accentColor)

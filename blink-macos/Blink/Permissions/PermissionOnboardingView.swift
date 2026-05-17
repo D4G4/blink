@@ -28,7 +28,7 @@ struct PermissionOnboardingView: View {
 
                 Text("Blink needs Accessibility permission to work")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(fg.opacity(0.85))
+                    .foregroundStyle(fg)
                     .padding(.bottom, 36)
 
                 // Explanation cards
@@ -58,10 +58,10 @@ struct PermissionOnboardingView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "info.circle")
                         .font(.system(size: 14))
-                        .foregroundStyle(fg.opacity(0.8))
+                        .foregroundStyle(fg)
                     Text("macOS will ask you to grant access in System Settings")
                         .font(.system(size: 14))
-                        .foregroundStyle(fg.opacity(0.8))
+                        .foregroundStyle(fg)
                 }
                 .padding(.bottom, 20)
 
@@ -99,7 +99,7 @@ struct PermissionOnboardingView: View {
                     .foregroundStyle(fg)
                 Text(description)
                     .font(.system(size: 13))
-                    .foregroundStyle(fg.opacity(0.8))
+                    .foregroundStyle(fg)
             }
 
             Spacer()

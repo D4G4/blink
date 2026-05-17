@@ -415,7 +415,7 @@ final class OverlayWindowController {
 
 // MARK: - Toast (bottom-right heads-up)
 
-private struct ToastView: View {
+struct ToastView: View {
     let theme: BlinkTheme
     let onDone: () -> Void
     @Environment(\.colorScheme) private var colorScheme
@@ -474,23 +474,25 @@ private struct ToastView: View {
 
 // MARK: - Timer extended toast
 
-private struct TimerExtendedToastView: View {
+struct TimerExtendedToastView: View {
     let theme: BlinkTheme
     let onDismiss: () -> Void
     let onTakeBreak: () -> Void
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
+        let bg = theme.overlayBackground(for: colorScheme)
+        let fg = theme.overlayText(for: colorScheme)
         let accent = theme.accent(for: colorScheme)
         VStack(spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "brain.head.profile")
                     .font(.system(size: 14))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(fg)
 
                 Text("In flow — timer extended")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(fg)
             }
 
             Button {
@@ -498,17 +500,17 @@ private struct TimerExtendedToastView: View {
             } label: {
                 Text("Take break now")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(accent)
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 5)
-                    .background(.white)
+                    .background(accent)
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(accent)
+        .background(bg)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
@@ -544,7 +546,7 @@ private final class KeyEventHandler {
 
 // MARK: - Fullscreen countdown (3... 2... 1...)
 
-private struct CountdownPhaseView: View {
+struct CountdownPhaseView: View {
     let theme: BlinkTheme
     let onCountdownDone: () -> Void
     let onSkip: () -> Void
@@ -563,17 +565,17 @@ private struct CountdownPhaseView: View {
             VStack(spacing: 20) {
                 Text("Break starting in")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(fg.opacity(0.7))
+                    .foregroundStyle(fg)
                 
                 Text("\(count)")
                     .font(.system(size: 96, weight: .ultraLight, design: .rounded))
-                    .foregroundStyle(theme.accent)
+                    .foregroundStyle(theme.accent(for: colorScheme))
                     .scaleEffect(scale)
                     .animation(.easeOut(duration: 0.3), value: count)
                 
                 Text("esc to skip")
                     .font(.system(size: 13))
-                    .foregroundStyle(fg.opacity(0.3))
+                    .foregroundStyle(fg)
                     .padding(.top, 16)
             }
         }
@@ -601,7 +603,7 @@ private struct CountdownPhaseView: View {
 
 // MARK: - Break phase model (shared with key handler)
 
-private final class BreakPhaseModel: ObservableObject {
+final class BreakPhaseModel: ObservableObject {
     @Published var remaining: Int = 20
     @Published var total: Int = 20
     @Published var showExtendHint: Bool = false
@@ -635,7 +637,7 @@ private final class BreakPhaseModel: ObservableObject {
 
 // MARK: - Break timer (20s)
 
-private struct BreakPhaseView: View {
+struct BreakPhaseView: View {
     let theme: BlinkTheme
     @ObservedObject var model: BreakPhaseModel
     var showWalkSuggestion: Bool = false
@@ -664,7 +666,7 @@ private struct BreakPhaseView: View {
                                 Text("You've taken 4+ breaks — consider a quick walk!")
                                     .font(.system(size: 14, weight: .medium))
                             }
-                            .foregroundStyle(fg.opacity(0.7))
+                            .foregroundStyle(fg)
                         }
                     }
                     Spacer()
@@ -673,18 +675,18 @@ private struct BreakPhaseView: View {
                     VStack(spacing: 6) {
                         Image(systemName: "eye")
                             .font(.system(size: 20))
-                            .foregroundStyle(fg.opacity(0.7))
+                            .foregroundStyle(fg)
                         HStack(alignment: .firstTextBaseline, spacing: 3) {
                             Text("20")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
                                 .foregroundStyle(fg)
                             Text("ft")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(fg.opacity(0.7))
+                                .foregroundStyle(fg)
                         }
                     }
                     .padding(14)
-                    .background(fg.opacity(0.08))
+                    .background(fg.opacity(0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .padding(.trailing, 32)
                 }
@@ -695,13 +697,14 @@ private struct BreakPhaseView: View {
                 Spacer()
                 
                 ZStack {
+                    let accentColor = theme.accent(for: colorScheme)
                     Circle()
-                        .stroke(theme.accent.opacity(0.15), lineWidth: 5)
+                        .stroke(accentColor.opacity(0.15), lineWidth: 5)
                         .frame(width: 220, height: 220)
 
                     Circle()
                         .trim(from: 0, to: CGFloat(model.remaining) / CGFloat(model.total))
-                        .stroke(theme.accent, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .stroke(accentColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
                         .frame(width: 220, height: 220)
                         .rotationEffect(.degrees(-90))
                         .animation(.linear(duration: 1), value: model.remaining)
@@ -736,10 +739,15 @@ private struct BreakPhaseView: View {
                         Text("Train Eyes")
                             .font(.system(size: 12, weight: .medium))
                     }
+                    .foregroundStyle(fg)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
-                    .background(fg.opacity(0.08))
+                    .background(fg.opacity(0.15))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(fg.opacity(0.2), lineWidth: 1)
+                    )
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 30)
@@ -757,7 +765,7 @@ private struct BreakPhaseView: View {
 
 // MARK: - Key hint component
 
-private struct KeyHintView: View {
+struct KeyHintView: View {
     let key: String
     let label: String
     let theme: BlinkTheme
@@ -780,7 +788,7 @@ private struct KeyHintView: View {
             
             Text(label)
                 .font(.system(size: 15))
-                .foregroundStyle(fg.opacity(0.6))
+                .foregroundStyle(fg)
         }
     }
 }
@@ -789,7 +797,7 @@ private struct KeyHintView: View {
 
 // MARK: - Flow nudge toast
 
-private struct FlowNudgeToastView: View {
+struct FlowNudgeToastView: View {
     let theme: BlinkTheme
     let message: String
     let onDismiss: () -> Void
@@ -797,17 +805,19 @@ private struct FlowNudgeToastView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
+        let bg = theme.overlayBackground(for: colorScheme)
+        let fg = theme.overlayText(for: colorScheme)
         let accent = theme.accent(for: colorScheme)
 
         HStack(spacing: 12) {
             Image(systemName: "brain.head.profile")
                 .font(.system(size: 20))
-                .foregroundStyle(.white)
+                .foregroundStyle(fg)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(message)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(fg)
                     .lineLimit(2)
             }
 
@@ -818,17 +828,17 @@ private struct FlowNudgeToastView: View {
             } label: {
                 Text("Break")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(accent)
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(.white)
+                    .background(accent)
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(accent)
+        .background(bg)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

@@ -108,7 +108,7 @@ struct OnboardingView: View {
 
                     Text("Smart breaks for your eyes")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(selectedTheme.onBackgroundText(for: colorScheme).opacity(0.7))
+                        .foregroundStyle(selectedTheme.onBackgroundText(for: colorScheme))
                 }
                 .padding(.bottom, 48)
 
@@ -186,7 +186,7 @@ struct OnboardingView: View {
             } label: {
                 Image(systemName: "chevron.left.circle.fill")
                     .font(.system(size: 44))
-                    .foregroundStyle(fg.opacity(selectedIndex > 0 ? 0.8 : 0.2))
+                    .foregroundStyle(fg.opacity(selectedIndex > 0 ? 1 : 0.3))
             }
             .buttonStyle(.plain)
             .disabled(selectedIndex == 0)
@@ -206,7 +206,7 @@ struct OnboardingView: View {
             } label: {
                 Image(systemName: "chevron.right.circle.fill")
                     .font(.system(size: 44))
-                    .foregroundStyle(fg.opacity(selectedIndex < themes.count - 1 ? 0.8 : 0.2))
+                    .foregroundStyle(fg.opacity(selectedIndex < themes.count - 1 ? 1 : 0.3))
             }
             .buttonStyle(.plain)
             .disabled(selectedIndex == themes.count - 1)
