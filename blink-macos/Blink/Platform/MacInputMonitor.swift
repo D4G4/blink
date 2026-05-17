@@ -62,6 +62,12 @@ final class MacInputMonitor: InputEventSource {
         }
     }
 
+    /// Whether the tap is alive and receiving events.
+    var isTapAlive: Bool {
+        guard let tap = eventTap else { return false }
+        return CGEvent.tapIsEnabled(tap: tap)
+    }
+
     func stopMonitoring() {
         if let tap = eventTap {
             CGEvent.tapEnable(tap: tap, enable: false)

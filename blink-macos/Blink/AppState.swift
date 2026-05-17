@@ -259,11 +259,38 @@ final class AppState: ObservableObject {
                 self.engine.setVideoPlaying(video)
                 self.isVideoPlaying = video
 
-                // Tap health check — reEnableTapIfNeeded handles logging internally
+                // Tap health check + fallback polling
                 self.inputMonitor?.reEnableTapIfNeeded()
+                if self.inputMonitor?.isTapAlive != true {
+                    self.pollInputFallback()
+                }
 
                 self.engine.tick()
             }
+        }
+    }
+
+    // MARK: - Input fallback (when CGEventTap is dead — secure keyboard entry, etc.)
+
+    /// Poll CGEventSource as a fallback when the tap can't receive events.
+    /// This works even during secure keyboard entry because it reads from
+    /// the kernel's HID state table, not from an event tap.
+    private func pollInputFallback() {
+        let threshold: TimeInterval = 1.0  // detect events within the last tick
+
+        let keyIdle = CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .keyDown)
+        if keyIdle < threshold {
+            engine.recordKeystroke()
+        }
+
+        let clickIdle = CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .leftMouseDown)
+        if clickIdle < threshold {
+            engine.recordClick()
+        }
+
+        let scrollIdle = CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .scrollWheel)
+        if scrollIdle < threshold {
+            engine.recordScroll()
         }
     }
 
