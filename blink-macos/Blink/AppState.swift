@@ -327,7 +327,28 @@ final class AppState: ObservableObject {
     // MARK: - Public actions (for menu bar buttons)
 
     func showBreakPrompt() {
-        engine.onShowBreak?(engine.currentBreakStreak + 1)
+        // Manual trigger from menu bar — skip the 3s toast and go directly to break
+        isBreakPrompted = true
+        breaksPromptedToday += 1
+        overlayController.showBreak(
+            breakNumber: engine.currentBreakStreak + 1,
+            skipToast: true,
+            onComplete: { [weak self] in
+                Task { @MainActor in
+                    self?.engine.userTookBreak()
+                    self?.isBreakPrompted = false
+                    self?.breaksTakenToday += 1
+                    self?.overlayController.dismiss()
+                }
+            },
+            onSkip: { [weak self] in
+                Task { @MainActor in
+                    self?.engine.userSkippedBreak()
+                    self?.isBreakPrompted = false
+                    self?.overlayController.dismiss()
+                }
+            }
+        )
     }
 
     // MARK: - Persistence

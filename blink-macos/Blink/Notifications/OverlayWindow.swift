@@ -17,11 +17,17 @@ final class OverlayWindowController {
         : ThemeManager.shared.current
     }
     
-    func showBreak(breakNumber: Int = 0, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
-        showToast(onToastDone: { [weak self] in
-            self?.dismissToast()
-            self?.showBreakTimer(breakNumber: breakNumber, onComplete: onComplete, onSkip: onSkip)
-        })
+    func showBreak(breakNumber: Int = 0, skipToast: Bool = false, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
+        if skipToast {
+            // Manual trigger — go directly to break timer without toast
+            showBreakTimer(breakNumber: breakNumber, onComplete: onComplete, onSkip: onSkip)
+        } else {
+            // Automatic trigger — show toast first
+            showToast(onToastDone: { [weak self] in
+                self?.dismissToast()
+                self?.showBreakTimer(breakNumber: breakNumber, onComplete: onComplete, onSkip: onSkip)
+            })
+        }
     }
     
     /// Show a "timer extended" toast when flow is detected.
