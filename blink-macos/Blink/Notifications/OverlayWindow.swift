@@ -336,6 +336,17 @@ final class OverlayWindowController {
         win.ignoresMouseEvents = false
         win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         win.alphaValue = 0
+
+        // Reposition if screen geometry changes (lid close/open, display switch)
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil, queue: .main
+        ) { [weak win] _ in
+            if let screen = NSScreen.main, let win {
+                win.setFrame(screen.frame, display: true)
+            }
+        }
+
         self.fullscreenWindow = win
         
         let skipAction = { [weak self] in
