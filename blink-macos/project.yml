@@ -7,7 +7,8 @@ options:
 
 packages:
   BlinkCore:
-    path: BlinkCore
+    url: git@github-d4g4:D4G4/blink-core.git
+    from: "1.0.0"
 
 schemes:
   Blink:

@@ -8,7 +8,8 @@ final class MacInputMonitor: InputEventSource {
     var onKeystroke: ((KeystrokeEvent) -> Void)?
     var onMouseEvent: ((MouseEvent) -> Void)?
 
-    private var eventTap: CFMachPort?
+    /// Exposed for tap liveness check via `CGEvent.tapIsEnabled(tap:)`.
+    private(set) var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
     func startMonitoring() {
@@ -42,6 +43,15 @@ final class MacInputMonitor: InputEventSource {
         CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
         BlinkLog.permission.info("CGEventTap created and enabled in MacInputMonitor — input monitoring active")
+    }
+
+    /// Re-enable the event tap if macOS disabled it (happens after long sleep).
+    func reEnableTapIfNeeded() {
+        guard let tap = eventTap else { return }
+        if !CGEvent.tapIsEnabled(tap: tap) {
+            BlinkLog.permission.info("CGEventTap was disabled — re-enabling after wake")
+            CGEvent.tapEnable(tap: tap, enable: true)
+        }
     }
 
     func stopMonitoring() {

@@ -167,8 +167,8 @@ final class GaborExerciseState: ObservableObject {
         case .contrastDetection:
             correct = response == targetPosition
         case .orientationDiscrimination, .flankerMasking:
-            // 0 = left tilt (negative angle), 1 = right tilt (positive angle)
-            let expectedResponse = targetOrientation > 0 ? 1 : 0
+            // Renderer rotation: positive angle → stripes lean left visually, negative → right
+            let expectedResponse = targetOrientation > 0 ? 0 : 1
             correct = response == expectedResponse
         }
 
