@@ -739,6 +739,29 @@ struct BreakPhaseView: View {
                         .foregroundStyle(fg)
                 }
                 
+                Button {
+                    onSkip()
+                    GaborExerciseWindowController.shared.show(theme: theme)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "eye.circle")
+                            .font(.system(size: 16))
+                        Text("Train Eyes")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .foregroundStyle(fg)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(fg.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(fg.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 30)
+                
                 Spacer()
                 
                 Text("+20s")
@@ -753,29 +776,6 @@ struct BreakPhaseView: View {
                     KeyHintView(key: "esc", label: "Skip break", theme: theme)
                     KeyHintView(key: "→", label: "Extend 20s", theme: theme)
                 }
-
-                Button {
-                    onSkip()
-                    GaborExerciseWindowController.shared.show(theme: theme)
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "eye.circle")
-                            .font(.system(size: 12))
-                        Text("Train Eyes")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundStyle(fg)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 6)
-                    .background(fg.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(fg.opacity(0.2), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 30)
                 
                 Spacer()
                     .frame(height: 20)
