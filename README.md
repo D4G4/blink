@@ -20,12 +20,6 @@
 
 > **Why open source?** Blink needs Accessibility permission to work — that's a lot of trust. We made it open source so you can see exactly what we do with it: read input *timing*, never content. No analytics, no telemetry, no network calls. Every line is right here.
 
-> Why commit messages don't follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)? --
-I wanted at least one project where I don't have to think of what tags to use in my commit :p
->
->  [Update] I don't like it - I should have used conventional commits from the get go :|
-> Don't be like me!
-
 ---
 
 Every 20 minutes of screen time, look at something 20 feet away for 20 seconds. Optometrists have recommended this since the 90s. The problem isn't the rule — it's the apps.
