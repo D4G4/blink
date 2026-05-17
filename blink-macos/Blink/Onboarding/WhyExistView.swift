@@ -100,7 +100,7 @@ struct WhyExistView: View {
                         } label: {
                             Text(onContinue != nil ? "Choose Theme" : "Got it")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(theme.textOnAccent(for: colorScheme))
                                 .frame(width: 120, height: 34)
                                 .background(theme.accent(for: colorScheme))
                                 .clipShape(Capsule())

@@ -11,32 +11,42 @@
 		09A1C80B8AA67D8958C07429 /* FlowLearnMoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */; };
 		0A343322F21E7C5500E3163C /* AdaptiveStaircase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06436D890269E4C851271B66 /* AdaptiveStaircase.swift */; };
 		0AF1EB410D21A0FAD63E48EA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D310BA2552802E7D6905702 /* SettingsView.swift */; };
+		0FEE1066FF8A7B430A2D0DF5 /* PermissionPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C52EC0F95A3EDFAEB7BF5EF /* PermissionPreviews.swift */; };
+		106DD7BB4336A61EF22124B9 /* GaborExercisePreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF145F6FA9620208E8F61F12 /* GaborExercisePreviews.swift */; };
+		1742115CD05288EFF631D72F /* OverlayPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8DAA5DF0E6D811746929D46 /* OverlayPreviews.swift */; };
 		19EA05FBA30BECC7BFA02C69 /* UIActionLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0FF6DFB2A34886365FDFBEE /* UIActionLogger.swift */; };
 		1BB8F112BA1F2D463757D0E8 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB2FCB3D4A937B4DF52593C /* AppState.swift */; };
 		1F3B28A4230B4EA81B7BCD0C /* GaborExerciseWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FAFF7F938EE92646B112B6B /* GaborExerciseWindowController.swift */; };
 		25F8E55421DC2B55922B6CC4 /* BlinkApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 989DBB159CA5CB427CCCADEF /* BlinkApp.swift */; };
 		285C0EFFE325468E346E69D5 /* MacInputMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 545B271DAD35F8C4FA3D7CCF /* MacInputMonitor.swift */; };
 		2A0582A72A1AAB4740356223 /* WhyExistWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */; };
+		2AA0C694A19FC9CC9E17AD7E /* FlowSensitivityPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98A4A21A521D054DD953F889 /* FlowSensitivityPreviews.swift */; };
 		2FF43ACECCF77373C5EFCCA4 /* LogExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BDF5153E498B2DEFD9EAEBF /* LogExporter.swift */; };
 		35EA33C9B1B23682BB31DCED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4BF5F1BD395AB638696B46E9 /* Assets.xcassets */; };
 		379C438AB35FC1F051388A97 /* PermissionGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90526A63E832616BC379B327 /* PermissionGuideView.swift */; };
 		3A60C972DDC5C22A3F5471B4 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F26BF916A815637E47FA8E /* PermissionManager.swift */; };
+		42E3217149CAF5FF6E5873ED /* FlowLearnMorePreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 950FEEA7873F266C9905AA29 /* FlowLearnMorePreviews.swift */; };
 		489B49000BDC6DAC9E692730 /* ThemedToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5414954E7C64589362BB613F /* ThemedToggleStyle.swift */; };
 		507F4ED04A91D7AC11D01C8B /* BlinkLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32D0AD0CA0A07A73EF86986B /* BlinkLog.swift */; };
 		51B85A79F15C502885A3F8C2 /* BlinkTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0886829FB1518795A9E605C /* BlinkTheme.swift */; };
 		6236E723BC574777D616DE37 /* BlinkCore in Frameworks */ = {isa = PBXBuildFile; productRef = B3D1D1183FB72FCF22C0F8F6 /* BlinkCore */; };
+		6C4A616CDE642C324B34568C /* ResearchPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8652ED73DCA18CF630CBFAA /* ResearchPreviews.swift */; };
 		6D05464304B14CAD3A2BE0D7 /* WhyExistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8919A95A03586CABD364494 /* WhyExistView.swift */; };
 		71DDA90772E11550128D362D /* FlowSensitivityPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4489BDE637012610175AC573 /* FlowSensitivityPage.swift */; };
 		721AB1C8176D69C9F1A07603 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71AF16B93A94215233284E2E /* OnboardingView.swift */; };
 		722622A0B195340B20B82F9C /* PermissionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1952E3C02F56495895D00BB8 /* PermissionWindowController.swift */; };
 		72570C0C40040759FE52FBDF /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D286D81AEFFC707C40AF416D /* MenuBarView.swift */; };
+		75F926616E7E3BF7816A8C3F /* MenuBarPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D72E2CB3299F409D6B0B6D /* MenuBarPreviews.swift */; };
 		77928BBBF428D817C890540F /* GaborExerciseState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E55AA4F9D3F6C46BB8F0D1 /* GaborExerciseState.swift */; };
 		78F685AF5FBDA94856623590 /* AllPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4978224F028FE729A5E799 /* AllPreviews.swift */; };
+		7C94891B78849985756A520E /* OnboardingPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10436F24DF7276AC91A19F6D /* OnboardingPreviews.swift */; };
 		7D233C03212E195C2A96AAA8 /* ResearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */; };
 		9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 216A16F819CB23807A4A69BF /* MacAppMonitor.swift */; };
 		9F0CE1946691CF2FE32D1528 /* GaborRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04C1C6827F429B94B7B265B /* GaborRenderer.swift */; };
 		A0462C64DCADDC43FA97B6D1 /* ResearchWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F839D2575DE2B8C9F7F320B9 /* ResearchWindowController.swift */; };
+		A233F663E3A1DAADE4DB81C9 /* WhyExistPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E235E6FC3668A9A6898B7849 /* WhyExistPreviews.swift */; };
 		A4411B3A5D05D71332F0C539 /* FlowLearnMoreWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B64A6EE793C76CA223A1CDF /* FlowLearnMoreWindowController.swift */; };
+		A764B552A8C024B989E79757 /* SettingsPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 926B0463A25FAEDC0BE064A4 /* SettingsPreviews.swift */; };
 		AF2AA32997C297584EE5186E /* OnboardingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32296CA5F384757F2CCB9CDC /* OnboardingWindow.swift */; };
 		CBF502A96C4139DA82CA7235 /* PersistenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259BC5A29D8C29D30B7A8C1F /* PersistenceManager.swift */; };
 		CD85665E518B19F7BBB58D1F /* GaborExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */; };
@@ -57,6 +67,7 @@
 		04E55AA4F9D3F6C46BB8F0D1 /* GaborExerciseState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborExerciseState.swift; sourceTree = "<group>"; };
 		06436D890269E4C851271B66 /* AdaptiveStaircase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveStaircase.swift; sourceTree = "<group>"; };
 		0F4978224F028FE729A5E799 /* AllPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllPreviews.swift; sourceTree = "<group>"; };
+		10436F24DF7276AC91A19F6D /* OnboardingPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPreviews.swift; sourceTree = "<group>"; };
 		10F26BF916A815637E47FA8E /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
 		1952E3C02F56495895D00BB8 /* PermissionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionWindowController.swift; sourceTree = "<group>"; };
 		216A16F819CB23807A4A69BF /* MacAppMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAppMonitor.swift; sourceTree = "<group>"; };
@@ -68,6 +79,7 @@
 		32D0AD0CA0A07A73EF86986B /* BlinkLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkLog.swift; sourceTree = "<group>"; };
 		3D310BA2552802E7D6905702 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		3FAFF7F938EE92646B112B6B /* GaborExerciseWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborExerciseWindowController.swift; sourceTree = "<group>"; };
+		41D72E2CB3299F409D6B0B6D /* MenuBarPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPreviews.swift; sourceTree = "<group>"; };
 		4489BDE637012610175AC573 /* FlowSensitivityPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityPage.swift; sourceTree = "<group>"; };
 		454E601831980C64BDA0BDD1 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		48431B2C296BDB92BF0BB93C /* Blink.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blink.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -80,21 +92,29 @@
 		7BDF5153E498B2DEFD9EAEBF /* LogExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogExporter.swift; sourceTree = "<group>"; };
 		86936E2AA96EE4843F617808 /* GaborSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborSessionStore.swift; sourceTree = "<group>"; };
 		8C3FE352EB3AFEEB76ECBD6B /* Blink.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Blink.entitlements; sourceTree = "<group>"; };
+		8C52EC0F95A3EDFAEB7BF5EF /* PermissionPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionPreviews.swift; sourceTree = "<group>"; };
 		90526A63E832616BC379B327 /* PermissionGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionGuideView.swift; sourceTree = "<group>"; };
+		926B0463A25FAEDC0BE064A4 /* SettingsPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPreviews.swift; sourceTree = "<group>"; };
 		93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLearnMoreView.swift; sourceTree = "<group>"; };
+		950FEEA7873F266C9905AA29 /* FlowLearnMorePreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLearnMorePreviews.swift; sourceTree = "<group>"; };
 		977674318B8EB84E0DD3DE41 /* MacContextDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContextDetector.swift; sourceTree = "<group>"; };
 		97BC933707696BDE8C0788B9 /* MicWarningWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicWarningWindowController.swift; sourceTree = "<group>"; };
 		989DBB159CA5CB427CCCADEF /* BlinkApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkApp.swift; sourceTree = "<group>"; };
+		98A4A21A521D054DD953F889 /* FlowSensitivityPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityPreviews.swift; sourceTree = "<group>"; };
 		A04C1C6827F429B94B7B265B /* GaborRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborRenderer.swift; sourceTree = "<group>"; };
 		A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborExerciseView.swift; sourceTree = "<group>"; };
 		A7812EFC9F08563A52F81AA7 /* GaborDisplayConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborDisplayConfig.swift; sourceTree = "<group>"; };
 		A8919A95A03586CABD364494 /* WhyExistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistView.swift; sourceTree = "<group>"; };
 		AF68C178E62F6093F4057913 /* PermissionOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionOnboardingView.swift; sourceTree = "<group>"; };
 		BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistWindowController.swift; sourceTree = "<group>"; };
+		C8DAA5DF0E6D811746929D46 /* OverlayPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayPreviews.swift; sourceTree = "<group>"; };
 		D0FF6DFB2A34886365FDFBEE /* UIActionLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIActionLogger.swift; sourceTree = "<group>"; };
 		D286D81AEFFC707C40AF416D /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		D8652ED73DCA18CF630CBFAA /* ResearchPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchPreviews.swift; sourceTree = "<group>"; };
 		DBA5281E80D09549F7590353 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		DF145F6FA9620208E8F61F12 /* GaborExercisePreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborExercisePreviews.swift; sourceTree = "<group>"; };
 		E0886829FB1518795A9E605C /* BlinkTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkTheme.swift; sourceTree = "<group>"; };
+		E235E6FC3668A9A6898B7849 /* WhyExistPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistPreviews.swift; sourceTree = "<group>"; };
 		E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchView.swift; sourceTree = "<group>"; };
 		EDA291436352B986E47616EA /* FlowSensitivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityView.swift; sourceTree = "<group>"; };
 		EDCB6EA78FBAD3A0E6F29598 /* OverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayWindow.swift; sourceTree = "<group>"; };
@@ -189,6 +209,7 @@
 				96D4CE7352584A15028548A2 /* Permissions */,
 				8515D8F7F86994F9EE494B11 /* Persistence */,
 				BB1BE3CA5D65054DBB150A6A /* Platform */,
+				E081B047DEFA84D90CC10185 /* Previews */,
 				91CADECEB89E682897857F7D /* Research */,
 				082C8BA94E0BCFA337FD2181 /* Settings */,
 				73D24F7B2165BC5E03F1C38C /* Theme */,
@@ -250,6 +271,23 @@
 				97BC933707696BDE8C0788B9 /* MicWarningWindowController.swift */,
 			);
 			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		E081B047DEFA84D90CC10185 /* Previews */ = {
+			isa = PBXGroup;
+			children = (
+				950FEEA7873F266C9905AA29 /* FlowLearnMorePreviews.swift */,
+				98A4A21A521D054DD953F889 /* FlowSensitivityPreviews.swift */,
+				DF145F6FA9620208E8F61F12 /* GaborExercisePreviews.swift */,
+				41D72E2CB3299F409D6B0B6D /* MenuBarPreviews.swift */,
+				10436F24DF7276AC91A19F6D /* OnboardingPreviews.swift */,
+				C8DAA5DF0E6D811746929D46 /* OverlayPreviews.swift */,
+				8C52EC0F95A3EDFAEB7BF5EF /* PermissionPreviews.swift */,
+				D8652ED73DCA18CF630CBFAA /* ResearchPreviews.swift */,
+				926B0463A25FAEDC0BE064A4 /* SettingsPreviews.swift */,
+				E235E6FC3668A9A6898B7849 /* WhyExistPreviews.swift */,
+			);
+			path = Previews;
 			sourceTree = "<group>";
 		};
 		E370FA75E2B9CA960A6CB41D /* Products */ = {
@@ -343,11 +381,14 @@
 				507F4ED04A91D7AC11D01C8B /* BlinkLog.swift in Sources */,
 				51B85A79F15C502885A3F8C2 /* BlinkTheme.swift in Sources */,
 				DE5BDA2DC244F80E4D05FDA7 /* BreakNotificationManager.swift in Sources */,
+				42E3217149CAF5FF6E5873ED /* FlowLearnMorePreviews.swift in Sources */,
 				09A1C80B8AA67D8958C07429 /* FlowLearnMoreView.swift in Sources */,
 				A4411B3A5D05D71332F0C539 /* FlowLearnMoreWindowController.swift in Sources */,
 				71DDA90772E11550128D362D /* FlowSensitivityPage.swift in Sources */,
+				2AA0C694A19FC9CC9E17AD7E /* FlowSensitivityPreviews.swift in Sources */,
 				015614087E1362D0362B4424 /* FlowSensitivityView.swift in Sources */,
 				D4C7B9C1BE451DB94C843A92 /* GaborDisplayConfig.swift in Sources */,
+				106DD7BB4336A61EF22124B9 /* GaborExercisePreviews.swift in Sources */,
 				77928BBBF428D817C890540F /* GaborExerciseState.swift in Sources */,
 				CD85665E518B19F7BBB58D1F /* GaborExerciseView.swift in Sources */,
 				1F3B28A4230B4EA81B7BCD0C /* GaborExerciseWindowController.swift in Sources */,
@@ -358,24 +399,31 @@
 				D5C6DCF4BA41B2C014A4D3C8 /* MacContextDetector.swift in Sources */,
 				285C0EFFE325468E346E69D5 /* MacInputMonitor.swift in Sources */,
 				E2E2DC15A3B655161CF31EA3 /* MenuBarController.swift in Sources */,
+				75F926616E7E3BF7816A8C3F /* MenuBarPreviews.swift in Sources */,
 				72570C0C40040759FE52FBDF /* MenuBarView.swift in Sources */,
 				EA6F6BD4A96C0F66254A6167 /* MicWarningWindowController.swift in Sources */,
+				7C94891B78849985756A520E /* OnboardingPreviews.swift in Sources */,
 				721AB1C8176D69C9F1A07603 /* OnboardingView.swift in Sources */,
 				AF2AA32997C297584EE5186E /* OnboardingWindow.swift in Sources */,
+				1742115CD05288EFF631D72F /* OverlayPreviews.swift in Sources */,
 				CFB301E36AADFE6AB97FFCE5 /* OverlayWindow.swift in Sources */,
 				379C438AB35FC1F051388A97 /* PermissionGuideView.swift in Sources */,
 				3A60C972DDC5C22A3F5471B4 /* PermissionManager.swift in Sources */,
 				DEAF8705E1C91BA6128075DC /* PermissionOnboardingView.swift in Sources */,
+				0FEE1066FF8A7B430A2D0DF5 /* PermissionPreviews.swift in Sources */,
 				722622A0B195340B20B82F9C /* PermissionWindowController.swift in Sources */,
 				CBF502A96C4139DA82CA7235 /* PersistenceManager.swift in Sources */,
 				E18997FAD5140713D3E5907B /* PreferencesWindowController.swift in Sources */,
+				6C4A616CDE642C324B34568C /* ResearchPreviews.swift in Sources */,
 				7D233C03212E195C2A96AAA8 /* ResearchView.swift in Sources */,
 				A0462C64DCADDC43FA97B6D1 /* ResearchWindowController.swift in Sources */,
+				A764B552A8C024B989E79757 /* SettingsPreviews.swift in Sources */,
 				0AF1EB410D21A0FAD63E48EA /* SettingsView.swift in Sources */,
 				CEC516E6EED0DAFCDECC1AE9 /* ThemeManager.swift in Sources */,
 				489B49000BDC6DAC9E692730 /* ThemedToggleStyle.swift in Sources */,
 				19EA05FBA30BECC7BFA02C69 /* UIActionLogger.swift in Sources */,
 				F82D96161BCBD00DDE686A88 /* UpdateChecker.swift in Sources */,
+				A233F663E3A1DAADE4DB81C9 /* WhyExistPreviews.swift in Sources */,
 				6D05464304B14CAD3A2BE0D7 /* WhyExistView.swift in Sources */,
 				2A0582A72A1AAB4740356223 /* WhyExistWindowController.swift in Sources */,
 			);
@@ -588,7 +636,7 @@
 			repositoryURL = "git@github-d4g4:D4G4/blink-core.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 1.1.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

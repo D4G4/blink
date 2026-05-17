@@ -12,6 +12,7 @@ struct PermissionGuideView: View {
 
     var body: some View {
         let accent = theme.accent(for: colorScheme)
+        let fg = theme.onBackgroundText(for: colorScheme)
         let bgTop = theme.backgroundTop(for: colorScheme)
 
         ZStack {
@@ -19,7 +20,7 @@ struct PermissionGuideView: View {
                 .ignoresSafeArea()
 
             RadialGradient(
-                colors: [.white.opacity(0.1), .clear],
+                colors: [fg.opacity(0.1), .clear],
                 center: .top,
                 startRadius: 50,
                 endRadius: 400
@@ -31,14 +32,14 @@ struct PermissionGuideView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "hand.raised.circle.fill")
                             .font(.system(size: 24, weight: .light))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(fg)
                         Text("Grant Accessibility Access")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(fg)
                     }
                     Text("Blink needs this to detect your input timing")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(fg)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 20)
@@ -47,18 +48,18 @@ struct PermissionGuideView: View {
                 // Main content: screenshot + steps side by side
                 HStack(spacing: 24) {
                     // LEFT: Hero screenshot
-                    annotatedScreenshot(accent: accent, bgTop: bgTop)
+                    annotatedScreenshot(accent: accent, fg: fg)
 
                     // RIGHT: Steps (centered)
                     VStack(alignment: .leading, spacing: 0) {
-                        stepRow(icon: "plus.circle.fill", title: "Click  +  button", bgTop: bgTop)
-                        stepConnector()
-                        blinkIconStep()
-                        stepConnector()
-                        toggleStep(accent: accent)
+                        stepRow(icon: "plus.circle.fill", title: "Click  +  button", fg: fg, bgTop: bgTop)
+                        stepConnector(fg: fg)
+                        blinkIconStep(fg: fg)
+                        stepConnector(fg: fg)
+                        toggleStep(accent: accent, fg: fg)
                     }
                     .padding(16)
-                    .background(.white.opacity(0.15))
+                    .background(fg.opacity(0.15))
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                     .frame(width: 200)
                 }
@@ -80,7 +81,7 @@ struct PermissionGuideView: View {
                         .foregroundStyle(bgTop)
                         .frame(height: 40)
                         .padding(.horizontal, 20)
-                        .background(.white)
+                        .background(fg)
                         .clipShape(Capsule())
                         .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
                     }
@@ -95,10 +96,10 @@ struct PermissionGuideView: View {
                             Text("I've granted access")
                                 .font(.system(size: 14, weight: .bold))
                         }
-                        .foregroundStyle(.white)
+                        .foregroundStyle(fg)
                         .frame(height: 40)
                         .padding(.horizontal, 20)
-                        .background(.white.opacity(0.25))
+                        .background(fg.opacity(0.25))
                         .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -107,7 +108,7 @@ struct PermissionGuideView: View {
                 if showError {
                     Text("Permission not detected — make sure Blink is toggled on in Accessibility")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(fg)
                         .padding(.top, 6)
                 }
 
@@ -119,7 +120,7 @@ struct PermissionGuideView: View {
 
     // MARK: - Annotated Screenshot
 
-    private func annotatedScreenshot(accent: Color, bgTop: Color) -> some View {
+    private func annotatedScreenshot(accent: Color, fg: Color) -> some View {
         Image("AccessibilitySettings")
             .resizable()
             .aspectRatio(contentMode: .fit)
@@ -130,31 +131,31 @@ struct PermissionGuideView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(.white.opacity(0.25), lineWidth: 1)
+                    .stroke(fg.opacity(0.25), lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.35), radius: 20, y: 10)
     }
 
     // MARK: - Step Components
 
-    private func stepRow(icon: String, title: String, bgTop: Color) -> some View {
+    private func stepRow(icon: String, title: String, fg: Color, bgTop: Color) -> some View {
         HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(.white.opacity(0.85))
+                    .fill(fg)
                     .frame(width: 32, height: 18)
                 Image(systemName: "plus")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.black.opacity(0.4))
+                    .foregroundStyle(bgTop)
             }
             Text(title)
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(fg)
         }
         .padding(.vertical, 8)
     }
 
-    private func blinkIconStep() -> some View {
+    private func blinkIconStep(fg: Color) -> some View {
         HStack(spacing: 12) {
             Image(theme.iconAsset)
                 .resizable()
@@ -163,34 +164,35 @@ struct PermissionGuideView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             Text("Find Blink → Open")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(fg)
         }
         .padding(.vertical, 8)
     }
 
-    private func toggleStep(accent: Color) -> some View {
+    private func toggleStep(accent: Color, fg: Color) -> some View {
         HStack(spacing: 12) {
             // Mini macOS-style toggle (on state) with theme color
             ZStack(alignment: .trailing) {
                 Capsule()
                     .fill(accent)
+                    .overlay(Capsule().stroke(fg.opacity(0.3), lineWidth: 1))
                     .frame(width: 36, height: 20)
                 Circle()
-                    .fill(.white)
+                    .fill(theme.textOnAccent(for: colorScheme))
                     .frame(width: 17, height: 17)
                     .shadow(color: .black.opacity(0.15), radius: 1, y: 1)
                     .padding(.trailing, 1.5)
             }
             Text("Toggle on")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(fg)
         }
         .padding(.vertical, 8)
     }
 
-    private func stepConnector() -> some View {
+    private func stepConnector(fg: Color) -> some View {
         Rectangle()
-            .fill(.white.opacity(0.3))
+            .fill(fg.opacity(0.3))
             .frame(width: 2, height: 10)
             .padding(.leading, 17)
     }

@@ -30,7 +30,7 @@ struct FlowSensitivityPage: View {
                     Text("Themes")
                         .font(.system(size: 14, weight: .medium))
                 }
-                .foregroundStyle(fg.opacity(0.7))
+                .foregroundStyle(fg)
             }
             .buttonStyle(.plain)
             .padding(.top, 20)
@@ -40,7 +40,7 @@ struct FlowSensitivityPage: View {
 
                 Image(systemName: "brain.head.profile")
                     .font(.system(size: 56, weight: .light))
-                    .foregroundStyle(fg.opacity(0.7))
+                    .foregroundStyle(fg)
                     .frame(maxWidth: .infinity)
                     .padding(.bottom, 20)
 
@@ -77,10 +77,10 @@ struct FlowSensitivityPage: View {
                             Text("Explore how it works")
                                 .font(.system(size: 14, weight: .bold))
                         }
-                        .foregroundStyle(.white)
+                        .foregroundStyle(fg)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 10)
-                        .background(.white.opacity(0.2))
+                        .background(fg.opacity(0.2))
                         .clipShape(Capsule())
                         .scaleEffect(pulsing ? 1.05 : 1.0)
                         .opacity(pulsing ? 1.0 : 0.85)
@@ -117,7 +117,7 @@ struct FlowSensitivityPage: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             Text(text)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(fg.opacity(0.9))
+                .foregroundStyle(fg)
             Spacer()
         }
         .padding(12)
