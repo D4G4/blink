@@ -60,14 +60,15 @@ public class TimerStateMachineTests
     }
 
     [Fact]
-    public void AdjustsProportionallyForFlow()
+    public void NoFlowScaling()
     {
         var timer = new TimerStateMachine();
-        timer.Tick(FlowState.Normal, 600); // 50% elapsed
+        timer.Tick(FlowState.Normal, 600);
         Assert.Equal(600, timer.RemainingSeconds);
 
-        timer.Tick(FlowState.Flow, 0); // 30min * 50% remaining = 900
-        Assert.Equal(900, timer.RemainingSeconds);
+        // Flow state no longer changes duration — BreakDecisionEngine handles extensions
+        timer.Tick(FlowState.Flow, 0);
+        Assert.Equal(600, timer.RemainingSeconds);
     }
 
     [Fact]

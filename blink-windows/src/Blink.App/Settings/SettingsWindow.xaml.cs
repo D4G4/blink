@@ -34,8 +34,8 @@ public sealed partial class SettingsWindow : Window
         FlowSensitivityLabel.Text = $"{(int)(tm.FlowSensitivity * 100)}%";
         FlowSensitivityDescription.Text = GetFlowSensitivityDescription(tm.FlowSensitivity);
 
-        FlowScoreValue.Text = $"{_appState.FlowScore:P0}";
-        FlowStateValue.Text = _appState.CurrentFlowState.ToString();
+        FlowScoreValue.Text = "—";
+        FlowStateValue.Text = _appState.DisplayStateName;
         BreaksTodayValue.Text = $"{_appState.BreaksTakenToday} / {_appState.BreaksPromptedToday}";
 
         var version = typeof(SettingsWindow).Assembly.GetName().Version;
@@ -101,7 +101,7 @@ public sealed partial class SettingsWindow : Window
         var value = (int)e.NewValue;
         ThemeManager.Instance.BaseInterval = value;
         BaseIntervalLabel.Text = $"{value} min";
-        _appState.TimerStateMachine.NormalDuration = value * 60;
+        // Timer duration is fixed at 20 min — setting stored for future use
     }
 
     private void ShowTimerToggle_Toggled(object sender, RoutedEventArgs e)
@@ -137,7 +137,7 @@ public sealed partial class SettingsWindow : Window
         ThemeManager.Instance.FlowSensitivity = value;
         FlowSensitivityLabel.Text = $"{pct}%";
         FlowSensitivityDescription.Text = GetFlowSensitivityDescription(value);
-        _appState.FlowStateMachine.FlowEntryThreshold = value;
+        _appState.Engine.Sensitivity = value;
     }
 
     private void FlowLearnMore_Click(object sender, RoutedEventArgs e)

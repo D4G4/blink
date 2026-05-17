@@ -146,10 +146,10 @@ public sealed partial class MenuBarPopup : Window
         ApplyTheme();
         CountdownText.Text = FormatTime(_appState.RemainingSeconds);
         StateLabel.Text = StateLabelText();
-        DurationLabel.Text = $"{(int)_appState.TimerStateMachine.TimerDuration / 60} min";
+        DurationLabel.Text = $"{(int)_appState.TimerTotal / 60} min";
         StatsText.Text = $"{_appState.BreaksTakenToday} breaks today";
 
-        var totalDuration = _appState.TimerStateMachine.TimerDuration;
+        var totalDuration = _appState.TimerTotal;
         var progress = totalDuration > 0 ? 1.0 - (_appState.RemainingSeconds / totalDuration) : 0;
         progress = Math.Clamp(progress, 0, 1);
         ProgressFill.Width = (PopupWidth - 24 - 28) * progress;
@@ -182,15 +182,13 @@ public sealed partial class MenuBarPopup : Window
     private (Color, string) FlowBadgeColorAndLabel()
     {
         if (_appState.IsVideoPlaying) return (Colors.LimeGreen, "Video");
-        return _appState.CurrentFlowState switch
+        return _appState.DisplayStateName switch
         {
-            FlowState.Normal => (Colors.Gray, "Working"),
-            FlowState.Flow => (Accent(), "In flow"),
-            FlowState.DeepFlow => (Accent(), "Deep flow"),
-            FlowState.Idle => (Colors.Orange, "Away"),
-            FlowState.Meeting => (Colors.IndianRed, "Meeting"),
-            FlowState.BreakPrompted => (Accent(), "Break"),
-            _ => (Colors.Gray, "")
+            "Working" => (Colors.Gray, "Working"),
+            "Away" => (Colors.Orange, "Away"),
+            "Meeting" => (Colors.IndianRed, "Meeting"),
+            "OnBreak" => (Accent(), "Break"),
+            _ => (Colors.Gray, "Working")
         };
     }
 
@@ -203,15 +201,13 @@ public sealed partial class MenuBarPopup : Window
     private string StateLabelText()
     {
         if (_appState.IsVideoPlaying) return "Video playing — timer paused";
-        return _appState.CurrentFlowState switch
+        return _appState.DisplayStateName switch
         {
-            FlowState.Normal => "Timer running",
-            FlowState.Flow => "In flow — timer extended",
-            FlowState.DeepFlow => "Deep flow — timer extended",
-            FlowState.Idle => "Away — timer paused",
-            FlowState.Meeting => "In meeting — timer paused",
-            FlowState.BreakPrompted => "Break time",
-            _ => ""
+            "Working" => "Timer running",
+            "Away" => "Away — timer paused",
+            "Meeting" => "In meeting — timer paused",
+            "OnBreak" => "Break time",
+            _ => "Timer running"
         };
     }
 

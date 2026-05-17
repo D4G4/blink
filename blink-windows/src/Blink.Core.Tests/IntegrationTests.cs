@@ -38,12 +38,12 @@ public class IntegrationTests
     }
 
     [Fact]
-    public void FlowLostAfterIdle()
+    public void IdleResetsToNormal()
     {
         var sm = new FlowStateMachine();
         for (int i = 0; i < 8; i++)
             sm.Tick(0.8, 0, false, false, 1000 + i * 30);
-        Assert.Equal(FlowState.Flow, sm.State);
+        Assert.Equal(FlowState.Normal, sm.State); // no flow detection
 
         sm.Tick(0.8, 185, false, false, 1360);
         Assert.Equal(FlowState.Idle, sm.State);
@@ -53,26 +53,12 @@ public class IntegrationTests
     }
 
     [Fact]
-    public void IdleScoreDoesNotBuildFlow()
+    public void ContinuousActivityStaysNormal()
     {
         var sm = new FlowStateMachine();
-        for (int i = 0; i < 8; i++)
-            sm.Tick(0.9, 185 + i * 30, false, false, 1000 + i * 30);
-        Assert.Equal(FlowState.Idle, sm.State);
-
-        sm.Tick(0.9, 0, false, false, 1240);
-        Assert.Equal(FlowState.Normal, sm.State);
-    }
-
-    [Fact]
-    public void AgentWorkflow_ScrollingEntersFlow()
-    {
-        var sm = new FlowStateMachine();
-        // All gaps < 60s tolerance → continuous activity → enters flow after 3 min
-        var idleTimes = new[] { 5.0, 3, 8, 2, 12, 4, 6, 15, 3, 7 };
-        for (int i = 0; i < 10; i++)
-            sm.Tick(0.0, idleTimes[i], false, false, 1000 + i * 30);
-        Assert.Equal(FlowState.Flow, sm.State);
+        for (int i = 0; i < 40; i++)
+            sm.Tick(0.85, 0, false, false, 1000 + i * 30);
+        Assert.Equal(FlowState.Normal, sm.State); // no flow/deepFlow
     }
 
     [Fact]
@@ -84,27 +70,12 @@ public class IntegrationTests
     }
 
     [Fact]
-    public void DeepFlowLostAfterIdle()
-    {
-        var sm = new FlowStateMachine();
-        for (int i = 0; i < 40; i++)
-            sm.Tick(0.85, 0, false, false, 1000 + i * 30);
-        Assert.Equal(FlowState.DeepFlow, sm.State);
-
-        sm.Tick(0.85, 185, false, false, 2250);
-        Assert.Equal(FlowState.Idle, sm.State);
-
-        sm.Tick(0.85, 0, false, false, 2280);
-        Assert.Equal(FlowState.Normal, sm.State);
-    }
-
-    [Fact]
     public void MeetingReturnsToNormal()
     {
         var sm = new FlowStateMachine();
         for (int i = 0; i < 8; i++)
             sm.Tick(0.8, 0, false, false, 1000 + i * 30);
-        Assert.Equal(FlowState.Flow, sm.State);
+        Assert.Equal(FlowState.Normal, sm.State);
 
         sm.Tick(0.8, 0, true, false, 1300);
         Assert.Equal(FlowState.Meeting, sm.State);
