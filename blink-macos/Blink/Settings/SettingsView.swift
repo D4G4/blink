@@ -300,7 +300,7 @@ struct SettingsView: View {
                     }
                 )
                 .onChange(of: flowSensitivity) { _, newValue in
-                    appState.flowStateMachine.sensitivity = newValue
+                    appState.engine.sensitivity = newValue
                 }
             }
         }

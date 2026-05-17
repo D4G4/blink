@@ -240,8 +240,8 @@ struct MenuBarView: View {
 
                     RoundedRectangle(cornerRadius: 3)
                         .fill(accentColor)
-                        .frame(width: geo.size.width * appState.timerStateMachine.progress, height: 6)
-                        .animation(.linear(duration: 1), value: appState.timerStateMachine.progress)
+                        .frame(width: geo.size.width * timerProgress, height: 6)
+                        .animation(.linear(duration: 1), value: timerProgress)
                 }
             }
             .frame(height: 6)
@@ -370,42 +370,42 @@ struct MenuBarView: View {
 
     private var flowStateColor: Color {
         if appState.isVideoPlaying { return .green }
-        switch appState.flowState {
-        case .normal: return .gray
-        case .flow, .deepFlow: return accentColor
-        case .idle: return .orange
+        switch appState.displayState {
+        case .working: return .gray
+        case .away: return .orange
         case .meeting: return .red
-        case .breakPrompted: return accentColor
+        case .onBreak: return accentColor
         }
     }
 
     private var flowStateBadgeLabel: String {
         if appState.isVideoPlaying { return "Video" }
-        switch appState.flowState {
-        case .normal: return "Working"
-        case .flow: return "In flow"
-        case .deepFlow: return "Deep flow"
-        case .idle: return "Away"
+        switch appState.displayState {
+        case .working: return "Working"
+        case .away: return "Away"
         case .meeting: return "Mic active"
-        case .breakPrompted: return "Break"
+        case .onBreak: return "Break"
         }
     }
 
     private var flowStateLabel: String {
         if appState.isVideoPlaying { return "Video playing — timer paused" }
-        switch appState.flowState {
-        case .normal: return "Timer running"
-        case .flow: return "In flow — may extend at break time"
-        case .deepFlow: return "Deep focus — may extend at break time"
-        case .idle: return "Away — timer paused"
+        switch appState.displayState {
+        case .working: return "Timer running"
+        case .away: return "Away — timer paused"
         case .meeting: return "Mic active — timer paused"
-        case .breakPrompted: return "Break time"
+        case .onBreak: return "Break time"
         }
     }
 
     private var timerDurationLabel: String {
-        let total = Int(appState.timerStateMachine.timerDuration)
+        let total = Int(appState.timerTotal)
         return "\(total / 60) min"
+    }
+
+    private var timerProgress: Double {
+        guard appState.timerTotal > 0 else { return 1.0 }
+        return max(0, min(1.0, 1.0 - appState.remainingSeconds / appState.timerTotal))
     }
 
 
