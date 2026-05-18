@@ -96,6 +96,22 @@ public static class NativeMethods
     [DllImport("user32.dll")]
     public static extern int GetSystemMetrics(int nIndex);
 
+    // SHQueryUserNotificationState — detects Direct3D fullscreen games / presentation mode / quiet hours
+    // even when window-rect heuristics miss (e.g. exclusive-fullscreen games).
+    [DllImport("shell32.dll")]
+    public static extern int SHQueryUserNotificationState(out QueryUserNotificationState state);
+
+    public enum QueryUserNotificationState
+    {
+        NotPresent = 1,
+        Busy = 2,                  // user is busy, accept notifications discouraged
+        RunningD3dFullScreen = 3,  // exclusive-fullscreen Direct3D app (game)
+        PresentationMode = 4,      // PowerPoint etc.
+        AcceptsNotifications = 5,
+        QuietTime = 6,
+        App = 7,                   // modern app fullscreen
+    }
+
     public const int SM_CXSCREEN = 0;
     public const int SM_CYSCREEN = 1;
     public const int SM_CXSMICON = 49;

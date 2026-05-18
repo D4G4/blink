@@ -7,6 +7,7 @@ using Blink.Core.FlowDetection;
 using Blink.Platform;
 using Blink.App.Theme;
 using Microsoft.UI.Dispatching;
+using Blink.App.Logging;
 
 namespace Blink.App;
 
@@ -77,17 +78,20 @@ public sealed class AppState : INotifyPropertyChanged
     {
         Engine.OnShowBreak = breakNumber =>
         {
+            Log.Info($"Break prompted (streak={breakNumber})");
             IsBreakPrompted = true;
             BreaksPromptedToday++;
             _overlayManager?.ShowBreak(
                 onComplete: () =>
                 {
+                    Log.Info("Break taken");
                     Engine.UserTookBreak();
                     IsBreakPrompted = false;
                     BreaksTakenToday++;
                 },
                 onSkip: () =>
                 {
+                    Log.Info("Break skipped");
                     Engine.UserSkippedBreak();
                     IsBreakPrompted = false;
                 });
@@ -95,6 +99,7 @@ public sealed class AppState : INotifyPropertyChanged
 
         Engine.OnShowExtendToast = reason =>
         {
+            Log.Info($"Timer extended: {reason}");
             _overlayManager?.ShowFlowNudge(
                 $"{reason} — extended 10 min",
                 () => Engine.UserTookBreak());
@@ -108,6 +113,7 @@ public sealed class AppState : INotifyPropertyChanged
 
         Engine.OnStateChange = state =>
         {
+            Log.Info($"State change → {state}");
             DisplayStateName = state.ToString();
         };
 
@@ -148,10 +154,14 @@ public sealed class AppState : INotifyPropertyChanged
             var mic = _contextDetector?.IsMicrophoneActive() ?? false;
             var cam = _contextDetector?.IsCameraActive() ?? false;
             var video = _contextDetector?.IsMediaPlaying() ?? false;
+            // Treat a fullscreen app (game, presentation, exclusive-fullscreen D3D)
+            // the same as video — pause the timer rather than interrupt.
+            var fullscreen = _contextDetector?.IsFrontAppFullScreen() ?? false;
+            var pauseTimer = video || fullscreen;
             Engine.SetMicActive(mic);
             Engine.SetCameraActive(cam);
-            Engine.SetVideoPlaying(video);
-            IsVideoPlaying = video;
+            Engine.SetVideoPlaying(pauseTimer);
+            IsVideoPlaying = pauseTimer;
 
             Engine.Tick();
         }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));

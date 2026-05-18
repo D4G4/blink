@@ -67,17 +67,36 @@ public sealed class WinContextDetector : IContextSource
 
     public bool IsFrontAppFullScreen()
     {
+        // Primary signal: SHQueryUserNotificationState catches Direct3D-exclusive
+        // games + presentation mode, which window-rect heuristics miss.
+        if (SHQueryUserNotificationState(out var state) == 0)
+        {
+            if (state is QueryUserNotificationState.Busy
+                       or QueryUserNotificationState.RunningD3dFullScreen
+                       or QueryUserNotificationState.PresentationMode
+                       or QueryUserNotificationState.App)
+                return true;
+        }
+
+        // Fallback: foreground window covers the whole screen.
         var hwnd = GetForegroundWindow();
         if (hwnd == IntPtr.Zero) return false;
-
         if (!GetWindowRect(hwnd, out var rect)) return false;
 
         var screenW = GetSystemMetrics(SM_CXSCREEN);
         var screenH = GetSystemMetrics(SM_CYSCREEN);
+        if (!(rect.Left <= 0 && rect.Top <= 0 && rect.Right >= screenW && rect.Bottom >= screenH))
+            return false;
 
-        // Window covers entire screen = fullscreen
-        return rect.Left <= 0 && rect.Top <= 0
-            && rect.Right >= screenW && rect.Bottom >= screenH;
+        // Don't count our own break-overlay or Gabor window as "fullscreen app".
+        var processName = WinAppMonitor.GetCurrentProcessName();
+        if (processName != null &&
+            (processName.Equals("Blink.App", StringComparison.OrdinalIgnoreCase) ||
+             processName.Equals("Blink-x64", StringComparison.OrdinalIgnoreCase) ||
+             processName.Equals("Blink-arm64", StringComparison.OrdinalIgnoreCase)))
+            return false;
+
+        return true;
     }
 
     public bool IsMediaPlaying()

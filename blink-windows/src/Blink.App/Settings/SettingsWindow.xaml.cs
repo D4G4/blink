@@ -322,6 +322,19 @@ public sealed partial class SettingsWindow : Window
         });
     }
 
+    private void OnOpenLogs(object sender, RoutedEventArgs e)
+    {
+        var dir = Blink.App.Logging.Log.LogsDirectory;
+        try { System.IO.Directory.CreateDirectory(dir); } catch { }
+        Blink.App.Logging.Log.Info("User opened logs folder");
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "explorer.exe",
+            Arguments = $"\"{dir}\"",
+            UseShellExecute = true
+        });
+    }
+
     private void RestartOnboarding_Click(object sender, RoutedEventArgs e)
     {
         ThemeManager.Instance.HasCompletedOnboarding = false;

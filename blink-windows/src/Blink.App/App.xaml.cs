@@ -2,6 +2,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Blink.App.TrayIcon;
 using Blink.App.Theme;
+using Blink.App.Logging;
 
 namespace Blink.App;
 
@@ -18,10 +19,14 @@ public partial class App : Application
     {
         InitializeComponent();
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            Log.Error("Unhandled exception", e.ExceptionObject as Exception ?? new Exception(e.ExceptionObject?.ToString() ?? "?"));
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "?";
+        Log.Info($"OnLaunched (v{version})");
         var themeManager = ThemeManager.Instance;
         _appState = new AppState();
 

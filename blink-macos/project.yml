@@ -34,7 +34,7 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: true
         PRODUCT_BUNDLE_IDENTIFIER: com.blink20.app
-        MARKETING_VERSION: "3.0.0"
+        MARKETING_VERSION: "3.1.0"
         CURRENT_PROJECT_VERSION: "2"
         INFOPLIST_KEY_LSUIElement: true
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false
