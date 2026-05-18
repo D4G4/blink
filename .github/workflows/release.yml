@@ -68,6 +68,9 @@ jobs:
       - name: Install tools
         run: brew install xcodegen create-dmg
 
+      - name: Clone BlinkCore
+        run: git clone git@github-d4g4:D4G4/blink-core.git blink-macos/BlinkCore
+
       - name: Run BlinkCore tests
         run: cd blink-macos/BlinkCore && swift test
 
