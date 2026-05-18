@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Blink.App.GaborExercise.GaborExerciseWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Eye Exercise">
+
+    <Grid x:Name="RootGrid" Background="Black">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Main phase content -->
+        <ContentControl Grid.Row="0" x:Name="PhaseHost"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+
+        <!-- Footer -->
+        <Grid Grid.Row="1" Padding="20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Text="For wellness purposes only — not medical advice  ·  Press Esc to exit"
+                       FontSize="10" Foreground="White" Opacity="0.6"
+                       VerticalAlignment="Center"/>
+            <HyperlinkButton Grid.Column="1" Click="OnShowDisclaimer"
+                             Content="Disclaimer" FontSize="10" Foreground="White" Padding="0,0,12,0"/>
+            <HyperlinkButton Grid.Column="2" Click="OnCloseClick"
+                             Content="Close" FontSize="10" Foreground="White" Padding="0"/>
+        </Grid>
+    </Grid>
+</Window>

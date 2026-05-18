@@ -86,6 +86,22 @@
                 </StackPanel>
             </Button>
 
+            <!-- Eye Exercise (beta) -->
+            <Button x:Name="EyeExerciseButton" Click="OnEyeExercise"
+                    Margin="12,6,12,0"
+                    HorizontalAlignment="Stretch"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="0,6">
+                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                    <FontIcon Glyph="&#xF272;" FontSize="12" x:Name="EyeExerciseIcon"/>
+                    <TextBlock Text="Eye Exercise" FontSize="12" FontWeight="Medium" x:Name="EyeExerciseLabel"/>
+                    <Border CornerRadius="3" Padding="5,1" x:Name="BetaPill">
+                        <TextBlock Text="beta" FontSize="9" FontWeight="SemiBold" x:Name="BetaLabel"/>
+                    </Border>
+                </StackPanel>
+            </Button>
+
             <!-- Bottom buttons -->
             <Grid Padding="16,10,16,12">
                 <Grid.ColumnDefinitions>

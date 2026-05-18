@@ -22,6 +22,7 @@ public sealed partial class MenuBarPopup : Window
     public event Action? OnTakeBreakNowRequested;
     public event Action? OnQuitRequested;
     public event Action? OnAboutRequested;
+    public event Action? OnEyeExerciseRequested;
 
     public MenuBarPopup(AppState appState)
     {
@@ -81,7 +82,7 @@ public sealed partial class MenuBarPopup : Window
     private int MeasureContentHeight()
     {
         var hasUpdate = UpdateChecker.Instance.UpdateAvailable;
-        return hasUpdate ? 410 : 320;
+        return hasUpdate ? 450 : 360;
     }
 
     private void OnActivated(object sender, WindowActivatedEventArgs args)
@@ -139,6 +140,11 @@ public sealed partial class MenuBarPopup : Window
         UpdateBannerIcon.Foreground = accentBrush;
         UpdateDownloadButton.Background = accentBrush;
         UpdateDownloadButton.Foreground = textOnAccent;
+
+        EyeExerciseIcon.Foreground = accentBrush;
+        EyeExerciseLabel.Foreground = accentBrush;
+        BetaPill.Background = new SolidColorBrush(Color.FromArgb(30, accent.R, accent.G, accent.B));
+        BetaLabel.Foreground = accentBrush;
 
         var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", $"theme-{theme.Id}.png");
         if (File.Exists(iconPath))
@@ -232,6 +238,12 @@ public sealed partial class MenuBarPopup : Window
     {
         AppWindow.Hide();
         OnAboutRequested?.Invoke();
+    }
+
+    private void OnEyeExercise(object sender, RoutedEventArgs e)
+    {
+        AppWindow.Hide();
+        OnEyeExerciseRequested?.Invoke();
     }
 
     private void OnPreferences(object sender, RoutedEventArgs e)

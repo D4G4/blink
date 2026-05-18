@@ -85,6 +85,11 @@ public partial class App : Application
                 var win = new Onboarding.WhyExistWindow(ThemeManager.Instance.Current);
                 win.Activate();
             };
+            _menuPopup.OnEyeExerciseRequested += () =>
+            {
+                var win = new GaborExercise.GaborExerciseWindow(ThemeManager.Instance.Current);
+                win.Activate();
+            };
             _menuPopup.OnQuitRequested += () =>
             {
                 _trayIcon?.Dispose();
