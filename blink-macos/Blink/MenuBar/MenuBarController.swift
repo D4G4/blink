@@ -12,20 +12,20 @@ final class MenuBarController {
     /// Call once after a short delay post-launch (~0.5s) to find the status item.
     func findStatusItem() {
         let allWindows = NSApp.windows
-        BlinkLog.menuBar.info("findStatusItem: \(allWindows.count) windows")
+        Log.i("findStatusItem: \(allWindows.count) windows")
         for win in allWindows {
-            BlinkLog.menuBar.info("  window: \(win.className) title='\(win.title)'")
+            Log.i("  window: \(win.className) title='\(win.title)'")
         }
 
         let statusBarWindows = allWindows.filter {
             $0.className.contains("StatusBar") || $0.className.contains("StatusItem")
         }
-        BlinkLog.menuBar.info("Status bar windows: \(statusBarWindows.count)")
+        Log.i("Status bar windows: \(statusBarWindows.count)")
 
         statusItem = allWindows
             .compactMap { win -> NSStatusItem? in
                 guard let item = win.value(forKey: "statusItem") as? NSStatusItem else { return nil }
-                BlinkLog.menuBar.info("  found statusItem in \(win.className), item class=\(type(of: item))")
+                Log.i("  found statusItem in \(win.className), item class=\(type(of: item))")
                 return item
             }
             .first
@@ -40,10 +40,10 @@ final class MenuBarController {
         NSApp.activate(ignoringOtherApps: true)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             if let action = button.action, let target = button.target {
-                BlinkLog.menuBar.info("open: sending action \(NSStringFromSelector(action)) to \(type(of: target))")
+                Log.i("open: sending action \(NSStringFromSelector(action)) to \(type(of: target))")
                 NSApp.sendAction(action, to: target, from: button)
             } else {
-                BlinkLog.menuBar.info("open: no action/target, using performClick")
+                Log.i("open: no action/target, using performClick")
                 button.performClick(button)
             }
         }

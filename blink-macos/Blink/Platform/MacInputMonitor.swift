@@ -32,7 +32,7 @@ final class MacInputMonitor: InputEventSource {
             callback: MacInputMonitor.eventCallback,
             userInfo: selfPtr
         ) else {
-            BlinkLog.permission.error("CGEventTap creation failed in MacInputMonitor — input monitoring will NOT work this session")
+            Log.e("CGEventTap creation failed in MacInputMonitor — input monitoring will NOT work this session")
             return
         }
 
@@ -42,7 +42,7 @@ final class MacInputMonitor: InputEventSource {
         self.runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
-        BlinkLog.permission.info("CGEventTap created and enabled in MacInputMonitor — input monitoring active")
+        Log.i("CGEventTap created and enabled in MacInputMonitor — input monitoring active")
     }
 
     private var tapDeathLogged = false
@@ -58,7 +58,7 @@ final class MacInputMonitor: InputEventSource {
         CGEvent.tapEnable(tap: tap, enable: true)
         if !tapDeathLogged {
             tapDeathLogged = true
-            BlinkLog.permission.info("CGEventTap was disabled — attempted re-enable")
+            Log.i("CGEventTap was disabled — attempted re-enable")
         }
     }
 
@@ -83,7 +83,7 @@ final class MacInputMonitor: InputEventSource {
     private static let eventCallback: CGEventTapCallBack = { _, type, event, userInfo in
         // macOS sends these when it kills the tap — log the actual reason
         if type == .tapDisabledByTimeout {
-            BlinkLog.permission.info("CGEventTap KILLED: tapDisabledByTimeout — callback was too slow")
+            Log.i("CGEventTap KILLED: tapDisabledByTimeout — callback was too slow")
             if let userInfo {
                 let monitor = Unmanaged<MacInputMonitor>.fromOpaque(userInfo).takeUnretainedValue()
                 if let tap = monitor.eventTap {
@@ -93,7 +93,7 @@ final class MacInputMonitor: InputEventSource {
             return Unmanaged.passUnretained(event)
         }
         if type == .tapDisabledByUserInput {
-            BlinkLog.permission.info("CGEventTap KILLED: tapDisabledByUserInput — secure input active")
+            Log.i("CGEventTap KILLED: tapDisabledByUserInput — secure input active")
             return Unmanaged.passUnretained(event)
         }
 

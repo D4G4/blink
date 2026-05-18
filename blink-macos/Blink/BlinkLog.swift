@@ -31,7 +31,7 @@ enum BlinkLog {
 
     private static var fileHandle: FileHandle?
 
-    /// Creates a new session log file: Logs/2026-05-18/session-13-34-14.log
+    /// Creates a new session log file: Logs/2026-05-18/session-3-34-14-PM.log
     private static func currentFileHandle() -> FileHandle? {
         if let handle = fileHandle { return handle }
 
@@ -65,7 +65,7 @@ enum BlinkLog {
 
     private static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "HH-mm-ss"
+        f.dateFormat = "h-mm-ss-a"
         return f
     }()
 
@@ -155,11 +155,21 @@ struct BlinkLogger {
 
     private static let formatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss.SSS"
+        f.dateFormat = "h:mm:ss.SSS a"
         return f
     }()
 
     private static func timestamp() -> String {
         formatter.string(from: Date())
     }
+}
+
+// MARK: - Short aliases
+
+enum Log {
+    private static let logger = BlinkLogger("Blink")
+
+    static func i(_ msg: String) { logger.info(msg) }
+    static func d(_ msg: String) { logger.debug(msg) }
+    static func e(_ msg: String) { logger.error(msg) }
 }

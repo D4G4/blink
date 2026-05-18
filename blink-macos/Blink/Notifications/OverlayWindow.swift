@@ -25,9 +25,11 @@ final class OverlayWindowController {
     func showBreak(breakNumber: Int = 0, skipToast: Bool = false, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
         if skipToast {
             // Manual trigger — go directly to break timer without toast
+            Log.i("Break overlay: skipping toast, showing fullscreen directly (break #\(breakNumber))")
             showBreakTimer(breakNumber: breakNumber, onComplete: onComplete, onSkip: onSkip)
         } else {
             // Automatic trigger — show toast first
+            Log.i("Break overlay: showing 3s toast before fullscreen (break #\(breakNumber))")
             showToast(onToastDone: { [weak self] in
                 self?.dismissToast()
                 self?.showBreakTimer(breakNumber: breakNumber, onComplete: onComplete, onSkip: onSkip)
@@ -38,6 +40,7 @@ final class OverlayWindowController {
     /// Show a "timer extended" toast when flow is detected.
     /// User can dismiss (keep extension) or tap "Take break now".
     func showTimerExtendedToast(onTakeBreakNow: @escaping () -> Void) {
+        Log.i("Timer extended toast: showing flow-detected nudge")
         // Don't stack on existing toast
         dismissToast()
         
@@ -56,8 +59,12 @@ final class OverlayWindowController {
         
         let toastView = TimerExtendedToastView(
             theme: theme,
-            onDismiss: { [weak self] in self?.dismissToast() },
+            onDismiss: { [weak self] in
+                Log.i("Timer extended toast: dismissed by user")
+                self?.dismissToast()
+            },
             onTakeBreak: { [weak self] in
+                Log.i("Timer extended toast: 'Take break now' tapped")
                 self?.dismissToast()
                 onTakeBreakNow()
             }
@@ -167,6 +174,7 @@ final class OverlayWindowController {
 
     /// Show a gentle nudge during flow — non-intrusive toast that auto-dismisses after 7s.
     func showFlowNudge(message: String, onTakeBreak: @escaping () -> Void) {
+        Log.i("Flow nudge toast: \(message)")
         dismissToast()
 
         guard let screen = NSScreen.main else { return }
@@ -185,8 +193,12 @@ final class OverlayWindowController {
         let toastView = FlowNudgeToastView(
             theme: theme,
             message: message,
-            onDismiss: { [weak self] in self?.dismissToast() },
+            onDismiss: { [weak self] in
+                Log.i("Flow nudge toast: dismissed by user")
+                self?.dismissToast()
+            },
             onTakeBreak: { [weak self] in
+                Log.i("Flow nudge toast: 'Take break' tapped")
                 self?.dismissToast()
                 onTakeBreak()
             }
@@ -333,6 +345,7 @@ final class OverlayWindowController {
     // MARK: - Fullscreen break timer
     
     private func showBreakTimer(breakNumber: Int = 0, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
+        Log.i("Fullscreen break overlay: creating window (break #\(breakNumber))")
         guard let screen = NSScreen.main else { return }
 
         // Borderless overlay at .screenSaver level — covers everything instantly.
@@ -375,6 +388,7 @@ final class OverlayWindowController {
             showWalkSuggestion: breakNumber >= 4,
             onDismiss: { [weak self] in
                 // Kill-switch: try normal dismiss, then nuke if still alive
+                Log.i("Break overlay: X button (kill-switch) tapped")
                 skipAction()
                 DispatchQueue.main.async {
                     self?.dismissImmediately()
@@ -390,8 +404,14 @@ final class OverlayWindowController {
         // Keyboard handling — local (app active) + global (app in background)
         removeEventMonitors()
         currentKeyHandler = KeyEventHandler(
-            onEscape: skipAction,
-            onRightArrow: { [weak breakModel] in breakModel?.extend() }
+            onEscape: {
+                Log.i("Break overlay: Escape key pressed — skipping break")
+                skipAction()
+            },
+            onRightArrow: { [weak breakModel] in
+                Log.i("Break overlay: right arrow pressed — extending break +20s")
+                breakModel?.extend()
+            }
         )
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if self?.currentKeyHandler?.handle(event) == true {
@@ -405,6 +425,7 @@ final class OverlayWindowController {
         // Click anywhere after countdown reaches 0 → skip break
         clickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak breakModel] event in
             if breakModel?.remaining ?? 1 <= 0 {
+                Log.i("Break overlay: click-to-dismiss after countdown reached 0")
                 skipAction()
                 return nil
             }
@@ -442,6 +463,7 @@ final class OverlayWindowController {
     private func dismissFullscreen() {
         guard !isDismissing else { return }
         isDismissing = true
+        Log.i("Fullscreen overlay: dismissing (fade-out)")
         removeEventMonitors()
         guard let win = fullscreenWindow else { return }
         fullscreenWindow = nil
@@ -463,6 +485,7 @@ final class OverlayWindowController {
     func dismissImmediately() {
         guard !isDismissing else { return }
         isDismissing = true
+        Log.i("Fullscreen overlay: dismissing immediately (no animation)")
         dismissToast()
         removeEventMonitors()
         guard let win = fullscreenWindow else { return }
@@ -672,8 +695,6 @@ final class BreakPhaseModel: ObservableObject {
     private var countdownStartDate: Date?
     /// Total seconds that were on the clock at start (adjusted for extends).
     private var countdownStartTotal: Int = 20
-    /// Seconds at zero before auto-dismiss (wall-clock based).
-    private static let autoDismissAfterZero: TimeInterval = 60
 
     deinit {
         stopTimer()
@@ -684,6 +705,7 @@ final class BreakPhaseModel: ObservableObject {
         total += 20
         // Adjust wall-clock baseline so elapsed calculation stays correct
         countdownStartTotal += 20
+        Log.i("BreakPhaseModel: extended +20s → total=\(total)s, remaining=\(remaining)s")
         withAnimation(.easeOut(duration: 0.4)) { showExtendHint = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             withAnimation { self?.showExtendHint = false }
@@ -691,6 +713,7 @@ final class BreakPhaseModel: ObservableObject {
     }
 
     func startTimer(onComplete: @escaping () -> Void) {
+        Log.i("BreakPhaseModel: countdown started (\(total)s)")
         countdownStartDate = Date()
         countdownStartTotal = total
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -703,14 +726,11 @@ final class BreakPhaseModel: ObservableObject {
             if wallRemaining > 0 {
                 self.remaining = wallRemaining
             } else {
+                // Countdown done — dismiss immediately
+                Log.i("BreakPhaseModel: countdown reached 0 — auto-completing break")
                 self.remaining = 0
-                // Auto-dismiss after 60s at zero (wall-clock), covering the case
-                // where the Mac slept while at 0 and Timer was paused.
-                let secondsPastZero = elapsed - TimeInterval(self.countdownStartTotal)
-                if secondsPastZero >= Self.autoDismissAfterZero {
-                    self.stopTimer()
-                    onComplete()
-                }
+                self.stopTimer()
+                onComplete()
             }
         }
     }
@@ -739,28 +759,6 @@ struct BreakPhaseView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
 
-            // Close button — always visible, top-right corner.
-            // Kill-switch: nukes the overlay window directly if normal dismiss fails.
-            VStack {
-                HStack {
-                    Spacer()
-                    Button {
-                        onDismiss?()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(fg)
-                            .frame(width: 32, height: 32)
-                            .background(fg.opacity(0.12))
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.trailing, 24)
-                    .padding(.top, 24)
-                }
-                Spacer()
-            }
-
             VStack(spacing: 0) {
                 // Title row with 20ft badge
                 HStack {
@@ -780,25 +778,6 @@ struct BreakPhaseView: View {
                         }
                     }
                     Spacer()
-                }
-                .overlay(alignment: .leading) {
-                    VStack(spacing: 6) {
-                        Image(systemName: "eye")
-                            .font(.system(size: 20))
-                            .foregroundStyle(fg)
-                        HStack(alignment: .firstTextBaseline, spacing: 3) {
-                            Text("20")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundStyle(fg)
-                            Text("ft")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(fg)
-                        }
-                    }
-                    .padding(14)
-                    .background(fg.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .padding(.leading, 32)
                 }
                 .padding(.top, 80)
                 

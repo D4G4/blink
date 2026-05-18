@@ -87,14 +87,14 @@ final class AppState: ObservableObject {
             hasAccessibilityPermission = true
             return
         }
-        BlinkLog.app.info("Blink starting up")
+        Log.i("Blink starting up")
 
         // One-time: force re-onboarding for build 20 (new flow sensitivity UI)
         let onboardingVersion = UserDefaults.standard.integer(forKey: "onboardingVersion")
         if onboardingVersion < 2 {
             ThemeManager.shared.hasCompletedOnboarding = false
             UserDefaults.standard.set(2, forKey: "onboardingVersion")
-            BlinkLog.app.info("Onboarding reset for new flow sensitivity UI")
+            Log.i("Onboarding reset for new flow sensitivity UI")
         }
 
         setupEngineCallbacks()
@@ -111,7 +111,7 @@ final class AppState: ObservableObject {
         if ThemeManager.shared.hasCompletedOnboarding {
             checkPermissionsAndStart()
         } else {
-            BlinkLog.app.info("Onboarding not complete — deferring permissions")
+            Log.i("Onboarding not complete — deferring permissions")
             onboardingObserver = NotificationCenter.default.addObserver(
                 forName: .onboardingCompleted, object: nil, queue: .main
             ) { [weak self] _ in
@@ -129,12 +129,13 @@ final class AppState: ObservableObject {
             // If screen is locked or Mac is asleep, the user is already looking
             // away — showing an overlay would just get stuck. Count as taken.
             if self.isUserAway {
-                BlinkLog.app.info("Break due but user is away (asleep=\(self.isSystemAsleep), locked=\(self.isScreenLocked)) — counting as taken")
+                Log.i("Break due but user is away (asleep=\(self.isSystemAsleep), locked=\(self.isScreenLocked)) — counting as taken")
                 self.engine.userTookBreak()
                 self.breaksTakenToday += 1
                 return
             }
 
+            Log.i("Break #\(breakNumber) — showing overlay")
             self.isBreakPrompted = true
             self.overlayShownAt = Date()
             self.breaksPromptedToday += 1
@@ -142,6 +143,7 @@ final class AppState: ObservableObject {
                 breakNumber: breakNumber,
                 onComplete: { [weak self] in
                     Task { @MainActor in
+                        Log.i("Break completed (countdown finished)")
                         self?.engine.userTookBreak()
                         self?.isBreakPrompted = false
                         self?.overlayShownAt = nil
@@ -151,6 +153,7 @@ final class AppState: ObservableObject {
                 },
                 onSkip: { [weak self] in
                     Task { @MainActor in
+                        Log.i("Break skipped")
                         self?.engine.userSkippedBreak()
                         self?.isBreakPrompted = false
                         self?.overlayShownAt = nil
@@ -162,7 +165,7 @@ final class AppState: ObservableObject {
 
         engine.onShowExtendToast = { [weak self] reason in
             guard let self else { return }
-            BlinkLog.app.info("Break decision: extend — \(reason)")
+            Log.i("Break decision: extend — \(reason)")
             self.overlayController.showFlowNudge(
                 message: "\(reason) — extended 10 min",
                 // e.g. "Focused — extended 10 min"
@@ -181,7 +184,12 @@ final class AppState: ObservableObject {
         }
 
         engine.onStateChange = { [weak self] state in
-            self?.displayState = state
+            guard let self else { return }
+            let prev = self.displayState
+            if prev != state {
+                Log.i("Engine state: \(prev) → \(state)")
+            }
+            self.displayState = state
         }
 
         engine.compliance.onBreakRecorded = { [weak self] record in
@@ -203,16 +211,16 @@ final class AppState: ObservableObject {
 
     private func checkPermissionsAndStart() {
         let granted = PermissionManager.isPermissionGranted()
-        BlinkLog.app.info("Permission probe result: \(granted)")
+        Log.i("Permission probe result: \(granted)")
         if granted {
             hasAccessibilityPermission = true
             UserDefaults.standard.set(true, forKey: "permissionGranted")
             startMonitoring()
             startTimer()
             showTimerForStartup()
-            BlinkLog.app.info("Permission confirmed — monitors and timers started")
+            Log.i("Permission confirmed — monitors and timers started")
         } else {
-            BlinkLog.app.info("Permission not granted — showing guide")
+            Log.i("Permission not granted — showing guide")
             hasAccessibilityPermission = false
             permissionWindow = PermissionWindowController()
             permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
@@ -223,13 +231,13 @@ final class AppState: ObservableObject {
                 self.startMonitoring()
                 self.startTimer()
                 self.showTimerForStartup()
-                BlinkLog.app.info("Permission granted — monitors and timers started")
+                Log.i("Permission granted — monitors and timers started")
             }
         }
     }
 
     private func startMonitoring() {
-        BlinkLog.app.info("Starting input monitoring (CGEventTap)")
+        Log.i("Starting input monitoring (CGEventTap)")
         let input = MacInputMonitor()
         input.onKeystroke = { [weak self] _ in self?.engine.recordKeystroke() }
         input.onMouseEvent = { [weak self] event in
@@ -242,14 +250,14 @@ final class AppState: ObservableObject {
         input.startMonitoring()
         self.inputMonitor = input
 
-        BlinkLog.app.info("Starting app monitor (NSWorkspace)")
+        Log.i("Starting app monitor (NSWorkspace)")
         let appMon = MacAppMonitor()
         appMon.onAppSwitch = { [weak self] event in
-            BlinkLog.app.debug("App switch → \(event.appBundleID)")
+            Log.d("App switch → \(event.appBundleID)")
             self?.engine.recordAppSwitch(bundleID: event.appBundleID)
         }
         appMon.onWindowTitleChange = {
-            BlinkLog.app.debug("Window title changed")
+            Log.d("Window title changed")
         }
         appMon.startMonitoring()
         self.appMonitor = appMon
@@ -260,11 +268,11 @@ final class AppState: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            BlinkLog.app.info("Mac going to sleep")
+            Log.i("Mac going to sleep")
             guard let self else { return }
             self.isSystemAsleep = true
             if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
-                BlinkLog.app.info("Break overlay active before sleep — dismissing synchronously")
+                Log.i("Break overlay active before sleep — dismissing synchronously")
                 self.engine.userTookBreak()
                 self.isBreakPrompted = false
                 self.overlayController.dismissImmediately()
@@ -277,13 +285,13 @@ final class AppState: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            BlinkLog.app.info("Wake from sleep")
+            Log.i("Wake from sleep")
             guard let self else { return }
             self.isSystemAsleep = false
             self.inputMonitor?.reEnableTapIfNeeded()
             // Defense-in-depth: if any overlay survived sleep, kill it immediately.
             if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
-                BlinkLog.app.info("Break overlay still present on wake — dismissing")
+                Log.i("Break overlay still present on wake — dismissing")
                 self.engine.userTookBreak()
                 self.isBreakPrompted = false
                 self.overlayController.dismissImmediately()
@@ -296,7 +304,7 @@ final class AppState: ObservableObject {
             DispatchQueue.main.async { self?.micAlwaysOnWarning = true }
         }
         self.contextDetector = ctx
-        BlinkLog.app.info("All monitors active")
+        Log.i("All monitors active")
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             _ = self?.contextDetector?.isMicrophoneActive()
@@ -331,7 +339,7 @@ final class AppState: ObservableObject {
                 // Kill-switch: force-dismiss overlay if stuck beyond 2 minutes
                 if let shownAt = self.overlayShownAt,
                    Date().timeIntervalSince(shownAt) >= Self.overlayMaxSeconds {
-                    BlinkLog.app.error("Kill-switch: overlay stuck for >\(Int(Self.overlayMaxSeconds))s — force dismissing")
+                    Log.e("Kill-switch: overlay stuck for >\(Int(Self.overlayMaxSeconds))s — force dismissing")
                     self.engine.userTookBreak()
                     self.isBreakPrompted = false
                     self.overlayShownAt = nil
@@ -375,14 +383,14 @@ final class AppState: ObservableObject {
 
     private func findStatusItemAndOpen(attempts: Int) {
         guard attempts < 10 else {
-            BlinkLog.app.info("MenuBarController: gave up finding status item after 10 attempts")
+            Log.i("MenuBarController: gave up finding status item after 10 attempts")
             return
         }
         let delay = 0.3 * Double(attempts + 1)
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             MenuBarController.shared.findStatusItem()
             if MenuBarController.shared.statusItem != nil {
-                BlinkLog.app.info("MenuBarController: found status item on attempt \(attempts + 1)")
+                Log.i("MenuBarController: found status item on attempt \(attempts + 1)")
                 MenuBarController.shared.open()
             } else {
                 self.findStatusItemAndOpen(attempts: attempts + 1)
@@ -394,19 +402,22 @@ final class AppState: ObservableObject {
 
     func togglePause() {
         isPaused.toggle()
-        BlinkLog.app.info("Pause toggled → \(isPaused ? "paused" : "resumed")")
+        Log.i("Pause toggled → \(isPaused ? "paused" : "resumed")")
     }
 
     func showBreakPrompt() {
         // Manual trigger from menu bar — skip the 3s toast and go directly to break
+        let breakNum = engine.currentBreakStreak + 1
+        Log.i("Manual break #\(breakNum) triggered from menu bar")
         isBreakPrompted = true
         overlayShownAt = Date()
         breaksPromptedToday += 1
         overlayController.showBreak(
-            breakNumber: engine.currentBreakStreak + 1,
+            breakNumber: breakNum,
             skipToast: true,
             onComplete: { [weak self] in
                 Task { @MainActor in
+                    Log.i("Manual break #\(breakNum) completed (countdown finished)")
                     self?.engine.userTookBreak()
                     self?.isBreakPrompted = false
                     self?.overlayShownAt = nil
@@ -416,6 +427,7 @@ final class AppState: ObservableObject {
             },
             onSkip: { [weak self] in
                 Task { @MainActor in
+                    Log.i("Manual break #\(breakNum) skipped")
                     self?.engine.userSkippedBreak()
                     self?.isBreakPrompted = false
                     self?.overlayShownAt = nil
@@ -431,6 +443,6 @@ final class AppState: ObservableObject {
         let records = persistence.loadTodayRecords()
         breaksPromptedToday = records.count
         breaksTakenToday = records.filter { $0.compliance == .taken || $0.compliance == .delayed }.count
-        BlinkLog.app.info("Loaded today's stats: \(self.breaksTakenToday)/\(self.breaksPromptedToday) breaks taken")
+        Log.i("Loaded today's stats: \(self.breaksTakenToday)/\(self.breaksPromptedToday) breaks taken")
     }
 }

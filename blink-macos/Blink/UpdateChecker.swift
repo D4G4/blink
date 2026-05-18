@@ -29,7 +29,7 @@ final class UpdateChecker: ObservableObject {
 
     func startPeriodicChecks() {
         guard !Self.isAppStore else {
-            BlinkLog.update.info("App Store install — skipping update checks")
+            Log.i("App Store install — skipping update checks")
             return
         }
         checkForUpdate()
@@ -60,7 +60,7 @@ final class UpdateChecker: ObservableObject {
                 let current = Self.currentVersion
 
                 if isNewer(latest, than: current) {
-                    BlinkLog.update.info("Update available: \(current) → \(latest)")
+                    Log.i("Update available: \(current) → \(latest)")
                     latestVersion = latest
                     updateAvailable = true
                     lastCheckResult = .available(latest)
@@ -81,11 +81,11 @@ final class UpdateChecker: ObservableObject {
                         downloadURL = URL(string: htmlURL)
                     }
                 } else {
-                    BlinkLog.update.info("Up to date: \(current)")
+                    Log.i("Up to date: \(current)")
                     lastCheckResult = .upToDate
                 }
             } catch {
-                BlinkLog.update.debug("Update check failed: \(error.localizedDescription)")
+                Log.d("Update check failed: \(error.localizedDescription)")
                 lastCheckResult = .failed
             }
             isChecking = false

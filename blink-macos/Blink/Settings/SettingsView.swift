@@ -308,7 +308,7 @@ struct SettingsView: View {
                     Button {
                         let check = appState.engine.spotCheckFlow()
                         flowCheckDetail = check.description
-                        BlinkLog.app.info("Flow spot check (Preferences):\n\(check.description)")
+                        Log.i("Flow spot check (Preferences):\n\(check.description)")
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "waveform.path.ecg")

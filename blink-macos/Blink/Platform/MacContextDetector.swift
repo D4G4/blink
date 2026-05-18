@@ -60,13 +60,13 @@ final class MacContextDetector: ContextSource {
         if isFirstMicCheck {
             isFirstMicCheck = false
             if active {
-                BlinkLog.context.info("Mic active at launch — likely Dictation/Siri")
+                Log.i("Mic active at launch — likely Dictation/Siri")
                 onMicActiveAtLaunch?()
             }
         }
 
         if active != lastMicState {
-            BlinkLog.context.info("Mic state changed: \(active ? "ACTIVE" : "inactive")")
+            Log.i("Mic state changed: \(active ? "ACTIVE" : "inactive")")
             if active { logAllDevices() }
             lastMicState = active
         }
@@ -96,7 +96,7 @@ final class MacContextDetector: ContextSource {
 
             let inputOnly = isInputOnlyDevice(device)
             let hasInput = hasInputStreams(device)
-            BlinkLog.context.info("Device \(device): \(name as String), hasInput=\(hasInput), inputOnly=\(inputOnly)")
+            Log.i("Device \(device): \(name as String), hasInput=\(hasInput), inputOnly=\(inputOnly)")
         }
     }
 
