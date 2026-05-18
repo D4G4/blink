@@ -13,15 +13,18 @@ struct BlinkApp: App {
                 .environmentObject(themeManager)
                 .environmentObject(UpdateChecker.shared)
         } label: {
-            if showTimerInMenuBar && appState.hasAccessibilityPermission {
-                HStack(spacing: 4) {
+            Group {
+                if showTimerInMenuBar && appState.hasAccessibilityPermission {
+                    HStack(spacing: 4) {
+                        menuBarIcon
+                        Text(appState.formattedRemaining)
+                            .monospacedDigit()
+                    }
+                } else {
                     menuBarIcon
-                    Text(appState.formattedRemaining)
-                        .monospacedDigit()
                 }
-            } else {
-                menuBarIcon
             }
+            .opacity(appState.isPaused ? 0.35 : 1.0)
         }
         .menuBarExtraStyle(.window)
     }
@@ -31,7 +34,6 @@ struct BlinkApp: App {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: 18, height: 18)
-            .opacity(appState.isPaused ? 0.35 : 1.0)
     }
 }
 
