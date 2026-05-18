@@ -18,8 +18,27 @@ public sealed partial class SettingsWindow : Window
         InitializeComponent();
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "app.ico"));
         AppWindow.Resize(new Windows.Graphics.SizeInt32(440, 480));
+        ApplyThemeBackground();
         LoadCurrentValues();
         _isLoading = false;
+    }
+
+    private void ApplyThemeBackground()
+    {
+        var theme = ThemeManager.Instance.Current;
+        var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
+        var top = theme.BackgroundTop(isDark);
+        var bottom = theme.BackgroundBottom(isDark);
+        RootNav.Background = new LinearGradientBrush
+        {
+            StartPoint = new Windows.Foundation.Point(0, 0),
+            EndPoint = new Windows.Foundation.Point(0, 1),
+            GradientStops =
+            {
+                new GradientStop { Color = top, Offset = 0 },
+                new GradientStop { Color = bottom, Offset = 1 }
+            }
+        };
     }
 
     private void LoadCurrentValues()
