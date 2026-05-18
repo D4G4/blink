@@ -151,13 +151,11 @@ final class MacContextDetector: ContextSource {
                 )
                 if AudioObjectGetPropertyData(device, &addr, 0, nil, &size, &isRunning) == noErr,
                    isRunning != 0 {
-                    BlinkLog.context.debug("Mic in use: input-only device \(device) is running")
                     return true
                 }
             } else {
                 // Combination device (AirPods, USB headset): check input streams individually
                 if hasActiveInputStream(device) {
-                    BlinkLog.context.debug("Mic in use: combo device \(device) has active input stream")
                     return true
                 }
             }

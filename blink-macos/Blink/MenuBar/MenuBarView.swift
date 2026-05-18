@@ -97,7 +97,7 @@ struct MenuBarView: View {
             }
             .padding(.horizontal, 12)
 
-            // Stats
+            // Stats + flow check
             HStack(spacing: 6) {
                 Image(systemName: "eye")
                     .font(.system(size: 11))
@@ -106,10 +106,34 @@ struct MenuBarView: View {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
                 Spacer()
+                if appState.hasAccessibilityPermission {
+                    Button {
+                        let check = appState.engine.spotCheckFlow()
+                        flowSpotCheck = check.description
+                        BlinkLog.app.info("Flow spot check:\n\(check.description)")
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "waveform.path.ecg")
+                                .font(.system(size: 10))
+                            Text("Flow Check")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        .foregroundStyle(accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
-            .padding(.bottom, 10)
+            .padding(.bottom, flowSpotCheck != nil ? 4 : 10)
+
+            if let spotCheck = flowSpotCheck {
+                Text(spotCheck)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 10)
+            }
 
             Divider()
                 .padding(.horizontal, 12)
@@ -279,6 +303,7 @@ struct MenuBarView: View {
 
     @State private var showBrewCommand = false
     @State private var brewCommandCopied = false
+    @State private var flowSpotCheck: String?
 
     private func updateBanner(version: String) -> some View {
         VStack(spacing: 8) {

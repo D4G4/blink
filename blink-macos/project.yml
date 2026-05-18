@@ -7,8 +7,10 @@ options:
 
 packages:
   BlinkCore:
-    url: git@github-d4g4:D4G4/blink-core.git
-    from: "1.7.0"
+    path: BlinkCore
+    # Remote (switch back after pushing BlinkCore):
+    # url: git@github-d4g4:D4G4/blink-core.git
+    # from: "1.8.0"
 
 schemes:
   Blink:
@@ -34,7 +36,7 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: true
         PRODUCT_BUNDLE_IDENTIFIER: com.blink20.app
-        MARKETING_VERSION: "3.2.0"
+        MARKETING_VERSION: "3.2.1"
         CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_KEY_LSUIElement: true
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false

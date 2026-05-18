@@ -17,7 +17,6 @@ struct SettingsView: View {
     private var accentColor: Color { theme.accent(for: colorScheme) }
     
     @State private var selectedTab: Int = 0
-    @State private var logsCopied: Bool = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -215,18 +214,16 @@ struct SettingsView: View {
                 .padding(.top, 4)
                 
                 Button {
-                    UIActionLogger.buttonTapped("Copy Logs")
-                    LogExporter.exportToFile()
-                    logsCopied = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { logsCopied = false }
+                    UIActionLogger.buttonTapped("Open Log Files")
+                    LogExporter.revealInFinder()
                 } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: logsCopied ? "checkmark" : "doc.on.clipboard")
+                        Image(systemName: "folder")
                             .font(.system(size: 11))
-                        Text(logsCopied ? "Copied!" : "Copy Logs to Clipboard")
+                        Text("Open Log Files")
                             .font(.system(size: 12))
                     }
-                    .foregroundStyle(logsCopied ? .green : accentColor)
+                    .foregroundStyle(accentColor)
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 4)
