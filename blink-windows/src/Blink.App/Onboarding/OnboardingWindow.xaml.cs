@@ -127,28 +127,17 @@ public sealed partial class OnboardingWindow : Window
         var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
         var fg = theme.OnBackgroundText(isDark);
         var fgBrush = new SolidColorBrush(fg);
-        var accent = theme.Accent(isDark);
 
         // Text colors
         FlowTitle.Foreground = fgBrush;
-        FlowSubtitle.Foreground = fgBrush;
-        FlowIcon.Foreground = new SolidColorBrush(fg) { Opacity = 0.7 };
+        FlowIcon.Foreground = fgBrush;
         BackLabel.Foreground = new SolidColorBrush(fg) { Opacity = 0.7 };
         FlowDescLabel.Foreground = fgBrush;
 
-        // Preset card text colors
-        NameEyeHealth.Foreground = fgBrush;
-        NameBalanced.Foreground = fgBrush;
-        NameDeepWork.Foreground = fgBrush;
-        DescEyeHealth.Foreground = fgBrush;
-        DescBalanced.Foreground = fgBrush;
-        DescDeepWork.Foreground = fgBrush;
-        IconEyeHealth.Foreground = fgBrush;
-        IconBalanced.Foreground = fgBrush;
-        IconDeepWork.Foreground = fgBrush;
-
-        // Explore button styling
+        // Explore button: capsule background (fg at 20% opacity, matching macOS)
         ExploreButton.Foreground = fgBrush;
+        ExploreButton.Background = new SolidColorBrush(
+            Color.FromArgb(50, fg.R, fg.G, fg.B));
 
         // Get Started button
         GetStartedButton.Background = fgBrush;
@@ -181,12 +170,13 @@ public sealed partial class OnboardingWindow : Window
         var accent = theme.Accent(isDark);
 
         // Update card backgrounds — selected gets white, others get translucent fg
+        var unselectedBg = Color.FromArgb(40, fg.R, fg.G, fg.B);
         CardEyeHealth.Background = new SolidColorBrush(
-            _selectedPreset == "eyeHealth" ? Colors.White : Color.FromArgb(30, fg.R, fg.G, fg.B));
+            _selectedPreset == "eyeHealth" ? Colors.White : unselectedBg);
         CardBalanced.Background = new SolidColorBrush(
-            _selectedPreset == "balanced" ? Colors.White : Color.FromArgb(30, fg.R, fg.G, fg.B));
+            _selectedPreset == "balanced" ? Colors.White : unselectedBg);
         CardDeepWork.Background = new SolidColorBrush(
-            _selectedPreset == "deepWork" ? Colors.White : Color.FromArgb(30, fg.R, fg.G, fg.B));
+            _selectedPreset == "deepWork" ? Colors.White : unselectedBg);
 
         // Selected card: accent for icon/name, accent at 80% for description
         // Unselected card: fg for icon/name, fg at 80% for description

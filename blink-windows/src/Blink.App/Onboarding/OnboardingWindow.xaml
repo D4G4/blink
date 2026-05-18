@@ -57,16 +57,17 @@
             </StackPanel>
         </Grid>
 
-        <!-- Page 2: Flow Sensitivity -->
+        <!-- Page 2: Flow Sensitivity (matches macOS FlowSensitivityPage layout) -->
         <Grid x:Name="FlowPage" Visibility="Collapsed">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>  <!-- 0: back button -->
+                <RowDefinition Height="Auto"/>  <!-- 1: icon -->
+                <RowDefinition Height="Auto"/>  <!-- 2: title -->
+                <RowDefinition Height="*"/>     <!-- 3: top spacer (centers cards) -->
+                <RowDefinition Height="Auto"/>  <!-- 4: cards -->
+                <RowDefinition Height="Auto"/>  <!-- 5: description -->
+                <RowDefinition Height="*"/>     <!-- 6: bottom spacer (centers cards) -->
+                <RowDefinition Height="Auto"/>  <!-- 7: buttons -->
             </Grid.RowDefinitions>
 
             <!-- Back button -->
@@ -80,39 +81,35 @@
                 </StackPanel>
             </Button>
 
-            <!-- Brain icon -->
-            <FontIcon Grid.Row="1" x:Name="FlowIcon" Glyph="&#xE945;"
-                      FontSize="60" Opacity="0.7"
-                      HorizontalAlignment="Center" Margin="0,20,0,0"/>
+            <!-- Head/brain icon -->
+            <FontIcon Grid.Row="1" x:Name="FlowIcon" Glyph="&#xE77B;"
+                      FontSize="56"
+                      HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
-            <!-- Title + subtitle -->
-            <StackPanel Grid.Row="2" HorizontalAlignment="Center" Spacing="6" Margin="0,20,0,0">
-                <TextBlock x:Name="FlowTitle" Text="Flow Detection"
-                           FontSize="28" FontWeight="Bold"
-                           HorizontalAlignment="Center"/>
-                <TextBlock x:Name="FlowSubtitle"
-                           Text="Blink detects when you're focused and extends break intervals"
-                           FontSize="15" Opacity="0.85"
-                           HorizontalAlignment="Center" TextAlignment="Center"
-                           TextWrapping="Wrap" MaxWidth="400"/>
-            </StackPanel>
+            <!-- Title only (no subtitle — matches macOS) -->
+            <TextBlock Grid.Row="2" x:Name="FlowTitle" Text="Flow Detection"
+                       FontSize="32" FontWeight="Bold"
+                       HorizontalAlignment="Center"/>
+
+            <!-- Top spacer -->
+            <Grid Grid.Row="3"/>
 
             <!-- Preset cards -->
-            <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="14"
-                        HorizontalAlignment="Center" Margin="0,24,0,0">
+            <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="14"
+                        HorizontalAlignment="Center">
 
                 <Button x:Name="PresetEyeHealth" Click="OnPresetSelected"
                         Tag="eyeHealth" Background="Transparent" BorderThickness="0"
                         Padding="0" CornerRadius="14">
-                    <Border x:Name="CardEyeHealth" CornerRadius="14" Padding="16,20"
-                            Width="150" MinHeight="130">
+                    <Border x:Name="CardEyeHealth" CornerRadius="14" Padding="10,20"
+                            Width="160" MinHeight="140">
                         <StackPanel Spacing="10" HorizontalAlignment="Center">
                             <FontIcon x:Name="IconEyeHealth" Glyph="&#xEB51;" FontSize="32"/>
                             <TextBlock x:Name="NameEyeHealth" Text="Eye health"
                                        FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/>
                             <TextBlock x:Name="DescEyeHealth" Text="Regular breaks. Only intense work extends."
                                        FontSize="12" TextAlignment="Center" TextWrapping="Wrap"
-                                       MaxWidth="130"/>
+                                       MaxWidth="140"/>
                         </StackPanel>
                     </Border>
                 </Button>
@@ -120,15 +117,15 @@
                 <Button x:Name="PresetBalanced" Click="OnPresetSelected"
                         Tag="balanced" Background="Transparent" BorderThickness="0"
                         Padding="0" CornerRadius="14">
-                    <Border x:Name="CardBalanced" CornerRadius="14" Padding="16,20"
-                            Width="150" MinHeight="130">
+                    <Border x:Name="CardBalanced" CornerRadius="14" Padding="10,20"
+                            Width="160" MinHeight="140">
                         <StackPanel Spacing="10" HorizontalAlignment="Center">
-                            <FontIcon x:Name="IconBalanced" Glyph="&#xE912;" FontSize="32"/>
+                            <FontIcon x:Name="IconBalanced" Glyph="&#xE94E;" FontSize="32"/>
                             <TextBlock x:Name="NameBalanced" Text="Balanced"
                                        FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/>
                             <TextBlock x:Name="DescBalanced" Text="Smart timing. Extends for focused work."
                                        FontSize="12" TextAlignment="Center" TextWrapping="Wrap"
-                                       MaxWidth="130"/>
+                                       MaxWidth="140"/>
                         </StackPanel>
                     </Border>
                 </Button>
@@ -136,35 +133,36 @@
                 <Button x:Name="PresetDeepWork" Click="OnPresetSelected"
                         Tag="deepWork" Background="Transparent" BorderThickness="0"
                         Padding="0" CornerRadius="14">
-                    <Border x:Name="CardDeepWork" CornerRadius="14" Padding="16,20"
-                            Width="150" MinHeight="130">
+                    <Border x:Name="CardDeepWork" CornerRadius="14" Padding="10,20"
+                            Width="160" MinHeight="140">
                         <StackPanel Spacing="10" HorizontalAlignment="Center">
-                            <FontIcon x:Name="IconDeepWork" Glyph="&#xE945;" FontSize="32"/>
+                            <FontIcon x:Name="IconDeepWork" Glyph="&#xE811;" FontSize="32"/>
                             <TextBlock x:Name="NameDeepWork" Text="Deep work"
                                        FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/>
                             <TextBlock x:Name="DescDeepWork" Text="Fewer interruptions. Gentle reminders."
                                        FontSize="12" TextAlignment="Center" TextWrapping="Wrap"
-                                       MaxWidth="130"/>
+                                       MaxWidth="140"/>
                         </StackPanel>
                     </Border>
                 </Button>
             </StackPanel>
 
             <!-- Description for selected preset -->
-            <TextBlock Grid.Row="4" x:Name="FlowDescLabel"
+            <TextBlock Grid.Row="5" x:Name="FlowDescLabel"
                        FontSize="15" FontWeight="Medium"
                        TextAlignment="Center" TextWrapping="Wrap"
-                       HorizontalAlignment="Center" MaxWidth="420"
-                       VerticalAlignment="Top" Margin="0,20,0,0"/>
+                       HorizontalAlignment="Center" MaxWidth="600"
+                       VerticalAlignment="Top" Margin="0,28,0,0"/>
 
-            <!-- Spacer -->
-            <Grid Grid.Row="5"/>
+            <!-- Bottom spacer -->
+            <Grid Grid.Row="6"/>
 
-            <!-- Buttons -->
-            <StackPanel Grid.Row="6" HorizontalAlignment="Center" Spacing="20" Margin="0,0,0,20">
+            <!-- Buttons (30px spacing matching macOS) -->
+            <StackPanel Grid.Row="7" HorizontalAlignment="Center" Spacing="30" Margin="0,0,0,20">
                 <Button x:Name="ExploreButton" Click="OnExploreHowItWorks"
-                        Background="Transparent" BorderThickness="0"
-                        HorizontalAlignment="Center" Padding="20,10">
+                        BorderThickness="0"
+                        HorizontalAlignment="Center" Padding="20,10"
+                        CornerRadius="20">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xE9E9;" FontSize="14"/>
                         <TextBlock Text="Explore how it works" FontSize="14" FontWeight="Bold"/>
