@@ -19,10 +19,10 @@
 
             <!-- Welcome text -->
             <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8">
-                <TextBlock Text="Welcome to Blink"
+                <TextBlock x:Name="WelcomeTitle" Text="Welcome to Blink"
                            FontSize="36" FontWeight="Bold"
                            HorizontalAlignment="Center"/>
-                <TextBlock Text="Smart breaks for your eyes"
+                <TextBlock x:Name="WelcomeSubtitle" Text="Smart breaks for your eyes"
                            FontSize="16" Opacity="0.7"
                            HorizontalAlignment="Center"/>
             </StackPanel>
@@ -112,7 +112,7 @@
                                        FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/>
                             <TextBlock x:Name="DescEyeHealth" Text="Regular breaks. Only intense work extends."
                                        FontSize="12" TextAlignment="Center" TextWrapping="Wrap"
-                                       Opacity="0.8" MaxWidth="130"/>
+                                       MaxWidth="130"/>
                         </StackPanel>
                     </Border>
                 </Button>
@@ -128,7 +128,7 @@
                                        FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/>
                             <TextBlock x:Name="DescBalanced" Text="Smart timing. Extends for focused work."
                                        FontSize="12" TextAlignment="Center" TextWrapping="Wrap"
-                                       Opacity="0.8" MaxWidth="130"/>
+                                       MaxWidth="130"/>
                         </StackPanel>
                     </Border>
                 </Button>
@@ -144,7 +144,7 @@
                                        FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/>
                             <TextBlock x:Name="DescDeepWork" Text="Fewer interruptions. Gentle reminders."
                                        FontSize="12" TextAlignment="Center" TextWrapping="Wrap"
-                                       Opacity="0.8" MaxWidth="130"/>
+                                       MaxWidth="130"/>
                         </StackPanel>
                     </Border>
                 </Button>

@@ -26,6 +26,7 @@ public sealed partial class WhyExistWindow : Window
 
     private readonly BlinkTheme _theme;
     private readonly bool _isDark;
+    private SolidColorBrush _fgBrush = null!;
     private int _page;
 
     public WhyExistWindow(BlinkTheme theme)
@@ -71,12 +72,19 @@ public sealed partial class WhyExistWindow : Window
 
         var accent = _theme.Accent(_isDark);
         GotItButton.Background = new SolidColorBrush(accent);
+        GotItButton.Foreground = new SolidColorBrush(_theme.TextOnAccent(_isDark));
         NextLabel.Foreground = new SolidColorBrush(accent);
         NextChevron.Foreground = new SolidColorBrush(accent);
 
         var textColor = _theme.OnBackgroundText(_isDark);
         Dot1.Fill = new SolidColorBrush(textColor);
         Dot2.Fill = new SolidColorBrush(textColor);
+
+        _fgBrush = new SolidColorBrush(textColor);
+        Page1Title.Foreground = _fgBrush;
+        Page1Subtitle.Foreground = _fgBrush;
+        Page2Title.Foreground = _fgBrush;
+        Page2Subtitle.Foreground = _fgBrush;
     }
 
     private void BuildPage1()
@@ -135,15 +143,16 @@ public sealed partial class WhyExistWindow : Window
                         HorizontalAlignment = HorizontalAlignment.Center,
                         Children =
                         {
-                            new TextBlock { Text = number, FontSize = 42, FontWeight = Microsoft.UI.Text.FontWeights.Bold },
+                            new TextBlock { Text = number, FontSize = 42, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = _fgBrush },
                             new TextBlock { Text = unit, FontSize = 16, FontWeight = Microsoft.UI.Text.FontWeights.Medium,
-                                            Opacity = 0.6, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0,0,0,8) }
+                                            Foreground = _fgBrush, Opacity = 0.6, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0,0,0,8) }
                         }
                     },
                     new TextBlock
                     {
                         Text = description,
                         FontSize = 14,
+                        Foreground = _fgBrush,
                         Opacity = 0.7,
                         TextAlignment = TextAlignment.Center,
                         TextWrapping = TextWrapping.Wrap
@@ -164,7 +173,7 @@ public sealed partial class WhyExistWindow : Window
             Children =
             {
                 new FontIcon { Glyph = glyph, FontSize = 16, Foreground = accent, Width = 22, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0,2,0,0) },
-                new TextBlock { Text = text, FontSize = 15, TextWrapping = TextWrapping.Wrap }
+                new TextBlock { Text = text, FontSize = 15, Foreground = _fgBrush, TextWrapping = TextWrapping.Wrap }
             }
         };
         FactsList.Children.Add(row);
@@ -185,8 +194,8 @@ public sealed partial class WhyExistWindow : Window
             Spacing = 4,
             Children =
             {
-                new TextBlock { Text = title, FontSize = 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
-                new TextBlock { Text = description, FontSize = 14, Opacity = 0.7, TextWrapping = TextWrapping.Wrap }
+                new TextBlock { Text = title, FontSize = 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = _fgBrush },
+                new TextBlock { Text = description, FontSize = 14, Foreground = _fgBrush, Opacity = 0.7, TextWrapping = TextWrapping.Wrap }
             }
         };
         Grid.SetColumn(stack, 1);

@@ -76,6 +76,8 @@ public sealed partial class OnboardingWindow : Window
         // Update text color to match theme's on-background color
         var textColor = theme.OnBackgroundText(isDark);
         var textBrush = new SolidColorBrush(textColor);
+        WelcomeTitle.Foreground = textBrush;
+        WelcomeSubtitle.Foreground = textBrush;
         ThemeName.Foreground = textBrush;
     }
 
@@ -146,7 +148,7 @@ public sealed partial class OnboardingWindow : Window
         IconDeepWork.Foreground = fgBrush;
 
         // Explore button styling
-        ExploreButton.Foreground = new SolidColorBrush(Colors.White);
+        ExploreButton.Foreground = fgBrush;
 
         // Get Started button
         GetStartedButton.Background = fgBrush;

@@ -6,7 +6,7 @@
 
     <Grid x:Name="RootGrid" Padding="12,8" CornerRadius="8">
         <Grid.Background>
-            <SolidColorBrush Color="#FFCC6600"/>
+            <SolidColorBrush Color="#E6000000"/>
         </Grid.Background>
 
         <Grid.ColumnDefinitions>
@@ -14,9 +14,9 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Bug icon -->
+        <!-- Bug icon (orange on black, matching macOS) -->
         <FontIcon Grid.Column="0" Glyph="&#xE825;" FontSize="16"
-                  Foreground="White" VerticalAlignment="Center"/>
+                  Foreground="Orange" VerticalAlignment="Center"/>
 
         <!-- Debug message -->
         <TextBlock Grid.Column="1" x:Name="MessageText"

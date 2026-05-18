@@ -36,16 +36,19 @@ public sealed partial class CountdownWindow : Window
         appWindow.Move(new Windows.Graphics.PointInt32(0, 0));
         appWindow.Resize(new Windows.Graphics.SizeInt32(display.OuterBounds.Width, display.OuterBounds.Height));
 
-        // Apply theme gradient and text colors
-        var theme = ThemeManager.Instance.Current;
+        // Apply theme gradient and text colors (respect "use dark overlay" setting)
+        var theme = ThemeManager.Instance.UseDarkOverlay
+            ? BlinkTheme.Dark
+            : ThemeManager.Instance.Current;
         var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
 
         GradientTop.Color = theme.BackgroundTop(isDark);
         GradientBottom.Color = theme.BackgroundBottom(isDark);
 
-        var textColor = new SolidColorBrush(theme.OnBackgroundText(isDark));
+        var fg = theme.OnBackgroundText(isDark);
+        var textColor = new SolidColorBrush(fg);
         TitleText.Foreground = textColor;
-        CountdownText.Foreground = textColor;
+        CountdownText.Foreground = new SolidColorBrush(theme.Accent(isDark));
         HintText.Foreground = textColor;
 
         // Ensure the Grid can receive keyboard focus

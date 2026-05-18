@@ -15,10 +15,10 @@
         <ScrollViewer Grid.Row="0" x:Name="Page1" VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Stretch" Spacing="0" Padding="36,32,36,24">
                 <StackPanel Spacing="6" HorizontalAlignment="Center" Margin="0,0,0,28">
-                    <TextBlock Text="The 20-20-20 Rule"
+                    <TextBlock x:Name="Page1Title" Text="The 20-20-20 Rule"
                                FontSize="28" FontWeight="Bold"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="Recommended by optometrists since 1991"
+                    <TextBlock x:Name="Page1Subtitle" Text="Recommended by optometrists since 1991"
                                FontSize="15" Opacity="0.6"
                                HorizontalAlignment="Center"/>
                 </StackPanel>
@@ -39,10 +39,10 @@
         <ScrollViewer Grid.Row="0" x:Name="Page2" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Stretch" Spacing="0" Padding="36,32,36,24">
                 <StackPanel Spacing="6" HorizontalAlignment="Center" Margin="0,0,0,28">
-                    <TextBlock Text="How Blink Works"
+                    <TextBlock x:Name="Page2Title" Text="How Blink Works"
                                FontSize="28" FontWeight="Bold"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="Breaks that respect your workflow"
+                    <TextBlock x:Name="Page2Subtitle" Text="Breaks that respect your workflow"
                                FontSize="15" Opacity="0.6"
                                HorizontalAlignment="Center"/>
                 </StackPanel>
@@ -94,8 +94,7 @@
                     HorizontalAlignment="Right" VerticalAlignment="Center"
                     Width="120" Height="34"
                     CornerRadius="17"
-                    FontSize="14" FontWeight="SemiBold"
-                    Foreground="White">
+                    FontSize="14" FontWeight="SemiBold">
                 <TextBlock Text="Got it"/>
             </Button>
         </Grid>
