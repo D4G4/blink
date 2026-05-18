@@ -102,7 +102,7 @@ struct MenuBarView: View {
                 .padding(.horizontal, 12)
 
             // Take Break Now button
-            if appState.hasAccessibilityPermission && !appState.isBreakPrompted {
+            if appState.hasAccessibilityPermission && !appState.isBreakPrompted && !appState.isPaused {
                 Button {
                     UIActionLogger.buttonTapped("Take Break Now", context: "MenuBar")
                     appState.showBreakPrompt()
@@ -123,6 +123,26 @@ struct MenuBarView: View {
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
             }
+
+            // Pause / Resume button
+            Button {
+                appState.togglePause()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: appState.isPaused ? "play.fill" : "pause.fill")
+                        .font(.system(size: 12))
+                    Text(appState.isPaused ? "Resume Blink" : "Pause Blink")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 30)
+                .background(Color.primary.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.top, 4)
 
             Spacer()
                 .frame(height: 4)
@@ -389,6 +409,7 @@ struct MenuBarView: View {
     }
 
     private var flowStateLabel: String {
+        if appState.isPaused { return "Paused" }
         if appState.isVideoPlaying { return "Video playing — timer paused" }
         switch appState.displayState {
         case .working: return "Timer running"

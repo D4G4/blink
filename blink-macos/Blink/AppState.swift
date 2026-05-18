@@ -15,6 +15,7 @@ final class AppState: ObservableObject {
     @Published var breaksPromptedToday: Int = 0
     @Published var hasAccessibilityPermission: Bool = false
     @Published var isVideoPlaying: Bool = false
+    @Published var isPaused: Bool = false
     @Published var micAlwaysOnWarning: Bool = false
     @AppStorage("debugNotifications") var debugNotifications: Bool = false
 
@@ -272,7 +273,7 @@ final class AppState: ObservableObject {
                     self.pollInputFallback()
                 }
 
-                self.engine.tick()
+                if !self.isPaused { self.engine.tick() }
             }
         }
     }
@@ -325,6 +326,11 @@ final class AppState: ObservableObject {
     }
 
     // MARK: - Public actions (for menu bar buttons)
+
+    func togglePause() {
+        isPaused.toggle()
+        BlinkLog.app.info("Pause toggled → \(isPaused ? "paused" : "resumed")")
+    }
 
     func showBreakPrompt() {
         // Manual trigger from menu bar — skip the 3s toast and go directly to break
