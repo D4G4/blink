@@ -23,12 +23,17 @@ public sealed class TrayIconManager : IDisposable
     private const uint WM_TRAYICON = 0x8000 + 1; // WM_APP + 1
     private const uint IDM_SETTINGS = 1;
     private const uint IDM_TAKE_BREAK = 2;
+    private const uint IDM_PAUSE = 4;
     private const uint IDM_QUIT = 3;
 
     public event Action? OnSettingsRequested;
     public event Action? OnTakeBreakNowRequested;
+    public event Action? OnPauseToggleRequested;
     public event Action? OnQuitRequested;
     public event Action? OnLeftClickRequested;
+
+    private IntPtr _hIconNormal;
+    private IntPtr _hIconFaded;
 
     public TrayIconManager(AppState appState)
     {
@@ -71,10 +76,12 @@ public sealed class TrayIconManager : IDisposable
 
     private void ShowContextMenu()
     {
+        var pauseLabel = _appState.IsPaused ? "Resume Blink" : "Pause Blink";
         var hMenu = CreatePopupMenu();
-        AppendMenu(hMenu, MF_STRING, IDM_SETTINGS, "Settings");
+        AppendMenu(hMenu, MF_STRING, IDM_PAUSE, pauseLabel);
         AppendMenu(hMenu, MF_STRING, IDM_TAKE_BREAK, "Take Break Now");
         AppendMenu(hMenu, MF_SEPARATOR, 0, "");
+        AppendMenu(hMenu, MF_STRING, IDM_SETTINGS, "Settings");
         AppendMenu(hMenu, MF_STRING, IDM_QUIT, "Quit Blink");
 
         GetCursorPos(out var pt);
@@ -86,6 +93,9 @@ public sealed class TrayIconManager : IDisposable
 
         switch ((uint)cmd)
         {
+            case IDM_PAUSE:
+                OnPauseToggleRequested?.Invoke();
+                break;
             case IDM_SETTINGS:
                 OnSettingsRequested?.Invoke();
                 break;
@@ -100,7 +110,9 @@ public sealed class TrayIconManager : IDisposable
 
     public void Show()
     {
-        _hIcon = LoadTrayIcon();
+        _hIconNormal = LoadTrayIcon("app.ico");
+        _hIconFaded = LoadTrayIcon("app-faded.ico");
+        _hIcon = _hIconNormal;
 
         _iconData = new NOTIFYICONDATA
         {
@@ -121,11 +133,28 @@ public sealed class TrayIconManager : IDisposable
             TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
     }
 
+    public void SetPaused(bool paused)
+    {
+        if (!_isShowing) return;
+
+        var newIcon = paused ? _hIconFaded : _hIconNormal;
+        if (newIcon == IntPtr.Zero) newIcon = _hIconNormal; // fallback if faded doesn't exist
+        _hIcon = newIcon;
+        _iconData.hIcon = _hIcon;
+        _iconData.szTip = paused
+            ? "Blink — Paused"
+            : $"Blink — Next break in {_appState.FormattedRemaining}";
+        _iconData.uFlags = NIF_ICON | NIF_TIP;
+        Shell_NotifyIcon(NIM_MODIFY, ref _iconData);
+    }
+
     public void UpdateTooltip()
     {
         if (!_isShowing) return;
 
-        _iconData.szTip = $"Blink — Next break in {_appState.FormattedRemaining}";
+        _iconData.szTip = _appState.IsPaused
+            ? "Blink — Paused"
+            : $"Blink — Next break in {_appState.FormattedRemaining}";
         _iconData.uFlags = NIF_TIP;
         Shell_NotifyIcon(NIM_MODIFY, ref _iconData);
     }
@@ -149,11 +178,9 @@ public sealed class TrayIconManager : IDisposable
             Shell_NotifyIcon(NIM_DELETE, ref _iconData);
             _isShowing = false;
         }
-        if (_hIcon != IntPtr.Zero)
-        {
-            DestroyIcon(_hIcon);
-            _hIcon = IntPtr.Zero;
-        }
+        if (_hIconNormal != IntPtr.Zero) { DestroyIcon(_hIconNormal); _hIconNormal = IntPtr.Zero; }
+        if (_hIconFaded != IntPtr.Zero) { DestroyIcon(_hIconFaded); _hIconFaded = IntPtr.Zero; }
+        _hIcon = IntPtr.Zero;
         if (_hWnd != IntPtr.Zero)
         {
             DestroyWindow(_hWnd);
@@ -161,9 +188,10 @@ public sealed class TrayIconManager : IDisposable
         }
     }
 
-    private static IntPtr LoadTrayIcon()
+    private static IntPtr LoadTrayIcon(string filename)
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "app.ico");
+        var path = Path.Combine(AppContext.BaseDirectory, filename);
+        if (!File.Exists(path)) return IntPtr.Zero;
         var size = GetSystemMetrics(SM_CXSMICON);
         return LoadImage(IntPtr.Zero, path, IMAGE_ICON, size, size, LR_LOADFROMFILE);
     }

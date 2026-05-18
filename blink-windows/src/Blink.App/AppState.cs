@@ -40,6 +40,7 @@ public sealed class AppState : INotifyPropertyChanged
     private string _displayState = "Working";
     private bool _isBreakPrompted;
     private bool _isVideoPlaying;
+    private bool _isPaused;
     private int _breaksTakenToday;
     private int _breaksPromptedToday;
 
@@ -48,6 +49,7 @@ public sealed class AppState : INotifyPropertyChanged
     public string DisplayStateName { get => _displayState; private set => Set(ref _displayState, value); }
     public bool IsBreakPrompted { get => _isBreakPrompted; private set => Set(ref _isBreakPrompted, value); }
     public bool IsVideoPlaying { get => _isVideoPlaying; private set => Set(ref _isVideoPlaying, value); }
+    public bool IsPaused { get => _isPaused; private set => Set(ref _isPaused, value); }
     public int BreaksTakenToday { get => _breaksTakenToday; private set => Set(ref _breaksTakenToday, value); }
     public int BreaksPromptedToday { get => _breaksPromptedToday; private set => Set(ref _breaksPromptedToday, value); }
 
@@ -163,8 +165,15 @@ public sealed class AppState : INotifyPropertyChanged
             Engine.SetVideoPlaying(pauseTimer);
             IsVideoPlaying = pauseTimer;
 
+            if (IsPaused) return;
             Engine.Tick();
         }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    }
+
+    public void TogglePause()
+    {
+        IsPaused = !IsPaused;
+        Log.Info($"Pause toggled → {(IsPaused ? "paused" : "resumed")}");
     }
 
     public void ShowBreakPrompt()

@@ -23,6 +23,7 @@ public sealed partial class MenuBarPopup : Window
     public event Action? OnQuitRequested;
     public event Action? OnAboutRequested;
     public event Action? OnEyeExerciseRequested;
+    public event Action? OnPauseToggleRequested;
 
     public MenuBarPopup(AppState appState)
     {
@@ -82,7 +83,7 @@ public sealed partial class MenuBarPopup : Window
     private int MeasureContentHeight()
     {
         var hasUpdate = UpdateChecker.Instance.UpdateAvailable;
-        return hasUpdate ? 450 : 360;
+        return hasUpdate ? 490 : 400;
     }
 
     private void OnActivated(object sender, WindowActivatedEventArgs args)
@@ -168,7 +169,11 @@ public sealed partial class MenuBarPopup : Window
         FlowStateDot.Fill = new SolidColorBrush(color);
         FlowStateBadge.Text = label;
 
-        TakeBreakButton.IsEnabled = !_appState.IsBreakPrompted;
+        TakeBreakButton.IsEnabled = !_appState.IsBreakPrompted && !_appState.IsPaused;
+
+        // Pause button state
+        PauseIcon.Glyph = _appState.IsPaused ? "\uE768" : "\uE769";   // Play : Pause
+        PauseLabel.Text = _appState.IsPaused ? "Resume Blink" : "Pause Blink";
 
         RefreshUpdateBanner();
     }
@@ -210,6 +215,7 @@ public sealed partial class MenuBarPopup : Window
 
     private string StateLabelText()
     {
+        if (_appState.IsPaused) return "Paused";
         if (_appState.IsVideoPlaying) return "Video playing — timer paused";
         return _appState.DisplayStateName switch
         {
@@ -238,6 +244,12 @@ public sealed partial class MenuBarPopup : Window
     {
         AppWindow.Hide();
         OnAboutRequested?.Invoke();
+    }
+
+    private void OnTogglePause(object sender, RoutedEventArgs e)
+    {
+        OnPauseToggleRequested?.Invoke();
+        Refresh();
     }
 
     private void OnEyeExercise(object sender, RoutedEventArgs e)

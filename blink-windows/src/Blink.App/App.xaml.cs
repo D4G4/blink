@@ -59,6 +59,11 @@ public partial class App : Application
             settings.Activate();
         };
         _trayIcon.OnTakeBreakNowRequested += () => _appState!.ShowBreakPrompt();
+        _trayIcon.OnPauseToggleRequested += () =>
+        {
+            _appState!.TogglePause();
+            _trayIcon!.SetPaused(_appState.IsPaused);
+        };
         _trayIcon.OnQuitRequested += () =>
         {
             _trayIcon?.Dispose();
@@ -85,6 +90,11 @@ public partial class App : Application
                 settings.Activate();
             };
             _menuPopup.OnTakeBreakNowRequested += () => _appState!.ShowBreakPrompt();
+            _menuPopup.OnPauseToggleRequested += () =>
+            {
+                _appState!.TogglePause();
+                _trayIcon!.SetPaused(_appState.IsPaused);
+            };
             _menuPopup.OnAboutRequested += () =>
             {
                 var win = new Onboarding.WhyExistWindow(ThemeManager.Instance.Current);
