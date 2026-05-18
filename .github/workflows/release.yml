@@ -52,6 +52,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Configure SSH for BlinkCore (private dependency)
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.BLINKCORE_DEPLOY_KEY }}" > ~/.ssh/blinkcore_deploy
+          chmod 600 ~/.ssh/blinkcore_deploy
+          cat >> ~/.ssh/config <<EOF
+          Host github-d4g4
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/blinkcore_deploy
+            StrictHostKeyChecking no
+          EOF
+
       - name: Install tools
         run: brew install xcodegen create-dmg
 
