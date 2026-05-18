@@ -7,10 +7,8 @@ options:
 
 packages:
   BlinkCore:
-    path: BlinkCore
-    # Remote (switch back after pushing BlinkCore):
-    # url: git@github-d4g4:D4G4/blink-core.git
-    # from: "1.8.0"
+    url: git@github-d4g4:D4G4/blink-core.git
+    from: "1.8.0"
 
 schemes:
   Blink:

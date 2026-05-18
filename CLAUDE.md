@@ -87,10 +87,11 @@ The script crops 6% from each side, rounds corners at 16% radius, outputs 1024x1
 
 ## Git Setup
 
-- Repo: `git@github.com:D4G4/blink.git` (private)
+- Repo: `git@github.com:D4G4/blink.git` (**PUBLIC** repo)
 - Git config: uses `~/.gitconfig-d4g4` via conditional include for `~/GitHub/D4G4/`
 - SSH key: `~/.ssh/id_ed25519_d4g4`
 - SSH push may fail with pack corruption on large pushes — use HTTPS as fallback
+- **BlinkCore is a PRIVATE repo** (`git@github-d4g4:D4G4/blink-core.git`). It is referenced in `project.yml` as a remote Swift package URL. NEVER change it to a local `path:` reference — that risks exposing private source code in the public Blink repo via git tracking or history. When BlinkCore changes are needed, edit them in `blink-macos/BlinkCore/` (nested git repo), commit and push to the BlinkCore remote, tag a new version, then update the `from:` version in `project.yml`. Never commit BlinkCore files to the Blink repo.
 
 ## Important Patterns
 
