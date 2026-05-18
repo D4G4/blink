@@ -1,0 +1,18 @@
+[package]
+name = "blink_core"
+version = "0.1.0"
+edition = "2021"
+description = "Native shared library for Blink's break-reminder algorithms"
+license = "proprietary"
+
+[lib]
+name = "blink_core"
+# staticlib for embedding into the macOS app bundle as a static archive,
+# cdylib for the Windows .dll (and a macOS .dylib alternative).
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
