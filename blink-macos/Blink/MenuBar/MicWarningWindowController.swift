@@ -24,7 +24,7 @@ final class MicWarningWindowController {
         })
 
         let win = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 420),
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 480),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -78,15 +78,19 @@ private struct MicWarningView: View {
             VStack(alignment: .leading, spacing: 12) {
                 explanationRow(
                     icon: "waveform",
-                    text: "Blink detected your mic is active during the startup. This usually means Dictation, Siri, or Voice Control is enabled."
+                    text: "Blink detected your mic was already active at startup. This usually means Dictation, Siri, or Voice Control is enabled — but it could also be an ongoing call."
+                )
+                explanationRow(
+                    icon: "info.circle",
+                    text: "If you're on a call, this warning will go away on its own when the call ends. No action needed."
                 )
                 explanationRow(
                     icon: "pause.circle",
-                    text: "Blink pauses your break timer when the mic is on, so you're not interrupted during calls. But if the mic is always on, your timer will never run."
+                    text: "If your mic is always on (Dictation, Siri), Blink's timer will stay paused permanently since it thinks you're in a call."
                 )
                 explanationRow(
                     icon: "gear",
-                    text: "You have two options: turn off Dictation in System Settings → Keyboard, or disable Blink's mic detection below."
+                    text: "To fix that: turn off Dictation in System Settings → Keyboard, or disable Blink's mic detection below."
                 )
             }
             .padding(.horizontal, 8)
@@ -113,7 +117,7 @@ private struct MicWarningView: View {
             }
         }
         .padding(24)
-        .frame(width: 480, height: 420)
+        .frame(width: 480, height: 480)
     }
 
     private func explanationRow(icon: String, text: String) -> some View {

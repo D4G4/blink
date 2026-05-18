@@ -31,6 +31,9 @@ final class AppState: ObservableObject {
     // Timers
     private var tickTimer: Timer?
 
+    // Sleep / lock tracking — used to suppress overlay when user is away
+    private var isSystemAsleep = false
+
     // Break overlay
     private let overlayController = OverlayWindowController()
 
@@ -54,6 +57,15 @@ final class AppState: ObservableObject {
         case .onBreak: return .breakPrompted
         }
     }
+
+    /// True when the screen is at the login window / screensaver lock.
+    private var isScreenLocked: Bool {
+        guard let dict = CGSessionCopyCurrentDictionary() as? [String: Any] else { return false }
+        return dict["CGSSessionScreenIsLocked"] as? Bool ?? false
+    }
+
+    /// True when the user can't possibly see the overlay (asleep or locked).
+    private var isUserAway: Bool { isSystemAsleep || isScreenLocked }
 
     var menuBarIconName: String {
         if isBreakPrompted { return "eye.trianglebadge.exclamationmark" }
@@ -108,6 +120,16 @@ final class AppState: ObservableObject {
     private func setupEngineCallbacks() {
         engine.onShowBreak = { [weak self] breakNumber in
             guard let self else { return }
+
+            // If screen is locked or Mac is asleep, the user is already looking
+            // away — showing an overlay would just get stuck. Count as taken.
+            if self.isUserAway {
+                BlinkLog.app.info("Break due but user is away (asleep=\(self.isSystemAsleep), locked=\(self.isScreenLocked)) — counting as taken")
+                self.engine.userTookBreak()
+                self.breaksTakenToday += 1
+                return
+            }
+
             self.isBreakPrompted = true
             self.breaksPromptedToday += 1
             self.overlayController.showBreak(
@@ -224,6 +246,23 @@ final class AppState: ObservableObject {
         appMon.startMonitoring()
         self.appMonitor = appMon
 
+        // Dismiss overlay before Mac sleeps so it's never stuck on screen at wake
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.willSleepNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            BlinkLog.app.info("Mac going to sleep")
+            guard let self else { return }
+            self.isSystemAsleep = true
+            if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
+                BlinkLog.app.info("Break overlay active before sleep — dismissing synchronously")
+                self.engine.userTookBreak()
+                self.isBreakPrompted = false
+                self.overlayController.dismissImmediately()
+            }
+        }
+
         // Re-enable CGEventTap after Mac wakes from sleep
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification,
@@ -231,15 +270,17 @@ final class AppState: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             BlinkLog.app.info("Wake from sleep")
-            self?.inputMonitor?.reEnableTapIfNeeded()
-            // If break overlay was showing before sleep, dismiss it — user was away
-            if self?.isBreakPrompted == true {
-                BlinkLog.app.info("Break overlay was showing before sleep — dismissing")
-                self?.engine.userTookBreak()
-                self?.isBreakPrompted = false
-                self?.overlayController.dismiss()
+            guard let self else { return }
+            self.isSystemAsleep = false
+            self.inputMonitor?.reEnableTapIfNeeded()
+            // Defense-in-depth: if any overlay survived sleep, kill it immediately.
+            if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
+                BlinkLog.app.info("Break overlay still present on wake — dismissing")
+                self.engine.userTookBreak()
+                self.isBreakPrompted = false
+                self.overlayController.dismissImmediately()
             }
-            self?.engine.wakeFromSleep()
+            self.engine.wakeFromSleep()
         }
 
         let ctx = MacContextDetector()
@@ -266,6 +307,12 @@ final class AppState: ObservableObject {
                 self.engine.setCameraActive(cam)
                 self.engine.setVideoPlaying(video)
                 self.isVideoPlaying = video
+
+                // If mic was flagged as "always on" at launch but is now inactive,
+                // it was a meeting, not Dictation/Siri — clear the warning.
+                if self.micAlwaysOnWarning && !mic {
+                    self.micAlwaysOnWarning = false
+                }
 
                 // Tap health check + fallback polling
                 self.inputMonitor?.reEnableTapIfNeeded()

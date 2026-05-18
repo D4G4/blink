@@ -10,7 +10,12 @@ final class OverlayWindowController {
     private var fullscreenWindow: NSWindow?
     private var keyMonitor: Any?
     private var globalKeyMonitor: Any?
-    
+    private var clickMonitor: Any?
+    private var isDismissing = false
+
+    /// True when the fullscreen break overlay window exists and is visible.
+    var isShowingFullscreen: Bool { fullscreenWindow != nil }
+
     private var theme: BlinkTheme {
         UserDefaults.standard.bool(forKey: "useDarkOverlay")
         ? .dark
@@ -329,18 +334,21 @@ final class OverlayWindowController {
     
     private func showBreakTimer(breakNumber: Int = 0, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
-        
+
+        // Borderless overlay at .floating level — high enough to cover normal
+        // windows, low enough that Mission Control / Cmd+Tab / Spotlight work.
+        // No .canJoinAllSpaces — user can swipe to another desktop to escape.
         let win = NSWindow(
             contentRect: screen.frame,
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
         )
-        win.level = .screenSaver
+        win.level = .floating
         win.isOpaque = false
         win.backgroundColor = .clear
         win.ignoresMouseEvents = false
-        win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        win.collectionBehavior = [.fullScreenAuxiliary]
         win.alphaValue = 0
 
         // Reposition if screen geometry changes (lid close/open, display switch)
@@ -354,49 +362,50 @@ final class OverlayWindowController {
         }
 
         self.fullscreenWindow = win
-        
+        isDismissing = false
+
         let skipAction = { [weak self] in
             self?.dismissFullscreen()
             onSkip()
         }
+
         let breakModel = BreakPhaseModel()
         let breakView = BreakPhaseView(
             theme: theme,
             model: breakModel,
             showWalkSuggestion: breakNumber >= 4,
+            onDismiss: skipAction,
             onComplete: { [weak self] in
                 self?.dismissFullscreen()
                 onComplete()
             },
             onSkip: skipAction
         )
-        
-        // NSEvent monitor for keyboard — .onKeyPress doesn't work in borderless windows
-        // Use local monitor (when app is active) + global monitor (when another app has focus)
-        removeKeyMonitor()
+
+        // Keyboard handling — local (app active) + global (app in background)
+        removeEventMonitors()
         currentKeyHandler = KeyEventHandler(
             onEscape: skipAction,
             onRightArrow: { [weak breakModel] in breakModel?.extend() }
         )
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if self?.currentKeyHandler?.handle(event) == true {
-                return nil // consumed
+                return nil
             }
             return event
         }
         globalKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             _ = self?.currentKeyHandler?.handle(event)
         }
-        // Click anywhere on the overlay after countdown reaches 0 → skip break
-        // This works even when keyboard is blocked by secure input
-        NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self, weak breakModel] event in
+        // Click anywhere after countdown reaches 0 → skip break
+        clickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak breakModel] event in
             if breakModel?.remaining ?? 1 <= 0 {
                 skipAction()
                 return nil
             }
             return event
         }
-        
+
         win.contentView = NSHostingView(rootView: AnyView(breakView))
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -409,7 +418,7 @@ final class OverlayWindowController {
     
     private var currentKeyHandler: KeyEventHandler?
     
-    private func removeKeyMonitor() {
+    private func removeEventMonitors() {
         if let monitor = keyMonitor {
             NSEvent.removeMonitor(monitor)
             keyMonitor = nil
@@ -418,24 +427,43 @@ final class OverlayWindowController {
             NSEvent.removeMonitor(monitor)
             globalKeyMonitor = nil
         }
+        if let monitor = clickMonitor {
+            NSEvent.removeMonitor(monitor)
+            clickMonitor = nil
+        }
         currentKeyHandler = nil
     }
     
     private func dismissFullscreen() {
-        removeKeyMonitor()
+        guard !isDismissing else { return }
+        isDismissing = true
+        removeEventMonitors()
         guard let win = fullscreenWindow else { return }
+        fullscreenWindow = nil
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.3
             win.animator().alphaValue = 0
-        }, completionHandler: { [weak self] in
+        }, completionHandler: {
             win.orderOut(nil)
-            self?.fullscreenWindow = nil
         })
     }
     
     func dismiss() {
         dismissToast()
         dismissFullscreen()
+    }
+
+    /// Synchronous dismiss with no animation — for willSleep / wake where
+    /// we can't afford to wait for a 0.3s fade that may never complete.
+    func dismissImmediately() {
+        guard !isDismissing else { return }
+        isDismissing = true
+        dismissToast()
+        removeEventMonitors()
+        guard let win = fullscreenWindow else { return }
+        fullscreenWindow = nil
+        win.alphaValue = 0
+        win.orderOut(nil)
     }
 }
 
@@ -635,6 +663,13 @@ final class BreakPhaseModel: ObservableObject {
     @Published var showExtendHint: Bool = false
     var timer: Timer?
 
+    /// Wall-clock timestamp when the countdown started (for surviving sleep).
+    private var countdownStartDate: Date?
+    /// Total seconds that were on the clock at start (adjusted for extends).
+    private var countdownStartTotal: Int = 20
+    /// Seconds at zero before auto-dismiss (wall-clock based).
+    private static let autoDismissAfterZero: TimeInterval = 60
+
     deinit {
         stopTimer()
     }
@@ -642,24 +677,39 @@ final class BreakPhaseModel: ObservableObject {
     func extend() {
         remaining += 20
         total += 20
+        // Adjust wall-clock baseline so elapsed calculation stays correct
+        countdownStartTotal += 20
         withAnimation(.easeOut(duration: 0.4)) { showExtendHint = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             withAnimation { self?.showExtendHint = false }
         }
     }
-    
+
     func startTimer(onComplete: @escaping () -> Void) {
+        countdownStartDate = Date()
+        countdownStartTotal = total
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            if self.remaining > 0 {
-                self.remaining -= 1
+            guard let self, let startDate = self.countdownStartDate else { return }
+
+            // Use wall-clock elapsed time so sleep doesn't freeze the countdown
+            let elapsed = Date().timeIntervalSince(startDate)
+            let wallRemaining = self.countdownStartTotal - Int(elapsed)
+
+            if wallRemaining > 0 {
+                self.remaining = wallRemaining
             } else {
-                self.stopTimer()
-                onComplete()
+                self.remaining = 0
+                // Auto-dismiss after 60s at zero (wall-clock), covering the case
+                // where the Mac slept while at 0 and Timer was paused.
+                let secondsPastZero = elapsed - TimeInterval(self.countdownStartTotal)
+                if secondsPastZero >= Self.autoDismissAfterZero {
+                    self.stopTimer()
+                    onComplete()
+                }
             }
         }
     }
-    
+
     func stopTimer() {
         timer?.invalidate()
         timer = nil
@@ -672,6 +722,7 @@ struct BreakPhaseView: View {
     let theme: BlinkTheme
     @ObservedObject var model: BreakPhaseModel
     var showWalkSuggestion: Bool = false
+    var onDismiss: (() -> Void)?
     let onComplete: () -> Void
     let onSkip: () -> Void
     @Environment(\.colorScheme) private var colorScheme
@@ -681,6 +732,28 @@ struct BreakPhaseView: View {
         ZStack {
             theme.backgroundGradient(for: colorScheme)
                 .ignoresSafeArea()
+
+            // Close button — always visible, top-left corner.
+            // Works regardless of event monitor health, app activation, or timer state.
+            VStack {
+                HStack {
+                    Button {
+                        onDismiss?()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(fg)
+                            .frame(width: 32, height: 32)
+                            .background(fg.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, 24)
+                    .padding(.top, 24)
+                    Spacer()
+                }
+                Spacer()
+            }
 
             VStack(spacing: 0) {
                 // Title row with 20ft badge
