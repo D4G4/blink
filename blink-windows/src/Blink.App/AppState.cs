@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Blink.Core;
+using Blink.Core.Abstractions;
 using Blink.Core.Compliance;
 using Blink.Core.FlowDetection;
 using Blink.Platform;
@@ -131,7 +132,7 @@ public sealed class AppState : INotifyPropertyChanged
         _inputMonitor.StartMonitoring();
 
         _appMonitor = new WinAppMonitor();
-        _appMonitor.OnAppSwitch += evt => Engine.RecordAppSwitch(evt.ProcessName);
+        _appMonitor.OnAppSwitch += evt => Engine.RecordAppSwitch(evt.AppId);
         _appMonitor.OnWindowTitleChange += () => { }; // no-op, engine doesn't track titles
         _appMonitor.StartMonitoring();
 

@@ -81,7 +81,7 @@ public sealed partial class MenuBarPopup : Window
     private int MeasureContentHeight()
     {
         var hasUpdate = UpdateChecker.Instance.UpdateAvailable;
-        return hasUpdate ? 500 : 400;
+        return hasUpdate ? 410 : 320;
     }
 
     private void OnActivated(object sender, WindowActivatedEventArgs args)

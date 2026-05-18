@@ -14,7 +14,7 @@ public sealed partial class FlowLearnMoreWindow : Window
     private readonly bool _isDark;
     private double _sensitivity;
 
-    public FlowLearnMoreWindow(BlinkTheme theme, double sensitivity)
+    public FlowLearnMoreWindow(BlinkTheme theme, double sensitivity, bool centered = false)
     {
         _theme = theme;
         _isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
@@ -23,13 +23,20 @@ public sealed partial class FlowLearnMoreWindow : Window
         InitializeComponent();
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "app.ico"));
 
+        // Set Maximum before Minimum to avoid a WinUI 3 XAML-parse ordering bug
+        // ("Failed to assign to property RangeBase.Minimum") in unpackaged apps.
+        SensitivitySlider.Maximum = 90;
+        SensitivitySlider.Minimum = 40;
+        SensitivitySlider.StepFrequency = 5;
+
         var area = Microsoft.UI.Windowing.DisplayArea.Primary;
         var width = Math.Min(520, (int)(area.WorkArea.Width * 0.5));
         var height = Math.Min(700, (int)(area.WorkArea.Height * 0.85));
-        AppWindow.Resize(new Windows.Graphics.SizeInt32(width, height));
-        AppWindow.Move(new Windows.Graphics.PointInt32(
-            (area.WorkArea.Width - width) / 2,
-            (area.WorkArea.Height - height) / 2));
+        var (x, y) = centered
+            ? ((area.WorkArea.Width - width) / 2, (area.WorkArea.Height - height) / 2)
+            : (area.WorkArea.X + area.WorkArea.Width - width - 12,
+               area.WorkArea.Y + area.WorkArea.Height - height - 12);
+        AppWindow.MoveAndResize(new Windows.Graphics.RectInt32(x, y, width, height));
 
         SensitivitySlider.Value = sensitivity * 100;
         ApplyTheme();

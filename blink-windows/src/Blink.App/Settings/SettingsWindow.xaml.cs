@@ -17,7 +17,14 @@ public sealed partial class SettingsWindow : Window
         _appState = appState;
         InitializeComponent();
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "app.ico"));
-        AppWindow.Resize(new Windows.Graphics.SizeInt32(440, 480));
+
+        const int width = 440;
+        const int height = 480;
+        var area = Microsoft.UI.Windowing.DisplayArea.Primary;
+        var x = area.WorkArea.X + area.WorkArea.Width - width - 12;
+        var y = area.WorkArea.Y + area.WorkArea.Height - height - 12;
+        AppWindow.MoveAndResize(new Windows.Graphics.RectInt32(x, y, width, height));
+
         ApplyThemeBackground();
         LoadCurrentValues();
         _isLoading = false;
@@ -195,20 +202,23 @@ public sealed partial class SettingsWindow : Window
         var theme = ThemeManager.Instance.Current;
         var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
         var accent = theme.Accent(isDark);
+        var fg = theme.OnBackgroundText(isDark);
         var accentBrush = new SolidColorBrush(accent);
+        var fgBrush = new SolidColorBrush(fg);
         // Selected: accent at 12% bg + accent border (matches macOS)
         var selectedBg = new SolidColorBrush(
-            Windows.UI.Color.FromArgb(30, accent.R, accent.G, accent.B));
+            Windows.UI.Color.FromArgb(40, accent.R, accent.G, accent.B));
+        // Unselected: ~22% fg — Windows has no vibrancy, so higher than macOS's 4%
         var normalBg = new SolidColorBrush(
-            Windows.UI.Color.FromArgb(10, 128, 128, 128));
+            Windows.UI.Color.FromArgb(56, fg.R, fg.G, fg.B));
         var transparentBorder = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
 
         StylePresetButton(PresetEyeHealthBtn, _currentFlowPreset == "eyeHealth",
-            selectedBg, normalBg, accentBrush, transparentBorder);
+            selectedBg, normalBg, accentBrush, fgBrush, transparentBorder);
         StylePresetButton(PresetBalancedBtn, _currentFlowPreset == "balanced",
-            selectedBg, normalBg, accentBrush, transparentBorder);
+            selectedBg, normalBg, accentBrush, fgBrush, transparentBorder);
         StylePresetButton(PresetDeepWorkBtn, _currentFlowPreset == "deepWork",
-            selectedBg, normalBg, accentBrush, transparentBorder);
+            selectedBg, normalBg, accentBrush, fgBrush, transparentBorder);
 
         // "How this affects your breaks" button — accent tinted
         FlowLearnMoreButton.Background = new SolidColorBrush(
@@ -221,11 +231,12 @@ public sealed partial class SettingsWindow : Window
 
     private static void StylePresetButton(Button btn, bool isSelected,
         SolidColorBrush selectedBg, SolidColorBrush normalBg,
-        SolidColorBrush accentBrush, SolidColorBrush transparentBorder)
+        SolidColorBrush accentBrush, SolidColorBrush fgBrush,
+        SolidColorBrush transparentBorder)
     {
         btn.Background = isSelected ? selectedBg : normalBg;
         btn.BorderBrush = isSelected ? accentBrush : transparentBorder;
-        btn.Foreground = isSelected ? accentBrush : null;
+        btn.Foreground = isSelected ? accentBrush : fgBrush;
     }
 
     private void FlowLearnMore_Click(object sender, RoutedEventArgs e)

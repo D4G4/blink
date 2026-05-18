@@ -102,7 +102,7 @@ public sealed partial class OnboardingWindow : Window
 
     private void OnWhyExist(object sender, RoutedEventArgs e)
     {
-        var window = new WhyExistWindow(_themes[_selectedIndex]);
+        var window = new WhyExistWindow(_themes[_selectedIndex], centered: true);
         window.Activate();
     }
 
@@ -202,7 +202,7 @@ public sealed partial class OnboardingWindow : Window
     private void OnExploreHowItWorks(object sender, RoutedEventArgs e)
     {
         var theme = _themes[_selectedIndex];
-        var window = new FlowLearnMoreWindow(theme, _sensitivity);
+        var window = new FlowLearnMoreWindow(theme, _sensitivity, centered: true);
         window.Activate();
     }
 

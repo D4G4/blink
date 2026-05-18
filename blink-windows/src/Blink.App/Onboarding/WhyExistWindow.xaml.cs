@@ -29,7 +29,7 @@ public sealed partial class WhyExistWindow : Window
     private SolidColorBrush _fgBrush = null!;
     private int _page;
 
-    public WhyExistWindow(BlinkTheme theme)
+    public WhyExistWindow(BlinkTheme theme, bool centered = false)
     {
         _theme = theme;
         _isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
@@ -39,10 +39,11 @@ public sealed partial class WhyExistWindow : Window
         var area = Microsoft.UI.Windowing.DisplayArea.Primary;
         var width = Math.Min(720, (int)(area.WorkArea.Width * 0.7));
         var height = Math.Min(720, (int)(area.WorkArea.Height * 0.85));
-        AppWindow.Resize(new Windows.Graphics.SizeInt32(width, height));
-        AppWindow.Move(new Windows.Graphics.PointInt32(
-            (area.WorkArea.Width - width) / 2,
-            (area.WorkArea.Height - height) / 2));
+        var (x, y) = centered
+            ? ((area.WorkArea.Width - width) / 2, (area.WorkArea.Height - height) / 2)
+            : (area.WorkArea.X + area.WorkArea.Width - width - 12,
+               area.WorkArea.Y + area.WorkArea.Height - height - 12);
+        AppWindow.MoveAndResize(new Windows.Graphics.RectInt32(x, y, width, height));
 
         ApplyThemeBackground();
         BuildPage1();
