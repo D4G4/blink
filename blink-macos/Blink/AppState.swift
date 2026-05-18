@@ -34,6 +34,10 @@ final class AppState: ObservableObject {
     // Sleep / lock tracking — used to suppress overlay when user is away
     private var isSystemAsleep = false
 
+    // Kill-switch: hard timeout if overlay is stuck beyond any reasonable duration
+    private var overlayShownAt: Date?
+    private static let overlayMaxSeconds: TimeInterval = 120
+
     // Break overlay
     private let overlayController = OverlayWindowController()
 
@@ -132,6 +136,7 @@ final class AppState: ObservableObject {
             }
 
             self.isBreakPrompted = true
+            self.overlayShownAt = Date()
             self.breaksPromptedToday += 1
             self.overlayController.showBreak(
                 breakNumber: breakNumber,
@@ -139,6 +144,7 @@ final class AppState: ObservableObject {
                     Task { @MainActor in
                         self?.engine.userTookBreak()
                         self?.isBreakPrompted = false
+                        self?.overlayShownAt = nil
                         self?.breaksTakenToday += 1
                         self?.overlayController.dismiss()
                     }
@@ -147,6 +153,7 @@ final class AppState: ObservableObject {
                     Task { @MainActor in
                         self?.engine.userSkippedBreak()
                         self?.isBreakPrompted = false
+                        self?.overlayShownAt = nil
                         self?.overlayController.dismiss()
                     }
                 }
@@ -321,6 +328,16 @@ final class AppState: ObservableObject {
                     self.pollInputFallback()
                 }
 
+                // Kill-switch: force-dismiss overlay if stuck beyond 2 minutes
+                if let shownAt = self.overlayShownAt,
+                   Date().timeIntervalSince(shownAt) >= Self.overlayMaxSeconds {
+                    BlinkLog.app.error("Kill-switch: overlay stuck for >\(Int(Self.overlayMaxSeconds))s — force dismissing")
+                    self.engine.userTookBreak()
+                    self.isBreakPrompted = false
+                    self.overlayShownAt = nil
+                    self.overlayController.dismissImmediately()
+                }
+
                 if !self.isPaused { self.engine.tick() }
             }
         }
@@ -383,6 +400,7 @@ final class AppState: ObservableObject {
     func showBreakPrompt() {
         // Manual trigger from menu bar — skip the 3s toast and go directly to break
         isBreakPrompted = true
+        overlayShownAt = Date()
         breaksPromptedToday += 1
         overlayController.showBreak(
             breakNumber: engine.currentBreakStreak + 1,
@@ -391,6 +409,7 @@ final class AppState: ObservableObject {
                 Task { @MainActor in
                     self?.engine.userTookBreak()
                     self?.isBreakPrompted = false
+                    self?.overlayShownAt = nil
                     self?.breaksTakenToday += 1
                     self?.overlayController.dismiss()
                 }
@@ -399,6 +418,7 @@ final class AppState: ObservableObject {
                 Task { @MainActor in
                     self?.engine.userSkippedBreak()
                     self?.isBreakPrompted = false
+                    self?.overlayShownAt = nil
                     self?.overlayController.dismiss()
                 }
             }

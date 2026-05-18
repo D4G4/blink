@@ -335,16 +335,15 @@ final class OverlayWindowController {
     private func showBreakTimer(breakNumber: Int = 0, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
 
-        // Borderless overlay at .floating level — high enough to cover normal
-        // windows, low enough that Mission Control / Cmd+Tab / Spotlight work.
-        // No .canJoinAllSpaces — user can swipe to another desktop to escape.
+        // Borderless overlay at .screenSaver level — covers everything instantly.
+        // Close button always visible. isUserAway gate prevents showing during sleep/lock.
         let win = NSWindow(
             contentRect: screen.frame,
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
         )
-        win.level = .floating
+        win.level = .screenSaver
         win.isOpaque = false
         win.backgroundColor = .clear
         win.ignoresMouseEvents = false
@@ -374,7 +373,13 @@ final class OverlayWindowController {
             theme: theme,
             model: breakModel,
             showWalkSuggestion: breakNumber >= 4,
-            onDismiss: skipAction,
+            onDismiss: { [weak self] in
+                // Kill-switch: try normal dismiss, then nuke if still alive
+                skipAction()
+                DispatchQueue.main.async {
+                    self?.dismissImmediately()
+                }
+            },
             onComplete: { [weak self] in
                 self?.dismissFullscreen()
                 onComplete()
@@ -447,7 +452,7 @@ final class OverlayWindowController {
             win.orderOut(nil)
         })
     }
-    
+
     func dismiss() {
         dismissToast()
         dismissFullscreen()
@@ -731,12 +736,14 @@ struct BreakPhaseView: View {
         let fg = theme.onBackgroundText(for: colorScheme)
         ZStack {
             theme.backgroundGradient(for: colorScheme)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
 
-            // Close button — always visible, top-left corner.
-            // Works regardless of event monitor health, app activation, or timer state.
+            // Close button — always visible, top-right corner.
+            // Kill-switch: nukes the overlay window directly if normal dismiss fails.
             VStack {
                 HStack {
+                    Spacer()
                     Button {
                         onDismiss?()
                     } label: {
@@ -748,9 +755,8 @@ struct BreakPhaseView: View {
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
-                    .padding(.leading, 24)
+                    .padding(.trailing, 24)
                     .padding(.top, 24)
-                    Spacer()
                 }
                 Spacer()
             }
@@ -775,7 +781,7 @@ struct BreakPhaseView: View {
                     }
                     Spacer()
                 }
-                .overlay(alignment: .trailing) {
+                .overlay(alignment: .leading) {
                     VStack(spacing: 6) {
                         Image(systemName: "eye")
                             .font(.system(size: 20))
@@ -792,14 +798,13 @@ struct BreakPhaseView: View {
                     .padding(14)
                     .background(fg.opacity(0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .padding(.trailing, 32)
+                    .padding(.leading, 32)
                 }
                 .padding(.top, 80)
                 
                 Spacer()
                 
-                Spacer()
-                
+                // Timer
                 ZStack {
                     let accentColor = theme.accent(for: colorScheme)
                     Circle()
@@ -817,6 +822,15 @@ struct BreakPhaseView: View {
                         .font(.system(size: 80, weight: .ultraLight, design: .monospaced))
                         .foregroundStyle(fg)
                 }
+                
+                Text("+20s")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(fg)
+                    .opacity(model.showExtendHint ? 1 : 0)
+                    .animation(.easeInOut(duration: 0.3), value: model.showExtendHint)
+                    .padding(.top, 10)
+                
+                Spacer()
                 
                 Button {
                     onSkip()
@@ -839,17 +853,8 @@ struct BreakPhaseView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 30)
+                .padding(.bottom, 40)
                 
-                Spacer()
-                
-                Text("+20s")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(fg)
-                    .opacity(model.showExtendHint ? 1 : 0)
-                    .animation(.easeInOut(duration: 0.3), value: model.showExtendHint)
-                
-                Spacer()
                 
                 HStack(spacing: 32) {
                     KeyHintView(key: "esc", label: "Skip break", theme: theme)

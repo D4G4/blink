@@ -115,7 +115,7 @@ struct MenuBarView: View {
                 .padding(.horizontal, 12)
 
             // Take Break Now button
-            if appState.hasAccessibilityPermission && !appState.isBreakPrompted && !appState.isPaused {
+            if !appState.isBreakPrompted && !appState.isPaused {
                 Button {
                     UIActionLogger.buttonTapped("Take Break Now", context: "MenuBar")
                     appState.showBreakPrompt()
