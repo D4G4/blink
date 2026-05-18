@@ -108,3 +108,4 @@ The script crops 6% from each side, rounds corners at 16% radius, outputs 1024x1
 - Don't set `selectedIndex = -1` as sentinel in SwiftUI `@State` — causes array out of bounds before `onAppear`
 - Don't use `.ultraThickMaterial` for themed dialogs — it's translucent and washes out in light mode
 - Don't add external dependencies — the project is zero-dependency by design
+- **Don't change BlinkCore's package reference in `project.yml` from `url:` to `path:`** — Blink is a PUBLIC repo, BlinkCore is PRIVATE. A `path:` reference can leak private source into public git history. Always use the remote URL with a version tag.
