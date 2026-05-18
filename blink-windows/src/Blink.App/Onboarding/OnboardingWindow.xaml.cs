@@ -186,16 +186,22 @@ public sealed partial class OnboardingWindow : Window
         CardDeepWork.Background = new SolidColorBrush(
             _selectedPreset == "deepWork" ? Colors.White : Color.FromArgb(30, fg.R, fg.G, fg.B));
 
-        // Selected card text uses accent, others use fg
+        // Selected card: accent for icon/name, accent at 80% for description
+        // Unselected card: fg for icon/name, fg at 80% for description
         var accentBrush = new SolidColorBrush(accent);
+        var accentDimBrush = new SolidColorBrush(accent) { Opacity = 0.8 };
         var fgBrush = new SolidColorBrush(fg);
+        var fgDimBrush = new SolidColorBrush(fg) { Opacity = 0.8 };
 
         IconEyeHealth.Foreground = _selectedPreset == "eyeHealth" ? accentBrush : fgBrush;
         NameEyeHealth.Foreground = _selectedPreset == "eyeHealth" ? accentBrush : fgBrush;
+        DescEyeHealth.Foreground = _selectedPreset == "eyeHealth" ? accentDimBrush : fgDimBrush;
         IconBalanced.Foreground = _selectedPreset == "balanced" ? accentBrush : fgBrush;
         NameBalanced.Foreground = _selectedPreset == "balanced" ? accentBrush : fgBrush;
+        DescBalanced.Foreground = _selectedPreset == "balanced" ? accentDimBrush : fgDimBrush;
         IconDeepWork.Foreground = _selectedPreset == "deepWork" ? accentBrush : fgBrush;
         NameDeepWork.Foreground = _selectedPreset == "deepWork" ? accentBrush : fgBrush;
+        DescDeepWork.Foreground = _selectedPreset == "deepWork" ? accentDimBrush : fgDimBrush;
 
         // Update description
         FlowDescLabel.Text = GetPresetDescription(_selectedPreset);
