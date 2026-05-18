@@ -279,6 +279,8 @@ struct SettingsView: View {
     
     // MARK: - Flow
     
+    @State private var flowCheckDetail: String?
+
     private var flowContent: some View {
         VStack(alignment: .leading, spacing: 20) {
             settingsSection("Flow Detection") {
@@ -298,6 +300,36 @@ struct SettingsView: View {
                 )
                 .onChange(of: flowSensitivity) { _, newValue in
                     appState.engine.sensitivity = newValue
+                }
+            }
+
+            settingsSection("Flow Check") {
+                VStack(alignment: .leading, spacing: 10) {
+                    Button {
+                        let check = appState.engine.spotCheckFlow()
+                        flowCheckDetail = check.description
+                        BlinkLog.app.info("Flow spot check (Preferences):\n\(check.description)")
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "waveform.path.ecg")
+                                .font(.system(size: 12))
+                            Text("Run Flow Check")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundStyle(accentColor)
+                    }
+                    .buttonStyle(.plain)
+
+                    if let detail = flowCheckDetail {
+                        Text(detail)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                            .padding(10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.primary.opacity(0.05))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
                 }
             }
         }
