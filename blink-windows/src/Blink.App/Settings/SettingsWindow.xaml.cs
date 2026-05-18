@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Blink.App.Theme;
 using Blink.App.Onboarding;
 
@@ -35,10 +36,6 @@ public sealed partial class SettingsWindow : Window
         FlowSensitivitySlider.Value = tm.FlowSensitivity * 100;
         FlowSensitivityLabel.Text = $"{(int)(tm.FlowSensitivity * 100)}%";
         UpdateFlowPresetUI();
-
-        FlowScoreValue.Text = "—";
-        FlowStateValue.Text = _appState.DisplayStateName;
-        BreaksTodayValue.Text = $"{_appState.BreaksTakenToday} / {_appState.BreaksPromptedToday}";
 
         var version = typeof(SettingsWindow).Assembly.GetName().Version;
         VersionText.Text = $"Version {version?.ToString(3) ?? "1.0.0"}";
@@ -179,24 +176,37 @@ public sealed partial class SettingsWindow : Window
         var theme = ThemeManager.Instance.Current;
         var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
         var accent = theme.Accent(isDark);
-        var accentBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(accent);
-        var normalBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-            Windows.UI.Color.FromArgb(10, 0, 0, 0));
+        var accentBrush = new SolidColorBrush(accent);
+        // Selected: accent at 12% bg + accent border (matches macOS)
+        var selectedBg = new SolidColorBrush(
+            Windows.UI.Color.FromArgb(30, accent.R, accent.G, accent.B));
+        var normalBg = new SolidColorBrush(
+            Windows.UI.Color.FromArgb(10, 128, 128, 128));
+        var transparentBorder = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
 
-        PresetEyeHealthBtn.Background = _currentFlowPreset == "eyeHealth" ? accentBrush : normalBrush;
-        PresetEyeHealthBtn.Foreground = _currentFlowPreset == "eyeHealth"
-            ? new Microsoft.UI.Xaml.Media.SolidColorBrush(theme.TextOnAccent(isDark))
-            : null;
-        PresetBalancedBtn.Background = _currentFlowPreset == "balanced" ? accentBrush : normalBrush;
-        PresetBalancedBtn.Foreground = _currentFlowPreset == "balanced"
-            ? new Microsoft.UI.Xaml.Media.SolidColorBrush(theme.TextOnAccent(isDark))
-            : null;
-        PresetDeepWorkBtn.Background = _currentFlowPreset == "deepWork" ? accentBrush : normalBrush;
-        PresetDeepWorkBtn.Foreground = _currentFlowPreset == "deepWork"
-            ? new Microsoft.UI.Xaml.Media.SolidColorBrush(theme.TextOnAccent(isDark))
-            : null;
+        StylePresetButton(PresetEyeHealthBtn, _currentFlowPreset == "eyeHealth",
+            selectedBg, normalBg, accentBrush, transparentBorder);
+        StylePresetButton(PresetBalancedBtn, _currentFlowPreset == "balanced",
+            selectedBg, normalBg, accentBrush, transparentBorder);
+        StylePresetButton(PresetDeepWorkBtn, _currentFlowPreset == "deepWork",
+            selectedBg, normalBg, accentBrush, transparentBorder);
+
+        // "How this affects your breaks" button — accent tinted
+        FlowLearnMoreButton.Background = new SolidColorBrush(
+            Windows.UI.Color.FromArgb(25, accent.R, accent.G, accent.B));
+        FlowLearnMoreIcon.Foreground = accentBrush;
+        FlowLearnMoreText.Foreground = accentBrush;
 
         FlowSensitivityDescription.Text = GetPresetDescription(_currentFlowPreset);
+    }
+
+    private static void StylePresetButton(Button btn, bool isSelected,
+        SolidColorBrush selectedBg, SolidColorBrush normalBg,
+        SolidColorBrush accentBrush, SolidColorBrush transparentBorder)
+    {
+        btn.Background = isSelected ? selectedBg : normalBg;
+        btn.BorderBrush = isSelected ? accentBrush : transparentBorder;
+        btn.Foreground = isSelected ? accentBrush : null;
     }
 
     private void FlowLearnMore_Click(object sender, RoutedEventArgs e)

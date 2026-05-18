@@ -116,42 +116,78 @@
                     </ItemsRepeater>
                 </StackPanel>
 
-                <!-- Flow Tab -->
-                <StackPanel x:Name="FlowPanel" Spacing="16" MaxWidth="500" Visibility="Collapsed">
+                <!-- Flow Tab (matches macOS FlowSensitivityView .settings style) -->
+                <StackPanel x:Name="FlowPanel" Spacing="20" MaxWidth="500" Visibility="Collapsed">
                     <TextBlock Text="FLOW DETECTION" FontSize="12" FontWeight="SemiBold" Opacity="0.5"/>
 
-                    <!-- Three preset buttons -->
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="PresetEyeHealthBtn" Click="OnFlowPresetSelected"
+                    <!-- Three equal-width preset buttons -->
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" x:Name="PresetEyeHealthBtn" Click="OnFlowPresetSelected"
                                 Tag="eyeHealth" HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Center" Padding="0,10" CornerRadius="10">
-                            <StackPanel Spacing="4" HorizontalAlignment="Center">
-                                <FontIcon x:Name="FlowIconEyeHealth" Glyph="&#xEB51;" FontSize="20"/>
+                                HorizontalContentAlignment="Center" Padding="0,12" CornerRadius="12"
+                                BorderThickness="1.5">
+                            <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                <FontIcon x:Name="FlowIconEyeHealth" Glyph="&#xEB51;" FontSize="22"/>
                                 <TextBlock x:Name="FlowNameEyeHealth" Text="Eye health"
                                            FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="PresetBalancedBtn" Click="OnFlowPresetSelected"
+
+                        <Button Grid.Column="1" x:Name="PresetBalancedBtn" Click="OnFlowPresetSelected"
                                 Tag="balanced" HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Center" Padding="0,10" CornerRadius="10">
-                            <StackPanel Spacing="4" HorizontalAlignment="Center">
-                                <FontIcon x:Name="FlowIconBalanced" Glyph="&#xE912;" FontSize="20"/>
+                                HorizontalContentAlignment="Center" Padding="0,12" CornerRadius="12"
+                                BorderThickness="1.5">
+                            <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                <FontIcon x:Name="FlowIconBalanced" Glyph="&#xE94E;" FontSize="22"/>
                                 <TextBlock x:Name="FlowNameBalanced" Text="Balanced"
                                            FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="PresetDeepWorkBtn" Click="OnFlowPresetSelected"
+
+                        <Button Grid.Column="2" x:Name="PresetDeepWorkBtn" Click="OnFlowPresetSelected"
                                 Tag="deepWork" HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Center" Padding="0,10" CornerRadius="10">
-                            <StackPanel Spacing="4" HorizontalAlignment="Center">
-                                <FontIcon x:Name="FlowIconDeepWork" Glyph="&#xE945;" FontSize="20"/>
+                                HorizontalContentAlignment="Center" Padding="0,12" CornerRadius="12"
+                                BorderThickness="1.5">
+                            <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                <FontIcon x:Name="FlowIconDeepWork" Glyph="&#xE811;" FontSize="22"/>
                                 <TextBlock x:Name="FlowNameDeepWork" Text="Deep work"
                                            FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                    </StackPanel>
+                    </Grid>
 
-                    <TextBlock x:Name="FlowSensitivityDescription" FontSize="12" Opacity="0.5" TextWrapping="Wrap"/>
+                    <!-- Description -->
+                    <TextBlock x:Name="FlowSensitivityDescription" FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
+
+                    <!-- "How this affects your breaks" full-width button -->
+                    <Button x:Name="FlowLearnMoreButton" Click="FlowLearnMore_Click"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                            Padding="0,8" CornerRadius="8" BorderThickness="0">
+                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                            <FontIcon x:Name="FlowLearnMoreIcon" Glyph="&#xE7B3;" FontSize="12"/>
+                            <TextBlock x:Name="FlowLearnMoreText" Text="How this affects your breaks"
+                                       FontSize="12" FontWeight="Medium"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Action links: Fine-tune (left) / Research (right) -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <HyperlinkButton Grid.Column="0" x:Name="FineTuneButton" Content="Fine-tune"
+                                         Click="FineTuneToggle_Click" Padding="0" FontSize="11"/>
+                        <HyperlinkButton Grid.Column="2" Content="Research"
+                                         Click="FlowLearnMore_Click" Padding="0" FontSize="11"/>
+                    </Grid>
 
                     <!-- Fine-tune slider (collapsed by default) -->
                     <StackPanel x:Name="FineTunePanel" Spacing="4" Visibility="Collapsed">
@@ -162,41 +198,6 @@
                                        FontFamily="Consolas" FontSize="12"/>
                         </StackPanel>
                     </StackPanel>
-
-                    <!-- Action links -->
-                    <StackPanel Orientation="Horizontal" Spacing="16">
-                        <HyperlinkButton x:Name="FineTuneButton" Content="Fine-tune"
-                                         Click="FineTuneToggle_Click" Padding="0" FontSize="11"/>
-                        <HyperlinkButton x:Name="FlowLearnMoreButton" Content="How this affects your breaks"
-                                         Click="FlowLearnMore_Click" Padding="0" FontSize="11"/>
-                    </StackPanel>
-
-                    <TextBlock Text="CURRENT STATE" FontSize="12" FontWeight="SemiBold" Opacity="0.5" Margin="0,16,0,0"/>
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Flow Score"/>
-                        <TextBlock x:Name="FlowScoreValue" FontFamily="Consolas" Grid.Column="1"/>
-                    </Grid>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="State"/>
-                        <TextBlock x:Name="FlowStateValue" FontFamily="Consolas" Grid.Column="1"/>
-                    </Grid>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Breaks Today"/>
-                        <TextBlock x:Name="BreaksTodayValue" FontFamily="Consolas" Grid.Column="1"/>
-                    </Grid>
                 </StackPanel>
 
                 <!-- About Tab -->
