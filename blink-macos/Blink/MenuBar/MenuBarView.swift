@@ -35,6 +35,19 @@ struct MenuBarView: View {
                 }
 
                 Spacer()
+
+                Button {
+                    appState.togglePause()
+                } label: {
+                    Image(systemName: appState.isPaused ? "play.fill" : "pause.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Color.primary.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .buttonStyle(.plain)
+                .help(appState.isPaused ? "Resume Blink" : "Pause Blink")
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
@@ -123,26 +136,6 @@ struct MenuBarView: View {
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
             }
-
-            // Pause / Resume button
-            Button {
-                appState.togglePause()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: appState.isPaused ? "play.fill" : "pause.fill")
-                        .font(.system(size: 12))
-                    Text(appState.isPaused ? "Resume Blink" : "Pause Blink")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 30)
-                .background(Color.primary.opacity(0.06))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.top, 4)
 
             Spacer()
                 .frame(height: 4)
