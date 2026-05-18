@@ -100,4 +100,80 @@ public class TimerStateMachineTests
         timer.Tick(FlowState.Normal, 9999);
         Assert.InRange(timer.Progress, 0, 1);
     }
+
+    [Fact]
+    public void Reset_ToCustomDuration_UpdatesBothRemainingAndTimerDuration()
+    {
+        // Reset(duration) now sets both RemainingSeconds and TimerDuration to
+        // the new value. Previously TimerDuration was hard-coded to 1200, which
+        // made Progress report "50% done" at the start of a 10-minute
+        // extension. Fixed in the same commit that adds this test.
+        var timer = new TimerStateMachine();
+        timer.Reset(600);
+        Assert.Equal(600, timer.RemainingSeconds);
+        Assert.Equal(600, timer.TimerDuration);
+        Assert.Equal(0.0, timer.Progress);
+        Assert.False(timer.IsPaused);
+    }
+
+    [Fact]
+    public void Reset_ProgressStartsAtZero()
+    {
+        // Direct regression test for the bug — make sure a fresh extension
+        // shows 0% progress, not (1 - 600/1200) = 50%.
+        var timer = new TimerStateMachine();
+        timer.Tick(FlowState.Normal, 300); // burn 5 min of the original 20
+        Assert.True(timer.Progress > 0);
+
+        timer.Reset(600); // extension to 10 min
+        Assert.Equal(0.0, timer.Progress);
+    }
+
+    [Fact]
+    public void ResetAfterBreak_RestoresDefault20Min()
+    {
+        var timer = new TimerStateMachine();
+        timer.Reset(300);
+        Assert.Equal(300, timer.RemainingSeconds);
+        timer.ResetAfterBreak();
+        Assert.Equal(1200, timer.RemainingSeconds);
+        Assert.Equal(1200, timer.TimerDuration);
+    }
+
+    [Fact]
+    public void OnBreakDue_NotRefired_AfterReset()
+    {
+        var timer = new TimerStateMachine();
+        var count = 0;
+        timer.OnBreakDue += () => count++;
+        timer.Tick(FlowState.Normal, 1200);
+        Assert.Equal(1, count);
+
+        timer.ResetAfterBreak();
+        timer.Tick(FlowState.Normal, 1200);
+        Assert.Equal(2, count); // a fresh cycle is allowed to fire again
+    }
+
+    [Fact]
+    public void IsPaused_FalseAfterMeetingEnds()
+    {
+        var timer = new TimerStateMachine();
+        timer.Tick(FlowState.Meeting, 1);
+        Assert.True(timer.IsPaused);
+        timer.Tick(FlowState.Normal, 1);
+        Assert.False(timer.IsPaused);
+    }
+
+    [Fact]
+    public void TimerDuration_NeverChanges_DuringNormalCountdown()
+    {
+        // After the BlinkCore refactor, duration is fixed at 20 min — flow doesn't
+        // extend it through the timer; BreakDecisionEngine handles extensions.
+        var timer = new TimerStateMachine();
+        Assert.Equal(1200, timer.TimerDuration);
+        timer.Tick(FlowState.Normal, 300);
+        Assert.Equal(1200, timer.TimerDuration);
+        timer.Tick(FlowState.Flow, 0);
+        Assert.Equal(1200, timer.TimerDuration);
+    }
 }

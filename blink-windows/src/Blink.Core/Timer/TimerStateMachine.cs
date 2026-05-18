@@ -13,14 +13,16 @@ public sealed class TimerStateMachine
     public bool IsPaused { get; private set; }
     public event Action? OnBreakDue;
 
-    public double TimerDuration => DefaultDuration;
+    // Tracks the duration of the *current* cycle. Set by Reset(duration) so
+    // that the UI's progress bar starts at 0% when an extension begins.
+    public double TimerDuration { get; private set; } = DefaultDuration;
 
     public double Progress
     {
         get
         {
-            return DefaultDuration > 0
-                ? Math.Max(0, Math.Min(1.0, 1.0 - RemainingSeconds / DefaultDuration))
+            return TimerDuration > 0
+                ? Math.Max(0, Math.Min(1.0, 1.0 - RemainingSeconds / TimerDuration))
                 : 1.0;
         }
     }
@@ -50,12 +52,14 @@ public sealed class TimerStateMachine
     public void ResetAfterBreak()
     {
         RemainingSeconds = DefaultDuration;
+        TimerDuration = DefaultDuration;
         IsPaused = false;
     }
 
     public void Reset(double duration)
     {
         RemainingSeconds = duration;
+        TimerDuration = duration;
         IsPaused = false;
     }
 }
