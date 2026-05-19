@@ -320,9 +320,9 @@ final class AppState: ObservableObject {
                 let cam = self.contextDetector?.isCameraActive() ?? false
                 let meetingApp = self.contextDetector?.isMeetingAppActive() ?? false
                 let video = self.contextDetector?.isMediaPlaying() ?? false
-                // Meeting app running → pause timer (same path as mic-active)
-                self.engine.setMicActive(mic || meetingApp)
+                self.engine.setMicActive(mic)
                 self.engine.setCameraActive(cam)
+                self.engine.setMeetingAppActive(meetingApp)
                 self.engine.setVideoPlaying(video)
                 self.isVideoPlaying = video
 
