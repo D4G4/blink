@@ -315,11 +315,13 @@ final class AppState: ObservableObject {
         tickTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
-                // Poll mic/camera/video every tick (cheap checks)
+                // Poll mic/camera/video/meeting-app every tick (cheap checks)
                 let mic = self.contextDetector?.isMicrophoneActive() ?? false
                 let cam = self.contextDetector?.isCameraActive() ?? false
+                let meetingApp = self.contextDetector?.isMeetingAppActive() ?? false
                 let video = self.contextDetector?.isMediaPlaying() ?? false
-                self.engine.setMicActive(mic)
+                // Meeting app running → pause timer (same path as mic-active)
+                self.engine.setMicActive(mic || meetingApp)
                 self.engine.setCameraActive(cam)
                 self.engine.setVideoPlaying(video)
                 self.isVideoPlaying = video

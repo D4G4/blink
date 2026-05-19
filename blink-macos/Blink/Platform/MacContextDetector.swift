@@ -49,7 +49,40 @@ final class MacContextDetector: ContextSource {
         "crunchyroll", "plex", "apple tv",
     ]
 
+    /// Known meeting/call apps. If any is running, timer pauses (same as mic-active).
+    private static let meetingApps: Set<String> = [
+        "us.zoom.xos",                    // Zoom
+        "com.microsoft.teams",             // Microsoft Teams (classic)
+        "com.microsoft.teams2",            // Microsoft Teams (new)
+        "com.tinyspeck.slackmacgap",       // Slack (huddles)
+        "com.apple.FaceTime",              // FaceTime
+        "com.discord.Discord",             // Discord
+        "com.hnc.Discord",                 // Discord (App Store)
+        "com.cisco.webexmeetingsapp",      // Webex Meetings
+        "com.cisco.webex.meetings",        // Webex (alt bundle)
+        "com.loom.desktop",                // Loom
+        "com.skype.skype",                 // Skype
+        "com.amazon.Amazon-Chime",         // Amazon Chime
+        "com.ringcentral.glip",            // RingCentral
+        "com.bluejeans.Blue",              // BlueJeans
+        "com.gotomeeting.mac",             // GoToMeeting
+    ]
+
     private var lastMicState = false
+    private var lastMeetingAppState = false
+
+    /// True if any known meeting app (Zoom, Teams, Slack, etc.) is currently running.
+    func isMeetingAppActive() -> Bool {
+        let active = NSWorkspace.shared.runningApplications.contains { app in
+            guard let bundleID = app.bundleIdentifier else { return false }
+            return Self.meetingApps.contains(bundleID)
+        }
+        if active != lastMeetingAppState {
+            Log.i("Meeting app state changed: \(active ? "ACTIVE" : "inactive")")
+            lastMeetingAppState = active
+        }
+        return active
+    }
 
     func isMicrophoneActive() -> Bool {
         guard !micDetectionDisabled else { return false }
