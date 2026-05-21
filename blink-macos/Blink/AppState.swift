@@ -104,6 +104,7 @@ final class AppState: ObservableObject {
         setupEngineCallbacks()
         loadTodayStats()
         BlinkLog.pruneOldLogs()
+        enableLoginItemIfFirstTime()
 
         // Sync sensitivity from UserDefaults
         let saved = UserDefaults.standard.double(forKey: "flowSensitivity")
