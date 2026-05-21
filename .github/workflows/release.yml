@@ -119,11 +119,12 @@ jobs:
           ln -s /Applications build/dmg-stage/Applications
           create-dmg \
             --volname "Blink" \
+            --background "dmg/dmg-background.png" \
             --window-pos 200 120 \
-            --window-size 540 380 \
+            --window-size 660 470 \
             --icon-size 128 \
-            --icon "Blink.app" 160 170 \
-            --icon "Applications" 380 170 \
+            --icon "Blink.app" 175 200 \
+            --app-drop-link 485 200 \
             --hide-extension "Blink.app" \
             --no-internet-enable \
             build/Blink.dmg \
