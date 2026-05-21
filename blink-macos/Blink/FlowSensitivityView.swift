@@ -35,7 +35,7 @@ struct FlowSensitivityView: View {
         var value: Double {
             switch self {
             case .eyeHealth: return 0.45
-            case .balanced: return 0.65
+            case .balanced: return 0.60
             case .deepWork: return 0.85
             }
         }

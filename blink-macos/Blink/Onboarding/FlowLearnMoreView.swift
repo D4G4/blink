@@ -14,7 +14,7 @@ struct FlowLearnMoreView: View {
 
     private let presetOptions: [(label: String, value: Double, icon: String)] = [
         ("Eye health", 0.45, "heart.circle.fill"),
-        ("Balanced", 0.65, "scale.3d"),
+        ("Balanced", 0.60, "scale.3d"),
         ("Deep work", 0.85, "brain.head.profile"),
     ]
 

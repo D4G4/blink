@@ -38,6 +38,9 @@ final class AppState: ObservableObject {
     private var overlayShownAt: Date?
     private static let overlayMaxSeconds: TimeInterval = 120
 
+    // Day tracking — reset break counters at midnight
+    private var lastStatsDay: Int = Calendar.current.component(.day, from: Date())
+
     // Break overlay
     private let overlayController = OverlayWindowController()
 
@@ -126,12 +129,12 @@ final class AppState: ObservableObject {
         engine.onShowBreak = { [weak self] breakNumber in
             guard let self else { return }
 
-            // If screen is locked or Mac is asleep, the user is already looking
-            // away — showing an overlay would just get stuck. Count as taken.
+            // If screen is locked or Mac is asleep, skip entirely.
+            // Don't show overlay, don't record a break, don't reset the timer.
+            // The engine tick is already suppressed by isUserAway, but this is
+            // defense-in-depth in case a break was pending before sleep.
             if self.isUserAway {
-                Log.i("Break due but user is away (asleep=\(self.isSystemAsleep), locked=\(self.isScreenLocked)) — counting as taken")
-                self.engine.userTookBreak()
-                self.breaksTakenToday += 1
+                Log.i("Break due but user is away — suppressing (no overlay, no recording)")
                 return
             }
 
@@ -171,8 +174,8 @@ final class AppState: ObservableObject {
                 // e.g. "Focused — extended 10 min"
                 onTakeBreak: { [weak self] in
                     Task { @MainActor in
-                        self?.engine.userTookBreak()
                         self?.isBreakPrompted = false
+                        self?.showBreakPrompt()
                     }
                 }
             )
@@ -273,7 +276,7 @@ final class AppState: ObservableObject {
             self.isSystemAsleep = true
             if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
                 Log.i("Break overlay active before sleep — dismissing synchronously")
-                self.engine.userTookBreak()
+                self.engine.userSkippedBreak()
                 self.isBreakPrompted = false
                 self.overlayController.dismissImmediately()
             }
@@ -292,7 +295,7 @@ final class AppState: ObservableObject {
             // Defense-in-depth: if any overlay survived sleep, kill it immediately.
             if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
                 Log.i("Break overlay still present on wake — dismissing")
-                self.engine.userTookBreak()
+                self.engine.userSkippedBreak()
                 self.isBreakPrompted = false
                 self.overlayController.dismissImmediately()
             }
@@ -336,17 +339,25 @@ final class AppState: ObservableObject {
                     self.pollInputFallback()
                 }
 
+                // Midnight reset — reload today's stats when the day rolls over
+                let today = Calendar.current.component(.day, from: Date())
+                if today != self.lastStatsDay {
+                    Log.i("Day changed — resetting break counters")
+                    self.lastStatsDay = today
+                    self.loadTodayStats()
+                }
+
                 // Kill-switch: force-dismiss overlay if stuck beyond 2 minutes
                 if let shownAt = self.overlayShownAt,
                    Date().timeIntervalSince(shownAt) >= Self.overlayMaxSeconds {
                     Log.e("Kill-switch: overlay stuck for >\(Int(Self.overlayMaxSeconds))s — force dismissing")
-                    self.engine.userTookBreak()
+                    self.engine.userSkippedBreak()
                     self.isBreakPrompted = false
                     self.overlayShownAt = nil
                     self.overlayController.dismissImmediately()
                 }
 
-                if !self.isPaused { self.engine.tick() }
+                if !self.isPaused && !self.isUserAway { self.engine.tick() }
             }
         }
     }
