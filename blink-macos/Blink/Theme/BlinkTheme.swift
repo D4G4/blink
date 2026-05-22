@@ -7,6 +7,9 @@ struct BlinkTheme: Identifiable, Equatable {
     let menuBarIconAsset: String
     let backgroundTop: Color
     let backgroundBottom: Color
+    /// Dark-mode tinted gradient — used for the fullscreen break overlay in dark mode.
+    let backgroundTopDark: Color
+    let backgroundBottomDark: Color
     let accent: Color
     let overlayBackgroundDark: Color
     let overlayBackgroundLight: Color
@@ -17,7 +20,7 @@ struct BlinkTheme: Identifiable, Equatable {
     let onBackgroundTextLight: Color
     let onBackgroundTextDark: Color
 
-    /// Whether background colors should invert in dark mode
+    /// Whether the accent color should invert to white in dark mode (Mono only)
     let invertInDarkMode: Bool
 
     func onBackgroundText(for colorScheme: ColorScheme) -> Color {
@@ -25,13 +28,11 @@ struct BlinkTheme: Identifiable, Equatable {
     }
 
     func backgroundTop(for colorScheme: ColorScheme) -> Color {
-        guard invertInDarkMode && colorScheme == .dark else { return backgroundTop }
-        return Color(hex: 0x1A1A1A)
+        colorScheme == .dark ? backgroundTopDark : backgroundTop
     }
 
     func backgroundBottom(for colorScheme: ColorScheme) -> Color {
-        guard invertInDarkMode && colorScheme == .dark else { return backgroundBottom }
-        return Color(hex: 0x111111)
+        colorScheme == .dark ? backgroundBottomDark : backgroundBottom
     }
 
     func backgroundGradient(for colorScheme: ColorScheme) -> LinearGradient {
@@ -92,6 +93,8 @@ struct BlinkTheme: Identifiable, Equatable {
         menuBarIconAsset: "MenuBarIcon-Peach",
         backgroundTop: Color(hex: 0x000000),
         backgroundBottom: Color(hex: 0x000000),
+        backgroundTopDark: Color(hex: 0x000000),
+        backgroundBottomDark: Color(hex: 0x000000),
         accent: .white,
         overlayBackgroundDark: Color.black.opacity(0.95),
         overlayBackgroundLight: Color.black.opacity(0.95),
@@ -111,6 +114,8 @@ struct BlinkTheme: Identifiable, Equatable {
         menuBarIconAsset: "MenuBarIcon-Peach",
         backgroundTop: Color(hex: 0xFFB89A),
         backgroundBottom: Color(hex: 0xF09060),
+        backgroundTopDark: Color(hex: 0x2A1408),
+        backgroundBottomDark: Color(hex: 0x180A04),
         accent: Color(hex: 0xE88565),
         overlayBackgroundDark: Color(hex: 0x1A0E08).opacity(0.92),
         overlayBackgroundLight: Color(hex: 0xFFF0E8).opacity(0.95),
@@ -128,6 +133,8 @@ struct BlinkTheme: Identifiable, Equatable {
         menuBarIconAsset: "MenuBarIcon-Midnight",
         backgroundTop: Color(hex: 0x2B2D52),
         backgroundBottom: Color(hex: 0x1A1B3A),
+        backgroundTopDark: Color(hex: 0x14152C),
+        backgroundBottomDark: Color(hex: 0x0A0B1A),
         accent: Color(hex: 0x6B7DB5),
         overlayBackgroundDark: Color(hex: 0x0C0C1A).opacity(0.95),
         overlayBackgroundLight: Color(hex: 0xE8EAF4).opacity(0.95),
@@ -145,6 +152,8 @@ struct BlinkTheme: Identifiable, Equatable {
         menuBarIconAsset: "MenuBarIcon-Sage",
         backgroundTop: Color(hex: 0xB8D4BC),
         backgroundBottom: Color(hex: 0x7BAF8A),
+        backgroundTopDark: Color(hex: 0x1A2D20),
+        backgroundBottomDark: Color(hex: 0x0E1A12),
         accent: Color(hex: 0x6EA87E),
         overlayBackgroundDark: Color(hex: 0x0A1A0E).opacity(0.92),
         overlayBackgroundLight: Color(hex: 0xEAF5EC).opacity(0.95),
@@ -162,6 +171,8 @@ struct BlinkTheme: Identifiable, Equatable {
         menuBarIconAsset: "MenuBarIcon-Sand",
         backgroundTop: Color(hex: 0xD8D0B8),
         backgroundBottom: Color(hex: 0xB5AC8E),
+        backgroundTopDark: Color(hex: 0x2A251A),
+        backgroundBottomDark: Color(hex: 0x18160E),
         accent: Color(hex: 0x9A9478),
         overlayBackgroundDark: Color(hex: 0x14120C).opacity(0.92),
         overlayBackgroundLight: Color(hex: 0xF2F0E8).opacity(0.95),
@@ -179,6 +190,8 @@ struct BlinkTheme: Identifiable, Equatable {
         menuBarIconAsset: "MenuBarIcon-Mono",
         backgroundTop: Color(hex: 0xF5F5F5),
         backgroundBottom: Color(hex: 0xE8E8E8),
+        backgroundTopDark: Color(hex: 0x1A1A1A),
+        backgroundBottomDark: Color(hex: 0x111111),
         accent: Color(hex: 0x222222),
         overlayBackgroundDark: Color(hex: 0x0A0A0A).opacity(0.95),
         overlayBackgroundLight: Color(hex: 0xFAFAFA).opacity(0.98),
