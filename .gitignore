@@ -3,6 +3,11 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 .swiftpm/
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+blink-macos/dmg/build/
+
+# Git worktrees (project convention: features/<branch>/<repo>)
+features/
 
 # Windows / .NET
 bin/
