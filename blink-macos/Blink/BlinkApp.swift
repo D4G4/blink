@@ -17,8 +17,13 @@ struct BlinkApp: App {
                 if showTimerInMenuBar && appState.hasAccessibilityPermission {
                     HStack(spacing: 4) {
                         menuBarIcon
-                        Text(appState.formattedRemaining)
-                            .monospacedDigit()
+                        ZStack(alignment: .trailing) {
+                            Text("00:00")
+                                .monospacedDigit()
+                                .hidden()
+                            Text(appState.formattedRemaining)
+                                .monospacedDigit()
+                        }
                     }
                 } else {
                     menuBarIcon
