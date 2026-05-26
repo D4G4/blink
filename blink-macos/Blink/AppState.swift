@@ -1,6 +1,5 @@
 import SwiftUI
 import Combine
-import ServiceManagement
 import BlinkCore
 
 /// Thin adapter between platform (macOS) and BlinkEngine (core logic).
@@ -104,7 +103,6 @@ final class AppState: ObservableObject {
         setupEngineCallbacks()
         loadTodayStats()
         BlinkLog.pruneOldLogs()
-        enableLoginItemIfFirstTime()
 
         // Sync sensitivity from UserDefaults
         let saved = UserDefaults.standard.double(forKey: "flowSensitivity")
@@ -211,23 +209,7 @@ final class AppState: ObservableObject {
             NotificationCenter.default.removeObserver(observer)
             onboardingObserver = nil
         }
-        enableLoginItemIfFirstTime()
         checkPermissionsAndStart()
-    }
-
-    /// Auto-enable login item after onboarding — only once, so users who
-    /// disable it in Preferences don't get overridden on next launch.
-    private func enableLoginItemIfFirstTime() {
-        let key = "didAutoEnableLoginItem"
-        guard !UserDefaults.standard.bool(forKey: key) else { return }
-        UserDefaults.standard.set(true, forKey: key)
-        do {
-            try SMAppService.mainApp.register()
-            UserDefaults.standard.set(true, forKey: "launchAtLogin")
-            Log.i("Auto-enabled launch at login")
-        } catch {
-            Log.e("Failed to auto-enable login item: \(error)")
-        }
     }
 
     private func checkPermissionsAndStart() {
