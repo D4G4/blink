@@ -89,7 +89,7 @@ struct MenuBarView: View {
 
             // Timer card
             VStack(spacing: 12) {
-                if !appState.hasAccessibilityPermission {
+                if !appState.hasInputMonitoringPermission {
                     permissionBanner
                 } else {
                     timerCard
@@ -432,13 +432,13 @@ struct MenuBarView: View {
                 .font(.system(size: 24))
                 .foregroundStyle(accentColor)
 
-            Text("Grant Accessibility for smart break timing")
+            Text("Grant Input Monitoring for smart break timing")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
             Button {
-                PermissionManager.openAccessibilitySettings()
+                PermissionManager.openInputMonitoringSettings()
             } label: {
                 Text("Open Settings")
                     .font(.system(size: 12, weight: .medium))

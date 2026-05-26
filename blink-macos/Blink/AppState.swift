@@ -13,7 +13,7 @@ final class AppState: ObservableObject {
     @Published var isBreakPrompted: Bool = false
     @Published var breaksTakenToday: Int = 0
     @Published var breaksPromptedToday: Int = 0
-    @Published var hasAccessibilityPermission: Bool = false
+    @Published var hasInputMonitoringPermission: Bool = false
     @Published var isVideoPlaying: Bool = false
     @Published var isPaused: Bool = false
     @Published var micAlwaysOnWarning: Bool = false
@@ -87,7 +87,7 @@ final class AppState: ObservableObject {
 
     init(preview: Bool = false) {
         if preview {
-            hasAccessibilityPermission = true
+            hasInputMonitoringPermission = true
             return
         }
         Log.i("Blink starting up")
@@ -216,21 +216,24 @@ final class AppState: ObservableObject {
         let granted = PermissionManager.isPermissionGranted()
         Log.i("Permission probe result: \(granted)")
         if granted {
-            hasAccessibilityPermission = true
+            hasInputMonitoringPermission = true
             UserDefaults.standard.set(true, forKey: "permissionGranted")
             startMonitoring()
             startTimer()
             showTimerForStartup()
             Log.i("Permission confirmed — monitors and timers started")
         } else {
-            Log.i("Permission not granted — showing guide")
-            hasAccessibilityPermission = false
+            Log.i("Permission not granted — firing system prompt + showing guide")
+            hasInputMonitoringPermission = false
+            // Fires the macOS "Allow input monitoring?" dialog on first call.
+            // No-op on subsequent calls or after the user has already responded.
+            PermissionManager.requestInputMonitoringAccess()
             permissionWindow = PermissionWindowController()
             permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
                 guard let self else { return }
                 UserDefaults.standard.set(true, forKey: "permissionGranted")
                 self.permissionWindow = nil
-                self.hasAccessibilityPermission = true
+                self.hasInputMonitoringPermission = true
                 self.startMonitoring()
                 self.startTimer()
                 self.showTimerForStartup()
@@ -258,9 +261,6 @@ final class AppState: ObservableObject {
         appMon.onAppSwitch = { [weak self] event in
             Log.d("App switch → \(event.appBundleID)")
             self?.engine.recordAppSwitch(bundleID: event.appBundleID)
-        }
-        appMon.onWindowTitleChange = {
-            Log.d("Window title changed")
         }
         appMon.startMonitoring()
         self.appMonitor = appMon

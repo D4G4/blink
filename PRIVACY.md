@@ -4,12 +4,13 @@
 
 ## What Blink accesses
 
-Blink uses macOS Accessibility permission to monitor:
+Blink uses macOS **Input Monitoring** permission to observe:
 
 - **Keystroke timing** (how fast you type, pauses between keystrokes)
 - **Mouse movement patterns** (speed, distance, scroll events)
-- **App switches** (how often you switch between apps)
-- **Microphone/camera status** (on or off, for meeting detection)
+- **App switches** (which app is frontmost — via public `NSWorkspace` notifications, no permission needed)
+
+It also uses macOS **Microphone** permission to read one bit of state — whether any app is currently capturing audio — so the break timer can pause during calls. No audio is recorded or transmitted.
 
 This data is used **only** to detect flow state and decide when to show a break reminder.
 
@@ -48,4 +49,4 @@ Blink is fully open source. You can verify every claim in this policy by reading
 
 Questions about privacy? Open an issue on GitHub or email dakshg18@gmail.com.
 
-*Last updated: May 13, 2026*
+*Last updated: May 26, 2026*

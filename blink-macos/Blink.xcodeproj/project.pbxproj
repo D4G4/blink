@@ -241,6 +241,7 @@
 		06436D890269E4C851271B66 /* AdaptiveStaircase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveStaircase.swift; sourceTree = "<group>"; };
 		06AF28268C456D45BC003C81 /* gabor_exercise_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_exercise_midnight_light.png; sourceTree = "<group>"; };
 		07FF0F230E63C0B30EB38298 /* permission_guide_sand_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = permission_guide_sand_dark.png; sourceTree = "<group>"; };
+		0B47EB8B7273BB95141192DE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0F1EAE632BF5816B793A7EF9 /* timer_extended_sand_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = timer_extended_sand_dark.png; sourceTree = "<group>"; };
 		0F3435F2D4755BA4C2A2ABF5 /* menu_bar_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_mono_light.png; sourceTree = "<group>"; };
 		0F4978224F028FE729A5E799 /* AllPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllPreviews.swift; sourceTree = "<group>"; };
@@ -550,6 +551,7 @@
 				989DBB159CA5CB427CCCADEF /* BlinkApp.swift */,
 				32D0AD0CA0A07A73EF86986B /* BlinkLog.swift */,
 				EDA291436352B986E47616EA /* FlowSensitivityView.swift */,
+				0B47EB8B7273BB95141192DE /* Info.plist */,
 				7BDF5153E498B2DEFD9EAEBF /* LogExporter.swift */,
 				D0FF6DFB2A34886365FDFBEE /* UIActionLogger.swift */,
 				73EF2DCF137E47C83983AFEB /* UpdateChecker.swift */,
@@ -1301,18 +1303,13 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 Blink";
-				INFOPLIST_KEY_NSInputMonitoringUsageDescription = "Blink monitors keyboard and mouse timing to detect flow state and deliver breaks at the right moment. No keystrokes or content are recorded.";
+				INFOPLIST_FILE = Blink/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.3.4;
+				MARKETING_VERSION = 4.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -1351,18 +1348,13 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 Blink";
-				INFOPLIST_KEY_NSInputMonitoringUsageDescription = "Blink monitors keyboard and mouse timing to detect flow state and deliver breaks at the right moment. No keystrokes or content are recorded.";
+				INFOPLIST_FILE = Blink/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.3.4;
+				MARKETING_VERSION = 4.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;

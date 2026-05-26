@@ -14,7 +14,7 @@ struct BlinkApp: App {
                 .environmentObject(UpdateChecker.shared)
         } label: {
             Group {
-                if showTimerInMenuBar && appState.hasAccessibilityPermission {
+                if showTimerInMenuBar && appState.hasInputMonitoringPermission {
                     HStack(spacing: 4) {
                         menuBarIcon
                         ZStack(alignment: .trailing) {

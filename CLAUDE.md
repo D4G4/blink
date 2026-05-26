@@ -72,9 +72,10 @@ The script crops 6% from each side, rounds corners at 16% radius, outputs 1024x1
 
 ## Permissions
 
-- **Accessibility** (required): CGEventTap for keystroke/mouse monitoring. App won't start timers without it.
-- Prompted after onboarding completes, never during.
-- When running from Xcode, each rebuild creates a new binary — must re-grant Accessibility each time. Not an issue with archived builds.
+- **Input Monitoring** (required): CGEventTap for keystroke/mouse monitoring, gated by `CGPreflightListenEventAccess` / `CGRequestListenEventAccess`. App won't start timers without it.
+- Prompted after onboarding completes, never during. `AppState.checkPermissionsAndStart` fires `CGRequestListenEventAccess()` which shows the system dialog; the in-app guide window is shown as a backstop.
+- When running from Xcode, each rebuild creates a new binary — must re-grant Input Monitoring each time. Not an issue with archived builds.
+- **Do NOT use Accessibility (`AXIsProcessTrusted`).** MAS guideline 2.4.5 forbids using Accessibility APIs for non-accessibility purposes; Blink was rejected for this in 2026-05 and migrated to Input Monitoring in v4.0.0.
 
 ## Homebrew Distribution
 
@@ -82,8 +83,8 @@ The script crops 6% from each side, rounds corners at 16% radius, outputs 1024x1
 - The app is ad-hoc signed (no Developer ID) — no TeamIdentifier, CDHash changes every build
 - The cask **must** have a `postflight` that runs `xattr -cr` on the installed app — this strips `com.apple.quarantine` so Gatekeeper doesn't block launch with "Apple could not verify"
 - Don't remove the `xattr -cr` postflight — without it the app won't launch at all
-- Accessibility permission (`AXIsProcessTrustedWithOptions`) works for ad-hoc signed apps only when quarantine is stripped first; removing the postflight breaks both launch and permission persistence
-- Because the app is ad-hoc signed, the TCC grant is tied to the binary's CDHash — upgrading to a new version (new CDHash) may require re-granting Accessibility permission
+- Input Monitoring permission (`CGPreflightListenEventAccess` / `CGRequestListenEventAccess`) works for ad-hoc signed apps only when quarantine is stripped first; removing the postflight breaks both launch and permission persistence
+- Because the app is ad-hoc signed, the TCC grant is tied to the binary's CDHash — upgrading to a new version (new CDHash) may require re-granting Input Monitoring permission
 
 ## Git Setup
 
@@ -103,7 +104,7 @@ The script crops 6% from each side, rounds corners at 16% radius, outputs 1024x1
 
 ## Don't
 
-- Don't use `AXIsProcessTrustedWithOptions` with prompt flag if already granted — causes repeated system dialogs
+- Don't use `AXIsProcessTrusted` / `AXIsProcessTrustedWithOptions` — Accessibility is the wrong TCC bucket for Blink's use case (MAS guideline 2.4.5). Use `CGPreflightListenEventAccess` and `CGRequestListenEventAccess` instead.
 - Don't use MediaRemote private framework — causes stderr noise and permission errors
 - Don't set `selectedIndex = -1` as sentinel in SwiftUI `@State` — causes array out of bounds before `onAppear`
 - Don't use `.ultraThickMaterial` for themed dialogs — it's translucent and washes out in light mode

@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// Shows the permission guide — user manually adds Blink in Accessibility settings.
+/// Shows the permission guide — user manually adds Blink in Input Monitoring settings.
 /// Dismissed when user clicks "I've granted access" and permission is confirmed.
 final class PermissionWindowController {
     private let log = BlinkLog.permission
@@ -21,7 +21,7 @@ final class PermissionWindowController {
         let guideView = PermissionGuideView(
             theme: theme,
             onOpenSettings: {
-                PermissionManager.openAccessibilitySettings()
+                PermissionManager.openInputMonitoringSettings()
             },
             onConfirmGranted: { [weak self] in
                 self?.checkAndDismiss()

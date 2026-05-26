@@ -32,23 +32,6 @@ final class MacContextDetector: ContextSource {
         "com.plexapp.plex",
     ]
 
-    /// Browsers — check window title for video sites
-    private static let browsers: Set<String> = [
-        "com.apple.Safari",
-        "com.google.Chrome",
-        "org.mozilla.firefox",
-        "com.microsoft.edgemac",
-        "com.brave.Browser",
-        "company.thebrowser.Browser",  // Arc
-    ]
-
-    /// Window title keywords that indicate video content
-    private static let videoTitleKeywords: [String] = [
-        "youtube", "netflix", "hulu", "disney+", "prime video",
-        "twitch", "vimeo", "dailymotion", "hbo", "peacock",
-        "crunchyroll", "plex", "apple tv",
-    ]
-
     private var lastMicState = false
 
     func isMicrophoneActive() -> Bool {
@@ -223,60 +206,19 @@ final class MacContextDetector: ContextSource {
         return defaults?.bool(forKey: "NSStatusItem Visible FocusModes") ?? false
     }
 
+    /// Fullscreen state of other apps requires the Accessibility permission, which Blink
+    /// no longer requests. Signal is unused by BlinkCore — kept here as a protocol stub.
     func isFrontAppFullScreen() -> Bool {
-        guard let frontApp = NSWorkspace.shared.frontmostApplication else { return false }
-        let pid = frontApp.processIdentifier
-        let appRef = AXUIElementCreateApplication(pid)
-
-        var windowValue: AnyObject?
-        guard AXUIElementCopyAttributeValue(appRef, kAXFocusedWindowAttribute as CFString, &windowValue) == .success,
-              let window = windowValue else { return false }
-
-        let axWindow = window as! AXUIElement
-        guard CFGetTypeID(axWindow) == AXUIElementGetTypeID() else { return false }
-
-        var fullscreenValue: AnyObject?
-        guard AXUIElementCopyAttributeValue(
-            axWindow,
-            "AXFullScreen" as CFString,
-            &fullscreenValue
-        ) == .success else { return false }
-
-        return (fullscreenValue as? Bool) ?? false
-    }
-
-    func isMediaPlaying() -> Bool {
-        guard let frontApp = NSWorkspace.shared.frontmostApplication,
-              let bundleID = frontApp.bundleIdentifier else { return false }
-
-        // Video app is frontmost — user is watching
-        if Self.videoApps.contains(bundleID) {
-            return true
-        }
-
-        // Browser is frontmost — check window title for video sites
-        if Self.browsers.contains(bundleID) {
-            if let title = windowTitle(for: frontApp)?.lowercased() {
-                return Self.videoTitleKeywords.contains { title.contains($0) }
-            }
-        }
-
         return false
     }
 
-    private func windowTitle(for app: NSRunningApplication) -> String? {
-        let appRef = AXUIElementCreateApplication(app.processIdentifier)
-        var windowValue: AnyObject?
-        guard AXUIElementCopyAttributeValue(appRef, kAXFocusedWindowAttribute as CFString, &windowValue) == .success,
-              let window = windowValue else { return nil }
-
-        let axWindow = window as! AXUIElement
-        guard CFGetTypeID(axWindow) == AXUIElementGetTypeID() else { return nil }
-
-        var titleValue: AnyObject?
-        guard AXUIElementCopyAttributeValue(axWindow, kAXTitleAttribute as CFString, &titleValue) == .success,
-              let title = titleValue as? String else { return nil }
-
-        return title
+    /// Detects when a known native video app is frontmost (TV.app, VLC, IINA, etc.).
+    /// Browser-tab video detection (YouTube/Netflix in Chrome/Safari) required reading
+    /// window titles via Accessibility and is no longer supported; the timer will run
+    /// normally while watching video in a browser.
+    func isMediaPlaying() -> Bool {
+        guard let frontApp = NSWorkspace.shared.frontmostApplication,
+              let bundleID = frontApp.bundleIdentifier else { return false }
+        return Self.videoApps.contains(bundleID)
     }
 }
