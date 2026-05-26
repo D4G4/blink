@@ -11,18 +11,19 @@ final class PermissionWindowController {
     private var grantPollTimer: Timer?
     var onPermissionGranted: (() -> Void)?
 
-    func show(theme: BlinkTheme, onGranted: @escaping () -> Void) {
+    func show(theme: BlinkTheme, isUpgrade: Bool = false, onGranted: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
         self.onPermissionGranted = onGranted
 
         let windowWidth: CGFloat = 700
-        let windowHeight: CGFloat = 420
+        let windowHeight: CGFloat = isUpgrade ? 480 : 420
         let visible = screen.visibleFrame
         let x = visible.midX - windowWidth / 2
         let y = visible.midY - windowHeight / 2
 
         let guideView = PermissionGuideView(
             theme: theme,
+            isUpgrade: isUpgrade,
             onOpenSettings: {
                 PermissionManager.openInputMonitoringSettings()
             },

@@ -222,23 +222,63 @@ final class AppState: ObservableObject {
             startTimer()
             showTimerForStartup()
             Log.i("Permission confirmed — monitors and timers started")
+            verifyTapAliveOrReprompt()
         } else {
-            Log.i("Permission not granted — firing system prompt + showing guide")
+            // Detect upgrade from v3.x: previously had Accessibility grant
+            // (which set permissionGranted=true) but the new Input Monitoring
+            // TCC bucket has never been granted. Show an explanation banner
+            // and skip the OS prompt for these users — the in-app guide is
+            // friendlier than firing both at once. New users still get the
+            // OS prompt for the cleanest first-launch flow.
+            let isUpgrade = UserDefaults.standard.bool(forKey: "permissionGranted")
+            Log.i("Permission not granted — \(isUpgrade ? "v3→v4 upgrade detected; showing in-app guide only" : "first-time install; firing system prompt + guide")")
             hasInputMonitoringPermission = false
-            // Fires the macOS "Allow input monitoring?" dialog on first call.
-            // No-op on subsequent calls or after the user has already responded.
-            PermissionManager.requestInputMonitoringAccess()
-            permissionWindow = PermissionWindowController()
-            permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
-                guard let self else { return }
-                UserDefaults.standard.set(true, forKey: "permissionGranted")
-                self.permissionWindow = nil
-                self.hasInputMonitoringPermission = true
-                self.startMonitoring()
-                self.startTimer()
-                self.showTimerForStartup()
-                Log.i("Permission granted — monitors and timers started")
+            if !isUpgrade {
+                PermissionManager.requestInputMonitoringAccess()
             }
+            showPermissionGuide(isUpgrade: isUpgrade)
+        }
+    }
+
+    /// Re-shows the permission guide and re-checks on confirm.
+    private func showPermissionGuide(isUpgrade: Bool = false) {
+        permissionWindow = PermissionWindowController()
+        permissionWindow?.show(theme: ThemeManager.shared.current, isUpgrade: isUpgrade) { [weak self] in
+            guard let self else { return }
+            UserDefaults.standard.set(true, forKey: "permissionGranted")
+            self.permissionWindow = nil
+            self.hasInputMonitoringPermission = true
+            self.startMonitoring()
+            self.startTimer()
+            self.showTimerForStartup()
+            Log.i("Permission granted — monitors and timers started")
+            self.verifyTapAliveOrReprompt()
+        }
+    }
+
+    /// Guards against the cached-denial silent-failure path:
+    /// `PermissionManager.isPermissionGranted()` can return true when
+    /// `CGPreflightListenEventAccess` returns true but `CGEvent.tapCreate`
+    /// fails (typically TCC cache lag right after a grant). After
+    /// `startMonitoring()` we verify the real tap is alive — if not, we treat
+    /// permission as denied and re-show the guide so the user can re-grant
+    /// instead of sitting with a "granted" UI and an engine getting zero
+    /// events.
+    private func verifyTapAliveOrReprompt() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            guard let self else { return }
+            guard self.inputMonitor?.isTapAlive == true else {
+                Log.e("CGEventTap is not alive 3s after startMonitoring — cached-grant silent failure; reverting and reprompting")
+                self.hasInputMonitoringPermission = false
+                self.inputMonitor?.stopMonitoring()
+                self.inputMonitor = nil
+                self.tickTimer?.invalidate()
+                self.tickTimer = nil
+                self.overlayController.dismiss()
+                self.showPermissionGuide()
+                return
+            }
+            Log.i("CGEventTap liveness verified 3s after startMonitoring")
         }
     }
 

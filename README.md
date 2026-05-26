@@ -79,7 +79,7 @@ Update later with `brew upgrade --cask blink`.
 - **🧠 Flow detection** — Monitors typing rhythm and app switching. When you're in deep focus, the timer extends from 20 to 30-40 minutes.
 - **⏸️ Natural pause waiting** — Doesn't interrupt mid-keystroke. Waits for a 6-second gap in your input — a natural thought boundary.
 - **🚶 Walk-away detection** — Left your desk for 3+ minutes? That counts as a break. Timer resets silently.
-- **🎬 Video awareness** — Watching in TV.app, VLC, IINA, or other native video players? Timer pauses — you're already resting your focus.
+- **🎬 Video awareness** — Watching in TV.app, VLC, IINA, or other native video players? Timer pauses — you're already resting your focus. *(Browser video — YouTube, Netflix in Safari/Chrome — is not detected; the timer keeps running.)*
 - **🎙️ Meeting detection** — Mic or camera active? Timer pauses. No interruptions during calls.
 - **🤖 Agent workflow aware** — Waiting for an AI response while scrolling? Timer keeps running. Sitting perfectly still for 3 minutes? That's a walk-away.
 - **👁️ Gabor patch exercises** — Built-in vision training with three scientifically studied exercise types. Train your visual cortex to detect subtler contrasts — right from the menu bar or during a break.
