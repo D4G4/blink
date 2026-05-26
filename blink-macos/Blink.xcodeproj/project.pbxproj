@@ -1300,7 +1300,7 @@
 				CODE_SIGN_ENTITLEMENTS = Blink/Blink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Blink/Info.plist;
@@ -1345,7 +1345,7 @@
 				CODE_SIGN_ENTITLEMENTS = Blink/Blink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 6V6FZW3FFN;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Blink/Info.plist;
@@ -1399,7 +1399,7 @@
 			repositoryURL = "git@github-d4g4:D4G4/blink-core.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.9.0;
+				minimumVersion = 2.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

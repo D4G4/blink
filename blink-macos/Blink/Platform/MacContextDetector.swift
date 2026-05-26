@@ -206,12 +206,6 @@ final class MacContextDetector: ContextSource {
         return defaults?.bool(forKey: "NSStatusItem Visible FocusModes") ?? false
     }
 
-    /// Fullscreen state of other apps requires the Accessibility permission, which Blink
-    /// no longer requests. Signal is unused by BlinkCore — kept here as a protocol stub.
-    func isFrontAppFullScreen() -> Bool {
-        return false
-    }
-
     /// Detects when a known native video app is frontmost (TV.app, VLC, IINA, etc.).
     /// Browser-tab video detection (YouTube/Netflix in Chrome/Safari) required reading
     /// window titles via Accessibility and is no longer supported; the timer will run

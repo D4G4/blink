@@ -6,7 +6,6 @@ import BlinkCore
 /// No Accessibility dependency — purely workspace notifications.
 final class MacAppMonitor: AppActivitySource {
     var onAppSwitch: ((AppSwitchEvent) -> Void)?
-    var onWindowTitleChange: (() -> Void)?
 
     private var observation: NSObjectProtocol?
 

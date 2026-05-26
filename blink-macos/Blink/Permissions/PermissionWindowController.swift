@@ -2,10 +2,13 @@ import SwiftUI
 import AppKit
 
 /// Shows the permission guide — user manually adds Blink in Input Monitoring settings.
-/// Dismissed when user clicks "I've granted access" and permission is confirmed.
+/// Auto-dismisses when permission is detected (either via the user clicking
+/// "I've granted access" in the guide, or by a background poll that catches
+/// the case where the user granted via the macOS system dialog instead).
 final class PermissionWindowController {
     private let log = BlinkLog.permission
     private var window: NSWindow?
+    private var grantPollTimer: Timer?
     var onPermissionGranted: (() -> Void)?
 
     func show(theme: BlinkTheme, onGranted: @escaping () -> Void) {
@@ -53,6 +56,24 @@ final class PermissionWindowController {
         }
 
         self.window = win
+        startGrantPolling()
+    }
+
+    /// Polls every 2 seconds for an external grant (user toggled Input Monitoring
+    /// in System Settings without clicking "I've granted access" in our guide).
+    /// `CGPreflightListenEventAccess` is cheap and never triggers a system prompt.
+    private func startGrantPolling() {
+        grantPollTimer?.invalidate()
+        grantPollTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            if PermissionManager.isPermissionGranted() {
+                self.log.info("Permission detected via background poll — dismissing window")
+                self.grantPollTimer?.invalidate()
+                self.grantPollTimer = nil
+                self.dismiss()
+                self.onPermissionGranted?()
+            }
+        }
     }
 
     private var checkAttempts = 0
@@ -62,6 +83,8 @@ final class PermissionWindowController {
         if PermissionManager.isPermissionGranted() {
             log.info("Permission confirmed — dismissing window")
             checkAttempts = 0
+            grantPollTimer?.invalidate()
+            grantPollTimer = nil
             dismiss()
             onPermissionGranted?()
             return
@@ -93,6 +116,8 @@ final class PermissionWindowController {
 
     func dismiss() {
         guard let win = window else { return }
+        grantPollTimer?.invalidate()
+        grantPollTimer = nil
         UIActionLogger.windowClosed("PermissionGuide")
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.3
