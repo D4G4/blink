@@ -7,23 +7,10 @@ import SwiftUI
 /// system dialog OR by clicking "I've granted access".
 struct PermissionGuideView: View {
     let theme: BlinkTheme
-    let isUpgrade: Bool
     let onOpenSettings: () -> Void
     let onConfirmGranted: () -> Void
     @Environment(\.colorScheme) private var colorScheme
     @State private var showError = false
-
-    init(
-        theme: BlinkTheme,
-        isUpgrade: Bool = false,
-        onOpenSettings: @escaping () -> Void,
-        onConfirmGranted: @escaping () -> Void
-    ) {
-        self.theme = theme
-        self.isUpgrade = isUpgrade
-        self.onOpenSettings = onOpenSettings
-        self.onConfirmGranted = onConfirmGranted
-    }
 
     var body: some View {
         let accent = theme.accent(for: colorScheme)
@@ -48,25 +35,17 @@ struct PermissionGuideView: View {
                         Image(systemName: "hand.raised.circle.fill")
                             .font(.system(size: 24, weight: .light))
                             .foregroundStyle(fg)
-                        Text(isUpgrade ? "Re-grant Permission" : "Grant Input Monitoring Access")
+                        Text("Grant Input Monitoring Access")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundStyle(fg)
                     }
-                    Text(isUpgrade
-                        ? "Blink v4 uses Input Monitoring instead of Accessibility"
-                        : "Blink needs this to detect your input timing")
+                    Text("Blink needs this to detect your input timing")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(fg)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 20)
-                .padding(.bottom, isUpgrade ? 12 : 16)
-
-                if isUpgrade {
-                    upgradeBanner(fg: fg, bgTop: bgTop)
-                        .padding(.horizontal, 28)
-                        .padding(.bottom, 12)
-                }
+                .padding(.bottom, 16)
 
                 // Main content: screenshot + steps side by side
                 HStack(spacing: 24) {
@@ -219,37 +198,11 @@ struct PermissionGuideView: View {
             .frame(width: 2, height: 10)
             .padding(.leading, 17)
     }
-
-    // MARK: - Upgrade Banner
-
-    private func upgradeBanner(fg: Color, bgTop: Color) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "info.circle.fill")
-                .font(.system(size: 14))
-                .foregroundStyle(fg)
-                .padding(.top, 1)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Apple's App Store guidelines require this change. Your old Accessibility grant in System Settings → Privacy & Security → Accessibility is no longer used — you can remove it.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(fg)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(10)
-        .background(fg.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
 }
 
 #Preview("Permission Guide — Peach") {
     PermissionGuideView(theme: .peach, onOpenSettings: {}, onConfirmGranted: {})
         .frame(width: 700, height: 420)
-}
-
-#Preview("Permission Guide — Upgrade") {
-    PermissionGuideView(theme: .peach, isUpgrade: true, onOpenSettings: {}, onConfirmGranted: {})
-        .frame(width: 700, height: 480)
 }
 
 #Preview("Permission Guide — Midnight") {

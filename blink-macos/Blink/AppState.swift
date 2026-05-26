@@ -92,14 +92,6 @@ final class AppState: ObservableObject {
         }
         Log.i("Blink starting up")
 
-        // One-time: force re-onboarding for build 20 (new flow sensitivity UI)
-        let onboardingVersion = UserDefaults.standard.integer(forKey: "onboardingVersion")
-        if onboardingVersion < 2 {
-            ThemeManager.shared.hasCompletedOnboarding = false
-            UserDefaults.standard.set(2, forKey: "onboardingVersion")
-            Log.i("Onboarding reset for new flow sensitivity UI")
-        }
-
         setupEngineCallbacks()
         loadTodayStats()
         BlinkLog.pruneOldLogs()
@@ -224,26 +216,17 @@ final class AppState: ObservableObject {
             Log.i("Permission confirmed — monitors and timers started")
             verifyTapAliveOrReprompt()
         } else {
-            // Detect upgrade from v3.x: previously had Accessibility grant
-            // (which set permissionGranted=true) but the new Input Monitoring
-            // TCC bucket has never been granted. Show an explanation banner
-            // and skip the OS prompt for these users — the in-app guide is
-            // friendlier than firing both at once. New users still get the
-            // OS prompt for the cleanest first-launch flow.
-            let isUpgrade = UserDefaults.standard.bool(forKey: "permissionGranted")
-            Log.i("Permission not granted — \(isUpgrade ? "v3→v4 upgrade detected; showing in-app guide only" : "first-time install; firing system prompt + guide")")
+            Log.i("Permission not granted — firing system prompt + showing guide")
             hasInputMonitoringPermission = false
-            if !isUpgrade {
-                PermissionManager.requestInputMonitoringAccess()
-            }
-            showPermissionGuide(isUpgrade: isUpgrade)
+            PermissionManager.requestInputMonitoringAccess()
+            showPermissionGuide()
         }
     }
 
     /// Re-shows the permission guide and re-checks on confirm.
-    private func showPermissionGuide(isUpgrade: Bool = false) {
+    private func showPermissionGuide() {
         permissionWindow = PermissionWindowController()
-        permissionWindow?.show(theme: ThemeManager.shared.current, isUpgrade: isUpgrade) { [weak self] in
+        permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
             guard let self else { return }
             UserDefaults.standard.set(true, forKey: "permissionGranted")
             self.permissionWindow = nil
