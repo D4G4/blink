@@ -19,8 +19,11 @@ final class MicrophonePermissionWindowController {
         let windowWidth: CGFloat = 560
         let windowHeight: CGFloat = 440
         let visible = screen.visibleFrame
+        // Anchor to the TOP of the screen (40pt below menu bar) so we don't
+        // overlap with the macOS Microphone TCC dialog, which is system-
+        // positioned around screen center. Centered horizontally.
         let x = visible.midX - windowWidth / 2
-        let y = visible.midY - windowHeight / 2
+        let y = visible.maxY - windowHeight - 40
 
         let view = MicrophonePermissionView(
             theme: theme,

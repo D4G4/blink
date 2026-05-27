@@ -18,8 +18,11 @@ final class PermissionWindowController {
         let windowWidth: CGFloat = 700
         let windowHeight: CGFloat = 420
         let visible = screen.visibleFrame
+        // Anchor to the TOP of the screen (40pt below menu bar) so we don't
+        // overlap with the macOS Input Monitoring TCC dialog, which is
+        // system-positioned around screen center. Centered horizontally.
         let x = visible.midX - windowWidth / 2
-        let y = visible.midY - windowHeight / 2
+        let y = visible.maxY - windowHeight - 40
 
         let guideView: NSView
         if troubleshooting {
