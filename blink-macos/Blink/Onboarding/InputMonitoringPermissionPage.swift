@@ -180,6 +180,10 @@ struct InputMonitoringPermissionPage: View {
                 .buttonStyle(.plain)
                 .padding(.top, 16)
             }
+            // Force the VStack to fill the ZStack — without this the
+            // VStack collapses to its widest child and the ZStack's
+            // .topLeading alignment pins it to the upper-left corner.
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.top, outerVPad)
             .padding(.bottom, outerVPad)
         }

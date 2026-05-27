@@ -1,18 +1,22 @@
 import SwiftUI
 
-/// Full onboarding flow: theme selection → flow sensitivity → microphone →
-/// input monitoring. All four steps live inside the same window, so the
-/// user's eye never has to jump between separate windows for onboarding
-/// and the permission wizard. Each step is a separate file
-/// (FlowSensitivityPage, MicrophonePermissionPage,
-/// InputMonitoringPermissionPage) stacked into this ZStack.
+/// Onboarding proper: theme selection → flow sensitivity. The permission
+/// flow (mic + IM) is a SEPARATE window — see PermissionFlowView /
+/// PermissionFlowWindowController. This split exists so a macOS TCC
+/// restart mid-permission-grant doesn't push the user back through
+/// theme + flow on relaunch (the relaunch only needs to surface the
+/// permission flow).
+///
+/// `hasCompletedOnboarding` is set to true as soon as the user clicks
+/// Get Started on the flow sensitivity page — at that point the user has
+/// chosen their setup, and any further interruption (TCC restart,
+/// crash, etc.) should NOT replay theme + flow selection.
 struct OnboardingView: View {
     @ObservedObject var themeManager: ThemeManager
-    /// Called when the entire flow resolves. `basicMode` is true only
-    /// when the user explicitly opted out of Input Monitoring on the
-    /// final step (dumb-timer fallback). AppState reads this to decide
-    /// whether to start the smart engine or the basic-timer-only path.
-    let onComplete: (_ basicMode: Bool) -> Void
+    /// Called when the user finishes theme + flow sensitivity selection.
+    /// AppState decides what to do next (start the engine if permissions
+    /// already in place, otherwise show PermissionFlowWindowController).
+    let onComplete: () -> Void
 
     /// Onboarding renders the variant matching the user's system appearance
     /// by default — so a user already in dark mode sees the dark variant
@@ -25,8 +29,6 @@ struct OnboardingView: View {
     @State private var showWhySheet: Bool = false
     @State private var showFlowPage: Bool = false
     @State private var showFlowLearnMore: Bool = false
-    @State private var showMicPage: Bool = false
-    @State private var showIMPage: Bool = false
     /// Default = Balanced preset value (see FlowSensitivityView.Preset.balanced).
     /// Picked so users who walk through onboarding without explicitly tapping
     /// a preset still land on the canonical Balanced threshold (0.60).
@@ -34,7 +36,7 @@ struct OnboardingView: View {
 
     private let themes: [BlinkTheme]
 
-    init(themeManager: ThemeManager, isDarkMode: Bool = false, onComplete: @escaping (_ basicMode: Bool) -> Void) {
+    init(themeManager: ThemeManager, isDarkMode: Bool = false, onComplete: @escaping () -> Void) {
         self.themeManager = themeManager
         self.onComplete = onComplete
         self.themes = BlinkTheme.allLight  // theme ordering — always Peach-first for onboarding
@@ -63,43 +65,25 @@ struct OnboardingView: View {
                     onBack: { withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = false } },
                     onLearnMore: { withAnimation(.easeInOut(duration: 0.4)) { showFlowLearnMore = true } },
                     onGetStarted: {
-                        // Advance to the microphone permission step instead
-                        // of completing onboarding — permission UI is now
-                        // part of the onboarding flow.
-                        withAnimation(.easeInOut(duration: 0.4)) { showMicPage = true }
-                    }
-                )
-                .transition(.opacity)
-            }
-
-            if showMicPage {
-                MicrophonePermissionPage(
-                    theme: selectedTheme,
-                    onBack: { withAnimation(.easeInOut(duration: 0.4)) { showMicPage = false } },
-                    onAdvance: {
-                        withAnimation(.easeInOut(duration: 0.4)) { showIMPage = true }
-                    }
-                )
-                .transition(.opacity)
-            }
-
-            if showIMPage {
-                InputMonitoringPermissionPage(
-                    theme: selectedTheme,
-                    onBack: { withAnimation(.easeInOut(duration: 0.4)) { showIMPage = false } },
-                    onComplete: { basicMode in
+                        // Mark onboarding done THE MOMENT the user
+                        // commits to their flow sensitivity choice — any
+                        // subsequent interruption (TCC restart, crash,
+                        // app quit) should not push them back through
+                        // theme + flow on relaunch. The permission flow
+                        // (mic + IM) is presented separately by AppState
+                        // via PermissionFlowWindowController.
                         themeManager.hasCompletedOnboarding = true
-                        onComplete(basicMode)
+                        onComplete()
                     }
                 )
                 .transition(.opacity)
             }
 
             // Preview dark/light toggle — overlay so it's always at the
-            // window corner regardless of inner content layout. Hidden on
-            // any page past theme selection (no theme preview to compare
+            // window corner regardless of inner content layout. Hidden
+            // on the flow sensitivity page (no theme preview to compare
             // there).
-            if !showFlowPage && !showMicPage && !showIMPage {
+            if !showFlowPage {
                 darkPreviewToggle
                     .padding(20)
                     .transition(.opacity)
@@ -133,12 +117,10 @@ struct OnboardingView: View {
             return .handled
         }
         .onKeyPress(.return) {
-            // Return advances to the flow page from theme selection, same
-            // as the Next button. Past the theme page, each page has its
-            // own primary action button — the Return key is no longer a
-            // safe "complete onboarding" shortcut now that permission
-            // grants must happen explicitly.
-            if !showFlowPage && !showMicPage && !showIMPage {
+            // Return advances from theme selection to the flow page,
+            // same as the Next button. On the flow page itself, the user
+            // uses its own Get Started button.
+            if !showFlowPage {
                 themeManager.select(selectedTheme)
                 withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = true }
                 return .handled
@@ -328,6 +310,6 @@ struct OnboardingView: View {
 }
 
 #Preview("Onboarding") {
-    OnboardingView(themeManager: ThemeManager.shared, onComplete: { _ in })
+    OnboardingView(themeManager: ThemeManager.shared, onComplete: {})
         .frame(width: 900, height: 650)
 }

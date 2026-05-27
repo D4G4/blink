@@ -98,6 +98,7 @@
 		54E7CE6044B9285652CCCB3D /* countdown_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E3099E0B244DB773C3FE472F /* countdown_midnight_light.png */; };
 		56DFC33AB5CDC737732DDE52 /* permission_onboarding_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = DE80B1A3BDF36FF9DB103C2A /* permission_onboarding_sand_dark.png */; };
 		5815097700F5218E4AB8109E /* permission_onboarding_sage_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 9194C9C466B6C7065F520647 /* permission_onboarding_sage_light.png */; };
+		588840F6F05733C1A7A7D429 /* PermissionFlowWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8E1FE160984914B32DC935A /* PermissionFlowWindowController.swift */; };
 		59C66464A7B8C2C37DC2C827 /* permission_onboarding_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FAD0A0A268672782CF691D8 /* permission_onboarding_midnight_dark.png */; };
 		5E05DE31A373DA48B52A1082 /* break_timer_dark_light.png in Resources */ = {isa = PBXBuildFile; fileRef = FD880499FB09DCFA6A60ED3C /* break_timer_dark_light.png */; };
 		5FC0B56A0036332C04D40319 /* flow_sensitivity_settings_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 5DDF046BFA087DB3BD12703D /* flow_sensitivity_settings_sand_dark.png */; };
@@ -174,6 +175,7 @@
 		C1D81946E9C0FBA46F2B94ED /* countdown_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A2452236E7035BFBEEDA6B9 /* countdown_peach_light.png */; };
 		C392738F4FD96DEA4FC724CE /* LaunchHUDWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 382BD980E4730B0AE8F9CED0 /* LaunchHUDWindowController.swift */; };
 		C4E712EFA220AFEAB9DBCAD6 /* research_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 8EC627A6D2F226D24327583F /* research_peach_light.png */; };
+		C6988F7F96F47C38AE99F8BB /* PermissionFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E85D94D142977660E9645359 /* PermissionFlowView.swift */; };
 		C9B6FAF52C2B62BCF93206A9 /* timer_extended_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 27BF82FC797F8EDAC57346E8 /* timer_extended_midnight_light.png */; };
 		C9F040A37308E95E90642297 /* gabor_exercise_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C4E9181A66DBFC63D0D2A14 /* gabor_exercise_sand_dark.png */; };
 		CA29C3921F5BC48D125FC241 /* KeyableBorderlessWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BDB8916B4ED34115BEEA046 /* KeyableBorderlessWindow.swift */; };
@@ -409,6 +411,7 @@
 		AFCA932ACA94A741134F21E0 /* settings_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = settings_midnight_dark.png; sourceTree = "<group>"; };
 		B057EBB6F7ED72F264090D4C /* .gitattributes */ = {isa = PBXFileReference; path = .gitattributes; sourceTree = "<group>"; };
 		B059F389F1E93CB6DFBD0D32 /* settings_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = settings_peach_light.png; sourceTree = "<group>"; };
+		B8E1FE160984914B32DC935A /* PermissionFlowWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionFlowWindowController.swift; sourceTree = "<group>"; };
 		BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistWindowController.swift; sourceTree = "<group>"; };
 		BF18D8947C4851BE0DCA382A /* gabor_exercise_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_exercise_mono_light.png; sourceTree = "<group>"; };
 		C2B5274EAAC775A45BD421DD /* flow_nudge_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_nudge_mono_light.png; sourceTree = "<group>"; };
@@ -445,6 +448,7 @@
 		E3099E0B244DB773C3FE472F /* countdown_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = countdown_midnight_light.png; sourceTree = "<group>"; };
 		E36BBEFCECED97A065EB27A2 /* gabor_exercise_mono_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_exercise_mono_dark.png; sourceTree = "<group>"; };
 		E3834EE8502ABD264392FC35 /* permission_guide_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = permission_guide_midnight_light.png; sourceTree = "<group>"; };
+		E85D94D142977660E9645359 /* PermissionFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionFlowView.swift; sourceTree = "<group>"; };
 		E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchView.swift; sourceTree = "<group>"; };
 		EA29D1D96C261B83F29559C7 /* flow_learn_more_sand_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_learn_more_sand_light.png; sourceTree = "<group>"; };
 		EC7FAB129F44AE104023F51B /* break_timer_sand_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_timer_sand_dark.png; sourceTree = "<group>"; };
@@ -543,6 +547,8 @@
 			children = (
 				841399F648DE043BE5C3E12E /* InputMonitoringRationaleView.swift */,
 				05CE63E53FA6FBA32960E900 /* InputMonitoringRecoveryWindowController.swift */,
+				E85D94D142977660E9645359 /* PermissionFlowView.swift */,
+				B8E1FE160984914B32DC935A /* PermissionFlowWindowController.swift */,
 				10F26BF916A815637E47FA8E /* PermissionManager.swift */,
 			);
 			path = Permissions;
@@ -1121,6 +1127,8 @@
 				AF2AA32997C297584EE5186E /* OnboardingWindow.swift in Sources */,
 				1742115CD05288EFF631D72F /* OverlayPreviews.swift in Sources */,
 				CFB301E36AADFE6AB97FFCE5 /* OverlayWindow.swift in Sources */,
+				C6988F7F96F47C38AE99F8BB /* PermissionFlowView.swift in Sources */,
+				588840F6F05733C1A7A7D429 /* PermissionFlowWindowController.swift in Sources */,
 				3A60C972DDC5C22A3F5471B4 /* PermissionManager.swift in Sources */,
 				0FEE1066FF8A7B430A2D0DF5 /* PermissionPreviews.swift in Sources */,
 				CBF502A96C4139DA82CA7235 /* PersistenceManager.swift in Sources */,

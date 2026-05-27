@@ -27,6 +27,7 @@ final class AppState: ObservableObject {
     private var appMonitor: MacAppMonitor?
     private var contextDetector: MacContextDetector?
     private var permissionRecovery: InputMonitoringRecoveryWindowController?
+    private var permissionFlow: PermissionFlowWindowController?
     private var launchHUD: LaunchHUDWindowController?
 
     // Timers
@@ -115,11 +116,8 @@ final class AppState: ObservableObject {
             Log.i("Onboarding not complete — deferring permissions")
             onboardingObserver = NotificationCenter.default.addObserver(
                 forName: .onboardingCompleted, object: nil, queue: .main
-            ) { [weak self] note in
-                // basicMode is set by OnboardingView's IM step — true when
-                // the user explicitly opted out of Input Monitoring.
-                let basicMode = (note.userInfo?["basicMode"] as? Bool) ?? false
-                Task { @MainActor in self?.onboardingCompleted(basicMode: basicMode) }
+            ) { [weak self] _ in
+                Task { @MainActor in self?.onboardingCompleted() }
             }
         }
     }
@@ -205,35 +203,28 @@ final class AppState: ObservableObject {
 
     // MARK: - Permissions & Monitoring
 
-    /// Called the moment onboarding finishes (theme → flow → mic → IM).
-    /// `basicMode == true` means the user explicitly opted out of Input
-    /// Monitoring on the IM step. We persist their choice and start
-    /// monitoring directly — no separate wizard window.
-    func onboardingCompleted(basicMode: Bool) {
+    /// Called the moment onboarding finishes (theme + flow sensitivity
+    /// only — the permission flow is presented separately). Same code
+    /// path as checkPermissionsAndStart for already-onboarded users
+    /// because the decision tree is identical: IM granted → start;
+    /// basicModeOptIn → start basic; else surface the permission flow.
+    func onboardingCompleted() {
         if let observer = onboardingObserver {
             NotificationCenter.default.removeObserver(observer)
             onboardingObserver = nil
         }
-        let granted = PermissionManager.isPermissionGranted()
-        Log.i("Onboarding completed: basicMode=\(basicMode), IM granted=\(granted)")
-
-        if basicMode {
-            UserDefaults.standard.set(true, forKey: "basicModeOptIn")
-            UserDefaults.standard.set(false, forKey: "permissionGranted")
-            hasInputMonitoringPermission = false
-        } else {
-            UserDefaults.standard.set(false, forKey: "basicModeOptIn")
-            UserDefaults.standard.set(granted, forKey: "permissionGranted")
-            hasInputMonitoringPermission = granted
-        }
-        startMonitoringAfterAllPermissions()
+        Log.i("Onboarding completed (theme + flow) — running permission check")
+        checkPermissionsAndStart()
     }
 
-    /// Permission probe for already-onboarded users (every subsequent launch).
-    /// If IM is granted or the user has opted into basic mode, start the
-    /// engine. If IM was previously granted but is now revoked, surface the
-    /// legacy troubleshooting guide — that's the post-onboarding recovery
-    /// path. We never re-open the onboarding wizard from here.
+    /// Decides what to do once onboarding (theme + flow) is recorded as
+    /// complete. Three branches:
+    ///   - IM granted              → start the smart engine
+    ///   - basicModeOptIn          → start the basic-timer fallback
+    ///   - Neither, and never previously granted   → show PermissionFlow
+    ///     (first-time mic + IM setup)
+    ///   - Neither, but previously granted (IM revoked / stale grant
+    ///     after a binary update) → show the staleGrant recovery window
     private func checkPermissionsAndStart() {
         let granted = PermissionManager.isPermissionGranted()
         let micStatus = PermissionManager.microphoneAuthorizationStatus()
@@ -256,18 +247,47 @@ final class AppState: ObservableObject {
             return
         }
 
-        // IM not granted and no basic-mode opt-in. This only happens
-        // post-onboarding if the user later revoked IM in Settings (the
-        // onboarding flow guarantees one of granted / basic-mode is set).
-        // Show the recovery window and DO NOT start the timer — the
-        // recovery UI is the source of truth right now. Starting a
-        // basic-mode timer in parallel would send mixed signals
-        // ("recovery modal says fix this" vs "timer is already
-        // running"). The timer starts only after the user resolves the
-        // recovery via the callback below (either re-grant or skip).
-        Log.i("IM revoked post-onboarding — showing recovery window (no timer until resolved)")
+        // No IM, no basic-mode opt-in. Two sub-cases distinguished by
+        // whether IM was EVER granted before:
+        //   - previouslyGranted=true  → stale grant (binary changed,
+        //                                TCC cache pointing at old CDHash)
+        //                                → recovery window with .staleGrant copy
+        //   - previouslyGranted=false → first-time setup (just finished
+        //                                onboarding or restart interrupted
+        //                                the original permission flow)
+        //                                → PermissionFlow (mic + IM)
         hasInputMonitoringPermission = false
-        showRecoveryWindow()
+        if previouslyGranted {
+            Log.i("IM revoked post-grant — showing staleGrant recovery window")
+            showRecoveryWindow()
+        } else {
+            Log.i("No IM yet — showing first-time PermissionFlow window")
+            showPermissionFlow()
+        }
+    }
+
+    /// Shows the first-time mic + IM permission flow. Used after a fresh
+    /// onboarding completes, and on any subsequent launch where the user
+    /// hasn't yet granted IM and hasn't opted into basic mode (e.g. a
+    /// TCC restart mid-permission-grant put us back here on relaunch).
+    private func showPermissionFlow() {
+        permissionFlow = PermissionFlowWindowController()
+        permissionFlow?.show(theme: ThemeManager.shared.current) { [weak self] basicMode in
+            guard let self else { return }
+            self.permissionFlow = nil
+            if basicMode {
+                Log.i("PermissionFlow resolved via skip — entering basic mode")
+                UserDefaults.standard.set(true, forKey: "basicModeOptIn")
+                UserDefaults.standard.set(false, forKey: "permissionGranted")
+                self.hasInputMonitoringPermission = false
+            } else {
+                Log.i("PermissionFlow resolved — IM granted")
+                UserDefaults.standard.set(true, forKey: "permissionGranted")
+                UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+                self.hasInputMonitoringPermission = true
+            }
+            self.startMonitoringAfterAllPermissions(showHUD: false)
+        }
     }
 
     /// Shows the recovery window for the cached-grant / revoked case —

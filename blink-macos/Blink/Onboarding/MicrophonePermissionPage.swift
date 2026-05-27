@@ -17,7 +17,11 @@ import AVFoundation
 /// Privacy → Microphone without coming back to click Continue.
 struct MicrophonePermissionPage: View {
     let theme: BlinkTheme
-    let onBack: () -> Void
+    /// nil when there's no "back" target — happens when this page is
+    /// presented from PermissionFlowView (post-onboarding), where mic is
+    /// the first step. In OnboardingView, this points to the flow
+    /// sensitivity page.
+    let onBack: (() -> Void)?
     /// Called when this step is resolved (granted, skipped, or post-denial continue).
     let onAdvance: () -> Void
 
@@ -46,8 +50,15 @@ struct MicrophonePermissionPage: View {
         ZStack(alignment: .topLeading) {
             theme.backgroundGradient(for: colorScheme).ignoresSafeArea()
 
-            backButton(fg: fg)
+            if onBack != nil {
+                backButton(fg: fg)
+            }
 
+            // `frame(maxWidth: .infinity, maxHeight: .infinity)` forces
+            // the content VStack to fill the whole ZStack. Without it,
+            // SwiftUI takes the VStack's intrinsic width (collapsed to
+            // its widest child, ~540pt) and the ZStack's .topLeading
+            // alignment pins the whole pile to the upper-left corner.
             VStack(spacing: 0) {
                 if deniedInSession {
                     deniedStep(fg: fg, bgTop: bgTop, iconSize: iconSize, titleSize: titleSize)
@@ -55,6 +66,7 @@ struct MicrophonePermissionPage: View {
                     initialStep(fg: fg, bgTop: bgTop, iconSize: iconSize, titleSize: titleSize)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.top, outerVPad)
             .padding(.bottom, outerVPad)
         }
@@ -63,7 +75,7 @@ struct MicrophonePermissionPage: View {
     private func backButton(fg: Color) -> some View {
         Button {
             stopPolling()
-            onBack()
+            onBack?()
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: "chevron.left")

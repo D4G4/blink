@@ -59,17 +59,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
 
             onboardingController = OnboardingWindowController()
-            onboardingController?.show(themeManager: themeManager) { [weak self] basicMode in
+            onboardingController?.show(themeManager: themeManager) { [weak self] in
                 self?.onboardingController = nil
                 NSApp.setActivationPolicy(.accessory)
-                // basicMode flows through userInfo so AppState's observer
-                // can choose between the smart engine and the basic-timer
-                // fallback without firing the legacy wizard.
-                NotificationCenter.default.post(
-                    name: .onboardingCompleted,
-                    object: nil,
-                    userInfo: ["basicMode": basicMode]
-                )
+                // Onboarding (theme + flow sensitivity) is done. AppState
+                // decides what to do next — if IM is already granted,
+                // start the engine; otherwise show PermissionFlowWindow.
+                NotificationCenter.default.post(name: .onboardingCompleted, object: nil)
             }
         } else {
             NSApp.setActivationPolicy(.accessory)
