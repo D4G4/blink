@@ -357,6 +357,20 @@ final class AppState: ObservableObject {
         appMon.startMonitoring()
         self.appMonitor = appMon
 
+        // Seed the currently-frontmost app at startup.
+        // NSWorkspace.didActivateApplicationNotification only fires on app
+        // CHANGES, not for the app that's already frontmost. Without this
+        // seed call, a user who launches Blink while Xcode is the active
+        // app and then never switches apps produces zero appSwitch events
+        // — and the engine's dwellByApp stays empty → creative bonus
+        // silently drops from 0.10 → 0.03 for the entire first window.
+        if let frontmostID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier {
+            Log.i("Seeding initial frontmost app: \(frontmostID)")
+            engine.setCurrentApp(bundleID: frontmostID)
+        } else {
+            Log.i("No frontmost app at startup — dwell tracking will start on first app switch")
+        }
+
         // Dismiss overlay before Mac sleeps so it's never stuck on screen at wake.
         // queue: .main guarantees we're on the main thread; MainActor.assumeIsolated
         // tells Swift's actor-isolation checker so we can touch @MainActor state.
