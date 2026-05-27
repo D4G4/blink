@@ -174,6 +174,7 @@
 		C4E712EFA220AFEAB9DBCAD6 /* research_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 8EC627A6D2F226D24327583F /* research_peach_light.png */; };
 		C9B6FAF52C2B62BCF93206A9 /* timer_extended_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 27BF82FC797F8EDAC57346E8 /* timer_extended_midnight_light.png */; };
 		C9F040A37308E95E90642297 /* gabor_exercise_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C4E9181A66DBFC63D0D2A14 /* gabor_exercise_sand_dark.png */; };
+		CA29C3921F5BC48D125FC241 /* KeyableBorderlessWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BDB8916B4ED34115BEEA046 /* KeyableBorderlessWindow.swift */; };
 		CBA100187EEDAE5A5460E25D /* break_timer_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 71D6D5978A8C0721F9680A54 /* break_timer_peach_light.png */; };
 		CBF502A96C4139DA82CA7235 /* PersistenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259BC5A29D8C29D30B7A8C1F /* PersistenceManager.swift */; };
 		CD85665E518B19F7BBB58D1F /* GaborExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */; };
@@ -356,6 +357,7 @@
 		88DEB6D18FE09B497F766EF8 /* permission_guide_peach_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = permission_guide_peach_dark.png; sourceTree = "<group>"; };
 		8A2452236E7035BFBEEDA6B9 /* countdown_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = countdown_peach_light.png; sourceTree = "<group>"; };
 		8B50EC777E81E9F8C6226402 /* menu_bar_sand_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_sand_dark.png; sourceTree = "<group>"; };
+		8BDB8916B4ED34115BEEA046 /* KeyableBorderlessWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyableBorderlessWindow.swift; sourceTree = "<group>"; };
 		8C3FE352EB3AFEEB76ECBD6B /* Blink.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Blink.entitlements; sourceTree = "<group>"; };
 		8C52EC0F95A3EDFAEB7BF5EF /* PermissionPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionPreviews.swift; sourceTree = "<group>"; };
 		8D3C0734B15BE7F92F6CB672 /* menu_bar_sage_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_sage_dark.png; sourceTree = "<group>"; };
@@ -599,6 +601,7 @@
 		BB1BE3CA5D65054DBB150A6A /* Platform */ = {
 			isa = PBXGroup;
 			children = (
+				8BDB8916B4ED34115BEEA046 /* KeyableBorderlessWindow.swift */,
 				216A16F819CB23807A4A69BF /* MacAppMonitor.swift */,
 				977674318B8EB84E0DD3DE41 /* MacContextDetector.swift */,
 				545B271DAD35F8C4FA3D7CCF /* MacInputMonitor.swift */,
@@ -1092,6 +1095,7 @@
 				1F3B28A4230B4EA81B7BCD0C /* GaborExerciseWindowController.swift in Sources */,
 				9F0CE1946691CF2FE32D1528 /* GaborRenderer.swift in Sources */,
 				DFB0303A5FE33D7F70B95556 /* GaborSessionStore.swift in Sources */,
+				CA29C3921F5BC48D125FC241 /* KeyableBorderlessWindow.swift in Sources */,
 				2FF43ACECCF77373C5EFCCA4 /* LogExporter.swift in Sources */,
 				9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */,
 				D5C6DCF4BA41B2C014A4D3C8 /* MacContextDetector.swift in Sources */,

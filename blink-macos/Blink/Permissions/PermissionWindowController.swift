@@ -44,7 +44,7 @@ final class PermissionWindowController {
             ))
         }
 
-        let win = NSWindow(
+        let win = KeyableBorderlessWindow(
             contentRect: NSRect(x: x, y: y, width: windowWidth, height: windowHeight),
             styleMask: [.borderless],
             backing: .buffered,
@@ -53,7 +53,10 @@ final class PermissionWindowController {
         win.isReleasedWhenClosed = false
         win.isOpaque = false
         win.backgroundColor = .clear
-        win.level = .normal
+        // Floating so the guide stays visible above the user's other windows
+        // while they're toggling the permission in System Settings. The OS
+        // Input Monitoring dialog uses .modalPanel and still appears on top.
+        win.level = .floating
         win.hasShadow = true
         win.appearance = NSApp.effectiveAppearance
         win.contentView = guideView
