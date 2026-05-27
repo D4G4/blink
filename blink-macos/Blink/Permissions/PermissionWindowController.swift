@@ -53,10 +53,12 @@ final class PermissionWindowController {
         win.isReleasedWhenClosed = false
         win.isOpaque = false
         win.backgroundColor = .clear
-        // Floating so the guide stays visible above the user's other windows
-        // while they're toggling the permission in System Settings. The OS
-        // Input Monitoring dialog uses .modalPanel and still appears on top.
-        win.level = .floating
+        // .normal — same level as System Settings and the macOS TCC dialog,
+        // so the system permission popup reliably renders ON TOP of our
+        // guide instead of behind it. Empirically, the Input Monitoring
+        // TCC dialog for sandboxed LSUIElement apps is NOT at .modalPanel
+        // level, so .floating would put our window above the system dialog.
+        win.level = .normal
         win.hasShadow = true
         win.appearance = NSApp.effectiveAppearance
         win.contentView = guideView

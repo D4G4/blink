@@ -6,10 +6,11 @@ struct OnboardingView: View {
     @ObservedObject var themeManager: ThemeManager
     let onComplete: () -> Void
 
-    /// Onboarding shows the LIGHT variant of every theme by default so users
-    /// see each theme's true colors. The bottom-right toggle flips this to
-    /// preview the dark variant.
-    @State private var previewDark: Bool = false
+    /// Onboarding renders the variant matching the user's system appearance
+    /// by default — so a user already in dark mode sees the dark variant
+    /// (which is the colors they'll actually live with day-to-day). The
+    /// bottom-right toggle lets them preview the other variant on demand.
+    @State private var previewDark: Bool
     @State private var selectedIndex: Int = 0
     @State private var iconScale: CGFloat = 0.5
     @State private var iconOpacity: Double = 0
@@ -23,7 +24,8 @@ struct OnboardingView: View {
     init(themeManager: ThemeManager, isDarkMode: Bool = false, onComplete: @escaping () -> Void) {
         self.themeManager = themeManager
         self.onComplete = onComplete
-        self.themes = BlinkTheme.allLight  // always render the light-ordering for onboarding
+        self.themes = BlinkTheme.allLight  // theme ordering — always Peach-first for onboarding
+        self._previewDark = State(initialValue: isDarkMode)  // initial variant follows system appearance
     }
 
     /// The colorScheme passed to theme methods — overridden by the preview toggle
