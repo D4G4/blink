@@ -374,6 +374,15 @@ final class AppState: ObservableObject {
                 self.inputMonitor?.reEnableTapIfNeeded()
                 if self.inputMonitor?.isTapAlive != true {
                     self.pollInputFallback()
+                    // If the tap is dead AND TCC now reports the permission as
+                    // missing, the user revoked Input Monitoring while Blink
+                    // was running. Reflect that in the menu bar banner so they
+                    // see the issue + one-click path to re-grant — instead of
+                    // silently running on the degraded HID-state fallback.
+                    if self.hasInputMonitoringPermission && !CGPreflightListenEventAccess() {
+                        Log.i("Permission revoked mid-session — surfacing banner")
+                        self.hasInputMonitoringPermission = false
+                    }
                 }
 
                 // Midnight reset — reload today's stats when the day rolls over
