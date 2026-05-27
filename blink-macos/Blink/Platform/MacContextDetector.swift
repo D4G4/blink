@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import AVFoundation
 import CoreAudio
 import BlinkCore
 import os
@@ -36,6 +37,14 @@ final class MacContextDetector: ContextSource {
 
     func isMicrophoneActive() -> Bool {
         guard !micDetectionDisabled else { return false }
+        // Short-circuit if mic permission isn't granted: never touch CoreAudio
+        // without TCC authorization, otherwise macOS may surprise-prompt the
+        // user mid-session (especially with the audio-input entitlement
+        // declared). Users who skip mic in the wizard expect zero mic
+        // interaction until they re-enable in Settings.
+        guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else {
+            return false
+        }
         let active = isMicInUse()
 
         // First check: if mic is already active at launch, it's likely Dictation/Siri.
