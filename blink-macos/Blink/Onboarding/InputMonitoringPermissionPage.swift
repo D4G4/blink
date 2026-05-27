@@ -66,7 +66,10 @@ struct InputMonitoringPermissionPage: View {
         let titleSize: CGFloat = isCompact ? 24 : 28
         let outerVPad: CGFloat = isCompact ? 20 : 40
 
-        let fg = theme.onBackgroundText(for: colorScheme)
+        // Permission pages use the theme's body text color (readable
+        // dark on light warm themes like Peach). See MicrophonePermissionPage
+        // for the rationale.
+        let fg = theme.onBackgroundBodyText(for: colorScheme)
         let bgTop = theme.backgroundTop(for: colorScheme)
 
         let iconName = mode == .staleGrant ? "exclamationmark.triangle.fill" : "keyboard"

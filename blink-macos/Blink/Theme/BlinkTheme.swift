@@ -16,15 +16,31 @@ struct BlinkTheme: Identifiable, Equatable {
     let overlayTextDark: Color
     let overlayTextLight: Color
 
-    /// Primary text color on the theme's background (onboarding, etc.)
+    /// Hero text on the theme background — titles, big numerals, theme
+    /// names on the onboarding carousel. White on warm themes (Peach)
+    /// reads OK at large sizes even at low WCAG contrast; for pastel
+    /// themes (Sage / Sand) this stays dark to avoid washed-out titles.
     let onBackgroundTextLight: Color
     let onBackgroundTextDark: Color
+
+    /// Body / detail text on the theme background — rationale rows,
+    /// caption text, fine print. The point at which white-on-light-warm
+    /// stops being readable (because the eye can't trace the thinner
+    /// strokes against the low-contrast background). For Peach this is
+    /// the dark peach-brown so dense permission-page content stays
+    /// legible while hero text upstream stays crisp white.
+    let onBackgroundBodyTextLight: Color
+    let onBackgroundBodyTextDark: Color
 
     /// Whether the accent color should invert to white in dark mode (Mono only)
     let invertInDarkMode: Bool
 
     func onBackgroundText(for colorScheme: ColorScheme) -> Color {
         colorScheme == .dark ? onBackgroundTextDark : onBackgroundTextLight
+    }
+
+    func onBackgroundBodyText(for colorScheme: ColorScheme) -> Color {
+        colorScheme == .dark ? onBackgroundBodyTextDark : onBackgroundBodyTextLight
     }
 
     func backgroundTop(for colorScheme: ColorScheme) -> Color {
@@ -102,6 +118,8 @@ struct BlinkTheme: Identifiable, Equatable {
         overlayTextLight: .white,
         onBackgroundTextLight: .white,
         onBackgroundTextDark: .white,
+        onBackgroundBodyTextLight: .white,
+        onBackgroundBodyTextDark: .white,
         invertInDarkMode: false
     )
 
@@ -121,13 +139,19 @@ struct BlinkTheme: Identifiable, Equatable {
         overlayBackgroundLight: Color(hex: 0xFFF0E8).opacity(0.95),
         overlayTextDark: Color(hex: 0xFFDDCC),
         overlayTextLight: Color(hex: 0x3D2012),
-        // Light Peach background (0xFFB89A → 0xF09060) is too light for
-        // white text — WCAG contrast is ~1.5:1, which reads as washed
-        // out on the onboarding / permission pages and the rationale
-        // sheet. Dark peach-brown matches the theme palette and pushes
-        // contrast above legibility.
-        onBackgroundTextLight: Color(hex: 0x3D2012),
+        // Hero text stays white — works fine on Peach at the large sizes
+        // used on the theme carousel ("Welcome to Blink", theme names)
+        // even though WCAG contrast is technically low. The warmth of
+        // the peach gradient gives white enough perceptual punch.
+        onBackgroundTextLight: .white,
         onBackgroundTextDark: .white,
+        // Body / detail text switches to dark peach-brown — when text
+        // gets small or dense (permission-page rationale rows, "Why
+        // Input Monitoring?" sheet body) white-on-light-peach falls
+        // apart and reads washed out. Dark color stays inside the
+        // theme palette.
+        onBackgroundBodyTextLight: Color(hex: 0x3D2012),
+        onBackgroundBodyTextDark: .white,
         invertInDarkMode: false
     )
 
@@ -145,8 +169,12 @@ struct BlinkTheme: Identifiable, Equatable {
         overlayBackgroundLight: Color(hex: 0xE8EAF4).opacity(0.95),
         overlayTextDark: Color(hex: 0xB8C0E0),
         overlayTextLight: Color(hex: 0x1A1B3A),
+        // Midnight has a dark gradient in both light and dark mode, so
+        // white text works for hero AND body — no split needed.
         onBackgroundTextLight: .white,
         onBackgroundTextDark: .white,
+        onBackgroundBodyTextLight: .white,
+        onBackgroundBodyTextDark: .white,
         invertInDarkMode: false
     )
 
@@ -164,11 +192,13 @@ struct BlinkTheme: Identifiable, Equatable {
         overlayBackgroundLight: Color(hex: 0xEAF5EC).opacity(0.95),
         overlayTextDark: Color(hex: 0xC8EED0),
         overlayTextLight: Color(hex: 0x1A3520),
-        // Light Sage background (0xB8D4BC) is too pastel for white text — WCAG
-        // contrast lands at ~1.3:1. Dark forest green matches the theme palette
-        // and keeps headings readable on the gradient.
+        // Light Sage background (0xB8D4BC) is too pastel for white text
+        // — WCAG contrast ~1.3:1 fails even for hero. Both hero and body
+        // stay dark for this theme in light mode.
         onBackgroundTextLight: Color(hex: 0x1A3520),
         onBackgroundTextDark: .white,
+        onBackgroundBodyTextLight: Color(hex: 0x1A3520),
+        onBackgroundBodyTextDark: .white,
         invertInDarkMode: false
     )
 
@@ -186,10 +216,12 @@ struct BlinkTheme: Identifiable, Equatable {
         overlayBackgroundLight: Color(hex: 0xF2F0E8).opacity(0.95),
         overlayTextDark: Color(hex: 0xE8E0CC),
         overlayTextLight: Color(hex: 0x2E2A1E),
-        // Light Sand background (0xD8D0B8) is too pastel for white text — same
-        // contrast failure as Sage. Dark brown stays inside the theme palette.
+        // Light Sand (0xD8D0B8) is too pastel for white text — same
+        // failure as Sage. Both hero and body stay dark in light mode.
         onBackgroundTextLight: Color(hex: 0x2E2A1E),
         onBackgroundTextDark: .white,
+        onBackgroundBodyTextLight: Color(hex: 0x2E2A1E),
+        onBackgroundBodyTextDark: .white,
         invertInDarkMode: false
     )
 
@@ -207,8 +239,12 @@ struct BlinkTheme: Identifiable, Equatable {
         overlayBackgroundLight: Color(hex: 0xFAFAFA).opacity(0.98),
         overlayTextDark: Color(hex: 0xF0F0F0),
         overlayTextLight: Color(hex: 0x1A1A1A),
+        // Mono has high contrast in both modes already — dark on light bg
+        // and white on dark bg works for hero AND body, no split needed.
         onBackgroundTextLight: Color(hex: 0x1A1A1A),
         onBackgroundTextDark: .white,
+        onBackgroundBodyTextLight: Color(hex: 0x1A1A1A),
+        onBackgroundBodyTextDark: .white,
         invertInDarkMode: true
     )
 }

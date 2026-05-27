@@ -10,7 +10,10 @@ struct InputMonitoringRationaleView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        let fg = theme.onBackgroundText(for: colorScheme)
+        // Rationale sheet is body-heavy (paragraphs explaining each
+        // bullet). Use the theme's body text color — see
+        // MicrophonePermissionPage for the hero-vs-body rationale.
+        let fg = theme.onBackgroundBodyText(for: colorScheme)
         let bgTop = theme.backgroundTop(for: colorScheme)
 
         ZStack {

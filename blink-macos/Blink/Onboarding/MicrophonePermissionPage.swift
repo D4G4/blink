@@ -44,7 +44,11 @@ struct MicrophonePermissionPage: View {
         let titleSize: CGFloat = isCompact ? 24 : 28
         let outerVPad: CGFloat = isCompact ? 20 : 40
 
-        let fg = theme.onBackgroundText(for: colorScheme)
+        // Permission pages are body-heavy (rationale rows, captions,
+        // longer prose) — use the theme's body text color which is the
+        // readable dark variant on light warm themes (Peach). Hero text
+        // color stays reserved for onboarding (theme + flow pages).
+        let fg = theme.onBackgroundBodyText(for: colorScheme)
         let bgTop = theme.backgroundTop(for: colorScheme)
 
         ZStack(alignment: .topLeading) {
