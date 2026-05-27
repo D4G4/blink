@@ -10,10 +10,12 @@ struct InputMonitoringRationaleView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        // Rationale sheet is body-heavy (paragraphs explaining each
-        // bullet). Use the theme's body text color — see
-        // MicrophonePermissionPage for the hero-vs-body rationale.
-        let fg = theme.onBackgroundBodyText(for: colorScheme)
+        // Two text colors — hero for the header (icon, title, subtitle,
+        // primary button) and body for the dense rationale rows. Matches
+        // the split used in MicrophonePermissionPage /
+        // InputMonitoringPermissionPage.
+        let heroFg = theme.onBackgroundText(for: colorScheme)
+        let bodyFg = theme.onBackgroundBodyText(for: colorScheme)
         let bgTop = theme.backgroundTop(for: colorScheme)
 
         ZStack {
@@ -21,7 +23,7 @@ struct InputMonitoringRationaleView: View {
                 .ignoresSafeArea()
 
             RadialGradient(
-                colors: [fg.opacity(0.1), .clear],
+                colors: [heroFg.opacity(0.1), .clear],
                 center: .top,
                 startRadius: 50,
                 endRadius: 400
@@ -32,14 +34,14 @@ struct InputMonitoringRationaleView: View {
                 VStack(spacing: 6) {
                     Image(systemName: "questionmark.circle.fill")
                         .font(.system(size: 26, weight: .light))
-                        .foregroundStyle(fg)
+                        .foregroundStyle(heroFg)
                         .padding(.bottom, 4)
                     Text("Why Input Monitoring?")
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(fg)
+                        .foregroundStyle(heroFg)
                     Text("What Blink reads, what it doesn't, and why this permission")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(fg.opacity(0.85))
+                        .foregroundStyle(heroFg.opacity(0.85))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 24)
                 }
@@ -52,25 +54,25 @@ struct InputMonitoringRationaleView: View {
                         icon: "waveform",
                         title: "What it reads",
                         body: "Only timing — when keys are pressed, when the mouse moves, scroll deltas, click counts. This is the raw signal Blink uses to score your focus state.",
-                        fg: fg
+                        fg: bodyFg
                     )
                     rationaleRow(
                         icon: "eye.slash.fill",
                         title: "What it does NOT read",
                         body: "Never the actual keys you press, never window contents, never URLs or filenames. Blink doesn't know if you typed \"hello\" or random characters — only that you typed.",
-                        fg: fg
+                        fg: bodyFg
                     )
                     rationaleRow(
                         icon: "brain.head.profile",
                         title: "Why we need this signal",
                         body: "Smart break timing depends on knowing when you're in deep flow vs idle vs context-switching. A dumb 20-min timer would interrupt you mid-thought. Typing rhythm + mouse activity is what makes the difference.",
-                        fg: fg
+                        fg: bodyFg
                     )
                     rationaleRow(
                         icon: "lock.shield.fill",
                         title: "Why a system permission",
                         body: "macOS requires Input Monitoring to observe keystroke events globally, even just for timing. There is no lower-permission API for this. Nothing leaves your Mac — no telemetry, no network calls, no storage.",
-                        fg: fg
+                        fg: bodyFg
                     )
                 }
                 .frame(maxWidth: 480)
@@ -86,7 +88,7 @@ struct InputMonitoringRationaleView: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(bgTop)
                         .frame(width: 140, height: 40)
-                        .background(fg)
+                        .background(heroFg)
                         .clipShape(Capsule())
                         .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
                 }

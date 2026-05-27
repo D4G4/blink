@@ -39,11 +39,14 @@ struct MicrophonePermissionPage: View {
         let titleSize: CGFloat = isCompact ? 24 : 28
         let outerVPad: CGFloat = isCompact ? 20 : 40
 
-        // Permission pages are body-heavy (rationale rows, captions,
-        // longer prose) — use the theme's body text color which is the
-        // readable dark variant on light warm themes (Peach). Hero text
-        // color stays reserved for onboarding (theme + flow pages).
-        let fg = theme.onBackgroundBodyText(for: colorScheme)
+        // Two text colors per page:
+        //   heroFg — title, subtitle, button styling. Matches onboarding
+        //   pages so the visual identity carries through (white on warm
+        //   themes like Peach, dark on pastel themes like Sage / Sand).
+        //   bodyFg — rationale rows / captions. Drops to the readable
+        //   dark variant on warm themes so dense prose isn't washed out.
+        let heroFg = theme.onBackgroundText(for: colorScheme)
+        let bodyFg = theme.onBackgroundBodyText(for: colorScheme)
         let bgTop = theme.backgroundTop(for: colorScheme)
 
         ZStack(alignment: .topLeading) {
@@ -60,9 +63,9 @@ struct MicrophonePermissionPage: View {
             // alignment pins the whole pile to the upper-left corner.
             VStack(spacing: 0) {
                 if deniedInSession {
-                    deniedStep(fg: fg, bgTop: bgTop, iconSize: iconSize, titleSize: titleSize)
+                    deniedStep(heroFg: heroFg, bodyFg: bodyFg, bgTop: bgTop, iconSize: iconSize, titleSize: titleSize)
                 } else {
-                    initialStep(fg: fg, bgTop: bgTop, iconSize: iconSize, titleSize: titleSize)
+                    initialStep(heroFg: heroFg, bodyFg: bodyFg, bgTop: bgTop, iconSize: iconSize, titleSize: titleSize)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -73,20 +76,20 @@ struct MicrophonePermissionPage: View {
 
     // MARK: - Initial step
 
-    private func initialStep(fg: Color, bgTop: Color, iconSize: CGFloat, titleSize: CGFloat) -> some View {
+    private func initialStep(heroFg: Color, bodyFg: Color, bgTop: Color, iconSize: CGFloat, titleSize: CGFloat) -> some View {
         VStack(spacing: 0) {
             Image(systemName: "mic.fill")
                 .font(.system(size: iconSize, weight: .light))
-                .foregroundStyle(fg)
+                .foregroundStyle(heroFg)
                 .padding(.bottom, 10)
 
             Text("Microphone Access")
                 .font(.system(size: titleSize, weight: .bold, design: .rounded))
-                .foregroundStyle(fg)
+                .foregroundStyle(heroFg)
 
             Text("So breaks don't interrupt your calls")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(fg.opacity(0.85))
+                .foregroundStyle(heroFg.opacity(0.85))
                 .padding(.top, 4)
 
             Spacer(minLength: 24)
@@ -96,19 +99,19 @@ struct MicrophonePermissionPage: View {
                     icon: "checkmark.circle.fill",
                     title: "What it's for",
                     body: "Detect when an app is using your mic so the break timer auto-pauses during meetings and calls.",
-                    fg: fg
+                    fg: bodyFg
                 )
                 rationaleRow(
                     icon: "eye.slash.fill",
                     title: "What we don't do",
                     body: "We only check whether the mic is in use — we never record, transmit, or store any audio.",
-                    fg: fg
+                    fg: bodyFg
                 )
                 rationaleRow(
                     icon: "hand.raised.fill",
                     title: "If you skip",
                     body: "Everything else still works. The timer just won't auto-pause during calls — you can manually pause from the menu bar.",
-                    fg: fg
+                    fg: bodyFg
                 )
             }
             .frame(maxWidth: 540)
@@ -117,11 +120,11 @@ struct MicrophonePermissionPage: View {
             Spacer(minLength: 24)
 
             HStack(spacing: 14) {
-                pageButton(label: "Skip", icon: nil, primary: false, fg: fg, bgTop: bgTop) {
+                pageButton(label: "Skip", icon: nil, primary: false, fg: heroFg, bgTop: bgTop) {
                     BlinkLog.permission.info("Onboarding mic step: user skipped")
                     onAdvance()
                 }
-                pageButton(label: "Grant Access", icon: "mic.fill", primary: true, fg: fg, bgTop: bgTop) {
+                pageButton(label: "Grant Access", icon: "mic.fill", primary: true, fg: heroFg, bgTop: bgTop) {
                     Task { @MainActor in
                         let granted = await PermissionManager.requestMicrophoneAccess()
                         BlinkLog.permission.info("Onboarding mic step: requestAccess resolved granted=\(granted)")
@@ -138,20 +141,20 @@ struct MicrophonePermissionPage: View {
 
     // MARK: - Denied step
 
-    private func deniedStep(fg: Color, bgTop: Color, iconSize: CGFloat, titleSize: CGFloat) -> some View {
+    private func deniedStep(heroFg: Color, bodyFg: Color, bgTop: Color, iconSize: CGFloat, titleSize: CGFloat) -> some View {
         VStack(spacing: 0) {
             Image(systemName: "mic.slash.fill")
                 .font(.system(size: iconSize, weight: .light))
-                .foregroundStyle(fg)
+                .foregroundStyle(heroFg)
                 .padding(.bottom, 10)
 
             Text("Microphone Access Denied")
                 .font(.system(size: titleSize, weight: .bold, design: .rounded))
-                .foregroundStyle(fg)
+                .foregroundStyle(heroFg)
 
             Text("macOS won't ask again — you can change this in Settings")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(fg.opacity(0.85))
+                .foregroundStyle(heroFg.opacity(0.85))
                 .padding(.top, 4)
 
             Spacer(minLength: 24)
@@ -161,13 +164,13 @@ struct MicrophonePermissionPage: View {
                     icon: "info.circle.fill",
                     title: "If this was a misclick",
                     body: "Open System Settings → Privacy & Security → Microphone, toggle Blink on, then click Continue below.",
-                    fg: fg
+                    fg: bodyFg
                 )
                 rationaleRow(
                     icon: "hand.raised.fill",
                     title: "If you meant to deny",
                     body: "Click Continue to move on. Everything else still works — the timer just won't auto-pause during calls.",
-                    fg: fg
+                    fg: bodyFg
                 )
             }
             .frame(maxWidth: 540)
@@ -176,11 +179,11 @@ struct MicrophonePermissionPage: View {
             Spacer(minLength: 24)
 
             HStack(spacing: 14) {
-                pageButton(label: "Open Settings", icon: "gear", primary: false, fg: fg, bgTop: bgTop) {
+                pageButton(label: "Open Settings", icon: "gear", primary: false, fg: heroFg, bgTop: bgTop) {
                     PermissionManager.openMicrophoneSettings()
                     startPolling()
                 }
-                pageButton(label: "Continue", icon: "arrow.right", primary: true, fg: fg, bgTop: bgTop) {
+                pageButton(label: "Continue", icon: "arrow.right", primary: true, fg: heroFg, bgTop: bgTop) {
                     BlinkLog.permission.info("Onboarding mic step: user continued past denial")
                     stopPolling()
                     onAdvance()

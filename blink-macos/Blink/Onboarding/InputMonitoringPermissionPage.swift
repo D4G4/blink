@@ -63,10 +63,13 @@ struct InputMonitoringPermissionPage: View {
         let titleSize: CGFloat = isCompact ? 24 : 28
         let outerVPad: CGFloat = isCompact ? 20 : 40
 
-        // Permission pages use the theme's body text color (readable
-        // dark on light warm themes like Peach). See MicrophonePermissionPage
-        // for the rationale.
-        let fg = theme.onBackgroundBodyText(for: colorScheme)
+        // Two text colors per page (matches MicrophonePermissionPage):
+        //   heroFg — title, subtitle, icon, primary/secondary buttons.
+        //   bodyFg — the IM-steps card (image + 3-step list), basic-mode
+        //   opt-out link. Body color so dense content stays legible on
+        //   warm light themes like Peach.
+        let heroFg = theme.onBackgroundText(for: colorScheme)
+        let bodyFg = theme.onBackgroundBodyText(for: colorScheme)
         let bgTop = theme.backgroundTop(for: colorScheme)
 
         let iconName = mode == .staleGrant ? "exclamationmark.triangle.fill" : "keyboard"
@@ -84,18 +87,18 @@ struct InputMonitoringPermissionPage: View {
             VStack(spacing: 0) {
                 Image(systemName: iconName)
                     .font(.system(size: iconSize, weight: .light))
-                    .foregroundStyle(fg)
+                    .foregroundStyle(heroFg)
                     .padding(.bottom, 10)
 
                 Text(title)
                     .font(.system(size: titleSize, weight: .bold, design: .rounded))
-                    .foregroundStyle(fg)
+                    .foregroundStyle(heroFg)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
 
                 Text(subtitle)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(fg.opacity(0.85))
+                    .foregroundStyle(heroFg.opacity(0.85))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
                     .padding(.top, 4)
@@ -111,10 +114,10 @@ struct InputMonitoringPermissionPage: View {
                             Image(systemName: "questionmark.circle").font(.system(size: 12))
                             Text("Why does Blink need this?").font(.system(size: 12, weight: .medium))
                         }
-                        .foregroundStyle(fg)
+                        .foregroundStyle(heroFg)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(fg.opacity(0.15))
+                        .background(heroFg.opacity(0.15))
                         .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -129,18 +132,18 @@ struct InputMonitoringPermissionPage: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(maxWidth: 320)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(fg.opacity(0.25), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(bodyFg.opacity(0.25), lineWidth: 1))
                         .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
 
                     VStack(alignment: .leading, spacing: 0) {
-                        imStepRow(num: 1, title: "Click +  button", fg: fg, bgTop: bgTop)
-                        imStepConnector(fg: fg)
-                        imStepRow(num: 2, title: "Find Blink → Open", fg: fg, bgTop: bgTop)
-                        imStepConnector(fg: fg)
-                        imStepRow(num: 3, title: "Toggle on", fg: fg, bgTop: bgTop)
+                        imStepRow(num: 1, title: "Click +  button", fg: bodyFg, bgTop: bgTop)
+                        imStepConnector(fg: bodyFg)
+                        imStepRow(num: 2, title: "Find Blink → Open", fg: bodyFg, bgTop: bgTop)
+                        imStepConnector(fg: bodyFg)
+                        imStepRow(num: 3, title: "Toggle on", fg: bodyFg, bgTop: bgTop)
                     }
                     .padding(16)
-                    .background(fg.opacity(0.15))
+                    .background(bodyFg.opacity(0.15))
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                     .frame(width: 220)
                 }
@@ -149,12 +152,12 @@ struct InputMonitoringPermissionPage: View {
                 Spacer(minLength: 18)
 
                 HStack(spacing: 14) {
-                    pageButton(label: "Open Settings", icon: "gear", primary: true, fg: fg, bgTop: bgTop) {
+                    pageButton(label: "Open Settings", icon: "gear", primary: true, fg: heroFg, bgTop: bgTop) {
                         NSApp.activate(ignoringOtherApps: true)
                         PermissionManager.requestInputMonitoringAccess()
                         PermissionManager.openInputMonitoringSettings()
                     }
-                    pageButton(label: "I've granted access", icon: "checkmark.circle.fill", primary: false, fg: fg, bgTop: bgTop) {
+                    pageButton(label: "I've granted access", icon: "checkmark.circle.fill", primary: false, fg: heroFg, bgTop: bgTop) {
                         checkGrant()
                     }
                 }
@@ -173,7 +176,7 @@ struct InputMonitoringPermissionPage: View {
                          ? "Skip for now — use basic timer"
                          : "Continue with basic timer (no smart timing)")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(fg.opacity(0.65))
+                        .foregroundStyle(heroFg.opacity(0.65))
                         .underline()
                 }
                 .buttonStyle(.plain)
