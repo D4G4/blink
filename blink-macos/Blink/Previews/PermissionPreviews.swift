@@ -2,50 +2,14 @@ import SwiftUI
 
 private let allThemes: [BlinkTheme] = [.peach, .midnight, .sage, .sand, .mono]
 
-#Preview("PermissionOnboarding — All Themes — Light") {
+#Preview("Mic Permission — All Themes — Light") {
     ScrollView {
         VStack(spacing: 20) {
             ForEach(allThemes) { theme in
                 VStack(spacing: 4) {
                     Text(theme.name).font(.caption).foregroundStyle(.secondary)
-                    PermissionOnboardingView(theme: theme, onContinue: {})
-                        .frame(width: 500, height: 450)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-            }
-        }
-        .padding(20)
-    }
-    .frame(width: 560, height: 2600)
-    .preferredColorScheme(.light)
-}
-
-#Preview("PermissionOnboarding — All Themes — Dark") {
-    ScrollView {
-        VStack(spacing: 20) {
-            ForEach(allThemes) { theme in
-                VStack(spacing: 4) {
-                    Text(theme.name).font(.caption).foregroundStyle(.secondary)
-                    PermissionOnboardingView(theme: theme, onContinue: {})
-                        .frame(width: 500, height: 450)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-            }
-        }
-        .padding(20)
-    }
-    .frame(width: 560, height: 2600)
-    .preferredColorScheme(.dark)
-}
-
-#Preview("PermissionGuide — All Themes — Light") {
-    ScrollView {
-        VStack(spacing: 20) {
-            ForEach(allThemes) { theme in
-                VStack(spacing: 4) {
-                    Text(theme.name).font(.caption).foregroundStyle(.secondary)
-                    PermissionGuideView(theme: theme, onOpenSettings: {}, onConfirmGranted: {})
-                        .frame(width: 500, height: 580)
+                    MicrophonePermissionPage(theme: theme, onBack: {}, onAdvance: {})
+                        .frame(width: 500, height: 600)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
@@ -56,20 +20,36 @@ private let allThemes: [BlinkTheme] = [.peach, .midnight, .sage, .sand, .mono]
     .preferredColorScheme(.light)
 }
 
-#Preview("PermissionGuide — All Themes — Dark") {
+#Preview("IM Permission — Onboarding mode — All Themes") {
     ScrollView {
         VStack(spacing: 20) {
             ForEach(allThemes) { theme in
                 VStack(spacing: 4) {
                     Text(theme.name).font(.caption).foregroundStyle(.secondary)
-                    PermissionGuideView(theme: theme, onOpenSettings: {}, onConfirmGranted: {})
-                        .frame(width: 500, height: 580)
+                    InputMonitoringPermissionPage(theme: theme, mode: .standard, onBack: {}, onComplete: { _ in })
+                        .frame(width: 700, height: 600)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
         }
         .padding(20)
     }
-    .frame(width: 560, height: 3200)
-    .preferredColorScheme(.dark)
+    .frame(width: 760, height: 3200)
+}
+
+#Preview("IM Permission — Stale-grant Recovery — All Themes") {
+    ScrollView {
+        VStack(spacing: 20) {
+            ForEach(allThemes) { theme in
+                VStack(spacing: 4) {
+                    Text(theme.name).font(.caption).foregroundStyle(.secondary)
+                    InputMonitoringPermissionPage(theme: theme, mode: .staleGrant, onBack: nil, onComplete: { _ in })
+                        .frame(width: 700, height: 600)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+            }
+        }
+        .padding(20)
+    }
+    .frame(width: 760, height: 3200)
 }

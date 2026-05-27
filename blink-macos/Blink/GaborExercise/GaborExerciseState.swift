@@ -167,7 +167,18 @@ final class GaborExerciseState: ObservableObject {
         case .contrastDetection:
             correct = response == targetPosition
         case .orientationDiscrimination, .flankerMasking:
-            // Renderer rotation: positive angle → stripes lean left visually, negative → right
+            // Renderer convention (verified empirically 2026-05-27 by
+            // rendering +30° and -30° patches via the actual
+            // GaborRenderer math and inspecting the output):
+            //   positive `orientation` → stripes go top-LEFT to
+            //     bottom-RIGHT ("\") → that's TILTED LEFT visually
+            //   negative `orientation` → stripes go top-RIGHT to
+            //     bottom-LEFT ("/") → that's TILTED RIGHT visually
+            // The CGBitmapContext data buffer is laid out with
+            // Cartesian y-up (bottom row first), not the screen y-down
+            // I initially derived — that's where the inversion comes
+            // from. Response 0 = "Tilted Left", response 1 = "Tilted
+            // Right" (from button order in GaborExerciseView).
             let expectedResponse = targetOrientation > 0 ? 0 : 1
             correct = response == expectedResponse
         }

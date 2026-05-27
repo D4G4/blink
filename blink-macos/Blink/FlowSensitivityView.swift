@@ -36,18 +36,23 @@ struct FlowSensitivityView: View {
         // (see BlinkCore/BreakDecisionEngine.swift). The values below pick a
         // meaningful spread across the three presets:
         //   Eye health (0.30 → threshold 0.80): very hard to extend — break-heavy
-        //   Balanced   (0.60 → threshold 0.50): moderate — needs real flow signal
+        //   Balanced   (0.50 → threshold 0.60): moderate — needs real flow signal
         //   Deep work  (0.75 → threshold 0.35): extends readily when focused
         //
-        // Note on Balanced: was briefly 0.50/threshold 0.60 in concert with
-        // the v1 keyboard-curve tightening. After v2 (6-bucket curve)
-        // restored mid-tier granularity, the higher threshold was doing
-        // duplicate correction work — the curve change alone is enough to
-        // demote moderate engagement, no need to also raise the bar.
+        // Note on Balanced (2026-05-27): bumped from 0.60 back to 0.50
+        // (threshold 0.50 → 0.60). User-tested session with 82 kpm
+        // keyboard, 72 spm scrolls, 14% creative-app time scored 0.54
+        // and was flagged as too eager to EXTEND — a score in the
+        // 0.50-0.55 band shouldn't qualify as flow worth extending the
+        // break for. The 6-bucket keyboard curve alone wasn't enough to
+        // demote those moderate-engagement scores; the threshold needed
+        // to come up too. Star (★) reference row in BreakDecisionEngine
+        // (33 kpm → 0.54 contribution) now correctly lands below the
+        // Balanced bar.
         var value: Double {
             switch self {
             case .eyeHealth: return 0.30
-            case .balanced: return 0.60
+            case .balanced: return 0.50
             case .deepWork: return 0.75
             }
         }
@@ -178,7 +183,10 @@ struct FlowSensitivityView: View {
 
             if showFineTune {
                 HStack(spacing: 8) {
-                    Slider(value: $sensitivity, in: 0.4...0.9, step: 0.05)
+                    // Range covers all three preset values (Eye health
+                    // 0.30 → Deep work 0.75) plus a little headroom on
+                    // each end for fine-tuning.
+                    Slider(value: $sensitivity, in: 0.25...0.90, step: 0.05)
                         .tint(accentColor)
                     Text(String(format: "%.0f%%", sensitivity * 100))
                         .font(.system(size: 12, design: .monospaced))

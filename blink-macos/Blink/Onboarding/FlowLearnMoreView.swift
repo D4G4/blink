@@ -5,23 +5,38 @@ struct FlowLearnMoreView: View {
     let theme: BlinkTheme
     let onDismiss: () -> Void
     @Environment(\.colorScheme) private var colorScheme
-    @AppStorage("flowSensitivity") private var storedSensitivity: Double = 0.7
-    @State private var sensitivity: Double = 0.7
+    // Defaults must match OnboardingView's flowSensitivity default (0.50 =
+    // Balanced, threshold 0.60). Previously these defaulted to 0.7 — if
+    // the user opened Learn More before tapping any preset and then
+    // clicked "Got it", storedSensitivity = 0.7 got written, and
+    // FlowSensitivityView's Preset.closest(to: 0.7) returned `deepWork`
+    // (distance 0.05 vs 0.10), silently flipping the onboarding selection
+    // to Deep work.
+    @AppStorage("flowSensitivity") private var storedSensitivity: Double = 0.50
+    @State private var sensitivity: Double = 0.50
 
     /// Controls whether the header shows a slider or preset buttons.
     enum PickerStyle { case slider, presets }
     var pickerStyle: PickerStyle = .presets
 
+    // Preset values mirror FlowSensitivityView.Preset.value exactly — they
+    // are the canonical source. Previously these diverged (0.45/0.60/0.85
+    // here vs 0.30/0.50/0.75 there) which led to the two pickers
+    // disagreeing about which preset was "selected" for the same stored
+    // value.
     private let presetOptions: [(label: String, value: Double, icon: String)] = [
-        ("Eye health", 0.45, "heart.circle.fill"),
-        ("Balanced", 0.60, "scale.3d"),
-        ("Deep work", 0.85, "brain.head.profile"),
+        ("Eye health", 0.30, "heart.circle.fill"),
+        ("Balanced", 0.50, "scale.3d"),
+        ("Deep work", 0.75, "brain.head.profile"),
     ]
 
+    // Match FlowSensitivityView's `Preset.closest(to:)` minimum-distance
+    // matching so the same stored value highlights the same preset in
+    // both views. Boundaries are midpoints between adjacent preset values.
     private var presetLabel: String {
         switch sensitivity {
-        case ..<0.55: return "Eye health"
-        case ..<0.75: return "Balanced"
+        case ..<0.40: return "Eye health"   // midpoint of 0.30 and 0.50
+        case ..<0.625: return "Balanced"    // midpoint of 0.50 and 0.75
         default: return "Deep work"
         }
     }
@@ -33,7 +48,7 @@ struct FlowLearnMoreView: View {
 
     // How many extensions allowed
     private var maxExtensions: Int {
-        sensitivity < 0.55 ? 0 : sensitivity < 0.75 ? 1 : 2
+        sensitivity < 0.40 ? 0 : sensitivity < 0.625 ? 1 : 2
     }
 
     private var maxTimer: String {
@@ -47,32 +62,32 @@ struct FlowLearnMoreView: View {
     // Sensitivity-dependent scenario results
     private var codingResult: String {
         switch sensitivity {
-        case ..<0.55: return "Break at 20 min — eye health prioritized"
-        case ..<0.75: return "Extended to 30 min → gentle nudge when ready"
+        case ..<0.40: return "Break at 20 min — eye health prioritized"
+        case ..<0.625: return "Extended to 30 min → gentle nudge when ready"
         default:      return "Extended up to 40 min → minimal interruption"
         }
     }
 
     private var designResult: String {
         switch sensitivity {
-        case ..<0.55: return "Break at 20 min — clicks alone don't extend"
-        case ..<0.75: return "Extended to 30 min — creative app detected"
+        case ..<0.40: return "Break at 20 min — clicks alone don't extend"
+        case ..<0.625: return "Extended to 30 min — creative app detected"
         default:      return "Extended up to 40 min — deep creative work"
         }
     }
 
     private var browsingResult: String {
         switch sensitivity {
-        case ..<0.55: return "Break overlay at 20 min"
-        case ..<0.75: return "Break overlay at 20 min — scrolling isn't focus"
+        case ..<0.40: return "Break overlay at 20 min"
+        case ..<0.625: return "Break overlay at 20 min — scrolling isn't focus"
         default:      return "Gentle nudge — low activity, not worth interrupting"
         }
     }
 
     private var readingResult: String {
         switch sensitivity {
-        case ..<0.55: return "Break at 20 min — your eyes still need rest"
-        case ..<0.75: return "Gentle nudge to rest your eyes"
+        case ..<0.40: return "Break at 20 min — your eyes still need rest"
+        case ..<0.625: return "Gentle nudge to rest your eyes"
         default:      return "Silent — barely any input detected"
         }
     }
@@ -98,7 +113,7 @@ struct FlowLearnMoreView: View {
                             Text("Eye health")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
-                            Slider(value: $sensitivity, in: 0.4...0.9, step: 0.05)
+                            Slider(value: $sensitivity, in: 0.25...0.90, step: 0.05)
                                 .tint(accent)
                             Text("Deep work")
                                 .font(.system(size: 11))
