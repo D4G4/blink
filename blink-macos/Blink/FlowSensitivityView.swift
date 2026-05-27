@@ -32,11 +32,17 @@ struct FlowSensitivityView: View {
     enum Preset: CaseIterable {
         case eyeHealth, balanced, deepWork
 
+        // Sensitivity → threshold mapping is `threshold = 1.1 - sensitivity`
+        // (see BlinkCore/BreakDecisionEngine.swift). The values below pick a
+        // meaningful spread across the three presets:
+        //   Eye health (0.30 → threshold 0.80): very hard to extend — break-heavy
+        //   Balanced   (0.50 → threshold 0.60): moderate — needs real flow signal
+        //   Deep work  (0.75 → threshold 0.35): extends readily when focused
         var value: Double {
             switch self {
-            case .eyeHealth: return 0.45
-            case .balanced: return 0.60
-            case .deepWork: return 0.85
+            case .eyeHealth: return 0.30
+            case .balanced: return 0.50
+            case .deepWork: return 0.75
             }
         }
 
