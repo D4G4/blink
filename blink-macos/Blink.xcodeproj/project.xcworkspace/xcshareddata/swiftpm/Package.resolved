@@ -1,0 +1,15 @@
+{
+  "originHash" : "404f429c6d28e0f7838e7a2884d4aeca5b6a42d49ac6624060ab37bb75d1b4e7",
+  "pins" : [
+    {
+      "identity" : "blink-core",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/D4G4/blink-core.git",
+      "state" : {
+        "revision" : "16d388f2222ace0623928159c6fbbb64f131c9d7",
+        "version" : "2.5.0"
+      }
+    }
+  ],
+  "version" : 3
+}

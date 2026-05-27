@@ -895,7 +895,7 @@
 			mainGroup = B23DD3B5EFB562B7C2FAEE85;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				F19323D0B64EC70C5FF30812 /* XCRemoteSwiftPackageReference "blink-core" */,
+				D87162A013A78D611315EAAE /* XCRemoteSwiftPackageReference "blink-core" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E370FA75E2B9CA960A6CB41D /* Products */;
@@ -1410,9 +1410,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		F19323D0B64EC70C5FF30812 /* XCRemoteSwiftPackageReference "blink-core" */ = {
+		D87162A013A78D611315EAAE /* XCRemoteSwiftPackageReference "blink-core" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "git@github-d4g4:D4G4/blink-core.git";
+			repositoryURL = "https://github.com/D4G4/blink-core.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.5.0;
@@ -1423,7 +1423,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		B3D1D1183FB72FCF22C0F8F6 /* BlinkCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = F19323D0B64EC70C5FF30812 /* XCRemoteSwiftPackageReference "blink-core" */;
+			package = D87162A013A78D611315EAAE /* XCRemoteSwiftPackageReference "blink-core" */;
 			productName = BlinkCore;
 		};
 /* End XCSwiftPackageProductDependency section */
