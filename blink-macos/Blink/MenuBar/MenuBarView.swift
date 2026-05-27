@@ -87,12 +87,14 @@ struct MenuBarView: View {
                 .padding(.bottom, 4)
             }
 
-            // Timer card
-            VStack(spacing: 12) {
+            // Timer card — always shown. In basic mode (no Input Monitoring
+            // permission but user opted in) the timer is still running on
+            // the dumb-fallback path, so the user should see the countdown.
+            // A small banner below nudges them to upgrade to smart timing.
+            VStack(spacing: 8) {
+                timerCard
                 if !appState.hasInputMonitoringPermission {
-                    permissionBanner
-                } else {
-                    timerCard
+                    basicModeBanner
                 }
             }
             .padding(.horizontal, 12)
@@ -424,35 +426,39 @@ struct MenuBarView: View {
 
 
 
-    // MARK: - Permission Banner
+    // MARK: - Basic Mode Banner
 
-    private var permissionBanner: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "lock.shield")
-                .font(.system(size: 24))
-                .foregroundStyle(accentColor)
-
-            Text("Grant Input Monitoring for smart break timing")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-
-            Button {
-                PermissionManager.openInputMonitoringSettings()
-            } label: {
-                Text("Open Settings")
+    /// Shown beneath the timer card when running without Input Monitoring
+    /// (the dumb-timer fallback path). Compact, non-alarming — the timer
+    /// is working, the user just doesn't have smart flow detection.
+    private var basicModeBanner: some View {
+        Button {
+            UIActionLogger.buttonTapped("Enable smart timing (from banner)")
+            PermissionManager.openInputMonitoringSettings()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 28)
-                    .background(accentColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .foregroundStyle(accentColor)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Basic timer mode")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    Text("Enable Input Monitoring for smart break timing")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.tertiary)
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(accentColor.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
-        .padding(14)
-        .background(accentColor.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .buttonStyle(.plain)
     }
 
     // MARK: - Helpers
