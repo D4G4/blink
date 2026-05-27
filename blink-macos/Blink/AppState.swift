@@ -224,9 +224,15 @@ final class AppState: ObservableObject {
     }
 
     /// Re-shows the permission guide and re-checks on confirm.
-    private func showPermissionGuide() {
+    /// `troubleshooting` switches to the "permission granted but tap dead"
+    /// copy + actions for the cached-grant edge case where the user has
+    /// already toggled the permission on but events still aren't flowing.
+    private func showPermissionGuide(troubleshooting: Bool = false) {
         permissionWindow = PermissionWindowController()
-        permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
+        permissionWindow?.show(
+            theme: ThemeManager.shared.current,
+            troubleshooting: troubleshooting
+        ) { [weak self] in
             guard let self else { return }
             UserDefaults.standard.set(true, forKey: "permissionGranted")
             self.permissionWindow = nil
@@ -239,29 +245,37 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Guards against the cached-denial silent-failure path:
+    /// Guards against the cached-grant silent-failure path:
     /// `PermissionManager.isPermissionGranted()` can return true when
     /// `CGPreflightListenEventAccess` returns true but `CGEvent.tapCreate`
-    /// fails (typically TCC cache lag right after a grant). After
-    /// `startMonitoring()` we verify the real tap is alive — if not, we treat
-    /// permission as denied and re-show the guide so the user can re-grant
-    /// instead of sitting with a "granted" UI and an engine getting zero
-    /// events.
+    /// fails (typically TCC cache lag right after a grant, or a stale grant
+    /// tied to a previous binary CDHash). `MacInputMonitor.startMonitoring`
+    /// already retries internally up to 3 times with 1s delays; we wait 5s
+    /// here to let those retries complete before deciding the tap is truly
+    /// dead.
+    ///
+    /// If the tap is dead, we branch on the *current* preflight result:
+    ///  - preflight = false → permission was revoked (or never really took);
+    ///    show the standard grant guide
+    ///  - preflight = true  → granted-but-broken (toggle didn't propagate to
+    ///    this binary); show the troubleshooting guide instead of falsely
+    ///    asking the user to grant something they already granted.
     private func verifyTapAliveOrReprompt() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
             guard let self else { return }
-            guard self.inputMonitor?.isTapAlive == true else {
-                Log.e("CGEventTap is not alive 3s after startMonitoring — cached-grant silent failure; reverting and reprompting")
-                self.hasInputMonitoringPermission = false
-                self.inputMonitor?.stopMonitoring()
-                self.inputMonitor = nil
-                self.tickTimer?.invalidate()
-                self.tickTimer = nil
-                self.overlayController.dismiss()
-                self.showPermissionGuide()
+            if self.inputMonitor?.isTapAlive == true {
+                Log.i("CGEventTap liveness verified 5s after startMonitoring")
                 return
             }
-            Log.i("CGEventTap liveness verified 3s after startMonitoring")
+            let preflight = CGPreflightListenEventAccess()
+            Log.e("CGEventTap is not alive 5s after startMonitoring (preflight=\(preflight)) — reverting and reprompting")
+            self.hasInputMonitoringPermission = false
+            self.inputMonitor?.stopMonitoring()
+            self.inputMonitor = nil
+            self.tickTimer?.invalidate()
+            self.tickTimer = nil
+            self.overlayController.dismiss()
+            self.showPermissionGuide(troubleshooting: preflight)
         }
     }
 

@@ -139,6 +139,7 @@
 		975E91C770BD55BE5FF2D26C /* settings_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = AFCA932ACA94A741134F21E0 /* settings_midnight_dark.png */; };
 		9B60B27F36D623303648DC2B /* flow_nudge_dark_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 993485451F0B1638E7EE3169 /* flow_nudge_dark_light.png */; };
 		9D0FC9FB9F66FD14FAF45C25 /* gabor_exercise_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 06AF28268C456D45BC003C81 /* gabor_exercise_midnight_light.png */; };
+		9D2DAA77A9D8F5C0E9DD8E06 /* PermissionTroubleshootingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4FB12115B0B8F17035D372A /* PermissionTroubleshootingView.swift */; };
 		9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 216A16F819CB23807A4A69BF /* MacAppMonitor.swift */; };
 		9DBBE8E96859F64D9E9F4BA5 /* settings_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = B059F389F1E93CB6DFBD0D32 /* settings_peach_light.png */; };
 		9E0A5BE7DBAC8DCFF8177CD2 /* flow_sensitivity_settings_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 6CF3180CB42EE05E65F9F19A /* flow_sensitivity_settings_peach_dark.png */; };
@@ -401,6 +402,7 @@
 		AFCA932ACA94A741134F21E0 /* settings_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = settings_midnight_dark.png; sourceTree = "<group>"; };
 		B057EBB6F7ED72F264090D4C /* .gitattributes */ = {isa = PBXFileReference; path = .gitattributes; sourceTree = "<group>"; };
 		B059F389F1E93CB6DFBD0D32 /* settings_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = settings_peach_light.png; sourceTree = "<group>"; };
+		B4FB12115B0B8F17035D372A /* PermissionTroubleshootingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionTroubleshootingView.swift; sourceTree = "<group>"; };
 		BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistWindowController.swift; sourceTree = "<group>"; };
 		BF18D8947C4851BE0DCA382A /* gabor_exercise_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_exercise_mono_light.png; sourceTree = "<group>"; };
 		C2B5274EAAC775A45BD421DD /* flow_nudge_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_nudge_mono_light.png; sourceTree = "<group>"; };
@@ -536,6 +538,7 @@
 				90526A63E832616BC379B327 /* PermissionGuideView.swift */,
 				10F26BF916A815637E47FA8E /* PermissionManager.swift */,
 				AF68C178E62F6093F4057913 /* PermissionOnboardingView.swift */,
+				B4FB12115B0B8F17035D372A /* PermissionTroubleshootingView.swift */,
 				1952E3C02F56495895D00BB8 /* PermissionWindowController.swift */,
 			);
 			path = Permissions;
@@ -1106,6 +1109,7 @@
 				3A60C972DDC5C22A3F5471B4 /* PermissionManager.swift in Sources */,
 				DEAF8705E1C91BA6128075DC /* PermissionOnboardingView.swift in Sources */,
 				0FEE1066FF8A7B430A2D0DF5 /* PermissionPreviews.swift in Sources */,
+				9D2DAA77A9D8F5C0E9DD8E06 /* PermissionTroubleshootingView.swift in Sources */,
 				722622A0B195340B20B82F9C /* PermissionWindowController.swift in Sources */,
 				CBF502A96C4139DA82CA7235 /* PersistenceManager.swift in Sources */,
 				E18997FAD5140713D3E5907B /* PreferencesWindowController.swift in Sources */,

@@ -11,7 +11,7 @@ final class PermissionWindowController {
     private var grantPollTimer: Timer?
     var onPermissionGranted: (() -> Void)?
 
-    func show(theme: BlinkTheme, onGranted: @escaping () -> Void) {
+    func show(theme: BlinkTheme, troubleshooting: Bool = false, onGranted: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
         self.onPermissionGranted = onGranted
 
@@ -21,15 +21,28 @@ final class PermissionWindowController {
         let x = visible.midX - windowWidth / 2
         let y = visible.midY - windowHeight / 2
 
-        let guideView = PermissionGuideView(
-            theme: theme,
-            onOpenSettings: {
-                PermissionManager.openInputMonitoringSettings()
-            },
-            onConfirmGranted: { [weak self] in
-                self?.checkAndDismiss()
-            }
-        )
+        let guideView: NSView
+        if troubleshooting {
+            guideView = NSHostingView(rootView: PermissionTroubleshootingView(
+                theme: theme,
+                onOpenSettings: {
+                    PermissionManager.openInputMonitoringSettings()
+                },
+                onTryAgain: { [weak self] in
+                    self?.checkAndDismiss()
+                }
+            ))
+        } else {
+            guideView = NSHostingView(rootView: PermissionGuideView(
+                theme: theme,
+                onOpenSettings: {
+                    PermissionManager.openInputMonitoringSettings()
+                },
+                onConfirmGranted: { [weak self] in
+                    self?.checkAndDismiss()
+                }
+            ))
+        }
 
         let win = NSWindow(
             contentRect: NSRect(x: x, y: y, width: windowWidth, height: windowHeight),
@@ -43,7 +56,7 @@ final class PermissionWindowController {
         win.level = .normal
         win.hasShadow = true
         win.appearance = NSApp.effectiveAppearance
-        win.contentView = NSHostingView(rootView: guideView)
+        win.contentView = guideView
 
         win.alphaValue = 0
         win.makeKeyAndOrderFront(nil)
