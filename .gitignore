@@ -4,6 +4,9 @@ DerivedData/
 xcuserdata/
 .swiftpm/
 *.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+# Keep Package.resolved committed — Xcode Cloud requires it for
+# deterministic SPM resolution (automatic resolution is disabled there).
+!*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 blink-macos/dmg/build/
 
 # Git worktrees (project convention: features/<branch>/<repo>)
