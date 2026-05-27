@@ -5,7 +5,7 @@ import AppKit
 final class OnboardingWindowController {
     private var window: NSWindow?
 
-    func show(themeManager: ThemeManager, onComplete: @escaping (_ basicMode: Bool) -> Void) {
+    func show(themeManager: ThemeManager, onComplete: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
 
         let visible = screen.visibleFrame
@@ -23,9 +23,9 @@ final class OnboardingWindowController {
         let onboardingView = OnboardingView(
             themeManager: themeManager,
             isDarkMode: isDark,
-            onComplete: { [weak self] basicMode in
+            onComplete: { [weak self] in
                 self?.dismiss()
-                onComplete(basicMode)
+                onComplete()
             }
         )
 

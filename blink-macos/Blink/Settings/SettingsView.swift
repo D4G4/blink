@@ -89,18 +89,12 @@ struct SettingsView: View {
             
             settingsSection("Break Screen") {
                 settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
-                Text("Pure black background instead of themed colors")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
-                    .padding(.leading, 4)
+                settingsCaption("Pure black background instead of themed colors")
             }
 
             settingsSection("Mic Detection") {
                 settingsToggle("Pause timer during calls", isOn: $pauseDuringCalls)
-                Text("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
-                    .padding(.leading, 4)
+                settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
             }
             
             settingsSection("Timer") {
@@ -123,10 +117,7 @@ struct SettingsView: View {
                     }
                 
                 settingsToggle("Debug notifications", isOn: $appState.debugNotifications)
-                Text("Show toasts for timer resets, state changes, and idle detection")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .padding(.leading, 4)
+                settingsCaption("Show toasts for timer resets, state changes, and idle detection")
                 
                 settingsRow("Input Monitoring") {
                     if appState.hasInputMonitoringPermission {
@@ -399,17 +390,29 @@ struct SettingsView: View {
     private func settingsRow(_ label: String, @ViewBuilder content: () -> some View) -> some View {
         HStack(alignment: .top) {
             Text(label)
-                .font(.system(size: 13))
+                .font(.system(size: 15))
                 .padding(.top, 4)
             Spacer()
             content()
         }
     }
-    
+
     private func settingsToggle(_ label: String, isOn: Binding<Bool>) -> some View {
         Toggle(label, isOn: isOn)
-            .font(.system(size: 13))
+            .font(.system(size: 15))
             .toggleStyle(ThemedToggleStyle(theme: theme))
+    }
+
+    /// Caption text shown under toggles / rows. Sized + colored for
+    /// readability — the previous combination (`size: 11` +
+    /// `.tertiary`) was painful to read on white backgrounds, and the
+    /// user flagged it specifically.
+    private func settingsCaption(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13))
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.leading, 4)
     }
     
     private func stateRow(_ label: String, value: String) -> some View {
