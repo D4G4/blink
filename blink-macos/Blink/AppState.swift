@@ -27,6 +27,7 @@ final class AppState: ObservableObject {
     private var appMonitor: MacAppMonitor?
     private var contextDetector: MacContextDetector?
     private var permissionWindow: PermissionWindowController?
+    private var micPermissionWindow: MicrophonePermissionWindowController?
 
     // Timers
     private var tickTimer: Timer?
@@ -210,19 +211,17 @@ final class AppState: ObservableObject {
         if granted {
             hasInputMonitoringPermission = true
             UserDefaults.standard.set(true, forKey: "permissionGranted")
-            startMonitoring()
-            startTimer()
-            showTimerForStartup()
-            Log.i("Permission confirmed — monitors and timers started")
-            verifyTapAliveOrReprompt()
+            // IM was already granted on a previous launch — go straight to
+            // the mic step (which is a no-op if mic was also previously
+            // resolved), then start monitoring.
+            proceedToMicrophoneStep()
         } else {
             Log.i("Permission not granted — showing guide + firing system prompt")
             hasInputMonitoringPermission = false
             // Show our guide window FIRST so the user sees it regardless of
             // whether the OS Input Monitoring dialog ends up visible. The
-            // guide window (now KeyableBorderlessWindow, .floating level)
-            // calls NSApp.activate(ignoringOtherApps:) on present, which
-            // brings Blink to the foreground.
+            // guide window calls NSApp.activate(ignoringOtherApps:) on
+            // present, which brings Blink to the foreground.
             showPermissionGuide()
             // Then fire the system prompt. A brief delay gives the guide
             // window time to render + activate the app, so the OS dialog
@@ -235,10 +234,12 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Re-shows the permission guide and re-checks on confirm.
-    /// `troubleshooting` switches to the "permission granted but tap dead"
-    /// copy + actions for the cached-grant edge case where the user has
-    /// already toggled the permission on but events still aren't flowing.
+    /// Re-shows the IM guide and, on grant, advances to the mic step
+    /// (not directly to startMonitoring) — so we don't trigger the mic
+    /// TCC prompt automatically as a side-effect of the engine first
+    /// calling isMicrophoneActive(). `troubleshooting` switches to the
+    /// "permission granted but tap dead" copy + actions for the
+    /// cached-grant edge case.
     private func showPermissionGuide(troubleshooting: Bool = false) {
         permissionWindow = PermissionWindowController()
         permissionWindow?.show(
@@ -249,12 +250,42 @@ final class AppState: ObservableObject {
             UserDefaults.standard.set(true, forKey: "permissionGranted")
             self.permissionWindow = nil
             self.hasInputMonitoringPermission = true
-            self.startMonitoring()
-            self.startTimer()
-            self.showTimerForStartup()
-            Log.i("Permission granted — monitors and timers started")
-            self.verifyTapAliveOrReprompt()
+            Log.i("Input Monitoring granted — advancing to microphone step")
+            self.proceedToMicrophoneStep()
         }
+    }
+
+    /// Second permission step: explainer dialog for microphone access.
+    /// Skipped entirely if the user previously granted or denied (system
+    /// remembers the decision). Engine starts only AFTER this resolves
+    /// — granted, skipped, or no-op — so we never trigger the mic TCC
+    /// prompt as an implicit side-effect of the tick timer.
+    private func proceedToMicrophoneStep() {
+        let status = PermissionManager.microphoneAuthorizationStatus()
+        if status == .authorized || status == .denied || status == .restricted {
+            Log.i("Microphone status already resolved (\(status.rawValue)) — skipping explainer")
+            startMonitoringAfterAllPermissions()
+            return
+        }
+        // status == .notDetermined — first time. Show our explainer.
+        Log.i("Showing microphone permission explainer")
+        micPermissionWindow = MicrophonePermissionWindowController()
+        micPermissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] granted in
+            guard let self else { return }
+            self.micPermissionWindow = nil
+            Log.i("Microphone step resolved (granted=\(granted)) — starting monitors")
+            self.startMonitoringAfterAllPermissions()
+        }
+    }
+
+    /// Final step: actually start the engine. Called once all permissions
+    /// (IM + mic) have been resolved one way or the other.
+    private func startMonitoringAfterAllPermissions() {
+        startMonitoring()
+        startTimer()
+        showTimerForStartup()
+        Log.i("Monitors and timers started")
+        verifyTapAliveOrReprompt()
     }
 
     /// Guards against the cached-grant silent-failure path:

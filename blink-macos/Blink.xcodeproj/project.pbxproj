@@ -104,6 +104,7 @@
 		6121A22C1EC0596320DAF7FE /* MenuBarSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A57EE2E757649DCFBF0714B2 /* MenuBarSnapshotTests.swift */; };
 		619503AC378ECA0BC4E0BC8F /* flow_nudge_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = A366C48EDBA2DB5E43095171 /* flow_nudge_midnight_light.png */; };
 		6236E723BC574777D616DE37 /* BlinkCore in Frameworks */ = {isa = PBXBuildFile; productRef = B3D1D1183FB72FCF22C0F8F6 /* BlinkCore */; };
+		62C9D5053413B8A33F6F1B5E /* MicrophonePermissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F84A3B552ECACC8409663D0 /* MicrophonePermissionView.swift */; };
 		640EC569F374A773B22B77F0 /* flow_sensitivity_settings_mono_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D861CF51C62B8CB9CE3C06E /* flow_sensitivity_settings_mono_dark.png */; };
 		6B7BAD6A278E85F80720592E /* permission_onboarding_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1303D9CFB1B3C6C95DDCADB1 /* permission_onboarding_peach_dark.png */; };
 		6C26845238B1833DA20E61FC /* flow_sensitivity_settings_sage_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 6E14E713D6C47450FA832929 /* flow_sensitivity_settings_sage_dark.png */; };
@@ -198,6 +199,7 @@
 		DEAF8705E1C91BA6128075DC /* PermissionOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF68C178E62F6093F4057913 /* PermissionOnboardingView.swift */; };
 		DF4B8F1F660DD727799EF3C4 /* permission_guide_sage_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 2D057D453C3DE3A3DC944E24 /* permission_guide_sage_dark.png */; };
 		DFB0303A5FE33D7F70B95556 /* GaborSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86936E2AA96EE4843F617808 /* GaborSessionStore.swift */; };
+		E0C33A6F62698CA09517504C /* MicrophonePermissionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B813194641D14136F1CD0F /* MicrophonePermissionWindowController.swift */; };
 		E0F46FEB32D475426FF66166 /* break_timer_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = DC60496826E482E3128C2781 /* break_timer_mono_light.png */; };
 		E0FAED45B76EE5E0433FC8C3 /* flow_learn_more_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 8155256B978232A47E986CE4 /* flow_learn_more_mono_light.png */; };
 		E18997FAD5140713D3E5907B /* PreferencesWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D2974278123650670528178 /* PreferencesWindowController.swift */; };
@@ -238,6 +240,7 @@
 /* Begin PBXFileReference section */
 		02DA8867E4C8F5F93C0CD014 /* countdown_dark_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = countdown_dark_light.png; sourceTree = "<group>"; };
 		035A7B7773E213D38194836A /* gabor_exercise_peach_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_exercise_peach_dark.png; sourceTree = "<group>"; };
+		04B813194641D14136F1CD0F /* MicrophonePermissionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrophonePermissionWindowController.swift; sourceTree = "<group>"; };
 		04E55AA4F9D3F6C46BB8F0D1 /* GaborExerciseState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborExerciseState.swift; sourceTree = "<group>"; };
 		05E15AB3D897C0ADB5D3F489 /* menu_bar_sand_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_sand_light.png; sourceTree = "<group>"; };
 		06436D890269E4C851271B66 /* AdaptiveStaircase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveStaircase.swift; sourceTree = "<group>"; };
@@ -247,6 +250,7 @@
 		0F1EAE632BF5816B793A7EF9 /* timer_extended_sand_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = timer_extended_sand_dark.png; sourceTree = "<group>"; };
 		0F3435F2D4755BA4C2A2ABF5 /* menu_bar_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_mono_light.png; sourceTree = "<group>"; };
 		0F4978224F028FE729A5E799 /* AllPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllPreviews.swift; sourceTree = "<group>"; };
+		0F84A3B552ECACC8409663D0 /* MicrophonePermissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrophonePermissionView.swift; sourceTree = "<group>"; };
 		10436F24DF7276AC91A19F6D /* OnboardingPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPreviews.swift; sourceTree = "<group>"; };
 		10F26BF916A815637E47FA8E /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
 		122D2BBFC387864D21A12C30 /* toast_sand_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = toast_sand_light.png; sourceTree = "<group>"; };
@@ -537,6 +541,8 @@
 		96D4CE7352584A15028548A2 /* Permissions */ = {
 			isa = PBXGroup;
 			children = (
+				0F84A3B552ECACC8409663D0 /* MicrophonePermissionView.swift */,
+				04B813194641D14136F1CD0F /* MicrophonePermissionWindowController.swift */,
 				90526A63E832616BC379B327 /* PermissionGuideView.swift */,
 				10F26BF916A815637E47FA8E /* PermissionManager.swift */,
 				AF68C178E62F6093F4057913 /* PermissionOnboardingView.swift */,
@@ -1104,6 +1110,8 @@
 				75F926616E7E3BF7816A8C3F /* MenuBarPreviews.swift in Sources */,
 				72570C0C40040759FE52FBDF /* MenuBarView.swift in Sources */,
 				EA6F6BD4A96C0F66254A6167 /* MicWarningWindowController.swift in Sources */,
+				62C9D5053413B8A33F6F1B5E /* MicrophonePermissionView.swift in Sources */,
+				E0C33A6F62698CA09517504C /* MicrophonePermissionWindowController.swift in Sources */,
 				7C94891B78849985756A520E /* OnboardingPreviews.swift in Sources */,
 				721AB1C8176D69C9F1A07603 /* OnboardingView.swift in Sources */,
 				AF2AA32997C297584EE5186E /* OnboardingWindow.swift in Sources */,

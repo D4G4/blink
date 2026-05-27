@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import AVFoundation
 import CoreGraphics
 import UserNotifications
 
@@ -61,6 +62,33 @@ enum PermissionManager {
     static func openInputMonitoringSettings() {
         log.info("Opening Input Monitoring settings pane")
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    // MARK: - Microphone (for meeting / call detection)
+
+    /// Current authorization status for microphone access. Used to gate the
+    /// in-app explainer dialog — already-granted users skip it entirely.
+    static func microphoneAuthorizationStatus() -> AVAuthorizationStatus {
+        AVCaptureDevice.authorizationStatus(for: .audio)
+    }
+
+    /// Request microphone access. First call with `.notDetermined` status
+    /// triggers the system TCC dialog with our `NSMicrophoneUsageDescription`
+    /// string. Subsequent calls return the prior decision immediately
+    /// without showing a dialog.
+    static func requestMicrophoneAccess() async -> Bool {
+        log.info("Requesting microphone access")
+        let granted = await AVCaptureDevice.requestAccess(for: .audio)
+        log.info("Microphone access result: \(granted ? "granted" : "denied")")
+        return granted
+    }
+
+    /// Opens System Settings to the Microphone pane (for users who
+    /// previously denied and want to flip it on).
+    static func openMicrophoneSettings() {
+        log.info("Opening Microphone settings pane")
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") else { return }
         NSWorkspace.shared.open(url)
     }
 
