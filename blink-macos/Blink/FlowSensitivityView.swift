@@ -36,12 +36,18 @@ struct FlowSensitivityView: View {
         // (see BlinkCore/BreakDecisionEngine.swift). The values below pick a
         // meaningful spread across the three presets:
         //   Eye health (0.30 → threshold 0.80): very hard to extend — break-heavy
-        //   Balanced   (0.50 → threshold 0.60): moderate — needs real flow signal
+        //   Balanced   (0.60 → threshold 0.50): moderate — needs real flow signal
         //   Deep work  (0.75 → threshold 0.35): extends readily when focused
+        //
+        // Note on Balanced: was briefly 0.50/threshold 0.60 in concert with
+        // the v1 keyboard-curve tightening. After v2 (6-bucket curve)
+        // restored mid-tier granularity, the higher threshold was doing
+        // duplicate correction work — the curve change alone is enough to
+        // demote moderate engagement, no need to also raise the bar.
         var value: Double {
             switch self {
             case .eyeHealth: return 0.30
-            case .balanced: return 0.50
+            case .balanced: return 0.60
             case .deepWork: return 0.75
             }
         }
