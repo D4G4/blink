@@ -360,12 +360,12 @@ struct PermissionWizardView: View {
 }
 
 #Preview("Wizard — Peach (mic step)") {
-    PermissionWizardView(theme: .peach, onAllDone: {})
+    PermissionWizardView(theme: .peach, onAllDone: { _ in })
         .frame(width: 700, height: 500)
 }
 
 #Preview("Wizard — Midnight (mic step)") {
-    PermissionWizardView(theme: .midnight, onAllDone: {})
+    PermissionWizardView(theme: .midnight, onAllDone: { _ in })
         .frame(width: 700, height: 500)
         .preferredColorScheme(.dark)
 }
