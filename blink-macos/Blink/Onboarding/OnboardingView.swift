@@ -6,7 +6,10 @@ struct OnboardingView: View {
     @ObservedObject var themeManager: ThemeManager
     let onComplete: () -> Void
 
-    @Environment(\.colorScheme) private var colorScheme
+    /// Onboarding shows the LIGHT variant of every theme by default so users
+    /// see each theme's true colors. The bottom-right toggle flips this to
+    /// preview the dark variant.
+    @State private var previewDark: Bool = false
     @State private var selectedIndex: Int = 0
     @State private var iconScale: CGFloat = 0.5
     @State private var iconOpacity: Double = 0
@@ -20,7 +23,14 @@ struct OnboardingView: View {
     init(themeManager: ThemeManager, isDarkMode: Bool = false, onComplete: @escaping () -> Void) {
         self.themeManager = themeManager
         self.onComplete = onComplete
-        self.themes = isDarkMode ? BlinkTheme.allDark : BlinkTheme.allLight
+        self.themes = BlinkTheme.allLight  // always render the light-ordering for onboarding
+    }
+
+    /// The colorScheme passed to theme methods — overridden by the preview toggle
+    /// instead of inherited from the system, so onboarding shows actual theme
+    /// colors and not the dark-tinted variant by default.
+    private var effectiveColorScheme: ColorScheme {
+        previewDark ? .dark : .light
     }
 
     private var selectedTheme: BlinkTheme {
@@ -28,7 +38,7 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottomTrailing) {
             themeSelectionPage
 
             if showFlowPage {
@@ -45,6 +55,14 @@ struct OnboardingView: View {
                 .transition(.opacity)
             }
 
+            // Preview dark/light toggle — overlay so it's always at the
+            // window corner regardless of inner content layout. Hidden on
+            // the FlowSensitivity page (no theme preview to compare there).
+            if !showFlowPage {
+                darkPreviewToggle
+                    .padding(20)
+                    .transition(.opacity)
+            }
         }
         .sheet(isPresented: $showWhySheet) {
             WhyExistView(theme: selectedTheme, onDismiss: {
@@ -85,13 +103,13 @@ struct OnboardingView: View {
 
     private var themeSelectionPage: some View {
         ZStack {
-            selectedTheme.backgroundGradient(for: colorScheme)
+            selectedTheme.backgroundGradient(for: effectiveColorScheme)
                 .animation(.easeInOut(duration: 0.5), value: selectedIndex)
-                .animation(.easeInOut(duration: 0.3), value: colorScheme)
+                .animation(.easeInOut(duration: 0.3), value: previewDark)
                 .ignoresSafeArea()
 
             RadialGradient(
-                colors: [selectedTheme.onBackgroundText(for: colorScheme).opacity(0.1), .clear],
+                colors: [selectedTheme.onBackgroundText(for: effectiveColorScheme).opacity(0.1), .clear],
                 center: .center,
                 startRadius: 50,
                 endRadius: 300
@@ -104,11 +122,11 @@ struct OnboardingView: View {
                 VStack(spacing: 8) {
                     Text("Welcome to Blink")
                         .font(.system(size: 38, weight: .bold, design: .rounded))
-                        .foregroundStyle(selectedTheme.onBackgroundText(for: colorScheme))
+                        .foregroundStyle(selectedTheme.onBackgroundText(for: effectiveColorScheme))
 
                     Text("Smart breaks for your eyes")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(selectedTheme.onBackgroundText(for: colorScheme))
+                        .foregroundStyle(selectedTheme.onBackgroundText(for: effectiveColorScheme))
                 }
                 .padding(.bottom, 48)
 
@@ -128,7 +146,7 @@ struct OnboardingView: View {
 
                 Text(selectedTheme.name)
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
-                    .foregroundStyle(selectedTheme.onBackgroundText(for: colorScheme))
+                    .foregroundStyle(selectedTheme.onBackgroundText(for: effectiveColorScheme))
                     .padding(.top, 24)
                     .animation(.easeInOut(duration: 0.3), value: selectedIndex)
 
@@ -148,10 +166,10 @@ struct OnboardingView: View {
                         Text("Why do I exist?")
                             .font(.system(size: 15, weight: .medium))
                     }
-                    .foregroundStyle(selectedTheme.onBackgroundText(for: colorScheme))
+                    .foregroundStyle(selectedTheme.onBackgroundText(for: effectiveColorScheme))
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
-                    .background(selectedTheme.onBackgroundText(for: colorScheme).opacity(0.15))
+                    .background(selectedTheme.onBackgroundText(for: effectiveColorScheme).opacity(0.15))
                     .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -164,9 +182,9 @@ struct OnboardingView: View {
                 } label: {
                     Text("Next")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(selectedTheme.backgroundTop(for: colorScheme))
+                        .foregroundStyle(selectedTheme.backgroundTop(for: effectiveColorScheme))
                         .frame(width: 200, height: 48)
-                        .background(selectedTheme.onBackgroundText(for: colorScheme))
+                        .background(selectedTheme.onBackgroundText(for: effectiveColorScheme))
                         .clipShape(Capsule())
                         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
                 }
@@ -179,7 +197,7 @@ struct OnboardingView: View {
     // MARK: - Theme Navigation
 
     private var themeNavigationControls: some View {
-        let fg = selectedTheme.onBackgroundText(for: colorScheme)
+        let fg = selectedTheme.onBackgroundText(for: effectiveColorScheme)
         return HStack(spacing: 60) {
             Button {
                 withAnimation { navigatePrevious() }
@@ -213,6 +231,28 @@ struct OnboardingView: View {
         }
     }
 
+    // MARK: - Dark Preview Toggle
+
+    private var darkPreviewToggle: some View {
+        let fg = selectedTheme.onBackgroundText(for: effectiveColorScheme)
+        return Button {
+            withAnimation(.easeInOut(duration: 0.3)) { previewDark.toggle() }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: previewDark ? "sun.max.fill" : "moon.fill")
+                    .font(.system(size: 13, weight: .medium))
+                Text(previewDark ? "Preview light" : "Preview dark")
+                    .font(.system(size: 12, weight: .medium))
+            }
+            .foregroundStyle(fg)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(fg.opacity(0.15))
+            .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .help(previewDark ? "Show theme's light colors" : "Preview how the theme looks in dark mode")
+    }
 
     // MARK: - Navigation
 
