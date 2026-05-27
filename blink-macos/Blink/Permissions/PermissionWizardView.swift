@@ -38,6 +38,12 @@ struct PermissionWizardView: View {
     /// user grants Input Monitoring via System Settings.
     @State private var imPollTimer: Timer?
 
+    /// Periodic AVCaptureDevice.authorizationStatus check — starts the
+    /// moment the user taps Open Settings on the mic-denial state, so we
+    /// auto-advance the wizard if they toggle Blink on in Privacy →
+    /// Microphone without having to come back and click Continue.
+    @State private var micPollTimer: Timer?
+
     var body: some View {
         let fg = theme.onBackgroundText(for: colorScheme)
         let bgTop = theme.backgroundTop(for: colorScheme)
@@ -75,7 +81,10 @@ struct PermissionWizardView: View {
         }
         .frame(minWidth: 700, minHeight: 500)
         .onAppear { initializeFromCurrentStatus() }
-        .onDisappear { stopIMPolling() }
+        .onDisappear {
+            stopIMPolling()
+            stopMicPolling()
+        }
     }
 
     /// Seed the wizard state from current TCC status so users don't have to
@@ -252,15 +261,43 @@ struct PermissionWizardView: View {
             HStack(spacing: 12) {
                 wizardButton(label: "Open Settings", icon: "gear", primary: false, fg: fg, bgTop: bgTop) {
                     PermissionManager.openMicrophoneSettings()
+                    // Start polling — if the user toggles Blink on in
+                    // Privacy → Microphone, we auto-advance without making
+                    // them switch back and click Continue.
+                    startMicPolling()
                 }
                 wizardButton(label: "Continue", icon: "arrow.right", primary: true, fg: fg, bgTop: bgTop) {
                     BlinkLog.permission.info("User continued past mic-denied state")
+                    stopMicPolling()
                     micDone = true
                     advanceToInputMonitoring()
                 }
             }
             .padding(.bottom, 28)
         }
+    }
+
+    // MARK: - Mic polling
+
+    private func startMicPolling() {
+        guard micPollTimer == nil else { return }
+        BlinkLog.permission.info("Starting mic-grant polling (every 2s)")
+        micPollTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+            DispatchQueue.main.async {
+                if PermissionManager.microphoneAuthorizationStatus() == .authorized {
+                    BlinkLog.permission.info("Mic grant detected by poll — advancing to IM step")
+                    stopMicPolling()
+                    withAnimation { micDeniedInSession = false }
+                    micDone = true
+                    advanceToInputMonitoring()
+                }
+            }
+        }
+    }
+
+    private func stopMicPolling() {
+        micPollTimer?.invalidate()
+        micPollTimer = nil
     }
 
     private func advanceToInputMonitoring() {
