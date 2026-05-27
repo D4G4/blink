@@ -34,7 +34,9 @@ final class UpdateChecker: ObservableObject {
         }
         checkForUpdate()
         periodicTimer = Timer.scheduledTimer(withTimeInterval: 86400, repeats: true) { [weak self] _ in
-            self?.checkForUpdate()
+            MainActor.assumeIsolated {
+                self?.checkForUpdate()
+            }
         }
     }
 

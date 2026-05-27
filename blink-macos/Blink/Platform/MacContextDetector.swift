@@ -79,16 +79,21 @@ final class MacContextDetector: ContextSource {
         guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size, &devices) == noErr else { return }
 
         for device in devices {
-            var nameSize: UInt32 = 256
+            var nameSize: UInt32 = UInt32(MemoryLayout<Unmanaged<CFString>>.size)
             var nameAddr = AudioObjectPropertyAddress(
                 mSelector: kAudioObjectPropertyName, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain
             )
-            var name: CFString = "" as CFString
-            AudioObjectGetPropertyData(device, &nameAddr, 0, nil, &nameSize, &name)
+            // Use Unmanaged<CFString> so the raw pointer treatment doesn't
+            // mishandle the object reference inside CFString (silenced
+            // 'forming UnsafeMutableRawPointer to a variable of type CFString'
+            // warning).
+            var nameRef: Unmanaged<CFString>?
+            AudioObjectGetPropertyData(device, &nameAddr, 0, nil, &nameSize, &nameRef)
+            let name = (nameRef?.takeRetainedValue() as String?) ?? "unknown"
 
             let inputOnly = isInputOnlyDevice(device)
             let hasInput = hasInputStreams(device)
-            Log.i("Device \(device): \(name as String), hasInput=\(hasInput), inputOnly=\(inputOnly)")
+            Log.i("Device \(device): \(name), hasInput=\(hasInput), inputOnly=\(inputOnly)")
         }
     }
 

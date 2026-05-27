@@ -352,20 +352,24 @@ final class AppState: ObservableObject {
         appMon.startMonitoring()
         self.appMonitor = appMon
 
-        // Dismiss overlay before Mac sleeps so it's never stuck on screen at wake
+        // Dismiss overlay before Mac sleeps so it's never stuck on screen at wake.
+        // queue: .main guarantees we're on the main thread; MainActor.assumeIsolated
+        // tells Swift's actor-isolation checker so we can touch @MainActor state.
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.willSleepNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Log.i("Mac going to sleep")
-            guard let self else { return }
-            self.isSystemAsleep = true
-            if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
-                Log.i("Break overlay active before sleep — dismissing synchronously")
-                self.engine.userSkippedBreak()
-                self.isBreakPrompted = false
-                self.overlayController.dismissImmediately()
+            MainActor.assumeIsolated {
+                Log.i("Mac going to sleep")
+                guard let self else { return }
+                self.isSystemAsleep = true
+                if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
+                    Log.i("Break overlay active before sleep — dismissing synchronously")
+                    self.engine.userSkippedBreak()
+                    self.isBreakPrompted = false
+                    self.overlayController.dismissImmediately()
+                }
             }
         }
 
@@ -375,18 +379,20 @@ final class AppState: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Log.i("Wake from sleep")
-            guard let self else { return }
-            self.isSystemAsleep = false
-            self.inputMonitor?.reEnableTapIfNeeded()
-            // Defense-in-depth: if any overlay survived sleep, kill it immediately.
-            if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
-                Log.i("Break overlay still present on wake — dismissing")
-                self.engine.userSkippedBreak()
-                self.isBreakPrompted = false
-                self.overlayController.dismissImmediately()
+            MainActor.assumeIsolated {
+                Log.i("Wake from sleep")
+                guard let self else { return }
+                self.isSystemAsleep = false
+                self.inputMonitor?.reEnableTapIfNeeded()
+                // Defense-in-depth: if any overlay survived sleep, kill it immediately.
+                if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
+                    Log.i("Break overlay still present on wake — dismissing")
+                    self.engine.userSkippedBreak()
+                    self.isBreakPrompted = false
+                    self.overlayController.dismissImmediately()
+                }
+                self.engine.wakeFromSleep()
             }
-            self.engine.wakeFromSleep()
         }
 
         let ctx = MacContextDetector()
