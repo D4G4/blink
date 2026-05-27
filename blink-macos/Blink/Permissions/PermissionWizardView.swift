@@ -34,6 +34,9 @@ struct PermissionWizardView: View {
     /// Settings instead. The step UI swaps to a denial-aware variant.
     @State private var micDeniedInSession: Bool = false
 
+    /// Shown when user taps "Why does Blink need this?" on the IM step.
+    @State private var showIMWhySheet: Bool = false
+
     /// Periodic CGPreflightListenEventAccess check — flips imDone when the
     /// user grants Input Monitoring via System Settings.
     @State private var imPollTimer: Timer?
@@ -81,6 +84,10 @@ struct PermissionWizardView: View {
         }
         .frame(minWidth: 700, minHeight: 500)
         .clipShape(RoundedRectangle(cornerRadius: 20))
+        .sheet(isPresented: $showIMWhySheet) {
+            InputMonitoringRationaleView(theme: theme) { showIMWhySheet = false }
+                .frame(width: 540, height: 520)
+        }
         .onAppear { initializeFromCurrentStatus() }
         .onDisappear {
             stopIMPolling()
@@ -332,6 +339,24 @@ struct PermissionWizardView: View {
                 Text("So Blink can detect your typing rhythm + flow state")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(fg.opacity(0.85))
+
+                Button {
+                    showIMWhySheet = true
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "questionmark.circle")
+                            .font(.system(size: 11))
+                        Text("Why does Blink need this?")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(fg)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(fg.opacity(0.15))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 8)
             }
             .padding(.bottom, 18)
 
