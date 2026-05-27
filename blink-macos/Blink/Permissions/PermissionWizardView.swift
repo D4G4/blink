@@ -14,9 +14,11 @@ import AVFoundation
 struct PermissionWizardView: View {
     let theme: BlinkTheme
 
-    /// Called when BOTH steps are resolved (granted or explicitly skipped),
-    /// so the caller can dismiss the window and start the engine.
-    let onAllDone: () -> Void
+    /// Called when BOTH steps are resolved (granted, skipped, or opted into
+    /// basic mode), so the caller can dismiss the window and start the
+    /// engine. `basicMode` is true when the user explicitly chose to run
+    /// without Input Monitoring (dumb timer only — no flow detection).
+    let onAllDone: (_ basicMode: Bool) -> Void
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -173,7 +175,7 @@ struct PermissionWizardView: View {
         if PermissionManager.isPermissionGranted() {
             BlinkLog.permission.info("IM already granted — skipping step 2")
             imDone = true
-            onAllDone()
+            onAllDone(false)
             return
         }
         withAnimation { currentStep = .inputMonitoring }
@@ -243,7 +245,23 @@ struct PermissionWizardView: View {
                     checkIMGrant()
                 }
             }
-            .padding(.bottom, 28)
+            .padding(.bottom, 8)
+
+            // Basic-mode opt-out — subtle so it's the deliberate "I don't
+            // want the smart features" path, not the obvious default.
+            Button {
+                BlinkLog.permission.info("User chose basic mode (no Input Monitoring) — engine will run with simple timer only")
+                stopIMPolling()
+                imDone = true
+                onAllDone(true)
+            } label: {
+                Text("Continue with basic timer (no smart timing)")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(fg.opacity(0.65))
+                    .underline()
+            }
+            .buttonStyle(.plain)
+            .padding(.bottom, 22)
         }
     }
 
@@ -272,7 +290,7 @@ struct PermissionWizardView: View {
                     BlinkLog.permission.info("IM grant detected by poll — wizard complete")
                     stopIMPolling()
                     imDone = true
-                    onAllDone()
+                    onAllDone(false)
                 }
             }
         }
@@ -288,7 +306,7 @@ struct PermissionWizardView: View {
         if PermissionManager.isPermissionGranted() {
             stopIMPolling()
             imDone = true
-            onAllDone()
+            onAllDone(false)
             return
         }
         imRetryAttempts += 1
@@ -297,7 +315,7 @@ struct PermissionWizardView: View {
             if PermissionManager.isPermissionGranted() {
                 stopIMPolling()
                 imDone = true
-                onAllDone()
+                onAllDone(false)
             }
         }
     }

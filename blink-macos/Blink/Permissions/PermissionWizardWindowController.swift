@@ -9,7 +9,10 @@ final class PermissionWizardWindowController {
     private let log = BlinkLog.permission
     private var window: NSWindow?
 
-    func show(theme: BlinkTheme, onComplete: @escaping () -> Void) {
+    /// `onComplete` fires once both wizard steps resolve. The `basicMode`
+    /// argument is true when the user explicitly chose to run without
+    /// Input Monitoring (dumb-timer fallback path).
+    func show(theme: BlinkTheme, onComplete: @escaping (_ basicMode: Bool) -> Void) {
         guard let screen = NSScreen.main else { return }
 
         let windowWidth: CGFloat = 700
@@ -20,9 +23,9 @@ final class PermissionWizardWindowController {
         let x = visible.midX - windowWidth / 2
         let y = visible.maxY - windowHeight - 40
 
-        let wizard = PermissionWizardView(theme: theme) { [weak self] in
+        let wizard = PermissionWizardView(theme: theme) { [weak self] basicMode in
             self?.dismiss()
-            onComplete()
+            onComplete(basicMode)
         }
 
         let win = KeyableBorderlessWindow(

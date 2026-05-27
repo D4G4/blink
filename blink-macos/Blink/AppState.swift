@@ -208,31 +208,48 @@ final class AppState: ObservableObject {
     private func checkPermissionsAndStart() {
         let granted = PermissionManager.isPermissionGranted()
         let micStatus = PermissionManager.microphoneAuthorizationStatus()
-        Log.i("Permission probe: IM=\(granted), mic=\(micStatus.rawValue)")
+        let basicModeOptIn = UserDefaults.standard.bool(forKey: "basicModeOptIn")
+        Log.i("Permission probe: IM=\(granted), mic=\(micStatus.rawValue), basicModeOptIn=\(basicModeOptIn)")
 
-        // If IM is already granted on this launch, no wizard needed. Mic is
-        // either resolved (granted/denied) — engine handles both cases — or
-        // .notDetermined, in which case the engine will silently survive
-        // without the pause-during-calls feature; user can grant later via
-        // Settings.
+        // IM granted → full mode.
         if granted {
             hasInputMonitoringPermission = true
             UserDefaults.standard.set(true, forKey: "permissionGranted")
+            // Clear any prior basic-mode opt-in — the user upgraded by
+            // granting IM, so the menu-bar nudge should disappear.
+            UserDefaults.standard.set(false, forKey: "basicModeOptIn")
             startMonitoringAfterAllPermissions()
             return
         }
 
-        // IM not granted → run the wizard (mic step first, then IM step).
-        // Engine doesn't start until the wizard's onComplete fires.
+        // IM not granted but the user previously chose basic mode → skip
+        // the wizard, run with the dumb-timer fallback. Menu bar banner
+        // still nudges them to upgrade.
+        if basicModeOptIn {
+            Log.i("Basic mode opt-in remembered — skipping wizard, starting dumb-timer fallback")
+            hasInputMonitoringPermission = false
+            startMonitoringAfterAllPermissions()
+            return
+        }
+
+        // First time without IM → run the wizard (mic step first, then IM
+        // step, with a 'Continue with basic timer' opt-out at the bottom).
         Log.i("IM not granted — showing permission wizard")
         hasInputMonitoringPermission = false
         permissionWizard = PermissionWizardWindowController()
-        permissionWizard?.show(theme: ThemeManager.shared.current) { [weak self] in
+        permissionWizard?.show(theme: ThemeManager.shared.current) { [weak self] basicMode in
             guard let self else { return }
             self.permissionWizard = nil
-            UserDefaults.standard.set(true, forKey: "permissionGranted")
-            self.hasInputMonitoringPermission = true
-            Log.i("Wizard complete — starting engine")
+            if basicMode {
+                Log.i("Wizard complete — user opted into basic mode")
+                UserDefaults.standard.set(true, forKey: "basicModeOptIn")
+                self.hasInputMonitoringPermission = false
+            } else {
+                Log.i("Wizard complete — IM granted, starting full engine")
+                UserDefaults.standard.set(true, forKey: "permissionGranted")
+                UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+                self.hasInputMonitoringPermission = true
+            }
             self.startMonitoringAfterAllPermissions()
         }
     }
@@ -280,6 +297,10 @@ final class AppState: ObservableObject {
     ///    this binary); show the troubleshooting guide instead of falsely
     ///    asking the user to grant something they already granted.
     private func verifyTapAliveOrReprompt() {
+        // In basic mode there's no MacInputMonitor to verify — pollInputFallback
+        // is the intended path. Skip the watchdog so we don't false-flag a
+        // "missing tap" and bounce the user back into the permission wizard.
+        guard hasInputMonitoringPermission else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
             guard let self else { return }
             if self.inputMonitor?.isTapAlive == true {
@@ -299,18 +320,28 @@ final class AppState: ObservableObject {
     }
 
     private func startMonitoring() {
-        Log.i("Starting input monitoring (CGEventTap)")
-        let input = MacInputMonitor()
-        input.onKeystroke = { [weak self] _ in self?.engine.recordKeystroke() }
-        input.onMouseEvent = { [weak self] event in
-            switch event.kind {
-            case .click: self?.engine.recordClick()
-            case .scroll(_): self?.engine.recordScroll()
-            case .move(_, _): break
+        if hasInputMonitoringPermission {
+            Log.i("Starting input monitoring (CGEventTap)")
+            let input = MacInputMonitor()
+            input.onKeystroke = { [weak self] _ in self?.engine.recordKeystroke() }
+            input.onMouseEvent = { [weak self] event in
+                switch event.kind {
+                case .click: self?.engine.recordClick()
+                case .scroll(_): self?.engine.recordScroll()
+                case .move(_, _): break
+                }
             }
+            input.startMonitoring()
+            self.inputMonitor = input
+        } else {
+            Log.i("Basic mode: skipping CGEventTap (no Input Monitoring permission)")
+            // inputMonitor stays nil. The engine still ticks every 30s and
+            // pollInputFallback (CGEventSource.secondsSinceLastEventType,
+            // no permission required) provides sparse keystroke/click
+            // signals from the kernel HID state — so timer countdown and
+            // idle detection still work, just without the rich event
+            // stream needed for flow scoring.
         }
-        input.startMonitoring()
-        self.inputMonitor = input
 
         Log.i("Starting app monitor (NSWorkspace)")
         let appMon = MacAppMonitor()
