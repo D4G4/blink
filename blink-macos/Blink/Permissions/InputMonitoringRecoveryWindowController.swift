@@ -14,10 +14,12 @@ import AppKit
 final class InputMonitoringRecoveryWindowController {
     private var window: NSWindow?
 
-    /// `onGranted` fires once IM is granted (detected via the page's
-    /// internal polling or "I've granted access" check). AppState uses
-    /// it to restart monitoring.
-    func show(theme: BlinkTheme, onGranted: @escaping () -> Void) {
+    /// `onResolved` fires once the user resolves the recovery. The
+    /// `basicMode` argument is true when the user explicitly skipped
+    /// the re-grant (chose to run the basic timer instead), false when
+    /// IM was successfully re-granted (detected via the page's internal
+    /// polling or "I've granted access" check).
+    func show(theme: BlinkTheme, onResolved: @escaping (_ basicMode: Bool) -> Void) {
         guard let screen = NSScreen.main else { return }
 
         let windowWidth: CGFloat = 700
@@ -32,9 +34,9 @@ final class InputMonitoringRecoveryWindowController {
             theme: theme,
             mode: .staleGrant,
             onBack: nil,
-            onComplete: { [weak self] _ in
+            onComplete: { [weak self] basicMode in
                 self?.dismiss()
-                onGranted()
+                onResolved(basicMode)
             }
         )
 
@@ -47,8 +49,16 @@ final class InputMonitoringRecoveryWindowController {
         win.isReleasedWhenClosed = false
         win.isOpaque = false
         win.backgroundColor = .clear
-        win.level = .normal
+        // .floating — sits above normal user windows so it can't be
+        // obscured by Xcode/browser/etc. Safe for recovery because we
+        // never fire a new TCC dialog here (the grant is recorded, just
+        // stale for this binary) — we only deeplink to Settings. The
+        // onboarding wizard used .normal because its first-time CGRequest
+        // CAN spawn an OS dialog, and a .floating wrapper would land
+        // above it; recovery has no such risk.
+        win.level = .floating
         win.hasShadow = true
+        win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         win.appearance = NSApp.effectiveAppearance
 
         let hosting = NSHostingView(rootView: page)

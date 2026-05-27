@@ -160,24 +160,25 @@ struct InputMonitoringPermissionPage: View {
                     }
                 }
 
-                // Basic-mode opt-out only in the onboarding flow.
-                // Recovery doesn't ask the user to downgrade — they
-                // already picked smart mode and the issue is technical
-                // (binary changed, TCC grant stale).
-                if mode == .standard {
-                    Button {
-                        BlinkLog.permission.info("Onboarding IM step: user chose basic mode")
-                        stopPolling()
-                        onComplete(true)
-                    } label: {
-                        Text("Continue with basic timer (no smart timing)")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(fg.opacity(0.65))
-                            .underline()
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 16)
+                // Basic-mode opt-out shown in both modes. In recovery
+                // it lets the user defer the IM re-grant and run the
+                // basic timer until they're ready to deal with TCC. The
+                // copy varies slightly so the action's intent reads
+                // right in each context.
+                Button {
+                    BlinkLog.permission.info("IM step (mode=\(mode)): user chose basic mode")
+                    stopPolling()
+                    onComplete(true)
+                } label: {
+                    Text(mode == .staleGrant
+                         ? "Skip for now — use basic timer"
+                         : "Continue with basic timer (no smart timing)")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(fg.opacity(0.65))
+                        .underline()
                 }
+                .buttonStyle(.plain)
+                .padding(.top, 16)
             }
             .padding(.top, outerVPad)
             .padding(.bottom, outerVPad)

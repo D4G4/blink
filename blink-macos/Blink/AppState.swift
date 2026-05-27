@@ -259,9 +259,13 @@ final class AppState: ObservableObject {
         // IM not granted and no basic-mode opt-in. This only happens
         // post-onboarding if the user later revoked IM in Settings (the
         // onboarding flow guarantees one of granted / basic-mode is set).
-        // Show the recovery window — InputMonitoringPermissionPage in
-        // its staleGrant mode, polished to match onboarding aesthetics.
-        Log.i("IM revoked post-onboarding — showing recovery window")
+        // Show the recovery window and DO NOT start the timer — the
+        // recovery UI is the source of truth right now. Starting a
+        // basic-mode timer in parallel would send mixed signals
+        // ("recovery modal says fix this" vs "timer is already
+        // running"). The timer starts only after the user resolves the
+        // recovery via the callback below (either re-grant or skip).
+        Log.i("IM revoked post-onboarding — showing recovery window (no timer until resolved)")
         hasInputMonitoringPermission = false
         showRecoveryWindow()
     }
@@ -272,23 +276,61 @@ final class AppState: ObservableObject {
     /// Granted — But Not Working" + the toggle-off-then-on guidance.
     private func showRecoveryWindow() {
         permissionRecovery = InputMonitoringRecoveryWindowController()
-        permissionRecovery?.show(theme: ThemeManager.shared.current) { [weak self] in
+        permissionRecovery?.show(theme: ThemeManager.shared.current) { [weak self] basicMode in
             guard let self else { return }
-            UserDefaults.standard.set(true, forKey: "permissionGranted")
             self.permissionRecovery = nil
-            self.hasInputMonitoringPermission = true
-            self.startMonitoringAfterAllPermissions()
+            if basicMode {
+                // User clicked "Continue with basic timer" — opted out of
+                // smart mode for now. Persisted as basicModeOptIn=true so
+                // future launches don't keep re-popping the recovery
+                // window. The opt-in is automatically cleared the next
+                // time IM is actually granted (see checkPermissionsAndStart).
+                Log.i("Recovery dismissed via skip — entering basic mode")
+                UserDefaults.standard.set(true, forKey: "basicModeOptIn")
+                UserDefaults.standard.set(false, forKey: "permissionGranted")
+                self.hasInputMonitoringPermission = false
+            } else {
+                Log.i("Recovery resolved — IM re-granted")
+                UserDefaults.standard.set(true, forKey: "permissionGranted")
+                UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+                self.hasInputMonitoringPermission = true
+            }
+            // Suppress the launch HUD — by the time recovery resolves
+            // the user is well past the initial "Blink is now active"
+            // moment.
+            self.startMonitoringAfterAllPermissions(showHUD: false)
         }
     }
 
-    /// Final step: actually start the engine. Called once all permissions
-    /// (IM + mic) have been resolved one way or the other.
-    private func startMonitoringAfterAllPermissions() {
+    /// Idempotent: tears down any existing monitors/timer first, then
+    /// starts fresh. Callable on first launch, after onboarding completes,
+    /// and on recovery (e.g. user re-granted IM after seeing the
+    /// staleGrant window). `showHUD` is false for the recovery restart so
+    /// we don't pop a second Launch HUD after one already fired earlier
+    /// this launch.
+    private func startMonitoringAfterAllPermissions(showHUD: Bool = true) {
+        teardownMonitoring()
         startMonitoring()
         startTimer()
-        showLaunchHUD()
-        Log.i("Monitors and timers started")
+        if showHUD { showLaunchHUD() }
+        Log.i("Monitors and timers started (showHUD=\(showHUD))")
         verifyTapAliveOrReprompt()
+    }
+
+    /// Stop any running monitors + timer so startMonitoringAfterAllPermissions
+    /// can be called again safely (without leaking the prior CGEventTap,
+    /// NSWorkspace observer, context detector, or tick Timer).
+    private func teardownMonitoring() {
+        inputMonitor?.stopMonitoring()
+        inputMonitor = nil
+        appMonitor?.stopMonitoring()
+        appMonitor = nil
+        // MacContextDetector has no lifecycle methods — just drop the
+        // reference. The cheap polling it does via the tick timer stops
+        // automatically once tickTimer is invalidated below.
+        contextDetector = nil
+        tickTimer?.invalidate()
+        tickTimer = nil
     }
 
     /// Guards against the cached-grant silent-failure path:
