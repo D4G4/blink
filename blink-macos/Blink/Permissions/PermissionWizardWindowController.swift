@@ -51,6 +51,14 @@ final class PermissionWizardWindowController {
         hosting.autoresizingMask = [.width, .height]
         win.contentView = hosting
 
+        // Show Blink in the Dock while the wizard is up. Blink normally
+        // runs as LSUIElement (.accessory) so it has no Dock icon — fine
+        // for steady-state menu-bar usage, but when the wizard is open
+        // and gets obscured by another app, the user has no way to find
+        // it back. .regular gives them a Dock icon to click. We flip
+        // back to .accessory in dismiss().
+        NSApp.setActivationPolicy(.regular)
+
         win.alphaValue = 0
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -73,6 +81,8 @@ final class PermissionWizardWindowController {
         }, completionHandler: { [weak self] in
             win.orderOut(nil)
             self?.window = nil
+            // Restore menu-bar-only mode now that the wizard is gone.
+            NSApp.setActivationPolicy(.accessory)
         })
     }
 }

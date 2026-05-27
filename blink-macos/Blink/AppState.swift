@@ -14,6 +14,11 @@ final class AppState: ObservableObject {
     @Published var breaksTakenToday: Int = 0
     @Published var breaksPromptedToday: Int = 0
     @Published var hasInputMonitoringPermission: Bool = false
+    /// True while the first-run permission wizard is on screen. Views use
+    /// this to suppress the "Basic timer mode" banner during setup — the
+    /// wizard is the ground truth UI for that decision, so a duplicate
+    /// nudge in the menu bar would just be noise.
+    @Published var isPermissionWizardShowing: Bool = false
     @Published var isVideoPlaying: Bool = false
     @Published var isPaused: Bool = false
     @Published var micAlwaysOnWarning: Bool = false
@@ -241,10 +246,12 @@ final class AppState: ObservableObject {
         // step, with a 'Continue with basic timer' opt-out at the bottom).
         Log.i("IM not granted — showing permission wizard")
         hasInputMonitoringPermission = false
+        isPermissionWizardShowing = true
         permissionWizard = PermissionWizardWindowController()
         permissionWizard?.show(theme: ThemeManager.shared.current) { [weak self] basicMode in
             guard let self else { return }
             self.permissionWizard = nil
+            self.isPermissionWizardShowing = false
             if basicMode {
                 Log.i("Wizard complete — user opted into basic mode")
                 UserDefaults.standard.set(true, forKey: "basicModeOptIn")

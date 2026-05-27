@@ -93,7 +93,7 @@ struct MenuBarView: View {
             // A small banner below nudges them to upgrade to smart timing.
             VStack(spacing: 8) {
                 timerCard
-                if !appState.hasInputMonitoringPermission {
+                if !appState.hasInputMonitoringPermission && !appState.isPermissionWizardShowing {
                     basicModeBanner
                 }
             }
