@@ -9,8 +9,18 @@ final class OnboardingWindowController {
         guard let screen = NSScreen.main else { return }
 
         let visible = screen.visibleFrame
-        let windowWidth = screen.frame.width * 0.8
-        let windowHeight = screen.frame.height * 0.8
+        // Scale with screen size but clamp to a sane range:
+        //   - min 900×680: below this the theme carousel + flow page
+        //     content starts to clip on the 13" MacBook Air
+        //   - max 1300×920: above this the design starts to feel
+        //     cavernous (the content is laid out for ~900pt, anything
+        //     much bigger is just empty margin)
+        //   - target: 55% of screen width × 65% of screen height
+        // Net effect: 13" MBA → ~900×680 (at the min), 27" 5K iMac /
+        // 6K external → ~1300×920 (at the max), 14" MBP / 16" MBP in
+        // between gracefully.
+        let windowWidth = max(900, min(visible.width * 0.55, 1300))
+        let windowHeight = max(680, min(visible.height * 0.65, 920))
 
         // Center within the visible frame (excludes menu bar and dock)
         let x = visible.midX - windowWidth / 2
