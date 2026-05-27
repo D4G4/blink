@@ -28,6 +28,11 @@ struct PermissionWizardView: View {
     @State private var micDone: Bool = false
     @State private var imDone: Bool = false
     @State private var imRetryAttempts: Int = 0
+    /// Becomes true if the user clicked Grant Access and then Don't Allow
+    /// in the OS dialog (vs explicitly clicking Skip). We don't auto-advance
+    /// in this case — the user may have misclicked and want to re-grant via
+    /// Settings instead. The step UI swaps to a denial-aware variant.
+    @State private var micDeniedInSession: Bool = false
 
     /// Periodic CGPreflightListenEventAccess check — flips imDone when the
     /// user grants Input Monitoring via System Settings.
@@ -69,7 +74,28 @@ struct PermissionWizardView: View {
             }
         }
         .frame(minWidth: 700, minHeight: 500)
+        .onAppear { initializeFromCurrentStatus() }
         .onDisappear { stopIMPolling() }
+    }
+
+    /// Seed the wizard state from current TCC status so users don't have to
+    /// click Grant Access just to discover that mic was previously denied
+    /// (no dialog will appear) or previously granted (no step needed).
+    private func initializeFromCurrentStatus() {
+        let status = PermissionManager.microphoneAuthorizationStatus()
+        switch status {
+        case .authorized:
+            BlinkLog.permission.info("Wizard onAppear: mic already authorized — skipping step 1")
+            micDone = true
+            advanceToInputMonitoring()
+        case .denied, .restricted:
+            BlinkLog.permission.info("Wizard onAppear: mic previously denied — showing denial UI")
+            micDeniedInSession = true
+        case .notDetermined:
+            break  // Show the standard initial step
+        @unknown default:
+            break
+        }
     }
 
     // MARK: - Step indicator
@@ -111,6 +137,16 @@ struct PermissionWizardView: View {
     // MARK: - Step 1: Microphone
 
     private func microphoneStep(fg: Color, bgTop: Color) -> some View {
+        Group {
+            if micDeniedInSession {
+                microphoneDeniedStep(fg: fg, bgTop: bgTop)
+            } else {
+                microphoneInitialStep(fg: fg, bgTop: bgTop)
+            }
+        }
+    }
+
+    private func microphoneInitialStep(fg: Color, bgTop: Color) -> some View {
         VStack(spacing: 0) {
             VStack(spacing: 4) {
                 Image(systemName: "mic.fill")
@@ -153,17 +189,74 @@ struct PermissionWizardView: View {
 
             HStack(spacing: 12) {
                 wizardButton(label: "Skip", icon: nil, primary: false, fg: fg, bgTop: bgTop) {
-                    BlinkLog.permission.info("User skipped microphone step")
+                    BlinkLog.permission.info("User skipped microphone step (explicit)")
                     micDone = true
                     advanceToInputMonitoring()
                 }
                 wizardButton(label: "Grant Access", icon: "mic.fill", primary: true, fg: fg, bgTop: bgTop) {
                     Task { @MainActor in
                         let granted = await PermissionManager.requestMicrophoneAccess()
-                        BlinkLog.permission.info("Microphone step resolved: granted=\(granted)")
-                        micDone = true
-                        advanceToInputMonitoring()
+                        BlinkLog.permission.info("Microphone request resolved: granted=\(granted)")
+                        if granted {
+                            micDone = true
+                            advanceToInputMonitoring()
+                        } else {
+                            // User clicked Don't Allow in the OS dialog (or
+                            // mic was already denied so no dialog appeared).
+                            // Don't auto-advance — surface a recovery path
+                            // in case they misclicked.
+                            withAnimation { micDeniedInSession = true }
+                        }
                     }
+                }
+            }
+            .padding(.bottom, 28)
+        }
+    }
+
+    private func microphoneDeniedStep(fg: Color, bgTop: Color) -> some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 4) {
+                Image(systemName: "mic.slash.fill")
+                    .font(.system(size: 28, weight: .light))
+                    .foregroundStyle(fg)
+                    .padding(.bottom, 6)
+                Text("Microphone Access Denied")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(fg)
+                Text("macOS won't ask again — you can change this in Settings")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(fg.opacity(0.85))
+            }
+            .padding(.bottom, 22)
+
+            VStack(alignment: .leading, spacing: 12) {
+                rationaleRow(
+                    icon: "info.circle.fill",
+                    title: "If this was a misclick",
+                    body: "Open System Settings → Privacy & Security → Microphone, toggle Blink on, then click Continue below.",
+                    fg: fg
+                )
+                rationaleRow(
+                    icon: "hand.raised.fill",
+                    title: "If you meant to deny",
+                    body: "Click Continue to move on. Everything else still works — the timer just won't auto-pause during calls.",
+                    fg: fg
+                )
+            }
+            .frame(maxWidth: 520)
+            .padding(.horizontal, 40)
+
+            Spacer()
+
+            HStack(spacing: 12) {
+                wizardButton(label: "Open Settings", icon: "gear", primary: false, fg: fg, bgTop: bgTop) {
+                    PermissionManager.openMicrophoneSettings()
+                }
+                wizardButton(label: "Continue", icon: "arrow.right", primary: true, fg: fg, bgTop: bgTop) {
+                    BlinkLog.permission.info("User continued past mic-denied state")
+                    micDone = true
+                    advanceToInputMonitoring()
                 }
             }
             .padding(.bottom, 28)
