@@ -121,7 +121,12 @@ struct BlinkTheme: Identifiable, Equatable {
         overlayBackgroundLight: Color(hex: 0xFFF0E8).opacity(0.95),
         overlayTextDark: Color(hex: 0xFFDDCC),
         overlayTextLight: Color(hex: 0x3D2012),
-        onBackgroundTextLight: .white,
+        // Light Peach background (0xFFB89A → 0xF09060) is too light for
+        // white text — WCAG contrast is ~1.5:1, which reads as washed
+        // out on the onboarding / permission pages and the rationale
+        // sheet. Dark peach-brown matches the theme palette and pushes
+        // contrast above legibility.
+        onBackgroundTextLight: Color(hex: 0x3D2012),
         onBackgroundTextDark: .white,
         invertInDarkMode: false
     )

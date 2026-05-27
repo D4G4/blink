@@ -17,9 +17,14 @@ final class PermissionFlowWindowController {
     func show(theme: BlinkTheme, onResolved: @escaping (_ basicMode: Bool) -> Void) {
         guard let screen = NSScreen.main else { return }
 
-        let windowWidth = screen.frame.width * 0.8
-        let windowHeight = screen.frame.height * 0.8
         let visible = screen.visibleFrame
+        // Scale with screen size but tighter than onboarding (the
+        // permission pages have less content). Range:
+        //   - min 720×620: tight fit for the rationale rows + buttons
+        //   - max 980×800: doesn't get cavernous on 6K displays
+        //   - target: 42% of screen width × 55% of screen height
+        let windowWidth = max(720, min(visible.width * 0.42, 980))
+        let windowHeight = max(620, min(visible.height * 0.55, 800))
         // Centered — same focal point as the onboarding window so the
         // transition from onboarding → permission flow doesn't jump the
         // eye.
