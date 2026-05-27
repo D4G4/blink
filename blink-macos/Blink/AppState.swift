@@ -31,6 +31,11 @@ final class AppState: ObservableObject {
 
     // Timers
     private var tickTimer: Timer?
+    /// Counts engine ticks since the last input-rate log line. The tick fires
+    /// every 1s; we report input counts every 30 ticks (30s) so the log has
+    /// a periodic pulse confirming events are flowing without flooding.
+    private var ticksSinceLastInputReport: Int = 0
+    private static let inputReportTickInterval: Int = 30
 
     // Sleep / lock tracking — used to suppress overlay when user is away
     private var isSystemAsleep = false
@@ -438,6 +443,18 @@ final class AppState: ObservableObject {
                     if self.hasInputMonitoringPermission && !CGPreflightListenEventAccess() {
                         Log.i("Permission revoked mid-session — surfacing banner")
                         self.hasInputMonitoringPermission = false
+                    }
+                }
+
+                // Periodic input-rate report so logs have a heartbeat
+                // confirming events are flowing. Logs only when there was
+                // any activity in the window — silent if user is away.
+                self.ticksSinceLastInputReport += 1
+                if self.ticksSinceLastInputReport >= Self.inputReportTickInterval {
+                    self.ticksSinceLastInputReport = 0
+                    if let counts = self.inputMonitor?.drainCounts(),
+                       counts.keystrokes + counts.mouseMoves + counts.scrolls + counts.clicks > 0 {
+                        Log.i("Input (last \(Self.inputReportTickInterval)s): keystrokes=\(counts.keystrokes), mouseMoves=\(counts.mouseMoves), scrolls=\(counts.scrolls), clicks=\(counts.clicks)")
                     }
                 }
 

@@ -19,6 +19,34 @@ final class MacInputMonitor: InputEventSource {
     private static let maxTapCreateAttempts = 3
     private static let tapRetryDelaySeconds: TimeInterval = 1.0
 
+    /// Thread-safe event counters for periodic input-rate logging. The
+    /// CGEventTap callback runs on the tap's runloop thread; drainCounts()
+    /// is called from the main thread (AppState tick). NSLock keeps the
+    /// reads/writes consistent.
+    struct EventCounts {
+        var keystrokes: Int = 0
+        var mouseMoves: Int = 0
+        var scrolls: Int = 0
+        var clicks: Int = 0
+    }
+    private var counts = EventCounts()
+    private let countsLock = NSLock()
+
+    /// Returns the counts accumulated since the last call and resets them.
+    func drainCounts() -> EventCounts {
+        countsLock.lock()
+        defer { countsLock.unlock() }
+        let snapshot = counts
+        counts = EventCounts()
+        return snapshot
+    }
+
+    fileprivate func recordEvent(_ keyPath: WritableKeyPath<EventCounts, Int>) {
+        countsLock.lock()
+        counts[keyPath: keyPath] += 1
+        countsLock.unlock()
+    }
+
     func startMonitoring() {
         attemptTapCreate(attempt: 1)
     }
@@ -125,18 +153,22 @@ final class MacInputMonitor: InputEventSource {
         switch type {
         case .keyDown:
             // Only capture timing — never the keycode or character
+            monitor.recordEvent(\.keystrokes)
             monitor.onKeystroke?(KeystrokeEvent(timestamp: timestamp))
 
         case .mouseMoved:
             let dx = event.getDoubleValueField(.mouseEventDeltaX)
             let dy = event.getDoubleValueField(.mouseEventDeltaY)
+            monitor.recordEvent(\.mouseMoves)
             monitor.onMouseEvent?(MouseEvent(timestamp: timestamp, kind: .move(deltaX: dx, deltaY: dy)))
 
         case .scrollWheel:
             let dy = event.getDoubleValueField(.scrollWheelEventDeltaAxis1)
+            monitor.recordEvent(\.scrolls)
             monitor.onMouseEvent?(MouseEvent(timestamp: timestamp, kind: .scroll(deltaY: dy)))
 
         case .leftMouseDown, .rightMouseDown:
+            monitor.recordEvent(\.clicks)
             monitor.onMouseEvent?(MouseEvent(timestamp: timestamp, kind: .click))
 
         default:
