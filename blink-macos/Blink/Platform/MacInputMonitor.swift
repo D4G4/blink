@@ -12,7 +12,46 @@ final class MacInputMonitor: InputEventSource {
     private(set) var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
+    /// Number of CGEvent.tapCreate attempts before giving up. TCC propagation
+    /// after a fresh grant can leave preflight=true but tapCreate=false for a
+    /// short window; retrying with backoff catches the common case before the
+    /// AppState watchdog has to reprompt the user.
+    private static let maxTapCreateAttempts = 3
+    private static let tapRetryDelaySeconds: TimeInterval = 1.0
+
+    /// Thread-safe event counters for periodic input-rate logging. The
+    /// CGEventTap callback runs on the tap's runloop thread; drainCounts()
+    /// is called from the main thread (AppState tick). NSLock keeps the
+    /// reads/writes consistent.
+    struct EventCounts {
+        var keystrokes: Int = 0
+        var mouseMoves: Int = 0
+        var scrolls: Int = 0
+        var clicks: Int = 0
+    }
+    private var counts = EventCounts()
+    private let countsLock = NSLock()
+
+    /// Returns the counts accumulated since the last call and resets them.
+    func drainCounts() -> EventCounts {
+        countsLock.lock()
+        defer { countsLock.unlock() }
+        let snapshot = counts
+        counts = EventCounts()
+        return snapshot
+    }
+
+    fileprivate func recordEvent(_ keyPath: WritableKeyPath<EventCounts, Int>) {
+        countsLock.lock()
+        counts[keyPath: keyPath] += 1
+        countsLock.unlock()
+    }
+
     func startMonitoring() {
+        attemptTapCreate(attempt: 1)
+    }
+
+    private func attemptTapCreate(attempt: Int) {
         let eventMask: CGEventMask = (
             (1 << CGEventType.keyDown.rawValue) |
             (1 << CGEventType.mouseMoved.rawValue) |
@@ -24,25 +63,35 @@ final class MacInputMonitor: InputEventSource {
         // Store self in a pointer for the C callback
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
 
-        guard let tap = CGEvent.tapCreate(
+        if let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .tailAppendEventTap,
             options: .listenOnly,
             eventsOfInterest: eventMask,
             callback: MacInputMonitor.eventCallback,
             userInfo: selfPtr
-        ) else {
-            Log.e("CGEventTap creation failed in MacInputMonitor — input monitoring will NOT work this session")
+        ) {
+            self.eventTap = tap
+            let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+            self.runLoopSource = source
+            CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
+            CGEvent.tapEnable(tap: tap, enable: true)
+            if attempt == 1 {
+                Log.i("CGEventTap created and enabled in MacInputMonitor — input monitoring active")
+            } else {
+                Log.i("CGEventTap created on attempt \(attempt)/\(Self.maxTapCreateAttempts) — input monitoring active")
+            }
             return
         }
 
-        self.eventTap = tap
-
-        let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        self.runLoopSource = source
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
-        Log.i("CGEventTap created and enabled in MacInputMonitor — input monitoring active")
+        if attempt < Self.maxTapCreateAttempts {
+            Log.i("CGEventTap creation failed on attempt \(attempt)/\(Self.maxTapCreateAttempts) — retrying in \(Self.tapRetryDelaySeconds)s (likely TCC propagation lag)")
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.tapRetryDelaySeconds) { [weak self] in
+                self?.attemptTapCreate(attempt: attempt + 1)
+            }
+        } else {
+            Log.e("CGEventTap creation failed after \(Self.maxTapCreateAttempts) attempts — input monitoring will NOT work this session (AppState watchdog will detect and reprompt)")
+        }
     }
 
     private var tapDeathLogged = false
@@ -104,18 +153,22 @@ final class MacInputMonitor: InputEventSource {
         switch type {
         case .keyDown:
             // Only capture timing — never the keycode or character
+            monitor.recordEvent(\.keystrokes)
             monitor.onKeystroke?(KeystrokeEvent(timestamp: timestamp))
 
         case .mouseMoved:
             let dx = event.getDoubleValueField(.mouseEventDeltaX)
             let dy = event.getDoubleValueField(.mouseEventDeltaY)
+            monitor.recordEvent(\.mouseMoves)
             monitor.onMouseEvent?(MouseEvent(timestamp: timestamp, kind: .move(deltaX: dx, deltaY: dy)))
 
         case .scrollWheel:
             let dy = event.getDoubleValueField(.scrollWheelEventDeltaAxis1)
+            monitor.recordEvent(\.scrolls)
             monitor.onMouseEvent?(MouseEvent(timestamp: timestamp, kind: .scroll(deltaY: dy)))
 
         case .leftMouseDown, .rightMouseDown:
+            monitor.recordEvent(\.clicks)
             monitor.onMouseEvent?(MouseEvent(timestamp: timestamp, kind: .click))
 
         default:

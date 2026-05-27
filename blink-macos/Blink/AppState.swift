@@ -1,6 +1,5 @@
 import SwiftUI
 import Combine
-import ServiceManagement
 import BlinkCore
 
 /// Thin adapter between platform (macOS) and BlinkEngine (core logic).
@@ -14,7 +13,12 @@ final class AppState: ObservableObject {
     @Published var isBreakPrompted: Bool = false
     @Published var breaksTakenToday: Int = 0
     @Published var breaksPromptedToday: Int = 0
-    @Published var hasAccessibilityPermission: Bool = false
+    @Published var hasInputMonitoringPermission: Bool = false
+    /// True while the first-run permission wizard is on screen. Views use
+    /// this to suppress the "Basic timer mode" banner during setup — the
+    /// wizard is the ground truth UI for that decision, so a duplicate
+    /// nudge in the menu bar would just be noise.
+    @Published var isPermissionWizardShowing: Bool = false
     @Published var isVideoPlaying: Bool = false
     @Published var isPaused: Bool = false
     @Published var micAlwaysOnWarning: Bool = false
@@ -27,10 +31,16 @@ final class AppState: ObservableObject {
     private var inputMonitor: MacInputMonitor?
     private var appMonitor: MacAppMonitor?
     private var contextDetector: MacContextDetector?
-    private var permissionWindow: PermissionWindowController?
+    private var permissionWindow: PermissionWindowController?  // troubleshooting only
+    private var permissionWizard: PermissionWizardWindowController?
 
     // Timers
     private var tickTimer: Timer?
+    /// Counts engine ticks since the last input-rate log line. The tick fires
+    /// every 1s; we report input counts every 30 ticks (30s) so the log has
+    /// a periodic pulse confirming events are flowing without flooding.
+    private var ticksSinceLastInputReport: Int = 0
+    private static let inputReportTickInterval: Int = 30
 
     // Sleep / lock tracking — used to suppress overlay when user is away
     private var isSystemAsleep = false
@@ -88,23 +98,14 @@ final class AppState: ObservableObject {
 
     init(preview: Bool = false) {
         if preview {
-            hasAccessibilityPermission = true
+            hasInputMonitoringPermission = true
             return
         }
         Log.i("Blink starting up")
 
-        // One-time: force re-onboarding for build 20 (new flow sensitivity UI)
-        let onboardingVersion = UserDefaults.standard.integer(forKey: "onboardingVersion")
-        if onboardingVersion < 2 {
-            ThemeManager.shared.hasCompletedOnboarding = false
-            UserDefaults.standard.set(2, forKey: "onboardingVersion")
-            Log.i("Onboarding reset for new flow sensitivity UI")
-        }
-
         setupEngineCallbacks()
         loadTodayStats()
         BlinkLog.pruneOldLogs()
-        enableLoginItemIfFirstTime()
 
         // Sync sensitivity from UserDefaults
         let saved = UserDefaults.standard.double(forKey: "flowSensitivity")
@@ -211,65 +212,148 @@ final class AppState: ObservableObject {
             NotificationCenter.default.removeObserver(observer)
             onboardingObserver = nil
         }
-        enableLoginItemIfFirstTime()
         checkPermissionsAndStart()
-    }
-
-    /// Auto-enable login item after onboarding — only once, so users who
-    /// disable it in Preferences don't get overridden on next launch.
-    private func enableLoginItemIfFirstTime() {
-        let key = "didAutoEnableLoginItem"
-        guard !UserDefaults.standard.bool(forKey: key) else { return }
-        UserDefaults.standard.set(true, forKey: key)
-        do {
-            try SMAppService.mainApp.register()
-            UserDefaults.standard.set(true, forKey: "launchAtLogin")
-            Log.i("Auto-enabled launch at login")
-        } catch {
-            Log.e("Failed to auto-enable login item: \(error)")
-        }
     }
 
     private func checkPermissionsAndStart() {
         let granted = PermissionManager.isPermissionGranted()
-        Log.i("Permission probe result: \(granted)")
+        let micStatus = PermissionManager.microphoneAuthorizationStatus()
+        let basicModeOptIn = UserDefaults.standard.bool(forKey: "basicModeOptIn")
+        Log.i("Permission probe: IM=\(granted), mic=\(micStatus.rawValue), basicModeOptIn=\(basicModeOptIn)")
+
+        // IM granted → full mode.
         if granted {
-            hasAccessibilityPermission = true
+            hasInputMonitoringPermission = true
             UserDefaults.standard.set(true, forKey: "permissionGranted")
-            startMonitoring()
-            startTimer()
-            showTimerForStartup()
-            Log.i("Permission confirmed — monitors and timers started")
-        } else {
-            Log.i("Permission not granted — showing guide")
-            hasAccessibilityPermission = false
-            permissionWindow = PermissionWindowController()
-            permissionWindow?.show(theme: ThemeManager.shared.current) { [weak self] in
-                guard let self else { return }
+            // Clear any prior basic-mode opt-in — the user upgraded by
+            // granting IM, so the menu-bar nudge should disappear.
+            UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+            startMonitoringAfterAllPermissions()
+            return
+        }
+
+        // IM not granted but the user previously chose basic mode → skip
+        // the wizard, run with the dumb-timer fallback. Menu bar banner
+        // still nudges them to upgrade.
+        if basicModeOptIn {
+            Log.i("Basic mode opt-in remembered — skipping wizard, starting dumb-timer fallback")
+            hasInputMonitoringPermission = false
+            startMonitoringAfterAllPermissions()
+            return
+        }
+
+        // First time without IM → run the wizard (mic step first, then IM
+        // step, with a 'Continue with basic timer' opt-out at the bottom).
+        Log.i("IM not granted — showing permission wizard")
+        hasInputMonitoringPermission = false
+        isPermissionWizardShowing = true
+        permissionWizard = PermissionWizardWindowController()
+        permissionWizard?.show(theme: ThemeManager.shared.current) { [weak self] basicMode in
+            guard let self else { return }
+            self.permissionWizard = nil
+            self.isPermissionWizardShowing = false
+            if basicMode {
+                Log.i("Wizard complete — user opted into basic mode")
+                UserDefaults.standard.set(true, forKey: "basicModeOptIn")
+                self.hasInputMonitoringPermission = false
+            } else {
+                Log.i("Wizard complete — IM granted, starting full engine")
                 UserDefaults.standard.set(true, forKey: "permissionGranted")
-                self.permissionWindow = nil
-                self.hasAccessibilityPermission = true
-                self.startMonitoring()
-                self.startTimer()
-                self.showTimerForStartup()
-                Log.i("Permission granted — monitors and timers started")
+                UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+                self.hasInputMonitoringPermission = true
             }
+            self.startMonitoringAfterAllPermissions()
+        }
+    }
+
+    /// Re-shows the legacy permission guide for the cached-grant
+    /// troubleshooting case (different scenario from the wizard — the user
+    /// already completed the wizard but the actual tap fails to create).
+    private func showPermissionGuide(troubleshooting: Bool = false) {
+        permissionWindow = PermissionWindowController()
+        permissionWindow?.show(
+            theme: ThemeManager.shared.current,
+            troubleshooting: troubleshooting
+        ) { [weak self] in
+            guard let self else { return }
+            UserDefaults.standard.set(true, forKey: "permissionGranted")
+            self.permissionWindow = nil
+            self.hasInputMonitoringPermission = true
+            self.startMonitoringAfterAllPermissions()
+        }
+    }
+
+    /// Final step: actually start the engine. Called once all permissions
+    /// (IM + mic) have been resolved one way or the other.
+    private func startMonitoringAfterAllPermissions() {
+        startMonitoring()
+        startTimer()
+        showTimerForStartup()
+        Log.i("Monitors and timers started")
+        verifyTapAliveOrReprompt()
+    }
+
+    /// Guards against the cached-grant silent-failure path:
+    /// `PermissionManager.isPermissionGranted()` can return true when
+    /// `CGPreflightListenEventAccess` returns true but `CGEvent.tapCreate`
+    /// fails (typically TCC cache lag right after a grant, or a stale grant
+    /// tied to a previous binary CDHash). `MacInputMonitor.startMonitoring`
+    /// already retries internally up to 3 times with 1s delays; we wait 5s
+    /// here to let those retries complete before deciding the tap is truly
+    /// dead.
+    ///
+    /// If the tap is dead, we branch on the *current* preflight result:
+    ///  - preflight = false → permission was revoked (or never really took);
+    ///    show the standard grant guide
+    ///  - preflight = true  → granted-but-broken (toggle didn't propagate to
+    ///    this binary); show the troubleshooting guide instead of falsely
+    ///    asking the user to grant something they already granted.
+    private func verifyTapAliveOrReprompt() {
+        // In basic mode there's no MacInputMonitor to verify — pollInputFallback
+        // is the intended path. Skip the watchdog so we don't false-flag a
+        // "missing tap" and bounce the user back into the permission wizard.
+        guard hasInputMonitoringPermission else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+            guard let self else { return }
+            if self.inputMonitor?.isTapAlive == true {
+                Log.i("CGEventTap liveness verified 5s after startMonitoring")
+                return
+            }
+            let preflight = CGPreflightListenEventAccess()
+            Log.e("CGEventTap is not alive 5s after startMonitoring (preflight=\(preflight)) — reverting and reprompting")
+            self.hasInputMonitoringPermission = false
+            self.inputMonitor?.stopMonitoring()
+            self.inputMonitor = nil
+            self.tickTimer?.invalidate()
+            self.tickTimer = nil
+            self.overlayController.dismiss()
+            self.showPermissionGuide(troubleshooting: preflight)
         }
     }
 
     private func startMonitoring() {
-        Log.i("Starting input monitoring (CGEventTap)")
-        let input = MacInputMonitor()
-        input.onKeystroke = { [weak self] _ in self?.engine.recordKeystroke() }
-        input.onMouseEvent = { [weak self] event in
-            switch event.kind {
-            case .click: self?.engine.recordClick()
-            case .scroll(_): self?.engine.recordScroll()
-            case .move(_, _): break
+        if hasInputMonitoringPermission {
+            Log.i("Starting input monitoring (CGEventTap)")
+            let input = MacInputMonitor()
+            input.onKeystroke = { [weak self] _ in self?.engine.recordKeystroke() }
+            input.onMouseEvent = { [weak self] event in
+                switch event.kind {
+                case .click: self?.engine.recordClick()
+                case .scroll(_): self?.engine.recordScroll()
+                case .move(_, _): break
+                }
             }
+            input.startMonitoring()
+            self.inputMonitor = input
+        } else {
+            Log.i("Basic mode: skipping CGEventTap (no Input Monitoring permission)")
+            // inputMonitor stays nil. The engine still ticks every 30s and
+            // pollInputFallback (CGEventSource.secondsSinceLastEventType,
+            // no permission required) provides sparse keystroke/click
+            // signals from the kernel HID state — so timer countdown and
+            // idle detection still work, just without the rich event
+            // stream needed for flow scoring.
         }
-        input.startMonitoring()
-        self.inputMonitor = input
 
         Log.i("Starting app monitor (NSWorkspace)")
         let appMon = MacAppMonitor()
@@ -277,26 +361,41 @@ final class AppState: ObservableObject {
             Log.d("App switch → \(event.appBundleID)")
             self?.engine.recordAppSwitch(bundleID: event.appBundleID)
         }
-        appMon.onWindowTitleChange = {
-            Log.d("Window title changed")
-        }
         appMon.startMonitoring()
         self.appMonitor = appMon
 
-        // Dismiss overlay before Mac sleeps so it's never stuck on screen at wake
+        // Seed the currently-frontmost app at startup.
+        // NSWorkspace.didActivateApplicationNotification only fires on app
+        // CHANGES, not for the app that's already frontmost. Without this
+        // seed call, a user who launches Blink while Xcode is the active
+        // app and then never switches apps produces zero appSwitch events
+        // — and the engine's dwellByApp stays empty → creative bonus
+        // silently drops from 0.10 → 0.03 for the entire first window.
+        if let frontmostID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier {
+            Log.i("Seeding initial frontmost app: \(frontmostID)")
+            engine.setCurrentApp(bundleID: frontmostID)
+        } else {
+            Log.i("No frontmost app at startup — dwell tracking will start on first app switch")
+        }
+
+        // Dismiss overlay before Mac sleeps so it's never stuck on screen at wake.
+        // queue: .main guarantees we're on the main thread; MainActor.assumeIsolated
+        // tells Swift's actor-isolation checker so we can touch @MainActor state.
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.willSleepNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Log.i("Mac going to sleep")
-            guard let self else { return }
-            self.isSystemAsleep = true
-            if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
-                Log.i("Break overlay active before sleep — dismissing synchronously")
-                self.engine.userSkippedBreak()
-                self.isBreakPrompted = false
-                self.overlayController.dismissImmediately()
+            MainActor.assumeIsolated {
+                Log.i("Mac going to sleep")
+                guard let self else { return }
+                self.isSystemAsleep = true
+                if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
+                    Log.i("Break overlay active before sleep — dismissing synchronously")
+                    self.engine.userSkippedBreak()
+                    self.isBreakPrompted = false
+                    self.overlayController.dismissImmediately()
+                }
             }
         }
 
@@ -306,18 +405,20 @@ final class AppState: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Log.i("Wake from sleep")
-            guard let self else { return }
-            self.isSystemAsleep = false
-            self.inputMonitor?.reEnableTapIfNeeded()
-            // Defense-in-depth: if any overlay survived sleep, kill it immediately.
-            if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
-                Log.i("Break overlay still present on wake — dismissing")
-                self.engine.userSkippedBreak()
-                self.isBreakPrompted = false
-                self.overlayController.dismissImmediately()
+            MainActor.assumeIsolated {
+                Log.i("Wake from sleep")
+                guard let self else { return }
+                self.isSystemAsleep = false
+                self.inputMonitor?.reEnableTapIfNeeded()
+                // Defense-in-depth: if any overlay survived sleep, kill it immediately.
+                if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
+                    Log.i("Break overlay still present on wake — dismissing")
+                    self.engine.userSkippedBreak()
+                    self.isBreakPrompted = false
+                    self.overlayController.dismissImmediately()
+                }
+                self.engine.wakeFromSleep()
             }
-            self.engine.wakeFromSleep()
         }
 
         let ctx = MacContextDetector()
@@ -355,6 +456,27 @@ final class AppState: ObservableObject {
                 self.inputMonitor?.reEnableTapIfNeeded()
                 if self.inputMonitor?.isTapAlive != true {
                     self.pollInputFallback()
+                    // If the tap is dead AND TCC now reports the permission as
+                    // missing, the user revoked Input Monitoring while Blink
+                    // was running. Reflect that in the menu bar banner so they
+                    // see the issue + one-click path to re-grant — instead of
+                    // silently running on the degraded HID-state fallback.
+                    if self.hasInputMonitoringPermission && !CGPreflightListenEventAccess() {
+                        Log.i("Permission revoked mid-session — surfacing banner")
+                        self.hasInputMonitoringPermission = false
+                    }
+                }
+
+                // Periodic input-rate report so logs have a heartbeat
+                // confirming events are flowing. Logs only when there was
+                // any activity in the window — silent if user is away.
+                self.ticksSinceLastInputReport += 1
+                if self.ticksSinceLastInputReport >= Self.inputReportTickInterval {
+                    self.ticksSinceLastInputReport = 0
+                    if let counts = self.inputMonitor?.drainCounts(),
+                       counts.keystrokes + counts.mouseMoves + counts.scrolls + counts.clicks > 0 {
+                        Log.i("Input (last \(Self.inputReportTickInterval)s): keystrokes=\(counts.keystrokes), mouseMoves=\(counts.mouseMoves), scrolls=\(counts.scrolls), clicks=\(counts.clicks)")
+                    }
                 }
 
                 // Midnight reset — reload today's stats when the day rolls over

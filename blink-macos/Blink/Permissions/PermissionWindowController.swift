@@ -1,34 +1,53 @@
 import SwiftUI
 import AppKit
 
-/// Shows the permission guide — user manually adds Blink in Accessibility settings.
-/// Dismissed when user clicks "I've granted access" and permission is confirmed.
+/// Shows the permission guide — user manually adds Blink in Input Monitoring settings.
+/// Auto-dismisses when permission is detected (either via the user clicking
+/// "I've granted access" in the guide, or by a background poll that catches
+/// the case where the user granted via the macOS system dialog instead).
 final class PermissionWindowController {
     private let log = BlinkLog.permission
     private var window: NSWindow?
+    private var grantPollTimer: Timer?
     var onPermissionGranted: (() -> Void)?
 
-    func show(theme: BlinkTheme, onGranted: @escaping () -> Void) {
+    func show(theme: BlinkTheme, troubleshooting: Bool = false, onGranted: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
         self.onPermissionGranted = onGranted
 
         let windowWidth: CGFloat = 700
         let windowHeight: CGFloat = 420
         let visible = screen.visibleFrame
+        // Anchor to the TOP of the screen (40pt below menu bar) so we don't
+        // overlap with the macOS Input Monitoring TCC dialog, which is
+        // system-positioned around screen center. Centered horizontally.
         let x = visible.midX - windowWidth / 2
-        let y = visible.midY - windowHeight / 2
+        let y = visible.maxY - windowHeight - 40
 
-        let guideView = PermissionGuideView(
-            theme: theme,
-            onOpenSettings: {
-                PermissionManager.openAccessibilitySettings()
-            },
-            onConfirmGranted: { [weak self] in
-                self?.checkAndDismiss()
-            }
-        )
+        let guideView: NSView
+        if troubleshooting {
+            guideView = NSHostingView(rootView: PermissionTroubleshootingView(
+                theme: theme,
+                onOpenSettings: {
+                    PermissionManager.openInputMonitoringSettings()
+                },
+                onTryAgain: { [weak self] in
+                    self?.checkAndDismiss()
+                }
+            ))
+        } else {
+            guideView = NSHostingView(rootView: PermissionGuideView(
+                theme: theme,
+                onOpenSettings: {
+                    PermissionManager.openInputMonitoringSettings()
+                },
+                onConfirmGranted: { [weak self] in
+                    self?.checkAndDismiss()
+                }
+            ))
+        }
 
-        let win = NSWindow(
+        let win = KeyableBorderlessWindow(
             contentRect: NSRect(x: x, y: y, width: windowWidth, height: windowHeight),
             styleMask: [.borderless],
             backing: .buffered,
@@ -37,10 +56,15 @@ final class PermissionWindowController {
         win.isReleasedWhenClosed = false
         win.isOpaque = false
         win.backgroundColor = .clear
+        // .normal — same level as System Settings and the macOS TCC dialog,
+        // so the system permission popup reliably renders ON TOP of our
+        // guide instead of behind it. Empirically, the Input Monitoring
+        // TCC dialog for sandboxed LSUIElement apps is NOT at .modalPanel
+        // level, so .floating would put our window above the system dialog.
         win.level = .normal
         win.hasShadow = true
         win.appearance = NSApp.effectiveAppearance
-        win.contentView = NSHostingView(rootView: guideView)
+        win.contentView = guideView
 
         win.alphaValue = 0
         win.makeKeyAndOrderFront(nil)
@@ -53,6 +77,24 @@ final class PermissionWindowController {
         }
 
         self.window = win
+        startGrantPolling()
+    }
+
+    /// Polls every 2 seconds for an external grant (user toggled Input Monitoring
+    /// in System Settings without clicking "I've granted access" in our guide).
+    /// `CGPreflightListenEventAccess` is cheap and never triggers a system prompt.
+    private func startGrantPolling() {
+        grantPollTimer?.invalidate()
+        grantPollTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            if PermissionManager.isPermissionGranted() {
+                self.log.info("Permission detected via background poll — dismissing window")
+                self.grantPollTimer?.invalidate()
+                self.grantPollTimer = nil
+                self.dismiss()
+                self.onPermissionGranted?()
+            }
+        }
     }
 
     private var checkAttempts = 0
@@ -62,6 +104,8 @@ final class PermissionWindowController {
         if PermissionManager.isPermissionGranted() {
             log.info("Permission confirmed — dismissing window")
             checkAttempts = 0
+            grantPollTimer?.invalidate()
+            grantPollTimer = nil
             dismiss()
             onPermissionGranted?()
             return
@@ -93,6 +137,8 @@ final class PermissionWindowController {
 
     func dismiss() {
         guard let win = window else { return }
+        grantPollTimer?.invalidate()
+        grantPollTimer = nil
         UIActionLogger.windowClosed("PermissionGuide")
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.3

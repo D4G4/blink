@@ -29,7 +29,7 @@ final class OnboardingWindowController {
             }
         )
 
-        let win = NSWindow(
+        let win = KeyableBorderlessWindow(
             contentRect: windowFrame,
             styleMask: [.borderless],
             backing: .buffered,

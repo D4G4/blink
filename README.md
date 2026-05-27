@@ -18,7 +18,7 @@
 
 ---
 
-> **Why open source?** Blink needs Accessibility permission to work — that's a lot of trust. We made it open source so you can see exactly what we do with it: read input *timing*, never content. No analytics, no telemetry, no network calls. Every line is right here.
+> **Why open source?** Blink needs Input Monitoring permission to work — that's a lot of trust. We made it open source so you can see exactly what we do with it: read input *timing*, never content. No analytics, no telemetry, no network calls. Every line is right here.
 
 ---
 
@@ -57,7 +57,7 @@ Update later with `brew upgrade --cask blink`.
    xattr -cr /Applications/Blink.app
    ```
 4. Launch Blink — it appears as an icon in your menu bar
-5. Grant **Accessibility** when prompted (required for smart detection)
+5. Grant **Input Monitoring** when prompted (required for smart detection)
 
 > The `xattr` step is needed because the app isn't notarized with Apple (we're open source, not paying $99/year for a certificate). Homebrew install handles this automatically.
 
@@ -79,7 +79,7 @@ Update later with `brew upgrade --cask blink`.
 - **🧠 Flow detection** — Monitors typing rhythm and app switching. When you're in deep focus, the timer extends from 20 to 30-40 minutes.
 - **⏸️ Natural pause waiting** — Doesn't interrupt mid-keystroke. Waits for a 6-second gap in your input — a natural thought boundary.
 - **🚶 Walk-away detection** — Left your desk for 3+ minutes? That counts as a break. Timer resets silently.
-- **🎬 Video awareness** — Watching YouTube or Netflix? Timer pauses — you're already resting your focus.
+- **🎬 Video awareness** — Watching in TV.app, VLC, IINA, or other native video players? Timer pauses — you're already resting your focus. *(Browser video — YouTube, Netflix in Safari/Chrome — is not detected; the timer keeps running.)*
 - **🎙️ Meeting detection** — Mic or camera active? Timer pauses. No interruptions during calls.
 - **🤖 Agent workflow aware** — Waiting for an AI response while scrolling? Timer keeps running. Sitting perfectly still for 3 minutes? That's a walk-away.
 - **👁️ Gabor patch exercises** — Built-in vision training with three scientifically studied exercise types. Train your visual cortex to detect subtler contrasts — right from the menu bar or during a break.
@@ -172,7 +172,7 @@ Or open `Blink.Windows.slnx` in Visual Studio 2022+.
 ### Tests
 
 ```bash
-# macOS — 85 tests
+# macOS — 183 tests
 cd blink-macos/BlinkCore && swift test
 
 # Windows — 74 tests (runs on Mac too)

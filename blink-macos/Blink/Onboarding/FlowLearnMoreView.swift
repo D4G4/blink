@@ -78,7 +78,6 @@ struct FlowLearnMoreView: View {
     }
 
     var body: some View {
-        let fg = Color.primary
         let accent = theme.accent(for: colorScheme)
 
         VStack(spacing: 0) {

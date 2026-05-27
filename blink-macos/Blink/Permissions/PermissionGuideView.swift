@@ -1,8 +1,10 @@
 import SwiftUI
 
-/// Visual guide for granting Accessibility permission manually.
+/// Visual guide for granting Input Monitoring permission manually.
 /// Landscape layout — hero screenshot on left, steps on right, button at bottom full width.
-/// Auto-dismissed by AppState polling when permission is granted.
+/// Auto-dismissed by PermissionWindowController's background poll
+/// (CGPreflightListenEventAccess) when permission is granted via the
+/// system dialog OR by clicking "I've granted access".
 struct PermissionGuideView: View {
     let theme: BlinkTheme
     let onOpenSettings: () -> Void
@@ -33,7 +35,7 @@ struct PermissionGuideView: View {
                         Image(systemName: "hand.raised.circle.fill")
                             .font(.system(size: 24, weight: .light))
                             .foregroundStyle(fg)
-                        Text("Grant Accessibility Access")
+                        Text("Grant Input Monitoring Access")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundStyle(fg)
                     }
@@ -106,7 +108,7 @@ struct PermissionGuideView: View {
                 }
 
                 if showError {
-                    Text("Permission not detected — make sure Blink is toggled on in Accessibility")
+                    Text("Permission not detected — make sure Blink is toggled on in Input Monitoring")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(fg)
                         .padding(.top, 6)
@@ -121,7 +123,7 @@ struct PermissionGuideView: View {
     // MARK: - Annotated Screenshot
 
     private func annotatedScreenshot(accent: Color, fg: Color) -> some View {
-        Image("AccessibilitySettings")
+        Image("InputMonitoringSettings")
             .resizable()
             .aspectRatio(contentMode: .fit)
             .clipShape(RoundedRectangle(cornerRadius: 10))

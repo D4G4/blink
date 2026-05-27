@@ -187,7 +187,7 @@ struct WhyExistView: View {
                 featureRow(icon: "figure.walk", title: "Walk-away detection",
                            text: "Step away from your computer? Blink counts that as a break and silently resets the timer.")
                 featureRow(icon: "play.rectangle", title: "Video awareness",
-                           text: "Detects when you're watching video and pauses — you're already resting your focus.")
+                           text: "When a native video app (TV, VLC, IINA, Netflix.app, etc.) is frontmost, the timer pauses — you're already resting your focus.")
                 featureRow(icon: "video", title: "Meeting detection",
                            text: "Pauses automatically during calls so you're never interrupted in a meeting.")
             }
