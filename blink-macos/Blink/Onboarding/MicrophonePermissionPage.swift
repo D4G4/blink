@@ -17,11 +17,6 @@ import AVFoundation
 /// Privacy → Microphone without coming back to click Continue.
 struct MicrophonePermissionPage: View {
     let theme: BlinkTheme
-    /// nil when there's no "back" target — happens when this page is
-    /// presented from PermissionFlowView (post-onboarding), where mic is
-    /// the first step. In OnboardingView, this points to the flow
-    /// sensitivity page.
-    let onBack: (() -> Void)?
     /// Called when this step is resolved (granted, skipped, or post-denial continue).
     let onAdvance: () -> Void
 
@@ -54,9 +49,9 @@ struct MicrophonePermissionPage: View {
         ZStack(alignment: .topLeading) {
             theme.backgroundGradient(for: colorScheme).ignoresSafeArea()
 
-            if onBack != nil {
-                backButton(fg: fg)
-            }
+            // No back button — PermissionFlow is forward-only. The page
+            // is the entry point into a dedicated window, and there's
+            // nowhere to go back to.
 
             // `frame(maxWidth: .infinity, maxHeight: .infinity)` forces
             // the content VStack to fill the whole ZStack. Without it,
@@ -74,24 +69,6 @@ struct MicrophonePermissionPage: View {
             .padding(.top, outerVPad)
             .padding(.bottom, outerVPad)
         }
-    }
-
-    private func backButton(fg: Color) -> some View {
-        Button {
-            stopPolling()
-            onBack?()
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
-                Text("Flow")
-                    .font(.system(size: 14, weight: .medium))
-            }
-            .foregroundStyle(fg)
-        }
-        .buttonStyle(.plain)
-        .padding(.top, 20)
-        .padding(.leading, 24)
     }
 
     // MARK: - Initial step
@@ -285,11 +262,11 @@ struct MicrophonePermissionPage: View {
 }
 
 #Preview("Peach") {
-    MicrophonePermissionPage(theme: .peach, onBack: {}, onAdvance: {})
+    MicrophonePermissionPage(theme: .peach, onAdvance: {})
         .frame(width: 900, height: 650)
 }
 
 #Preview("Sage") {
-    MicrophonePermissionPage(theme: .sage, onBack: {}, onAdvance: {})
+    MicrophonePermissionPage(theme: .sage, onAdvance: {})
         .frame(width: 900, height: 650)
 }

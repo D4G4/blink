@@ -8,7 +8,7 @@ private let allThemes: [BlinkTheme] = [.peach, .midnight, .sage, .sand, .mono]
             ForEach(allThemes) { theme in
                 VStack(spacing: 4) {
                     Text(theme.name).font(.caption).foregroundStyle(.secondary)
-                    MicrophonePermissionPage(theme: theme, onBack: {}, onAdvance: {})
+                    MicrophonePermissionPage(theme: theme, onAdvance: {})
                         .frame(width: 500, height: 600)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
@@ -26,7 +26,7 @@ private let allThemes: [BlinkTheme] = [.peach, .midnight, .sage, .sand, .mono]
             ForEach(allThemes) { theme in
                 VStack(spacing: 4) {
                     Text(theme.name).font(.caption).foregroundStyle(.secondary)
-                    InputMonitoringPermissionPage(theme: theme, mode: .standard, onBack: {}, onComplete: { _ in })
+                    InputMonitoringPermissionPage(theme: theme, mode: .standard, onComplete: { _ in })
                         .frame(width: 700, height: 600)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
@@ -43,7 +43,7 @@ private let allThemes: [BlinkTheme] = [.peach, .midnight, .sage, .sand, .mono]
             ForEach(allThemes) { theme in
                 VStack(spacing: 4) {
                     Text(theme.name).font(.caption).foregroundStyle(.secondary)
-                    InputMonitoringPermissionPage(theme: theme, mode: .staleGrant, onBack: nil, onComplete: { _ in })
+                    InputMonitoringPermissionPage(theme: theme, mode: .staleGrant, onComplete: { _ in })
                         .frame(width: 700, height: 600)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }

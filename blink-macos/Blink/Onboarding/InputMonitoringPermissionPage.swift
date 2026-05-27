@@ -31,9 +31,6 @@ struct InputMonitoringPermissionPage: View {
 
     let theme: BlinkTheme
     var mode: Mode = .standard
-    /// nil when there's no "back" target (recovery window has no
-    /// preceding page; onboarding always has Microphone behind it).
-    let onBack: (() -> Void)?
     /// Called when this step resolves. `basicMode` is true when the user
     /// explicitly opted out of Input Monitoring (basic-timer-only path).
     /// Always false in `.staleGrant` mode (no opt-out shown).
@@ -81,9 +78,8 @@ struct InputMonitoringPermissionPage: View {
         return ZStack(alignment: .topLeading) {
             theme.backgroundGradient(for: colorScheme).ignoresSafeArea()
 
-            if onBack != nil {
-                backButton(fg: fg)
-            }
+            // No back button — PermissionFlow is forward-only, and the
+            // staleGrant recovery window is a standalone surface.
 
             VStack(spacing: 0) {
                 Image(systemName: iconName)
@@ -192,24 +188,6 @@ struct InputMonitoringPermissionPage: View {
         }
     }
 
-    private func backButton(fg: Color) -> some View {
-        Button {
-            stopPolling()
-            onBack?()
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
-                Text("Microphone")
-                    .font(.system(size: 14, weight: .medium))
-            }
-            .foregroundStyle(fg)
-        }
-        .buttonStyle(.plain)
-        .padding(.top, 20)
-        .padding(.leading, 24)
-    }
-
     // MARK: - Grant polling + manual check
 
     private func initializeFromCurrentStatus() {
@@ -289,12 +267,12 @@ struct InputMonitoringPermissionPage: View {
 }
 
 #Preview("Peach") {
-    InputMonitoringPermissionPage(theme: .peach, onBack: {}, onComplete: { _ in })
+    InputMonitoringPermissionPage(theme: .peach, onComplete: { _ in })
         .frame(width: 900, height: 650)
 }
 
 #Preview("Midnight") {
-    InputMonitoringPermissionPage(theme: .midnight, onBack: {}, onComplete: { _ in })
+    InputMonitoringPermissionPage(theme: .midnight, onComplete: { _ in })
         .frame(width: 900, height: 650)
         .preferredColorScheme(.dark)
 }

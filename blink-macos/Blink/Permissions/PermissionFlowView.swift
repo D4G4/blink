@@ -26,9 +26,6 @@ struct PermissionFlowView: View {
             if currentStep == .microphone {
                 MicrophonePermissionPage(
                     theme: theme,
-                    // No back from the permission flow — there's nothing
-                    // before it. (Onboarding is already done.)
-                    onBack: nil,
                     onAdvance: {
                         withAnimation(.easeInOut(duration: 0.4)) {
                             currentStep = .inputMonitoring
@@ -40,14 +37,13 @@ struct PermissionFlowView: View {
                     removal: .move(edge: .leading).combined(with: .opacity)
                 ))
             } else {
+                // Forward-only — once the user resolves Mic (granted or
+                // skipped) the IM page takes over with no way back. The
+                // earlier back button only added confusion (going back
+                // re-rendered an already-resolved step).
                 InputMonitoringPermissionPage(
                     theme: theme,
                     mode: .standard,
-                    onBack: {
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            currentStep = .microphone
-                        }
-                    },
                     onComplete: { basicMode in
                         onComplete(basicMode)
                     }

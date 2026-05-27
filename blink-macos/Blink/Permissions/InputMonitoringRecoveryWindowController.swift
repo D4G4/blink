@@ -33,7 +33,6 @@ final class InputMonitoringRecoveryWindowController {
         let page = InputMonitoringPermissionPage(
             theme: theme,
             mode: .staleGrant,
-            onBack: nil,
             onComplete: { [weak self] basicMode in
                 self?.dismiss()
                 onResolved(basicMode)
