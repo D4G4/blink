@@ -48,6 +48,11 @@ struct MicrophonePermissionPage: View {
 
             backButton(fg: fg)
 
+            // `frame(maxWidth: .infinity, maxHeight: .infinity)` forces
+            // the content VStack to fill the whole ZStack. Without it,
+            // SwiftUI takes the VStack's intrinsic width (collapsed to
+            // its widest child, ~540pt) and the ZStack's .topLeading
+            // alignment pins the whole pile to the upper-left corner.
             VStack(spacing: 0) {
                 if deniedInSession {
                     deniedStep(fg: fg, bgTop: bgTop, iconSize: iconSize, titleSize: titleSize)
@@ -55,6 +60,7 @@ struct MicrophonePermissionPage: View {
                     initialStep(fg: fg, bgTop: bgTop, iconSize: iconSize, titleSize: titleSize)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.top, outerVPad)
             .padding(.bottom, outerVPad)
         }
