@@ -177,13 +177,10 @@ struct PermissionWizardView: View {
             return
         }
         withAnimation { currentStep = .inputMonitoring }
-        // Fire the system prompt + start grant polling. Brief delay lets the
-        // step transition render so the user sees IM content before the OS
-        // dialog appears.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            NSApp.activate(ignoringOtherApps: true)
-            PermissionManager.requestInputMonitoringAccess()
-        }
+        // Start polling so we auto-detect the grant when it happens, but do
+        // NOT auto-fire the OS dialog here — that only happens when the
+        // user taps "Open Settings" (so the system prompt and the Settings
+        // pane appear together as a single explicit user-initiated action).
         startIMPolling()
     }
 
@@ -232,6 +229,14 @@ struct PermissionWizardView: View {
 
             HStack(spacing: 12) {
                 wizardButton(label: "Open Settings", icon: "gear", primary: true, fg: fg, bgTop: bgTop) {
+                    // User-initiated: fire the OS prompt and open the
+                    // Settings pane together. On first invocation the OS
+                    // dialog appears (with "Open System Settings" button
+                    // that lands on the same pane); on subsequent
+                    // invocations the request is a no-op and the deeplink
+                    // is the working path.
+                    NSApp.activate(ignoringOtherApps: true)
+                    PermissionManager.requestInputMonitoringAccess()
                     PermissionManager.openInputMonitoringSettings()
                 }
                 wizardButton(label: "I've granted access", icon: "checkmark.circle.fill", primary: false, fg: fg, bgTop: bgTop) {
