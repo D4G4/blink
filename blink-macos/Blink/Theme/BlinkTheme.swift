@@ -159,7 +159,10 @@ struct BlinkTheme: Identifiable, Equatable {
         overlayBackgroundLight: Color(hex: 0xEAF5EC).opacity(0.95),
         overlayTextDark: Color(hex: 0xC8EED0),
         overlayTextLight: Color(hex: 0x1A3520),
-        onBackgroundTextLight: .white,
+        // Light Sage background (0xB8D4BC) is too pastel for white text — WCAG
+        // contrast lands at ~1.3:1. Dark forest green matches the theme palette
+        // and keeps headings readable on the gradient.
+        onBackgroundTextLight: Color(hex: 0x1A3520),
         onBackgroundTextDark: .white,
         invertInDarkMode: false
     )
@@ -178,7 +181,9 @@ struct BlinkTheme: Identifiable, Equatable {
         overlayBackgroundLight: Color(hex: 0xF2F0E8).opacity(0.95),
         overlayTextDark: Color(hex: 0xE8E0CC),
         overlayTextLight: Color(hex: 0x2E2A1E),
-        onBackgroundTextLight: .white,
+        // Light Sand background (0xD8D0B8) is too pastel for white text — same
+        // contrast failure as Sage. Dark brown stays inside the theme palette.
+        onBackgroundTextLight: Color(hex: 0x2E2A1E),
         onBackgroundTextDark: .white,
         invertInDarkMode: false
     )

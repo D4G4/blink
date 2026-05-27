@@ -14,11 +14,6 @@ final class AppState: ObservableObject {
     @Published var breaksTakenToday: Int = 0
     @Published var breaksPromptedToday: Int = 0
     @Published var hasInputMonitoringPermission: Bool = false
-    /// True while the first-run permission wizard is on screen. Views use
-    /// this to suppress the "Basic timer mode" banner during setup — the
-    /// wizard is the ground truth UI for that decision, so a duplicate
-    /// nudge in the menu bar would just be noise.
-    @Published var isPermissionWizardShowing: Bool = false
     @Published var isVideoPlaying: Bool = false
     @Published var isPaused: Bool = false
     @Published var micAlwaysOnWarning: Bool = false
@@ -31,8 +26,8 @@ final class AppState: ObservableObject {
     private var inputMonitor: MacInputMonitor?
     private var appMonitor: MacAppMonitor?
     private var contextDetector: MacContextDetector?
-    private var permissionWindow: PermissionWindowController?  // troubleshooting only
-    private var permissionWizard: PermissionWizardWindowController?
+    private var permissionRecovery: InputMonitoringRecoveryWindowController?
+    private var launchHUD: LaunchHUDWindowController?
 
     // Timers
     private var tickTimer: Timer?
@@ -120,8 +115,11 @@ final class AppState: ObservableObject {
             Log.i("Onboarding not complete — deferring permissions")
             onboardingObserver = NotificationCenter.default.addObserver(
                 forName: .onboardingCompleted, object: nil, queue: .main
-            ) { [weak self] _ in
-                Task { @MainActor in self?.onboardingCompleted() }
+            ) { [weak self] note in
+                // basicMode is set by OnboardingView's IM step — true when
+                // the user explicitly opted out of Input Monitoring.
+                let basicMode = (note.userInfo?["basicMode"] as? Bool) ?? false
+                Task { @MainActor in self?.onboardingCompleted(basicMode: basicMode) }
             }
         }
     }
@@ -207,90 +205,132 @@ final class AppState: ObservableObject {
 
     // MARK: - Permissions & Monitoring
 
-    func onboardingCompleted() {
+    /// Called the moment onboarding finishes (theme → flow → mic → IM).
+    /// `basicMode == true` means the user explicitly opted out of Input
+    /// Monitoring on the IM step. We persist their choice and start
+    /// monitoring directly — no separate wizard window.
+    func onboardingCompleted(basicMode: Bool) {
         if let observer = onboardingObserver {
             NotificationCenter.default.removeObserver(observer)
             onboardingObserver = nil
         }
-        checkPermissionsAndStart()
+        let granted = PermissionManager.isPermissionGranted()
+        Log.i("Onboarding completed: basicMode=\(basicMode), IM granted=\(granted)")
+
+        if basicMode {
+            UserDefaults.standard.set(true, forKey: "basicModeOptIn")
+            UserDefaults.standard.set(false, forKey: "permissionGranted")
+            hasInputMonitoringPermission = false
+        } else {
+            UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+            UserDefaults.standard.set(granted, forKey: "permissionGranted")
+            hasInputMonitoringPermission = granted
+        }
+        startMonitoringAfterAllPermissions()
     }
 
+    /// Permission probe for already-onboarded users (every subsequent launch).
+    /// If IM is granted or the user has opted into basic mode, start the
+    /// engine. If IM was previously granted but is now revoked, surface the
+    /// legacy troubleshooting guide — that's the post-onboarding recovery
+    /// path. We never re-open the onboarding wizard from here.
     private func checkPermissionsAndStart() {
         let granted = PermissionManager.isPermissionGranted()
         let micStatus = PermissionManager.microphoneAuthorizationStatus()
         let basicModeOptIn = UserDefaults.standard.bool(forKey: "basicModeOptIn")
-        Log.i("Permission probe: IM=\(granted), mic=\(micStatus.rawValue), basicModeOptIn=\(basicModeOptIn)")
+        let previouslyGranted = UserDefaults.standard.bool(forKey: "permissionGranted")
+        Log.i("Permission probe: IM=\(granted), mic=\(micStatus.rawValue), basicModeOptIn=\(basicModeOptIn), prevGranted=\(previouslyGranted)")
 
-        // IM granted → full mode.
         if granted {
             hasInputMonitoringPermission = true
             UserDefaults.standard.set(true, forKey: "permissionGranted")
-            // Clear any prior basic-mode opt-in — the user upgraded by
-            // granting IM, so the menu-bar nudge should disappear.
             UserDefaults.standard.set(false, forKey: "basicModeOptIn")
             startMonitoringAfterAllPermissions()
             return
         }
 
-        // IM not granted but the user previously chose basic mode → skip
-        // the wizard, run with the dumb-timer fallback. Menu bar banner
-        // still nudges them to upgrade.
         if basicModeOptIn {
-            Log.i("Basic mode opt-in remembered — skipping wizard, starting dumb-timer fallback")
+            Log.i("Basic mode opt-in remembered — starting basic-timer fallback")
             hasInputMonitoringPermission = false
             startMonitoringAfterAllPermissions()
             return
         }
 
-        // First time without IM → run the wizard (mic step first, then IM
-        // step, with a 'Continue with basic timer' opt-out at the bottom).
-        Log.i("IM not granted — showing permission wizard")
+        // IM not granted and no basic-mode opt-in. This only happens
+        // post-onboarding if the user later revoked IM in Settings (the
+        // onboarding flow guarantees one of granted / basic-mode is set).
+        // Show the recovery window and DO NOT start the timer — the
+        // recovery UI is the source of truth right now. Starting a
+        // basic-mode timer in parallel would send mixed signals
+        // ("recovery modal says fix this" vs "timer is already
+        // running"). The timer starts only after the user resolves the
+        // recovery via the callback below (either re-grant or skip).
+        Log.i("IM revoked post-onboarding — showing recovery window (no timer until resolved)")
         hasInputMonitoringPermission = false
-        isPermissionWizardShowing = true
-        permissionWizard = PermissionWizardWindowController()
-        permissionWizard?.show(theme: ThemeManager.shared.current) { [weak self] basicMode in
+        showRecoveryWindow()
+    }
+
+    /// Shows the recovery window for the cached-grant / revoked case —
+    /// the same InputMonitoringPermissionPage used in onboarding, with
+    /// its `.staleGrant` mode that swaps the header copy to "Permission
+    /// Granted — But Not Working" + the toggle-off-then-on guidance.
+    private func showRecoveryWindow() {
+        permissionRecovery = InputMonitoringRecoveryWindowController()
+        permissionRecovery?.show(theme: ThemeManager.shared.current) { [weak self] basicMode in
             guard let self else { return }
-            self.permissionWizard = nil
-            self.isPermissionWizardShowing = false
+            self.permissionRecovery = nil
             if basicMode {
-                Log.i("Wizard complete — user opted into basic mode")
+                // User clicked "Continue with basic timer" — opted out of
+                // smart mode for now. Persisted as basicModeOptIn=true so
+                // future launches don't keep re-popping the recovery
+                // window. The opt-in is automatically cleared the next
+                // time IM is actually granted (see checkPermissionsAndStart).
+                Log.i("Recovery dismissed via skip — entering basic mode")
                 UserDefaults.standard.set(true, forKey: "basicModeOptIn")
+                UserDefaults.standard.set(false, forKey: "permissionGranted")
                 self.hasInputMonitoringPermission = false
             } else {
-                Log.i("Wizard complete — IM granted, starting full engine")
+                Log.i("Recovery resolved — IM re-granted")
                 UserDefaults.standard.set(true, forKey: "permissionGranted")
                 UserDefaults.standard.set(false, forKey: "basicModeOptIn")
                 self.hasInputMonitoringPermission = true
             }
-            self.startMonitoringAfterAllPermissions()
+            // Suppress the launch HUD — by the time recovery resolves
+            // the user is well past the initial "Blink is now active"
+            // moment.
+            self.startMonitoringAfterAllPermissions(showHUD: false)
         }
     }
 
-    /// Re-shows the legacy permission guide for the cached-grant
-    /// troubleshooting case (different scenario from the wizard — the user
-    /// already completed the wizard but the actual tap fails to create).
-    private func showPermissionGuide(troubleshooting: Bool = false) {
-        permissionWindow = PermissionWindowController()
-        permissionWindow?.show(
-            theme: ThemeManager.shared.current,
-            troubleshooting: troubleshooting
-        ) { [weak self] in
-            guard let self else { return }
-            UserDefaults.standard.set(true, forKey: "permissionGranted")
-            self.permissionWindow = nil
-            self.hasInputMonitoringPermission = true
-            self.startMonitoringAfterAllPermissions()
-        }
-    }
-
-    /// Final step: actually start the engine. Called once all permissions
-    /// (IM + mic) have been resolved one way or the other.
-    private func startMonitoringAfterAllPermissions() {
+    /// Idempotent: tears down any existing monitors/timer first, then
+    /// starts fresh. Callable on first launch, after onboarding completes,
+    /// and on recovery (e.g. user re-granted IM after seeing the
+    /// staleGrant window). `showHUD` is false for the recovery restart so
+    /// we don't pop a second Launch HUD after one already fired earlier
+    /// this launch.
+    private func startMonitoringAfterAllPermissions(showHUD: Bool = true) {
+        teardownMonitoring()
         startMonitoring()
         startTimer()
-        showTimerForStartup()
-        Log.i("Monitors and timers started")
+        if showHUD { showLaunchHUD() }
+        Log.i("Monitors and timers started (showHUD=\(showHUD))")
         verifyTapAliveOrReprompt()
+    }
+
+    /// Stop any running monitors + timer so startMonitoringAfterAllPermissions
+    /// can be called again safely (without leaking the prior CGEventTap,
+    /// NSWorkspace observer, context detector, or tick Timer).
+    private func teardownMonitoring() {
+        inputMonitor?.stopMonitoring()
+        inputMonitor = nil
+        appMonitor?.stopMonitoring()
+        appMonitor = nil
+        // MacContextDetector has no lifecycle methods — just drop the
+        // reference. The cheap polling it does via the tick timer stops
+        // automatically once tickTimer is invalidated below.
+        contextDetector = nil
+        tickTimer?.invalidate()
+        tickTimer = nil
     }
 
     /// Guards against the cached-grant silent-failure path:
@@ -327,7 +367,7 @@ final class AppState: ObservableObject {
             self.tickTimer?.invalidate()
             self.tickTimer = nil
             self.overlayController.dismiss()
-            self.showPermissionGuide(troubleshooting: preflight)
+            self.showRecoveryWindow()
         }
     }
 
@@ -526,27 +566,29 @@ final class AppState: ObservableObject {
         }
     }
 
-    // MARK: - Menu bar
+    // MARK: - Launch HUD
 
-    private func showTimerForStartup() {
-        findStatusItemAndOpen(attempts: 0)
+    /// Shows a brief themed HUD at the top-right of the screen on launch
+    /// to confirm Blink is running. Replaces the previous "auto-open the
+    /// menu bar popup" approach — that couldn't surface anything when the
+    /// user's menu bar icon was hidden behind the notch / Bartender / or
+    /// pushed off-screen by sheer menu bar overflow. The HUD is its own
+    /// floating window so it's always visible regardless of menu bar state.
+    private func showLaunchHUD() {
+        launchHUD = LaunchHUDWindowController()
+        launchHUD?.show(theme: ThemeManager.shared.current) { [weak self] in
+            // User clicked the HUD — open the preferences window so they
+            // have somewhere obvious to land if they can't find the menu
+            // bar icon.
+            self?.openPreferences()
+        }
     }
 
-    private func findStatusItemAndOpen(attempts: Int) {
-        guard attempts < 10 else {
-            Log.i("MenuBarController: gave up finding status item after 10 attempts")
-            return
-        }
-        let delay = 0.3 * Double(attempts + 1)
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-            MenuBarController.shared.findStatusItem()
-            if MenuBarController.shared.statusItem != nil {
-                Log.i("MenuBarController: found status item on attempt \(attempts + 1)")
-                MenuBarController.shared.open()
-            } else {
-                self.findStatusItemAndOpen(attempts: attempts + 1)
-            }
-        }
+    /// Opens the Preferences window. Called from the launch HUD tap so
+    /// the user has somewhere obvious to land if they can't find the menu
+    /// bar icon.
+    func openPreferences() {
+        PreferencesWindowController.shared.show(appState: self, themeManager: ThemeManager.shared)
     }
 
     // MARK: - Public actions (for menu bar buttons)

@@ -245,6 +245,36 @@ private struct InstructionsPhase: View {
                         .lineSpacing(4)
                 }
 
+                // Visual reference for what each tilt direction looks
+                // like. Skipped for contrast detection (different task —
+                // patches there are unambiguously vertical or absent).
+                if state.exerciseType != .contrastDetection {
+                    Divider()
+                        .background(fg.opacity(0.15))
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label("What the tilts look like", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(fg)
+
+                        Text("Exaggerated examples — the real test uses smaller angles, so look carefully.")
+                            .font(.system(size: 13))
+                            .foregroundStyle(fg.opacity(0.85))
+                            .lineSpacing(3)
+
+                        HStack(spacing: 36) {
+                            // angleDegrees signs match the renderer
+                            // convention verified in GaborExerciseState
+                            // .submitResponse: positive → "\" (tilted
+                            // left), negative → "/" (tilted right).
+                            tiltExample(label: "Tilted Left", angleDegrees: 25, fg: fg)
+                            tiltExample(label: "Tilted Right", angleDegrees: -25, fg: fg)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 4)
+                    }
+                }
+
                 Divider()
                     .background(fg.opacity(0.15))
 
@@ -299,6 +329,32 @@ private struct InstructionsPhase: View {
             Spacer()
         }
         .padding(40)
+    }
+
+    /// Mini Gabor patch used in the instructions step to show what each
+    /// tilt direction looks like. Uses max contrast and a 25° angle (vs
+    /// the ±15° angle the real test uses) so the direction is
+    /// unambiguous. Renderer convention (verified empirically): positive
+    /// `angleDegrees` → stripes go top-LEFT to bottom-RIGHT ("\" = tilted
+    /// left); negative → "/" = tilted right. See the matching comment in
+    /// GaborExerciseState.submitResponse.
+    private func tiltExample(label: String, angleDegrees: Double, fg: Color) -> some View {
+        VStack(spacing: 10) {
+            GaborRenderer.asImage(
+                pointSize: 84,
+                contrast: 1.0,
+                spatialFrequency: 0.06,
+                orientation: angleDegrees * .pi / 180.0,
+                sigma: 14
+            )
+            .frame(width: 84, height: 84)
+            .clipShape(Circle())
+            .overlay(Circle().stroke(fg.opacity(0.3), lineWidth: 1))
+
+            Text(label)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(fg)
+        }
     }
 }
 

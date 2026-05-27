@@ -59,10 +59,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
 
             onboardingController = OnboardingWindowController()
-            onboardingController?.show(themeManager: themeManager) { [weak self] in
+            onboardingController?.show(themeManager: themeManager) { [weak self] basicMode in
                 self?.onboardingController = nil
                 NSApp.setActivationPolicy(.accessory)
-                NotificationCenter.default.post(name: .onboardingCompleted, object: nil)
+                // basicMode flows through userInfo so AppState's observer
+                // can choose between the smart engine and the basic-timer
+                // fallback without firing the legacy wizard.
+                NotificationCenter.default.post(
+                    name: .onboardingCompleted,
+                    object: nil,
+                    userInfo: ["basicMode": basicMode]
+                )
             }
         } else {
             NSApp.setActivationPolicy(.accessory)

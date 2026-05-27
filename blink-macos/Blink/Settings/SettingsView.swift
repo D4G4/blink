@@ -82,6 +82,19 @@ struct SettingsView: View {
     
     private var generalContent: some View {
         VStack(alignment: .leading, spacing: 20) {
+
+            settingsSection("Menu Bar") {
+                settingsToggle("Show countdown timer", isOn: $showTimerInMenuBar)
+            }
+            
+            settingsSection("Break Screen") {
+                settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
+                Text("Pure black background instead of themed colors")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
+                    .padding(.leading, 4)
+            }
+
             settingsSection("Mic Detection") {
                 settingsToggle("Pause timer during calls", isOn: $pauseDuringCalls)
                 Text("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
@@ -100,18 +113,6 @@ struct SettingsView: View {
                             .frame(width: 50)
                     }
                 }
-            }
-            
-            settingsSection("Menu Bar") {
-                settingsToggle("Show countdown timer", isOn: $showTimerInMenuBar)
-            }
-            
-            settingsSection("Break Screen") {
-                settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
-                Text("Pure black background instead of themed colors")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
-                    .padding(.leading, 4)
             }
             
             settingsSection("System") {
@@ -338,9 +339,14 @@ struct SettingsView: View {
     // MARK: - About
     
     private var aboutContent: some View {
+        // `frame(maxWidth: .infinity, maxHeight: .infinity)` so the About
+        // tab fills the same window area as the other tabs (General,
+        // Theme, Flow). Without this the VStack only takes its intrinsic
+        // narrow width, and the tab-switch transition animates the
+        // content "expanding" as the view bounds re-flow.
         VStack(spacing: 16) {
             Spacer()
-            
+
             ZStack {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(theme.backgroundTop)
@@ -365,9 +371,10 @@ struct SettingsView: View {
             Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0")")
                 .font(.system(size: 11))
                 .foregroundStyle(.tertiary)
-            
+
             Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     // MARK: - Reusable Components

@@ -13,6 +13,26 @@ struct FlowSensitivityPage: View {
     @State private var showResearch = false
 
     var body: some View {
+        GeometryReader { proxy in
+            content(availableHeight: proxy.size.height)
+        }
+    }
+
+    /// Sizing scales by window height so the layout never clips the Get
+    /// Started button on a 13" MacBook Air (640pt window) while still using
+    /// generous spacing on 14"+ laptops and external displays.
+    /// `isCompact` cutoff = 700pt; below that we shrink fixed elements but
+    /// keep them legible. Above that the design uses its full design sizes.
+    @ViewBuilder
+    private func content(availableHeight: CGFloat) -> some View {
+        let isCompact = availableHeight < 700
+        let iconSize: CGFloat = isCompact ? 44 : 56
+        let iconBottomPad: CGFloat = isCompact ? 10 : 20
+        let titleSize: CGFloat = isCompact ? 26 : 32
+        let titleBottomPad: CGFloat = isCompact ? 4 : 6
+        let buttonSpacing: CGFloat = isCompact ? 16 : 30
+        let outerVPad: CGFloat = isCompact ? 20 : 40
+
         let fg = theme.onBackgroundText(for: colorScheme)
         let accent = theme.accent(for: colorScheme)
 
@@ -39,18 +59,18 @@ struct FlowSensitivityPage: View {
             VStack(spacing: 0) {
 
                 Image(systemName: "brain.head.profile")
-                    .font(.system(size: 56, weight: .light))
+                    .font(.system(size: iconSize, weight: .light))
                     .foregroundStyle(fg)
                     .frame(maxWidth: .infinity)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, iconBottomPad)
 
                 Text("Flow Detection")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .font(.system(size: titleSize, weight: .bold, design: .rounded))
                     .foregroundStyle(fg)
                     .frame(maxWidth: .infinity)
-                    .padding(.bottom, 6)
-                
-                Spacer()
+                    .padding(.bottom, titleBottomPad)
+
+                Spacer(minLength: 0)
 
                 FlowSensitivityView(
                     sensitivity: $sensitivity,
@@ -65,9 +85,9 @@ struct FlowSensitivityPage: View {
                         .frame(width: 480, height: 700)
                 }
 
-                Spacer()
+                Spacer(minLength: 0)
 
-                VStack(spacing: 30) {
+                VStack(spacing: buttonSpacing) {
                     Button {
                         onLearnMore()
                     } label: {
@@ -103,7 +123,8 @@ struct FlowSensitivityPage: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.vertical, 40)
+            .padding(.top, outerVPad)
+            .padding(.bottom, outerVPad)
         }
     }
 
