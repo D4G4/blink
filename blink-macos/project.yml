@@ -8,7 +8,7 @@ options:
 packages:
   BlinkCore:
     url: git@github-d4g4:D4G4/blink-core.git
-    from: "2.2.0"
+    from: "2.3.0"
 
 schemes:
   Blink:
