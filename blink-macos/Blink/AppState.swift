@@ -216,10 +216,22 @@ final class AppState: ObservableObject {
             Log.i("Permission confirmed — monitors and timers started")
             verifyTapAliveOrReprompt()
         } else {
-            Log.i("Permission not granted — firing system prompt + showing guide")
+            Log.i("Permission not granted — showing guide + firing system prompt")
             hasInputMonitoringPermission = false
-            PermissionManager.requestInputMonitoringAccess()
+            // Show our guide window FIRST so the user sees it regardless of
+            // whether the OS Input Monitoring dialog ends up visible. The
+            // guide window (now KeyableBorderlessWindow, .floating level)
+            // calls NSApp.activate(ignoringOtherApps:) on present, which
+            // brings Blink to the foreground.
             showPermissionGuide()
+            // Then fire the system prompt. A brief delay gives the guide
+            // window time to render + activate the app, so the OS dialog
+            // appears on top with focus instead of being silently presented
+            // to an LSUIElement (menu-bar-only) app that's not foregrounded.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                NSApp.activate(ignoringOtherApps: true)
+                PermissionManager.requestInputMonitoringAccess()
+            }
         }
     }
 
