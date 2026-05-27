@@ -80,6 +80,7 @@ struct PermissionWizardView: View {
             }
         }
         .frame(minWidth: 700, minHeight: 500)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .onAppear { initializeFromCurrentStatus() }
         .onDisappear {
             stopIMPolling()
