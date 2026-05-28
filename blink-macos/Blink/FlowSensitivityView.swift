@@ -40,15 +40,15 @@ struct FlowSensitivityView: View {
         //   Balanced   (0.50 → threshold 0.60): moderate — needs real flow signal
         //   Deep work  (0.75 → threshold 0.35): extends readily when focused
         //
-        // Balanced's value comes from BlinkEngine.defaultSensitivity —
-        // the single source of truth for "the default a fresh user
-        // gets". The engine's internal defaults reference the same
-        // constant, so the UI and engine can never disagree about
-        // what Balanced means.
+        // `balanced` IS the canonical default — the single source of
+        // truth for what a fresh user gets. BlinkCore has no internal
+        // default of its own; AppState reads this when constructing the
+        // engine, and @AppStorage falls back to this when the key is
+        // missing. Change this number and the entire app moves with it.
         var value: Double {
             switch self {
             case .eyeHealth: return 0.30
-            case .balanced: return BlinkEngine.defaultSensitivity
+            case .balanced: return 0.50
             case .deepWork: return 0.75
             }
         }

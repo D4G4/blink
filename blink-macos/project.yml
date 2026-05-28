@@ -14,7 +14,7 @@ packages:
     # resolve. BlinkCore is still PRIVATE; access is gated by the
     # account's read permission on D4G4/blink-core.
     url: https://github.com/D4G4/blink-core.git
-    from: "2.6.0"
+    from: "2.7.0"
 
 schemes:
   Blink:
@@ -56,7 +56,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.blink20.app
         MARKETING_VERSION: "4.0.0"
-        CURRENT_PROJECT_VERSION: "11"
+        CURRENT_PROJECT_VERSION: "12"
         ENABLE_HARDENED_RUNTIME: true
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 6V6FZW3FFN

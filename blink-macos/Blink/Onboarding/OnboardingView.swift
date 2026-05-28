@@ -62,6 +62,16 @@ struct OnboardingView: View {
                     onBack: { withAnimation(.easeInOut(duration: 0.4)) { showFlowPage = false } },
                     onLearnMore: { withAnimation(.easeInOut(duration: 0.4)) { showFlowLearnMore = true } },
                     onGetStarted: {
+                        // Persist the sensitivity the user committed to.
+                        // @AppStorage only writes on assignment, so if
+                        // the user accepted the pre-highlighted Balanced
+                        // preset without tapping it, no write would have
+                        // happened — and downstream readers would fall
+                        // through to their own "key missing" defaults.
+                        // Writing here captures the user's visible
+                        // choice regardless of how they reached it.
+                        UserDefaults.standard.set(flowSensitivity, forKey: "flowSensitivity")
+
                         // Mark onboarding done THE MOMENT the user
                         // commits to their flow sensitivity choice — any
                         // subsequent interruption (TCC restart, crash,

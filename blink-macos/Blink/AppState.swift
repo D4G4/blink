@@ -19,8 +19,8 @@ final class AppState: ObservableObject {
     @Published var micAlwaysOnWarning: Bool = false
     @AppStorage("debugNotifications") var debugNotifications: Bool = false
 
-    // Engine
-    public let engine = BlinkEngine()
+    // Engine — constructed in init() with the effective sensitivity.
+    public let engine: BlinkEngine
 
     // Platform monitors
     private var inputMonitor: MacInputMonitor?
@@ -93,6 +93,15 @@ final class AppState: ObservableObject {
     // MARK: - Init
 
     init(preview: Bool = false) {
+        // Construct the engine with the effective sensitivity — either the
+        // persisted user value or the canonical UI default. BlinkCore has
+        // no internal default; this is the only source of truth.
+        let savedSensitivity = UserDefaults.standard.double(forKey: "flowSensitivity")
+        let effectiveSensitivity = savedSensitivity > 0
+            ? savedSensitivity
+            : FlowSensitivityView.Preset.balanced.value
+        self.engine = BlinkEngine(sensitivity: effectiveSensitivity)
+
         if preview {
             hasInputMonitoringPermission = true
             return
@@ -102,23 +111,6 @@ final class AppState: ObservableObject {
         setupEngineCallbacks()
         loadTodayStats()
         BlinkLog.pruneOldLogs()
-
-        // Sync sensitivity from UserDefaults. BlinkCore's engine has its
-        // own internal default (0.7 = Deep work region), but the UI's
-        // canonical default is FlowSensitivityView.Preset.balanced.value
-        // (0.50). On a fresh install the UserDefaults key doesn't exist
-        // and `double(forKey:)` returns 0.0 — if we skip the assignment,
-        // the engine silently disagrees with the UI. Always write the
-        // canonical default so engine and UI read the same value from
-        // here on out.
-        let savedSensitivity = UserDefaults.standard.double(forKey: "flowSensitivity")
-        let effectiveSensitivity = savedSensitivity > 0
-            ? savedSensitivity
-            : FlowSensitivityView.Preset.balanced.value
-        if savedSensitivity == 0 {
-            UserDefaults.standard.set(effectiveSensitivity, forKey: "flowSensitivity")
-        }
-        engine.sensitivity = effectiveSensitivity
 
         let savedWallClock = UserDefaults.standard.integer(forKey: "maxWallClockMinutes")
         if savedWallClock > 0 { engine.maxWallClockSeconds = TimeInterval(savedWallClock * 60) }
