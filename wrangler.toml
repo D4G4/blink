@@ -1,0 +1,7 @@
+# Cloudflare Workers Static Assets — serves the Blink marketing site (blink20.net).
+# Assets-only: no Worker script, just the static files in website/.
+name = "blink"
+compatibility_date = "2024-11-01"
+
+[assets]
+directory = "./website"
