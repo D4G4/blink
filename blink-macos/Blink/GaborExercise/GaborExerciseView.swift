@@ -408,10 +408,15 @@ private struct TrialPhase: View {
                 .font(.system(size: 13))
                 .foregroundStyle(fg)
 
-            // Response buttons
+            // Response buttons (also bound to ← / → arrow keys)
             if feedbackCorrect == nil {
-                responseButtons
-                    .padding(.horizontal, 60)
+                VStack(spacing: 10) {
+                    responseButtons
+                    Text("or press ← / →")
+                        .font(.system(size: 11))
+                        .foregroundStyle(fg.opacity(0.7))
+                }
+                .padding(.horizontal, 60)
             } else {
                 Color.clear.frame(height: 48)
             }
@@ -442,18 +447,22 @@ private struct TrialPhase: View {
                 ResponseButton(label: "Left", icon: "arrow.left.circle", theme: theme, colorScheme: dark) {
                     state.submitResponse(0)
                 }
+                .keyboardShortcut(.leftArrow, modifiers: [])
                 ResponseButton(label: "Right", icon: "arrow.right.circle", theme: theme, colorScheme: dark) {
                     state.submitResponse(1)
                 }
+                .keyboardShortcut(.rightArrow, modifiers: [])
             }
         case .orientationDiscrimination, .flankerMasking:
             HStack(spacing: 28) {
                 ResponseButton(label: "Tilted Left", icon: "arrow.turn.up.left", theme: theme, colorScheme: dark) {
                     state.submitResponse(0)
                 }
+                .keyboardShortcut(.leftArrow, modifiers: [])
                 ResponseButton(label: "Tilted Right", icon: "arrow.turn.up.right", theme: theme, colorScheme: dark) {
                     state.submitResponse(1)
                 }
+                .keyboardShortcut(.rightArrow, modifiers: [])
             }
         }
     }

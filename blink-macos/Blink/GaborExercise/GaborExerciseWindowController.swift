@@ -6,6 +6,7 @@ final class GaborExerciseWindowController: NSObject, NSWindowDelegate {
     static let shared = GaborExerciseWindowController()
     private var window: NSWindow?
     private var exerciseState: GaborExerciseState?
+    private var keyMonitor: Any?
 
     func show(theme: BlinkTheme) {
         if let existing = window, existing.isVisible {
@@ -47,6 +48,22 @@ final class GaborExerciseWindowController: NSObject, NSWindowDelegate {
 
         self.window = win
 
+        // Intercept Esc at the event level. During a trial or the
+        // instructions, it steps back to the picker and is consumed so it
+        // doesn't trigger macOS's exit-fullscreen (which would tear the
+        // whole exercise down). From the picker/results, Esc falls through
+        // to the default behavior (exit fullscreen → close the exercise).
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard event.keyCode == 53, let state = self?.exerciseState else { return event }
+            switch state.phase {
+            case .presenting, .feedback, .instructions:
+                state.returnToPicker()
+                return nil
+            default:
+                return event
+            }
+        }
+
         // Enter native fullscreen after a brief delay so the window is on screen
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             win.toggleFullScreen(nil)
@@ -66,11 +83,19 @@ final class GaborExerciseWindowController: NSObject, NSWindowDelegate {
     }
 
     private func cleanup(_ win: NSWindow) {
+        removeKeyMonitor()
         win.close()
         window = nil
         exerciseState = nil
         NSApp.setActivationPolicy(.accessory)
         UIActionLogger.windowClosed("GaborExercise")
+    }
+
+    private func removeKeyMonitor() {
+        if let monitor = keyMonitor {
+            NSEvent.removeMonitor(monitor)
+            keyMonitor = nil
+        }
     }
 
     // MARK: - NSWindowDelegate
@@ -83,6 +108,7 @@ final class GaborExerciseWindowController: NSObject, NSWindowDelegate {
     }
 
     func windowWillClose(_ notification: Notification) {
+        removeKeyMonitor()
         exerciseState?.cancelSession()
         window = nil
         exerciseState = nil

@@ -227,6 +227,17 @@ final class GaborExerciseState: ObservableObject {
         }
     }
 
+    /// Abandon the current attempt (without saving) and return to the picker.
+    /// Invalidates any pending feedback timer so it can't advance the trial
+    /// after we've left, and zeroes the counters so a later window-close
+    /// won't persist the abandoned attempt.
+    func returnToPicker() {
+        feedbackTimer?.invalidate()
+        currentTrial = 0
+        score = 0
+        phase = .ready
+    }
+
     var accuracyPercent: Int {
         guard currentTrial > 0 else { return 0 }
         return Int(round(Double(score) / Double(currentTrial) * 100))
