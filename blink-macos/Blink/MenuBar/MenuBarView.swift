@@ -157,13 +157,6 @@ struct MenuBarView: View {
                         .font(.system(size: 12))
                     Text("Eye Exercise")
                         .font(.system(size: 12, weight: .medium))
-                    Text("beta")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(accentColor)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 1)
-                        .background(accentColor.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 3))
                 }
                 .foregroundStyle(accentColor)
                 .frame(maxWidth: .infinity)

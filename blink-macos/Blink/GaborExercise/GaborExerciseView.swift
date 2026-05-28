@@ -90,19 +90,10 @@ private struct ReadyPhase: View {
         VStack(spacing: 0) {
             Spacer()
 
-            HStack(spacing: 10) {
-                Text("Eye Exercise")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundStyle(fg)
-                Text("beta")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(.white.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-            }
-            .padding(.bottom, 8)
+            Text("Eye Exercise")
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(fg)
+                .padding(.bottom, 8)
 
             Text("Train your visual cortex with Gabor patch exercises")
                 .font(.system(size: 15))
