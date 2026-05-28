@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "blink-site",
+      "runtimeExecutable": "/usr/bin/python3",
+      "runtimeArgs": ["serve.py", "4555", "website"],
+      "port": 4555
+    }
+  ]
+}

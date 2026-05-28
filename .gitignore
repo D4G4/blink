@@ -24,3 +24,6 @@ obj/
 TestResults/
 publish/
 blink-macos/build/
+
+# Local Claude Code settings
+.claude/settings.local.json

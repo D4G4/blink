@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Blink — Smart eye breaks for macOS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Blink — a smart 20·20·20 eye-break reminder for macOS that learns your rhythm and only interrupts at the right moment." />
+<link rel="icon" type="image/png" href="blink-icon-peach.png" />
+<style>
+  :root {
+    --paper:   #FFE9D6;
+    --paperHi: #FFF5E9;
+    --ink:     #2A1408;
+    --inkMute: rgba(42,20,8,0.58);
+    --hair:    rgba(180,90,50,0.26);
+    --peach:   #E88565;
+    --mono: "SF Mono", ui-monospace, "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    --head: "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--head); -webkit-font-smoothing: antialiased; }
+  /* Page-by-page snap scrolling: each section snaps into place. */
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+  .mono { font-family: var(--mono); letter-spacing: 0.2em; text-transform: uppercase; }
+
+  /* ── Sticky nav ────────────────────────────────────────────── */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 40px;
+    background: rgba(255,245,233,0.82);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    border-bottom: 1px solid var(--hair);
+  }
+  .brand { display: flex; align-items: center; gap: 13px; }
+  .brand .lockup { display: flex; align-items: baseline; gap: 12px; }
+  .brand .wm { font-size: 19px; font-weight: 800; letter-spacing: -0.03em; }
+  .brand .tag { font-size: 12px; color: var(--inkMute); }
+  .nav .spacer { flex: 1; }
+  .get {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 11px 20px; border: none; border-radius: 999px;
+    background: var(--ink); color: var(--paperHi);
+    font-family: var(--head); font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+    white-space: nowrap; text-decoration: none;
+    cursor: pointer; transition: transform .12s ease, background .2s ease;
+  }
+  .get:hover { transform: translateY(-1px); background: #3a1c0d; }
+  .get .os { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; opacity: 0.62; }
+  .get.big { padding: 16px 30px; font-size: 17px; }
+
+  /* ── Full-bleed sections ───────────────────────────────────── */
+  .bleed { position: relative; width: 100%; height: 100svh; overflow: hidden;
+    scroll-snap-align: start; scroll-snap-stop: always; }
+  .bleed-scaler { position: absolute; left: 50%; top: 50%;
+    width: 2880px; height: 1800px; transform-origin: center center; }
+
+  /* ── Closing CTA ───────────────────────────────────────────── */
+  .cta { text-align: center; padding: 80px 40px; min-height: 100svh; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    border-top: 1px solid var(--hair); scroll-snap-align: start;
+    background: radial-gradient(ellipse at 50% 0%, var(--paperHi) 0%, var(--paper) 70%); }
+  .cta h2 { font-size: clamp(40px, 6vw, 80px); font-weight: 800; letter-spacing: -0.04em;
+    line-height: 0.98; margin: 0; }
+  .cta p { font-size: clamp(16px, 1.7vw, 20px); color: var(--inkMute); margin: 22px 0 40px; }
+  .cta .sub { margin-top: 26px; font-size: 12px; color: var(--inkMute); }
+
+  /* ── Footer ────────────────────────────────────────────────── */
+  footer { max-width: 1180px; margin: 0 auto; padding: 40px 40px 70px; }
+  footer .rule { height: 1px; background: var(--hair); margin-bottom: 26px; }
+  footer .row { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--inkMute); }
+  footer .row .spacer { flex: 1; }
+
+  @media (max-width: 720px) {
+    .nav { padding: 12px 18px; gap: 10px; }
+    .brand .tag { display: none; }
+    .cta { padding: 80px 20px; }
+    footer { padding: 30px 20px 50px; }
+  }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="brand">
+    <img src="blink-icon-peach.png" width="28" height="28" alt="Blink" style="display:block;" />
+    <div class="lockup">
+      <span class="wm">Blink</span>
+      <span class="mono tag">Smart eye breaks for macOS</span>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <a class="get" href="https://github.com/D4G4/blink/releases/latest/download/Blink.dmg">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M8 1.5v8.5M8 10l-3-3M8 10l3-3M2.5 13h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Get Blink <span class="os">macOS · .dmg</span>
+  </a>
+</nav>
+
+<main id="sections"></main>
+
+<section class="cta">
+  <h2>Rest your eyes.</h2>
+  <p>Free, open source, and notarized for macOS.</p>
+  <a class="get big" href="https://github.com/D4G4/blink/releases/latest/download/Blink.dmg">
+    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M8 1.5v8.5M8 10l-3-3M8 10l3-3M2.5 13h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Get Blink <span class="os">macOS · .dmg</span>
+  </a>
+  <div class="mono sub">macOS 14+ · Apple-notarized · Open source</div>
+</section>
+
+<!-- Reused design components -->
+<script type="text/babel" src="themes.jsx?v=6"></script>
+<script type="text/babel" src="shots-1-3.jsx?v=6"></script>
+<script type="text/babel" src="shot-7.jsx?v=6"></script>
+<script type="text/babel" src="shots-v2.jsx?v=6"></script>
+<script type="text/babel" src="shots-v2-2.jsx?v=6"></script>
+
+<script type="text/babel">
+const COPY = {};
+
+const PAPER = '#FFE9D6', NIGHT = '#0E0B08';
+const SHOTS = [
+  { bg: PAPER, Cmp: () => <V2Shot1 copy={COPY} /> },
+  { bg: PAPER, Cmp: () => <V2Shot2 copy={COPY} /> },
+  { bg: PAPER, Cmp: () => <V2Shot3 copy={COPY} /> },
+  { bg: PAPER, Cmp: () => <V2Shot4 copy={COPY} /> },
+  { bg: PAPER, Cmp: () => <V2Shot6 copy={COPY} /> },
+  { bg: NIGHT, Cmp: () => <V2Shot7 copy={COPY} /> },
+];
+
+const STAGE_W = 2880, STAGE_H = 1800, NAV_H = 56;
+
+// Each design rendered full-bleed: the 2880-wide canvas scaled to fill the
+// viewport width, so it reads as a real full-width page section.
+function FullBleed({ Cmp, bg }) {
+  const ref = React.useRef(null);
+  const scalerRef = React.useRef(null);
+  React.useEffect(() => {
+    const fit = () => {
+      const f = ref.current, s = scalerRef.current;
+      if (!f || !s) return;
+      // Fit the whole 2880×1800 design inside the viewport (minus the nav),
+      // centered — never cropped.
+      const factor = Math.min(f.clientWidth / STAGE_W, f.clientHeight / STAGE_H);
+      s.style.transform = `translate(-50%, -50%) scale(${factor})`;
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    if (ref.current) ro.observe(ref.current);
+    window.addEventListener('resize', fit);
+    return () => { ro.disconnect(); window.removeEventListener('resize', fit); };
+  }, []);
+  return (
+    <section className="bleed" style={{ background: bg }} ref={ref}>
+      <div className="bleed-scaler" ref={scalerRef}>{Cmp()}</div>
+    </section>
+  );
+}
+
+function Site() {
+  return <>{SHOTS.map((s, i) => <FullBleed key={i} Cmp={s.Cmp} bg={s.bg} />)}</>;
+}
+ReactDOM.createRoot(document.getElementById('sections')).render(<Site />);
+</script>
+</body>
+</html>
