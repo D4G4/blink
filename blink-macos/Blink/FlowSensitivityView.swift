@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import BlinkCore
 
 /// Three-option flow sensitivity picker with optional fine-tune slider.
 /// Used in onboarding and Settings.
@@ -39,20 +40,15 @@ struct FlowSensitivityView: View {
         //   Balanced   (0.50 → threshold 0.60): moderate — needs real flow signal
         //   Deep work  (0.75 → threshold 0.35): extends readily when focused
         //
-        // Note on Balanced (2026-05-27): bumped from 0.60 back to 0.50
-        // (threshold 0.50 → 0.60). User-tested session with 82 kpm
-        // keyboard, 72 spm scrolls, 14% creative-app time scored 0.54
-        // and was flagged as too eager to EXTEND — a score in the
-        // 0.50-0.55 band shouldn't qualify as flow worth extending the
-        // break for. The 6-bucket keyboard curve alone wasn't enough to
-        // demote those moderate-engagement scores; the threshold needed
-        // to come up too. Star (★) reference row in BreakDecisionEngine
-        // (33 kpm → 0.54 contribution) now correctly lands below the
-        // Balanced bar.
+        // Balanced's value comes from BlinkEngine.defaultSensitivity —
+        // the single source of truth for "the default a fresh user
+        // gets". The engine's internal defaults reference the same
+        // constant, so the UI and engine can never disagree about
+        // what Balanced means.
         var value: Double {
             switch self {
             case .eyeHealth: return 0.30
-            case .balanced: return 0.50
+            case .balanced: return BlinkEngine.defaultSensitivity
             case .deepWork: return 0.75
             }
         }

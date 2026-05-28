@@ -1343,7 +1343,7 @@
 			repositoryURL = "https://github.com/D4G4/blink-core.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.5.0;
+				minimumVersion = 2.6.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
