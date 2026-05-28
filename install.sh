@@ -14,15 +14,6 @@ info() { echo -e "${BOLD}$1${RESET}"; }
 success() { echo -e "${GREEN}$1${RESET}"; }
 error() { echo -e "${RED}$1${RESET}" >&2; exit 1; }
 
-install_macos_brew() {
-    info "Homebrew detected — installing via brew..."
-    brew tap D4G4/blink
-    brew install --cask blink
-    success "$APP_NAME installed via Homebrew."
-    echo ""
-    echo "  Update later with: brew upgrade --cask blink"
-}
-
 install_macos_direct() {
     info "Installing $APP_NAME directly..."
 
@@ -74,11 +65,7 @@ install_macos() {
     info "Installing $APP_NAME for macOS..."
     echo ""
 
-    if command -v brew >/dev/null 2>&1; then
-        install_macos_brew
-    else
-        install_macos_direct
-    fi
+    install_macos_direct
 
     # Launch the app
     echo ""
