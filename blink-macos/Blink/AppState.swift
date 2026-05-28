@@ -103,9 +103,22 @@ final class AppState: ObservableObject {
         loadTodayStats()
         BlinkLog.pruneOldLogs()
 
-        // Sync sensitivity from UserDefaults
-        let saved = UserDefaults.standard.double(forKey: "flowSensitivity")
-        if saved > 0 { engine.sensitivity = saved }
+        // Sync sensitivity from UserDefaults. BlinkCore's engine has its
+        // own internal default (0.7 = Deep work region), but the UI's
+        // canonical default is FlowSensitivityView.Preset.balanced.value
+        // (0.50). On a fresh install the UserDefaults key doesn't exist
+        // and `double(forKey:)` returns 0.0 — if we skip the assignment,
+        // the engine silently disagrees with the UI. Always write the
+        // canonical default so engine and UI read the same value from
+        // here on out.
+        let savedSensitivity = UserDefaults.standard.double(forKey: "flowSensitivity")
+        let effectiveSensitivity = savedSensitivity > 0
+            ? savedSensitivity
+            : FlowSensitivityView.Preset.balanced.value
+        if savedSensitivity == 0 {
+            UserDefaults.standard.set(effectiveSensitivity, forKey: "flowSensitivity")
+        }
+        engine.sensitivity = effectiveSensitivity
 
         let savedWallClock = UserDefaults.standard.integer(forKey: "maxWallClockMinutes")
         if savedWallClock > 0 { engine.maxWallClockSeconds = TimeInterval(savedWallClock * 60) }
