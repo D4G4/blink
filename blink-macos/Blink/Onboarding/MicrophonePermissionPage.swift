@@ -94,7 +94,7 @@ struct MicrophonePermissionPage: View {
 
             Spacer(minLength: 24)
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 26) {
                 rationaleRow(
                     icon: "checkmark.circle.fill",
                     title: "What it's for",
@@ -234,13 +234,13 @@ struct MicrophonePermissionPage: View {
     private func rationaleRow(icon: String, title: String, body: String, fg: Color) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(fg)
                 .frame(width: 24, height: 24)
                 .padding(.top, 2)
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 14, weight: .bold)).foregroundStyle(fg)
-                Text(body).font(.system(size: 13)).foregroundStyle(fg.opacity(0.9))
+                Text(title).font(.system(size: 18, weight: .bold)).foregroundStyle(fg)
+                Text(body).font(.system(size: 15)).foregroundStyle(fg.opacity(0.9))
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)

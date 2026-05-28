@@ -145,12 +145,14 @@ struct BlinkTheme: Identifiable, Equatable {
         // the peach gradient gives white enough perceptual punch.
         onBackgroundTextLight: .white,
         onBackgroundTextDark: .white,
-        // Body / detail text switches to dark peach-brown — when text
-        // gets small or dense (permission-page rationale rows, "Why
-        // Input Monitoring?" sheet body) white-on-light-peach falls
-        // apart and reads washed out. Dark color stays inside the
-        // theme palette.
-        onBackgroundBodyTextLight: Color(hex: 0x3D2012),
+        // Body / detail text on the light Peach gradient. Pure white
+        // washed out at 13–14pt; the previous dark 0x3D2012 read too
+        // gloomy/heavy. 0x6E3520 is a medium warm brown — meaningfully
+        // closer to white tonally than the dark brown, ~3:1 contrast
+        // on the gradient (readable for small body text). Hero text
+        // stays pure white via onBackgroundTextLight.
+//        onBackgroundBodyTextLight: Color(hex: 0xF5E0D5),
+        onBackgroundBodyTextLight: .white,
         onBackgroundBodyTextDark: .white,
         invertInDarkMode: false
     )

@@ -136,11 +136,11 @@ struct InputMonitoringPermissionPage: View {
                         .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
 
                     VStack(alignment: .leading, spacing: 0) {
-                        imStepRow(num: 1, title: "Click +  button", fg: bodyFg, bgTop: bgTop)
+                        imStepRow(num: 1, title: "Click +  button", fg: heroFg, bgTop: bgTop)
                         imStepConnector(fg: bodyFg)
-                        imStepRow(num: 2, title: "Find Blink → Open", fg: bodyFg, bgTop: bgTop)
+                        imStepRow(num: 2, title: "Find Blink → Open", fg: heroFg, bgTop: bgTop)
                         imStepConnector(fg: bodyFg)
-                        imStepRow(num: 3, title: "Toggle on", fg: bodyFg, bgTop: bgTop)
+                        imStepRow(num: 3, title: "Toggle on", fg: heroFg, bgTop: bgTop)
                     }
                     .padding(16)
                     .background(bodyFg.opacity(0.15))
