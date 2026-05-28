@@ -5,15 +5,8 @@ struct FlowLearnMoreView: View {
     let theme: BlinkTheme
     let onDismiss: () -> Void
     @Environment(\.colorScheme) private var colorScheme
-    // Defaults must match OnboardingView's flowSensitivity default (0.50 =
-    // Balanced, threshold 0.60). Previously these defaulted to 0.7 — if
-    // the user opened Learn More before tapping any preset and then
-    // clicked "Got it", storedSensitivity = 0.7 got written, and
-    // FlowSensitivityView's Preset.closest(to: 0.7) returned `deepWork`
-    // (distance 0.05 vs 0.10), silently flipping the onboarding selection
-    // to Deep work.
-    @AppStorage("flowSensitivity") private var storedSensitivity: Double = 0.50
-    @State private var sensitivity: Double = 0.50
+    @AppStorage("flowSensitivity") private var storedSensitivity: Double = FlowSensitivityView.Preset.balanced.value
+    @State private var sensitivity: Double = FlowSensitivityView.Preset.balanced.value
 
     /// Controls whether the header shows a slider or preset buttons.
     enum PickerStyle { case slider, presets }

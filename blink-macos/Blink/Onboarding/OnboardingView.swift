@@ -29,10 +29,7 @@ struct OnboardingView: View {
     @State private var showWhySheet: Bool = false
     @State private var showFlowPage: Bool = false
     @State private var showFlowLearnMore: Bool = false
-    /// Default = Balanced preset value (see FlowSensitivityView.Preset.balanced).
-    /// Picked so users who walk through onboarding without explicitly tapping
-    /// a preset still land on the canonical Balanced threshold (0.60).
-    @AppStorage("flowSensitivity") private var flowSensitivity: Double = 0.50
+    @AppStorage("flowSensitivity") private var flowSensitivity: Double = FlowSensitivityView.Preset.balanced.value
 
     private let themes: [BlinkTheme]
 
