@@ -46,12 +46,16 @@ jobs:
           name: Blink-${{ matrix.arch }}
           path: publish/${{ matrix.arch }}/Blink-${{ matrix.arch }}.exe
 
-  # ── macOS ────────────────────────────────────────────────────────
+  # ── macOS (signed + notarized) ───────────────────────────────────
   macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
+      # SSH access to the private BlinkCore repo. The deploy key in the
+      # BLINKCORE_DEPLOY_KEY secret is registered as a read-only deploy
+      # key on D4G4/blink-core. The `github-d4g4` host alias mirrors the
+      # local dev setup so the same SPM / git URLs work in both places.
       - name: Configure SSH for BlinkCore (private dependency)
         run: |
           mkdir -p ~/.ssh
@@ -63,73 +67,80 @@ jobs:
             User git
             IdentityFile ~/.ssh/blinkcore_deploy
             StrictHostKeyChecking no
+          Host github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/blinkcore_deploy
+            IdentitiesOnly yes
+            StrictHostKeyChecking no
           EOF
+          # SPM resolves project.yml's HTTPS URL — rewrite it to use the
+          # SSH alias so the deploy key authenticates the fetch.
+          git config --global url."git@github-d4g4:D4G4/blink-core.git".insteadOf "https://github.com/D4G4/blink-core.git"
 
       - name: Install tools
         run: brew install xcodegen create-dmg
 
-      - name: Clone BlinkCore
+      - name: Clone BlinkCore for tests
         run: git clone git@github-d4g4:D4G4/blink-core.git blink-macos/BlinkCore
 
       - name: Run BlinkCore tests
         run: cd blink-macos/BlinkCore && swift test
 
-      - name: Generate Xcode project
-        run: cd blink-macos && xcodegen generate
-
-      - name: Archive
+      # Import the Developer ID Application certificate into a fresh
+      # temporary keychain. Pattern from Apple's docs + the standard
+      # GH Actions code-signing recipe. Keychain is torn down when the
+      # runner job completes — secrets never persist on disk.
+      - name: Import Developer ID signing cert
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.MACOS_KEYCHAIN_PASSWORD }}
         run: |
-          cd blink-macos
-          xcodebuild archive \
-            -project Blink.xcodeproj \
-            -scheme Blink \
-            -configuration Release \
-            -archivePath build/Blink.xcarchive \
-            -quiet \
-            CODE_SIGNING_ALLOWED=NO
+          set -e
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain-db
+          CERT_PATH=$RUNNER_TEMP/cert.p12
 
-      - name: Export app
-        run: |
-          cd blink-macos
-          mkdir -p build/export
-          cat > build/ExportOptions.plist <<PLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>mac-application</string>
-            <key>signingStyle</key>
-            <string>automatic</string>
-          </dict>
-          </plist>
-          PLIST
-          xcodebuild -exportArchive \
-            -archivePath build/Blink.xcarchive \
-            -exportPath build/export \
-            -exportOptionsPlist build/ExportOptions.plist \
-            -quiet \
-            || cp -R build/Blink.xcarchive/Products/Applications/Blink.app build/export/
+          echo -n "$CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
 
-      - name: Create DMG
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain
+
+          # Sanity check — Developer ID Application identity should be visible
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+      # Store the App Store Connect API key as a notarytool keychain
+      # profile so xcrun notarytool can submit the DMG. Profile name
+      # AC_NOTARY matches what scripts/build-release.sh expects.
+      - name: Setup notarytool credentials
+        env:
+          AC_API_KEY_BASE64: ${{ secrets.AC_API_KEY_BASE64 }}
+          AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
+          AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
         run: |
-          cd blink-macos
-          mkdir -p build/dmg-stage
-          cp -R build/export/Blink.app build/dmg-stage/
-          ln -s /Applications build/dmg-stage/Applications
-          create-dmg \
-            --volname "Blink" \
-            --background "dmg/dmg-background.png" \
-            --window-pos 200 120 \
-            --window-size 660 470 \
-            --icon-size 128 \
-            --icon "Blink.app" 175 200 \
-            --app-drop-link 485 200 \
-            --hide-extension "Blink.app" \
-            --no-internet-enable \
-            build/Blink.dmg \
-            build/dmg-stage/ \
-            || true
+          set -e
+          mkdir -p ~/.appstoreconnect/private_keys
+          KEY_PATH=~/.appstoreconnect/private_keys/AuthKey_${AC_API_KEY_ID}.p8
+          echo -n "$AC_API_KEY_BASE64" | base64 --decode > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+
+          xcrun notarytool store-credentials AC_NOTARY \
+            --key "$KEY_PATH" \
+            --key-id "$AC_API_KEY_ID" \
+            --issuer "$AC_API_ISSUER_ID"
+
+      # Build, sign, notarize, and staple in one go via the build script.
+      # Anything that's wrong with signing or notarization fails here
+      # rather than producing a bad DMG.
+      - name: Build signed + notarized DMG
+        run: bash blink-macos/scripts/build-release.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -158,7 +169,7 @@ jobs:
             artifacts/Blink-arm64/Blink-arm64.exe
             artifacts/Blink-macOS/Blink.dmg
 
-  # ── Update Homebrew cask ─────────────────────────────────────────
+  # ── Update Homebrew cask (notarized → no xattr workaround needed) ─
   homebrew:
     needs: release
     runs-on: ubuntu-latest
@@ -183,11 +194,32 @@ jobs:
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           path: homebrew-blink
 
-      - name: Update cask
+      - name: Update cask (version + sha + drop xattr postflight)
         run: |
+          set -e
           cd homebrew-blink
+          # Version + sha256
           sed -i 's/version ".*"/version "${{ steps.version.outputs.version }}"/' Casks/blink.rb
           sed -i 's/sha256 ".*"/sha256 "${{ steps.sha.outputs.sha256 }}"/' Casks/blink.rb
+          # Remove the entire postflight block — the DMG is now signed
+          # + notarized + stapled, so Gatekeeper trusts it on download
+          # and the `xattr -cr` workaround is no longer needed.
+          # Removes lines from 'postflight do' through the matching 'end'.
+          python3 - <<'PY'
+          import re
+          path = "Casks/blink.rb"
+          with open(path) as f:
+              src = f.read()
+          # Match `postflight do\n ... \nend\n` (one block, no nested do/end)
+          new = re.sub(
+              r"\n?[ \t]*postflight do\n(?:.*\n)*?[ \t]*end\n",
+              "\n",
+              src,
+              count=1,
+          )
+          with open(path, "w") as f:
+              f.write(new)
+          PY
 
       - name: Commit and push
         run: |
@@ -196,5 +228,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Casks/blink.rb
           git diff --cached --quiet && exit 0
-          git commit -m "Bump to v${{ steps.version.outputs.version }}"
+          git commit -m "Bump to v${{ steps.version.outputs.version }} (notarized)"
           git push
