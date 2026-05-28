@@ -22,6 +22,9 @@
     font-family: var(--head); -webkit-font-smoothing: antialiased; }
   /* Page-by-page snap scrolling: each section snaps into place. */
   html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+  /* Shot sections are injected async (Babel-in-browser); without this the
+     browser anchors to the static CTA and jumps to the bottom on load. */
+  html, body { overflow-anchor: none; }
   .mono { font-family: var(--mono); letter-spacing: 0.2em; text-transform: uppercase; }
 
   /* ── Sticky nav ────────────────────────────────────────────── */
@@ -169,6 +172,7 @@ function FullBleed({ Cmp, bg }) {
 }
 
 function Site() {
+  React.useLayoutEffect(() => { window.scrollTo({ top: 0, behavior: 'auto' }); }, []);
   return <>{SHOTS.map((s, i) => <FullBleed key={i} Cmp={s.Cmp} bg={s.bg} />)}</>;
 }
 ReactDOM.createRoot(document.getElementById('sections')).render(<Site />);
