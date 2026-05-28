@@ -86,8 +86,8 @@ install_macos() {
     open "/Applications/$APP_NAME.app"
 
     echo ""
-    info "Grant Accessibility when prompted:"
-    echo "  System Settings → Privacy & Security → Accessibility → toggle $APP_NAME"
+    info "Grant Input Monitoring when prompted:"
+    echo "  System Settings → Privacy & Security → Input Monitoring → toggle $APP_NAME"
     echo ""
     success "Done!"
 }
