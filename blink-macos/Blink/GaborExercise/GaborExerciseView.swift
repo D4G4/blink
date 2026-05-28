@@ -6,9 +6,19 @@ struct GaborExerciseView: View {
     let onDismiss: () -> Void
     @Environment(\.colorScheme) private var colorScheme
 
+    /// The Gabor stimulus is only on screen during a trial; only then do we
+    /// switch to the mid-gray field a patch must sit on. The picker,
+    /// instructions, and results keep the app's dark look.
+    private var onGray: Bool {
+        switch state.phase {
+        case .presenting, .feedback: return true
+        default: return false
+        }
+    }
+
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea(.all)
+            (onGray ? Color(white: 0.5) : Color.black).ignoresSafeArea(.all)
 
             VStack(spacing: 0) {
                 switch state.phase {
@@ -26,7 +36,7 @@ struct GaborExerciseView: View {
                     CompletePhase(state: state, theme: theme, colorScheme: colorScheme, onDismiss: onDismiss)
                 }
 
-                ExerciseFooter(onShowDisclaimer: { state.showDisclaimer() })
+                ExerciseFooter(onGray: onGray, onShowDisclaimer: { state.showDisclaimer() })
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -356,7 +366,7 @@ private struct TrialPhase: View {
     let theme: BlinkTheme
     var feedbackCorrect: Bool?
 
-    private let fg: Color = .white
+    private let fg: Color = Color(white: 0.12)
     private let config = GaborDisplayConfig.current()
 
     var body: some View {
@@ -379,7 +389,9 @@ private struct TrialPhase: View {
 
             Spacer()
 
-            // Stimulus — directly on black, no container box
+            // Stimulus sits on the mid-gray field (matched to the patch's mean
+            // luminance), so its Gaussian-tapered edges blend in with no
+            // visible disc or aperture.
             ZStack {
                 stimulusContent
                     .opacity(feedbackCorrect != nil ? 0.4 : 1.0)
@@ -478,7 +490,6 @@ private struct ContrastDetectionStimulus: View {
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
-        .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
     }
 }
 
@@ -497,7 +508,6 @@ private struct OrientationStimulus: View {
         )
         .frame(width: size, height: size)
         .clipShape(Circle())
-        .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
     }
 }
 
@@ -521,7 +531,6 @@ private struct FlankerStimulus: View {
             )
             .frame(width: size, height: size)
             .clipShape(Circle())
-            .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
             flankerPatch(size: size)
         }
     }
@@ -536,7 +545,6 @@ private struct FlankerStimulus: View {
         )
         .frame(width: size, height: size)
         .clipShape(Circle())
-        .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
     }
 }
 
@@ -634,7 +642,7 @@ private struct ResponseButton: View {
     let colorScheme: ColorScheme
     let action: () -> Void
 
-    private var fg: Color { .white }
+    private var fg: Color { Color(white: 0.12) }
 
     var body: some View {
         Button(action: action) {
@@ -680,12 +688,12 @@ private struct ProgressDots: View {
 
     private func dotColor(for index: Int) -> Color {
         guard index < trialResults.count else {
-            return theme.accent.opacity(0.2)
+            return .black
         }
         return trialResults[index].correct ? .green : .red
     }
 
-    private var dotSize: CGFloat { total > 25 ? 4 : 6 }
+    private var dotSize: CGFloat { total > 25 ? 5 : 7 }
 }
 
 private struct FeedbackOverlay: View {
@@ -700,10 +708,11 @@ private struct FeedbackOverlay: View {
 }
 
 private struct ExerciseFooter: View {
+    let onGray: Bool
     let onShowDisclaimer: () -> Void
 
     var body: some View {
-        let footerColor: Color = .white
+        let footerColor: Color = onGray ? Color(white: 0.12) : .white
         HStack {
             Text("For wellness purposes only \u{2014} not medical advice")
                 .font(.system(size: 10))
