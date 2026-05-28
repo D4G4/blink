@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="#install"><img src="https://img.shields.io/badge/install-macOS-blue?style=flat-square&logo=apple" alt="Install macOS"></a>
+  <a href="../../releases/latest/download/Blink.dmg"><img src="https://img.shields.io/badge/download-macOS%20.dmg-blue?style=flat-square&logo=apple" alt="Download macOS .dmg"></a>
   <a href="#windows-install"><img src="https://img.shields.io/badge/install-Windows-blue?style=flat-square&logo=windows" alt="Install Windows"></a>
   <img src="https://img.shields.io/badge/platform-macOS%2014%2B%20%7C%20Windows%2010%2B-lightgrey?style=flat-square" alt="macOS 14+ | Windows 10+">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
@@ -30,13 +30,15 @@ They interrupt you mid-thought. They fire a popup while you're in a meeting. The
 
 ## Install
 
-### <img src="https://img.shields.io/badge/-Quick%20Install-black?style=flat-square&logo=apple&logoColor=white" alt="Quick Install" height="20"> macOS
+### <img src="https://img.shields.io/badge/-Download%20.dmg-black?style=flat-square&logo=apple&logoColor=white" alt="Download" height="20"> macOS
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/D4G4/blink/main/install.sh | bash
-```
+**[⬇ Download Blink.dmg](../../releases/latest/download/Blink.dmg)** — signed and notarized by Apple.
 
-Downloads the latest release and installs it to `/Applications`.
+1. Open the DMG and drag **Blink** to the Applications folder
+2. Launch Blink — click **Open** on the one-time "downloaded from the Internet" prompt. It then appears in your menu bar.
+3. Grant **Input Monitoring** when prompted (required for smart detection)
+
+Because Blink is notarized, it launches cleanly — that one-time confirmation is the standard prompt every notarized app downloaded outside the App Store shows. No `xattr` or workarounds needed.
 
 ### <img src="https://img.shields.io/badge/-Homebrew-orange?style=flat-square&logo=homebrew&logoColor=white" alt="Homebrew" height="20"> macOS
 
@@ -48,14 +50,13 @@ brew install --cask blink
 Update later with `brew upgrade --cask blink`.
 
 <details>
-<summary><img src="https://img.shields.io/badge/-Manual%20Install-grey?style=flat-square&logo=apple&logoColor=white" alt="Manual" height="20"> macOS</summary>
+<summary><img src="https://img.shields.io/badge/-One%E2%80%91line%20script-grey?style=flat-square&logo=apple&logoColor=white" alt="Script" height="20"> macOS</summary>
 
-1. **[Download Blink.dmg](../../releases/latest)** from the latest release
-2. Open the DMG, drag **Blink** to the Applications folder
-3. Launch Blink — on first launch macOS shows a one-time "downloaded from the Internet" prompt; click **Open**. It then appears as an icon in your menu bar.
-4. Grant **Input Monitoring** when prompted (required for smart detection)
+```bash
+curl -fsSL https://raw.githubusercontent.com/D4G4/blink/main/install.sh | bash
+```
 
-> Blink is signed with an Apple Developer ID and notarized by Apple, so it launches cleanly — that one-time confirmation is the standard prompt every notarized app downloaded outside the App Store shows.
+Downloads the latest release and installs it to `/Applications`.
 
 </details>
 
