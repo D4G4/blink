@@ -36,7 +36,7 @@ They interrupt you mid-thought. They fire a popup while you're in a meeting. The
 curl -fsSL https://raw.githubusercontent.com/D4G4/blink/main/install.sh | bash
 ```
 
-Downloads the latest release, installs to `/Applications`, and handles quarantine automatically.
+Downloads the latest release and installs it to `/Applications`.
 
 ### <img src="https://img.shields.io/badge/-Homebrew-orange?style=flat-square&logo=homebrew&logoColor=white" alt="Homebrew" height="20"> macOS
 
@@ -52,14 +52,10 @@ Update later with `brew upgrade --cask blink`.
 
 1. **[Download Blink.dmg](../../releases/latest)** from the latest release
 2. Open the DMG, drag **Blink** to the Applications folder
-3. Before first launch, run this in Terminal to clear the quarantine flag:
-   ```bash
-   xattr -cr /Applications/Blink.app
-   ```
-4. Launch Blink — it appears as an icon in your menu bar
-5. Grant **Input Monitoring** when prompted (required for smart detection)
+3. Launch Blink — on first launch macOS shows a one-time "downloaded from the Internet" prompt; click **Open**. It then appears as an icon in your menu bar.
+4. Grant **Input Monitoring** when prompted (required for smart detection)
 
-> The `xattr` step is needed because the app isn't notarized with Apple (we're open source, not paying $99/year for a certificate). Homebrew install handles this automatically.
+> Blink is signed with an Apple Developer ID and notarized by Apple, so it launches cleanly — that one-time confirmation is the standard prompt every notarized app downloaded outside the App Store shows.
 
 </details>
 
