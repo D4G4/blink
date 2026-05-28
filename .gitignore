@@ -2,6 +2,8 @@
 DerivedData/
 *.xcuserstate
 xcuserdata/
+# Empty plist Xcode regenerates whenever the project is opened
+*.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
 .swiftpm/
 *.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
 # Keep Package.resolved committed — Xcode Cloud requires it for
