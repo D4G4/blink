@@ -32,14 +32,26 @@ mkdir -p "$BUILD_DIR"
 echo "→ Generating project..."
 xcodegen generate
 
-# Archive
+# Archive.
+# Sign the archive directly with the Developer ID Application cert rather
+# than the project's default Automatic style. Automatic signing resolves a
+# *development* identity ("Apple Development"/"Mac Development") for the
+# build phase, which a local Xcode mints on demand via the signed-in Apple
+# ID — but CI has no Apple ID session and only the Developer ID cert in its
+# keychain, so Automatic fails there with "No Mac Development signing
+# certificate". Manual Developer ID needs no provisioning profile for this
+# app's entitlements (sandbox + network.client + audio-input), so this is
+# deterministic and Apple-ID-independent in both CI and local runs.
 echo "→ Archiving..."
 xcodebuild archive \
     -project Blink.xcodeproj \
     -scheme Blink \
     -configuration Release \
     -archivePath "$ARCHIVE_PATH" \
-    -quiet
+    -quiet \
+    CODE_SIGN_STYLE=Manual \
+    CODE_SIGN_IDENTITY="Developer ID Application" \
+    DEVELOPMENT_TEAM=6V6FZW3FFN
 
 # Export with Developer ID Application signing.
 # method=developer-id tells xcodebuild to sign with the Developer ID
