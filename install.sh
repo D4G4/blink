@@ -53,9 +53,6 @@ install_macos_direct() {
     # Unmount
     hdiutil detach "$MOUNT_POINT" -quiet 2>/dev/null || true
 
-    # Strip quarantine (same as Homebrew postflight)
-    xattr -cr "/Applications/$APP_NAME.app" 2>/dev/null || true
-
     success "$APP_NAME installed to /Applications/"
     echo ""
     echo "  To update later, run this script again."
