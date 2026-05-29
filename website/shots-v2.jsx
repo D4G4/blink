@@ -218,10 +218,6 @@ function V2Shot2({ copy }) {
       {/* Headline (top-left, asymmetric — pairs with the call-out on the right) */}
       <div style={{ position: 'absolute', top: 220, left: 200, width: 1280 }}>
         <div style={{
-          fontFamily: MONO_STACK, fontSize: 24, letterSpacing: '0.32em', textTransform: 'uppercase',
-          color: V2.inkMute, fontWeight: 500, marginBottom: 32
-        }}>Mode of operation</div>
-        <div style={{
           fontSize: 168, fontWeight: 800, letterSpacing: '-0.045em', lineHeight: 0.92, color: V2.ink, textWrap: 'balance'
         }}>Lives in your menu bar.</div>
         <div style={{

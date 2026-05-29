@@ -24,10 +24,6 @@ function V2Shot4({ copy }) {
       {/* Header */}
       <div style={{ position: 'absolute', top: 200, left: 0, right: 0, padding: '0 220px', textAlign: 'center' }}>
         <div style={{
-          fontFamily: MONO_STACK, fontSize: 24, letterSpacing: '0.32em', textTransform: 'uppercase',
-          color: V2.inkMute, fontWeight: 500, marginBottom: 32,
-        }}>The collection</div>
-        <div style={{
           fontSize: 168, fontWeight: 800, letterSpacing: '-0.045em', lineHeight: 0.93, color: V2.ink, textWrap: 'balance',
         }}>Five themes. Pick the one that disappears.</div>
       </div>
@@ -251,10 +247,6 @@ function V2Shot6({ copy }) {
       {/* Left: massive headline */}
       <div style={{ position: 'absolute', left: 200, top: 280, width: 1180 }}>
         <div style={{
-          fontFamily: MONO_STACK, fontSize: 24, letterSpacing: '0.32em', textTransform: 'uppercase',
-          color: V2.inkMute, fontWeight: 500, marginBottom: 36,
-        }}>Privacy notice · 01</div>
-        <div style={{
           fontSize: 200, fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 0.92, color: V2.ink, textWrap: 'balance',
         }}>Private by design.</div>
         <div style={{
@@ -373,10 +365,6 @@ function V2Shot7({ copy }) {
 
       {/* Header */}
       <div style={{ position: 'absolute', top: 200, left: 200, right: 200, textAlign: 'center' }}>
-        <div style={{
-          fontFamily: MONO_STACK, fontSize: 24, letterSpacing: '0.32em', textTransform: 'uppercase',
-          color: 'rgba(244,234,219,0.55)', fontWeight: 500, marginBottom: 32,
-        }}>Optional</div>
         <div style={{
           fontSize: 144, fontWeight: 800, letterSpacing: '-0.045em', lineHeight: 0.93, color: '#F4EADB', textWrap: 'balance',
         }}>Train your eyes,
