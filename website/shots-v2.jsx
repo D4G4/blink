@@ -24,7 +24,7 @@ const V2 = {
 };
 
 // Headlines: SF Pro Rounded for friendliness, falling back to Display.
-const HEAD = `"SF Pro Rounded", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Helvetica", system-ui, sans-serif`;
+const HEAD = `ui-rounded, "SF Pro Rounded", "Nunito", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Helvetica", system-ui, sans-serif`;
 
 // ── Plate chrome ───────────────────────────────────────────────────────────
 // Every shot is presented like a numbered plate from a printed catalogue.

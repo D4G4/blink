@@ -21,6 +21,16 @@
 <meta name="twitter:description" content="A smart 20·20·20 eye-break reminder for macOS. Free, open source, and notarized." />
 <meta name="twitter:image" content="https://blink20.net/og-image.png" />
 <style>
+  /* Nunito: self-hosted rounded look-alike for SF Pro Rounded, which can't be
+     web-embedded (Apple license) and only resolves via `ui-rounded` in Safari.
+     Variable font, weights 300–800, latin subset. */
+  @font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 300 800;
+    font-display: swap;
+    src: url(fonts/nunito-latin-var.woff2) format('woff2');
+  }
   :root {
     --paper:   #FFE9D6;
     --paperHi: #FFF5E9;
@@ -29,7 +39,7 @@
     --hair:    rgba(180,90,50,0.26);
     --peach:   #E88565;
     --mono: "SF Mono", ui-monospace, "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
-    --head: "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    --head: ui-rounded, "SF Pro Rounded", "Nunito", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
@@ -82,7 +92,7 @@
   /* ── Closing CTA ───────────────────────────────────────────── */
   .cta { text-align: center; padding: 80px 40px; min-height: 100svh; display: flex;
     flex-direction: column; align-items: center; justify-content: center;
-    border-top: 1px solid var(--hair); scroll-snap-align: start;
+    border-top: 1px solid var(--hair); scroll-snap-align: start; scroll-snap-stop: always;
     background: radial-gradient(ellipse at 50% 0%, var(--paperHi) 0%, var(--paper) 70%); }
   .cta h2 { font-size: clamp(40px, 6vw, 80px); font-weight: 800; letter-spacing: -0.04em;
     line-height: 0.98; margin: 0; }
