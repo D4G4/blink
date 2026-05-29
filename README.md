@@ -176,6 +176,22 @@ cd blink-macos/BlinkCore && swift test
 cd blink-windows && dotnet test
 ```
 
+### Releasing
+
+Releases are fully automated by GitHub Actions ([`release.yml`](.github/workflows/release.yml)). To ship a new version, the only manual steps are:
+
+1. Bump `MARKETING_VERSION` in [`blink-macos/project.yml`](blink-macos/project.yml).
+2. Commit and push to `main`.
+3. Tag the commit `vX.Y.Z` (matching that version) and push the tag.
+
+```bash
+git tag v4.1.2 && git push origin main --tags
+```
+
+Pushing the tag triggers the pipeline, which builds the macOS app (signed + notarized DMG) and Windows binaries (x64 + arm64), publishes a GitHub Release with all artifacts, and bumps the Homebrew cask. No local build, signing, or upload is needed.
+
+> The tag **must** match `MARKETING_VERSION` — the Homebrew cask version is derived from the tag name, while the DMG's internal version comes from `project.yml`. If they diverge, the cask points at a DMG whose reported version doesn't match.
+
 ## Architecture
 
 ```
