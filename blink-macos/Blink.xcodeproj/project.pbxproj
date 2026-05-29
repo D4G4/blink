@@ -110,6 +110,7 @@
 		75F926616E7E3BF7816A8C3F /* MenuBarPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D72E2CB3299F409D6B0B6D /* MenuBarPreviews.swift */; };
 		7745788232A7FDA0878020D5 /* SnapshotTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A68025F523772A3614C351E /* SnapshotTestCase.swift */; };
 		77928BBBF428D817C890540F /* GaborExerciseState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E55AA4F9D3F6C46BB8F0D1 /* GaborExerciseState.swift */; };
+		78B568D6115B3B418D8EC26C /* MenuBarHelpWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846900CD7AF7BD0D6CE8D817 /* MenuBarHelpWindowController.swift */; };
 		78F685AF5FBDA94856623590 /* AllPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4978224F028FE729A5E799 /* AllPreviews.swift */; };
 		7935041477F439B41C7DB5FE /* flow_nudge_sage_light.png in Resources */ = {isa = PBXBuildFile; fileRef = FBB43FDF4786234B8352474E /* flow_nudge_sage_light.png */; };
 		7C6C0FC31A459EA2EC84936A /* why_exist_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 779C862D7A3AF9E6AD8246A4 /* why_exist_midnight_dark.png */; };
@@ -137,6 +138,7 @@
 		A35334AFBDFB584A9FE1AE75 /* menu_bar_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 8B50EC777E81E9F8C6226402 /* menu_bar_sand_dark.png */; };
 		A41B8279592028EBE1B3BF72 /* countdown_dark_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 02DA8867E4C8F5F93C0CD014 /* countdown_dark_light.png */; };
 		A4411B3A5D05D71332F0C539 /* FlowLearnMoreWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B64A6EE793C76CA223A1CDF /* FlowLearnMoreWindowController.swift */; };
+		A679A52978B3F946802C4448 /* MenuBarHelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A280E44E6940BC1469665B91 /* MenuBarHelpView.swift */; };
 		A764B552A8C024B989E79757 /* SettingsPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 926B0463A25FAEDC0BE064A4 /* SettingsPreviews.swift */; };
 		A961745A19EC087CE21AAA8A /* menu_bar_sage_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 8D3C0734B15BE7F92F6CB672 /* menu_bar_sage_dark.png */; };
 		AAF8A986805AD2581CBCEA05 /* menu_bar_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = C525EB8C482382CA7C74052F /* menu_bar_midnight_dark.png */; };
@@ -327,6 +329,7 @@
 		8324F35E27BBB9AAEC22DFB8 /* toast_dark_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = toast_dark_dark.png; sourceTree = "<group>"; };
 		8334922ADFE4C98CE1CF6D35 /* BlinkSnapshotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BlinkSnapshotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		841399F648DE043BE5C3E12E /* InputMonitoringRationaleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputMonitoringRationaleView.swift; sourceTree = "<group>"; };
+		846900CD7AF7BD0D6CE8D817 /* MenuBarHelpWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarHelpWindowController.swift; sourceTree = "<group>"; };
 		863262D254A3D6519CC8DCF8 /* research_mono_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = research_mono_dark.png; sourceTree = "<group>"; };
 		86936E2AA96EE4843F617808 /* GaborSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborSessionStore.swift; sourceTree = "<group>"; };
 		873B5B70B1583B18D20F4715 /* timer_extended_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = timer_extended_peach_light.png; sourceTree = "<group>"; };
@@ -361,6 +364,7 @@
 		9C26FEE808F6E2CB576566A5 /* countdown_dark_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = countdown_dark_dark.png; sourceTree = "<group>"; };
 		9E63C6E15DE92822189F5729 /* InputMonitoringPermissionPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputMonitoringPermissionPage.swift; sourceTree = "<group>"; };
 		A04C1C6827F429B94B7B265B /* GaborRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborRenderer.swift; sourceTree = "<group>"; };
+		A280E44E6940BC1469665B91 /* MenuBarHelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarHelpView.swift; sourceTree = "<group>"; };
 		A366C48EDBA2DB5E43095171 /* flow_nudge_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_nudge_midnight_light.png; sourceTree = "<group>"; };
 		A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborExerciseView.swift; sourceTree = "<group>"; };
 		A57EE2E757649DCFBF0714B2 /* MenuBarSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSnapshotTests.swift; sourceTree = "<group>"; };
@@ -599,6 +603,8 @@
 				94561199EC6A720C6B0B5941 /* LaunchHUDView.swift */,
 				382BD980E4730B0AE8F9CED0 /* LaunchHUDWindowController.swift */,
 				DBA5281E80D09549F7590353 /* MenuBarController.swift */,
+				A280E44E6940BC1469665B91 /* MenuBarHelpView.swift */,
+				846900CD7AF7BD0D6CE8D817 /* MenuBarHelpWindowController.swift */,
 				D286D81AEFFC707C40AF416D /* MenuBarView.swift */,
 				97BC933707696BDE8C0788B9 /* MicWarningWindowController.swift */,
 			);
@@ -1038,6 +1044,8 @@
 				D5C6DCF4BA41B2C014A4D3C8 /* MacContextDetector.swift in Sources */,
 				285C0EFFE325468E346E69D5 /* MacInputMonitor.swift in Sources */,
 				E2E2DC15A3B655161CF31EA3 /* MenuBarController.swift in Sources */,
+				A679A52978B3F946802C4448 /* MenuBarHelpView.swift in Sources */,
+				78B568D6115B3B418D8EC26C /* MenuBarHelpWindowController.swift in Sources */,
 				75F926616E7E3BF7816A8C3F /* MenuBarPreviews.swift in Sources */,
 				72570C0C40040759FE52FBDF /* MenuBarView.swift in Sources */,
 				EA6F6BD4A96C0F66254A6167 /* MicWarningWindowController.swift in Sources */,

@@ -2,41 +2,46 @@ import SwiftUI
 import AppKit
 
 /// Shows the Launch HUD in a borderless window at the top-right of the
-/// main screen. Auto-dismisses after `visibleSeconds`. Clicking the HUD
-/// dismisses it immediately (and notifies via `onTap`).
+/// main screen, visually near where the user's menu bar icon would be.
 ///
 /// This replaces the auto-open-menu-bar-popup behavior in
 /// `AppState.startMonitoringAfterAllPermissions`. The popup auto-open
 /// couldn't surface anything when the user's menu bar icon was hidden by
 /// the notch / Bartender / overflow, so the HUD — which is its own
 /// independent floating window — is the reliable "Blink is running" signal.
+///
+/// The HUD is persistent (no auto-dismiss). `onFound` fires when the user
+/// taps "I've found it"; `onCantFind` when they tap "Can't find it".
 @MainActor
 final class LaunchHUDWindowController {
     private var window: NSWindow?
-    private var dismissTimer: Timer?
 
-    /// `visibleSeconds = 6` is the default — long enough for the user to
-    /// notice and read the message, short enough not to be intrusive.
-    func show(theme: BlinkTheme, visibleSeconds: TimeInterval = 6.0, onTap: @escaping () -> Void) {
+    func show(theme: BlinkTheme, onFound: @escaping () -> Void, onCantFind: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
 
-        let windowWidth: CGFloat = 320
-        let windowHeight: CGFloat = 78
+        let width: CGFloat = 340
+        let height: CGFloat = 124
         let visible = screen.visibleFrame
-        // Anchor to TOP-RIGHT — visually near where the user's menu bar
-        // icon would be. 20pt margin from the right edge, 12pt below the
-        // top of the visible area (visible area excludes menu bar, so
-        // this lands just below the menu bar itself).
-        let x = visible.maxX - windowWidth - 20
-        let y = visible.maxY - windowHeight - 12
+        // Anchor to TOP-RIGHT — near where the menu bar icon would be.
+        // 20pt margin from the right edge, 12pt below the top of the
+        // visible area (which already excludes the menu bar).
+        let x = visible.maxX - width - 20
+        let y = visible.maxY - height - 12
 
-        let hud = LaunchHUDView(theme: theme) { [weak self] in
-            self?.dismiss(animated: true)
-            onTap()
-        }
+        let view = LaunchHUDView(
+            theme: theme,
+            onFound: { [weak self] in
+                self?.dismiss(animated: true)
+                onFound()
+            },
+            onCantFind: { [weak self] in
+                self?.dismiss(animated: true)
+                onCantFind()
+            }
+        )
 
         let win = NSPanel(
-            contentRect: NSRect(x: x, y: y, width: windowWidth, height: windowHeight),
+            contentRect: NSRect(x: x, y: y, width: width, height: height),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -50,8 +55,8 @@ final class LaunchHUDWindowController {
         win.appearance = NSApp.effectiveAppearance
         win.ignoresMouseEvents = false
 
-        let hosting = NSHostingView(rootView: hud)
-        hosting.frame = NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight)
+        let hosting = NSHostingView(rootView: view)
+        hosting.frame = NSRect(x: 0, y: 0, width: width, height: height)
         hosting.autoresizingMask = [.width, .height]
         win.contentView = hosting
 
@@ -65,18 +70,10 @@ final class LaunchHUDWindowController {
         }
 
         self.window = win
-
-        // Schedule auto-dismiss
-        dismissTimer?.invalidate()
-        dismissTimer = Timer.scheduledTimer(withTimeInterval: visibleSeconds, repeats: false) { [weak self] _ in
-            Task { @MainActor in self?.dismiss(animated: true) }
-        }
     }
 
     func dismiss(animated: Bool) {
         guard let win = window else { return }
-        dismissTimer?.invalidate()
-        dismissTimer = nil
         UIActionLogger.windowClosed("LaunchHUD")
 
         if animated {
