@@ -28,16 +28,16 @@ final class OnboardingWindowController {
 
         let windowFrame = NSRect(x: x, y: y, width: windowWidth, height: windowHeight)
 
-        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-
+        // Onboarding always renders light (Peach-in-light is the brand's
+        // first impression) regardless of system appearance.
         let onboardingView = OnboardingView(
             themeManager: themeManager,
-            isDarkMode: isDark,
             onComplete: { [weak self] in
                 self?.dismiss()
                 onComplete()
             }
         )
+        .preferredColorScheme(.light)
 
         let win = KeyableBorderlessWindow(
             contentRect: windowFrame,
@@ -49,7 +49,7 @@ final class OnboardingWindowController {
         win.backgroundColor = .clear
         win.level = .normal
         win.hasShadow = true
-        win.appearance = NSApp.effectiveAppearance
+        win.appearance = NSAppearance(named: .aqua)
         win.contentView = NSHostingView(rootView: onboardingView)
         win.makeKeyAndOrderFront(nil)
 

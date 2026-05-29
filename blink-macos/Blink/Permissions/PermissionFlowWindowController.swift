@@ -31,10 +31,14 @@ final class PermissionFlowWindowController {
         let x = visible.midX - windowWidth / 2
         let y = visible.midY - windowHeight / 2
 
+        // Forced light to match the onboarding window — the permission flow
+        // follows it immediately, so a system-following appearance here would
+        // cause a light→dark jump mid-flow.
         let view = PermissionFlowView(theme: theme) { [weak self] basicMode in
             self?.dismiss()
             onResolved(basicMode)
         }
+        .preferredColorScheme(.light)
 
         let win = KeyableBorderlessWindow(
             contentRect: NSRect(x: x, y: y, width: windowWidth, height: windowHeight),
@@ -47,7 +51,7 @@ final class PermissionFlowWindowController {
         win.backgroundColor = .clear
         win.level = .normal
         win.hasShadow = true
-        win.appearance = NSApp.effectiveAppearance
+        win.appearance = NSAppearance(named: .aqua)
 
         let hosting = NSHostingView(rootView: view)
         hosting.frame = NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight)
