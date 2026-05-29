@@ -291,7 +291,7 @@ final class AppState: ObservableObject {
                 UserDefaults.standard.set(false, forKey: "basicModeOptIn")
                 self.hasInputMonitoringPermission = true
             }
-            self.startMonitoringAfterAllPermissions(showHUD: false)
+            self.startMonitoringAfterAllPermissions()
         }
     }
 
@@ -320,25 +320,21 @@ final class AppState: ObservableObject {
                 UserDefaults.standard.set(false, forKey: "basicModeOptIn")
                 self.hasInputMonitoringPermission = true
             }
-            // Suppress the launch HUD — by the time recovery resolves
-            // the user is well past the initial "Blink is now active"
-            // moment.
-            self.startMonitoringAfterAllPermissions(showHUD: false)
+            self.startMonitoringAfterAllPermissions()
         }
     }
 
     /// Idempotent: tears down any existing monitors/timer first, then
     /// starts fresh. Callable on first launch, after onboarding completes,
     /// and on recovery (e.g. user re-granted IM after seeing the
-    /// staleGrant window). `showHUD` is false for the recovery restart so
-    /// we don't pop a second Launch HUD after one already fired earlier
-    /// this launch.
-    private func startMonitoringAfterAllPermissions(showHUD: Bool = true) {
+    /// staleGrant window). The launch HUD shows on every path — it's the
+    /// "Blink is running, here's where to find it" prompt.
+    private func startMonitoringAfterAllPermissions() {
         teardownMonitoring()
         startMonitoring()
         startTimer()
-        if showHUD { showLaunchHUD() }
-        Log.i("Monitors and timers started (showHUD=\(showHUD))")
+        showLaunchHUD()
+        Log.i("Monitors and timers started")
         verifyTapAliveOrReprompt()
     }
 
@@ -599,14 +595,21 @@ final class AppState: ObservableObject {
     /// user's menu bar icon was hidden behind the notch / Bartender / or
     /// pushed off-screen by sheer menu bar overflow. The HUD is its own
     /// floating window so it's always visible regardless of menu bar state.
+    /// Shows the persistent launch HUD on every launch. "I've found it"
+    /// dismisses it; "Can't find it" opens the help dialog, which explains
+    /// the notch/overflow problem and offers a guaranteed fallback entry
+    /// point (Open Preferences).
     private func showLaunchHUD() {
         launchHUD = LaunchHUDWindowController()
-        launchHUD?.show(theme: ThemeManager.shared.current) { [weak self] in
-            // User clicked the HUD — open the preferences window so they
-            // have somewhere obvious to land if they can't find the menu
-            // bar icon.
-            self?.openPreferences()
-        }
+        launchHUD?.show(
+            theme: ThemeManager.shared.current,
+            onFound: {},
+            onCantFind: { [weak self] in
+                MenuBarHelpWindowController.shared.show {
+                    self?.openPreferences()
+                }
+            }
+        )
     }
 
     /// Opens the Preferences window. Called from the launch HUD tap so
