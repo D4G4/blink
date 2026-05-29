@@ -304,14 +304,10 @@ function V2Shot3({ copy }) {
     }}>
       <PlateChrome index={3} accent={V2.peach} bottomLeft="Adaptive interval · 20 → 40 min" bottomRight="Detects steady typing, no app-switching" />
 
-      {/* Top: eyebrow + headline + subhead, centered */}
+      {/* Top: headline + subhead, centered */}
       <div style={{
         position: 'absolute', top: 200, left: 200, right: 200, textAlign: 'center'
       }}>
-        <div style={{
-          fontFamily: MONO_STACK, fontSize: 24, letterSpacing: '0.32em', textTransform: 'uppercase',
-          color: V2.inkMute, fontWeight: 500, marginBottom: 28
-        }}>Eye chart · Flow detection</div>
         <div style={{
           fontSize: 132, fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 0.95, color: V2.ink,
           textWrap: 'balance'
