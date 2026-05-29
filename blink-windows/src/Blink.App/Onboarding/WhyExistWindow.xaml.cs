@@ -29,10 +29,13 @@ public sealed partial class WhyExistWindow : Window
     private SolidColorBrush _fgBrush = null!;
     private int _page;
 
-    public WhyExistWindow(BlinkTheme theme, bool centered = false)
+    // `previewDark` is forwarded from onboarding (always-light, with its own
+    // preview-dark toggle) so this sheet doesn't jump to the system appearance
+    // mid-flow. Omitted (null) elsewhere → follows the system appearance.
+    public WhyExistWindow(BlinkTheme theme, bool centered = false, bool? previewDark = null)
     {
         _theme = theme;
-        _isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
+        _isDark = previewDark ?? (Application.Current.RequestedTheme == ApplicationTheme.Dark);
         InitializeComponent();
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "app.ico"));
 

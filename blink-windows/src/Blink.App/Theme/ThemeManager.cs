@@ -31,7 +31,10 @@ public sealed class ThemeManager
 
     public double FlowSensitivity
     {
-        get => GetSetting("flowSensitivity", 0.7);
+        // Default = the canonical "Balanced" preset — the value a fresh user
+        // gets before onboarding writes a preset. Sourced from the single
+        // FlowSensitivityPreset table (mirrors macOS FlowSensitivityView.Preset).
+        get => GetSetting("flowSensitivity", FlowSensitivityPreset.Default);
         set => SetSetting("flowSensitivity", value);
     }
 

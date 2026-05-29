@@ -55,6 +55,19 @@
                 <HyperlinkButton Content="Why do I exist?" Click="OnWhyExist"
                                  HorizontalAlignment="Center"/>
             </StackPanel>
+
+            <!-- Preview dark/light toggle — bottom-right corner, spans all rows.
+                 Lets a user preview the theme's dark variant; onboarding itself
+                 always opens light. Hidden on the flow page (no theme to compare). -->
+            <Button x:Name="PreviewDarkButton" Grid.RowSpan="5" Click="OnTogglePreviewDark"
+                    HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                    Background="Transparent" BorderThickness="0"
+                    Padding="12,8" CornerRadius="16">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon x:Name="PreviewDarkIcon" Glyph="&#xE708;" FontSize="13"/>
+                    <TextBlock x:Name="PreviewDarkLabel" Text="Preview dark" FontSize="12" FontWeight="Medium"/>
+                </StackPanel>
+            </Button>
         </Grid>
 
         <!-- Page 2: Flow Sensitivity (matches macOS FlowSensitivityPage layout) -->

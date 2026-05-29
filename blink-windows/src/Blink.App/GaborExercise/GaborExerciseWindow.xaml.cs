@@ -45,8 +45,11 @@ public sealed partial class GaborExerciseWindow : Window
             _state.CancelSession();
         };
 
+        // PreviewKeyDown (tunneling) fires before a focused response button can
+        // consume an arrow key for focus navigation, so ← / → reliably reach
+        // the trial handler regardless of which control has focus.
         if (Content is FrameworkElement root)
-            root.KeyDown += OnKeyDown;
+            root.PreviewKeyDown += OnKeyDown;
 
         Render();
     }
@@ -67,10 +70,37 @@ public sealed partial class GaborExerciseWindow : Window
 
     private void OnKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == Windows.System.VirtualKey.Escape)
+        switch (e.Key)
         {
-            Close();
-            e.Handled = true;
+            // ← / → submit the left/right (or tilted-left/right) response, but
+            // only during a live trial. Mirrors the macOS .keyboardShortcut
+            // bindings: left arrow → response 0, right arrow → response 1.
+            case Windows.System.VirtualKey.Left when _state.Phase == ExercisePhase.Presenting:
+                _state.SubmitResponse(0);
+                e.Handled = true;
+                break;
+            case Windows.System.VirtualKey.Right when _state.Phase == ExercisePhase.Presenting:
+                _state.SubmitResponse(1);
+                e.Handled = true;
+                break;
+
+            // Esc steps back to the picker from a trial, its feedback, or the
+            // instructions — abandoning the in-progress attempt without saving.
+            // From the picker/disclaimer/results it closes the window.
+            case Windows.System.VirtualKey.Escape:
+                if (_state.Phase is ExercisePhase.Presenting
+                    or ExercisePhase.FeedbackCorrect
+                    or ExercisePhase.FeedbackIncorrect
+                    or ExercisePhase.Instructions)
+                {
+                    _state.ReturnToPicker();
+                }
+                else
+                {
+                    Close();
+                }
+                e.Handled = true;
+                break;
         }
     }
 
@@ -79,6 +109,20 @@ public sealed partial class GaborExerciseWindow : Window
 
     private void Render()
     {
+        // The Gabor stimulus is only on screen during a trial; only then do we
+        // switch to the mid-gray field a patch must sit on, so its
+        // Gaussian-tapered edges blend into the surround instead of reading as
+        // a hard disc against black. The picker, instructions, disclaimer, and
+        // results keep the dark look.
+        RootGrid.Background = OnGray ? MidGrayBrush : new SolidColorBrush(Colors.Black);
+
+        // Footer (lives outside PhaseHost, spans every phase): dark text on the
+        // mid-gray field, white on the dark phases.
+        var footerFg = OnGray ? TrialFg : new SolidColorBrush(Colors.White);
+        FooterText.Foreground = footerFg;
+        FooterDisclaimer.Foreground = footerFg;
+        FooterClose.Foreground = footerFg;
+
         PhaseHost.Content = _state.Phase switch
         {
             ExercisePhase.Disclaimer => BuildDisclaimer(),
@@ -92,7 +136,16 @@ public sealed partial class GaborExerciseWindow : Window
         };
     }
 
+    private bool OnGray => _state.Phase is ExercisePhase.Presenting
+        or ExercisePhase.FeedbackCorrect
+        or ExercisePhase.FeedbackIncorrect;
+
     // ── Common brushes ──
+
+    // Mid-gray field matched to the Gabor patch's mean luminance (0.5 → 128).
+    private static SolidColorBrush MidGrayBrush => new(Color.FromArgb(255, 128, 128, 128));
+    // Dark text/icon foreground for use on the mid-gray field (macOS white: 0.12 ≈ 31).
+    private static SolidColorBrush TrialFg => new(Color.FromArgb(255, 31, 31, 31));
 
     private SolidColorBrush Fg => new(Colors.White);
     private SolidColorBrush Accent => new(_theme.Accent(_isDark));
@@ -125,18 +178,7 @@ public sealed partial class GaborExerciseWindow : Window
     {
         var root = new StackPanel { Spacing = 0, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Padding = new Thickness(40) };
 
-        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 8) };
-        titleRow.Children.Add(new TextBlock { Text = "Eye Exercise", FontSize = 32, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = Fg });
-        var beta = new Border
-        {
-            Background = FgSoft(38),
-            CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(8, 3, 8, 3),
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = new TextBlock { Text = "beta", FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Fg }
-        };
-        titleRow.Children.Add(beta);
-        root.Children.Add(titleRow);
+        root.Children.Add(new TextBlock { Text = "Eye Exercise", FontSize = 32, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = Fg, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 8) });
         root.Children.Add(new TextBlock { Text = "Train your visual cortex with Gabor patch exercises", FontSize = 15, Foreground = Fg, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 40) });
 
         var cards = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 20, HorizontalAlignment = HorizontalAlignment.Center };
@@ -240,8 +282,8 @@ public sealed partial class GaborExerciseWindow : Window
         var header = new Grid { Margin = new Thickness(60, 0, 60, 0) };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var trialText = new TextBlock { Text = $"Trial {_state.CurrentTrial} of {_state.TotalTrials}", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Medium, Foreground = Fg };
-        var scoreText = new TextBlock { Text = $"Score: {_state.Score}/{_state.CurrentTrial}", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Medium, Foreground = Fg };
+        var trialText = new TextBlock { Text = $"Trial {_state.CurrentTrial} of {_state.TotalTrials}", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Medium, Foreground = TrialFg };
+        var scoreText = new TextBlock { Text = $"Score: {_state.Score}/{_state.CurrentTrial}", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Medium, Foreground = TrialFg };
         Grid.SetColumn(scoreText, 1);
         header.Children.Add(trialText);
         header.Children.Add(scoreText);
@@ -274,16 +316,24 @@ public sealed partial class GaborExerciseWindow : Window
         root.Children.Add(stimulusContainer);
 
         // Hint
-        var hint = new TextBlock { Text = _state.ExerciseType.HowToPlay(), FontSize = 18, Foreground = Fg, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 16, 0, 0) };
+        var hint = new TextBlock { Text = _state.ExerciseType.HowToPlay(), FontSize = 18, Foreground = TrialFg, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 16, 0, 0) };
         Grid.SetRow(hint, 3);
         root.Children.Add(hint);
 
-        // Response buttons (only when not in feedback)
+        // Response buttons (only when not in feedback), also bound to ← / →.
         if (!showFeedback)
         {
-            var buttons = BuildResponseButtons();
-            Grid.SetRow(buttons, 4);
-            root.Children.Add(buttons);
+            var buttonStack = new StackPanel { Spacing = 10, HorizontalAlignment = HorizontalAlignment.Center };
+            buttonStack.Children.Add(BuildResponseButtons());
+            buttonStack.Children.Add(new TextBlock
+            {
+                Text = "or press ← / →",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromArgb((byte)(0.7 * 255), 31, 31, 31)),
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+            Grid.SetRow(buttonStack, 4);
+            root.Children.Add(buttonStack);
         }
         else
         {
@@ -301,7 +351,8 @@ public sealed partial class GaborExerciseWindow : Window
         var total = _state.TotalTrials;
         var results = _state.Staircase.TrialResults;
         var max = Math.Min(total, 30);
-        var dotSize = total > 25 ? 4 : 6;
+        // Prominent dots on the mid-gray field: black for pending, green/red for done.
+        var dotSize = total > 25 ? 5 : 7;
         for (var i = 0; i < max; i++)
         {
             SolidColorBrush fill;
@@ -313,13 +364,12 @@ public sealed partial class GaborExerciseWindow : Window
             }
             else
             {
-                var a = _theme.Accent(_isDark);
-                fill = new SolidColorBrush(Color.FromArgb(50, a.R, a.G, a.B));
+                fill = new SolidColorBrush(Colors.Black);
             }
             sp.Children.Add(new Ellipse { Width = dotSize, Height = dotSize, Fill = fill });
         }
         if (total > 30)
-            sp.Children.Add(new TextBlock { Text = $"+{total - 30}", FontSize = 9, Foreground = Fg, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 0, 0) });
+            sp.Children.Add(new TextBlock { Text = $"+{total - 30}", FontSize = 9, Foreground = TrialFg, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 0, 0) });
         return sp;
     }
 
@@ -399,26 +449,20 @@ public sealed partial class GaborExerciseWindow : Window
     private FrameworkElement BuildClippedPatch(WriteableBitmap bmp, double pointSize)
     {
         // Circle-clip via Border + CornerRadius (UIElement.Clip can only be Rectangle).
+        // No aperture ring: on the mid-gray field the patch's Gaussian-tapered
+        // edges fade into the surround, so an outline would draw a visible disc.
         var img = new Microsoft.UI.Xaml.Controls.Image
         {
             Source = bmp,
             Width = pointSize, Height = pointSize,
             Stretch = Stretch.UniformToFill
         };
-        var circle = new Border
+        return new Border
         {
             Width = pointSize, Height = pointSize,
             CornerRadius = new CornerRadius(pointSize / 2),
             Child = img
         };
-        var grid = new Grid { Width = pointSize, Height = pointSize };
-        grid.Children.Add(circle);
-        grid.Children.Add(new Ellipse
-        {
-            Stroke = FgSoft(50), StrokeThickness = 1,
-            Width = pointSize, Height = pointSize
-        });
-        return grid;
     }
 
     private FrameworkElement BuildResponseButtons()
@@ -498,15 +542,19 @@ public sealed partial class GaborExerciseWindow : Window
 
     private Button ResponseButton(string label, string glyph, Action onClick)
     {
+        // Response buttons only appear on the mid-gray trial field, so dark
+        // foreground + dark-tinted fill/border to read against the gray.
+        var darkFg = TrialFg;
+        var darkSoft = (byte alpha) => new SolidColorBrush(Color.FromArgb(alpha, 0, 0, 0));
         var inner = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-        inner.Children.Add(new FontIcon { Glyph = glyph, FontSize = 18, Foreground = Fg });
-        inner.Children.Add(new TextBlock { Text = label, FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Medium, Foreground = Fg });
+        inner.Children.Add(new FontIcon { Glyph = glyph, FontSize = 18, Foreground = darkFg });
+        inner.Children.Add(new TextBlock { Text = label, FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Medium, Foreground = darkFg });
 
         var btn = new Button
         {
             Content = inner, Width = 220, Height = 52,
-            Background = FgSoft(26),
-            BorderBrush = FgSoft(38),
+            Background = darkSoft(26),
+            BorderBrush = darkSoft(46),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(10)
         };

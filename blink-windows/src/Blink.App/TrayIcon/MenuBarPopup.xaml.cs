@@ -144,8 +144,6 @@ public sealed partial class MenuBarPopup : Window
 
         EyeExerciseIcon.Foreground = accentBrush;
         EyeExerciseLabel.Foreground = accentBrush;
-        BetaPill.Background = new SolidColorBrush(Color.FromArgb(30, accent.R, accent.G, accent.B));
-        BetaLabel.Foreground = accentBrush;
 
         var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", $"theme-{theme.Id}.png");
         if (File.Exists(iconPath))

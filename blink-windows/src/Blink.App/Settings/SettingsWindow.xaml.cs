@@ -246,20 +246,9 @@ public sealed partial class SettingsWindow : Window
         window.Activate();
     }
 
-    private static double PresetToValue(string preset) => preset switch
-    {
-        "eyeHealth" => 0.45,
-        "balanced" => 0.65,
-        "deepWork" => 0.85,
-        _ => 0.65
-    };
+    private static double PresetToValue(string preset) => FlowSensitivityPreset.ValueFor(preset);
 
-    private static string ClosestPreset(double sensitivity)
-    {
-        if (sensitivity <= 0.55) return "eyeHealth";
-        if (sensitivity <= 0.75) return "balanced";
-        return "deepWork";
-    }
+    private static string ClosestPreset(double sensitivity) => FlowSensitivityPreset.Closest(sensitivity);
 
     private static string GetPresetDescription(string preset) => preset switch
     {

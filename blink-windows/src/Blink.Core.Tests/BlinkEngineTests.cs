@@ -7,25 +7,49 @@ namespace Blink.Core.Tests;
 /// Behavioral spec for the BlinkEngine orchestrator. These tests treat the
 /// engine as a black box driven by input events + Tick, and assert against
 /// the callbacks it fires. Each test is portable to Swift xctest.
+///
+/// Time is driven via <see cref="BlinkEngine.SimulatedNow"/> for determinism.
 /// </summary>
 public class BlinkEngineTests
 {
+    // Reference epoch for simulated time.
+    private static readonly DateTime T0 = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    private static BlinkEngine NewEngine(double sensitivity = 0.7)
+    {
+        var e = new BlinkEngine(sensitivity) { SimulatedNow = T0 };
+        return e;
+    }
+
+    private static void Advance(BlinkEngine e, int seconds) =>
+        e.SimulatedNow = e.SimulatedNow!.Value.AddSeconds(seconds);
+
+    /// <summary>Tick once per second, advancing simulated time each tick.</summary>
+    private static void TickSeconds(BlinkEngine e, int seconds)
+    {
+        for (var i = 0; i < seconds; i++)
+        {
+            Advance(e, 1);
+            e.Tick();
+        }
+    }
+
     // --- Initial state ---
 
     [Fact]
     public void InitialState_Working_20Min()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         Assert.Equal(1200, e.RemainingSeconds);
         Assert.Equal(BlinkEngine.DisplayState.Working, e.CurrentState);
         Assert.Equal(0, e.CurrentBreakStreak);
     }
 
     [Fact]
-    public void Sensitivity_DefaultIs_0_7()
+    public void Sensitivity_SetViaConstructor()
     {
-        var e = new BlinkEngine();
-        Assert.Equal(0.7, e.Sensitivity, 6);
+        var e = new BlinkEngine(0.65);
+        Assert.Equal(0.65, e.Sensitivity, 6);
     }
 
     // --- Tick + countdown ---
@@ -33,11 +57,11 @@ public class BlinkEngineTests
     [Fact]
     public void Tick_FiresTimerUpdate()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         double? last = null;
         e.OnTimerUpdate = (rem, _) => last = rem;
         e.RecordKeystroke();
-        e.Tick();
+        TickSeconds(e, 1);
         Assert.NotNull(last);
         Assert.True(last < 1200);
     }
@@ -45,10 +69,10 @@ public class BlinkEngineTests
     [Fact]
     public void Tick_CountsDown_OneSecondPerTick()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.RecordKeystroke();
         var before = e.RemainingSeconds;
-        for (var i = 0; i < 10; i++) e.Tick();
+        TickSeconds(e, 10);
         var after = e.RemainingSeconds;
         Assert.InRange(before - after, 8, 12);
     }
@@ -58,27 +82,23 @@ public class BlinkEngineTests
     [Fact]
     public void NoActivity_DoesNotImmediatelyTriggerIdle()
     {
-        var e = new BlinkEngine();
-        // Activity right now, then one tick (1 second later, far below 180s threshold)
+        var e = NewEngine();
         e.RecordKeystroke();
-        e.Tick();
+        TickSeconds(e, 1);
         Assert.Equal(BlinkEngine.DisplayState.Working, e.CurrentState);
     }
 
     [Fact]
-    public void ActivityResetsConsecutiveBreaksOnceIdle()
+    public void ExtendedIdle_ResetsConsecutiveBreaks()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.UserTookBreak();
         e.UserTookBreak();
         Assert.Equal(2, e.CurrentBreakStreak);
 
-        // Sleep through the grace period + idle threshold by ticking without input
-        // Note: the engine uses wall-clock, so we can't simulate idle synthetically
-        // from here. This test just locks in the current behavior: streak persists
-        // through ticks unless idle is actually detected.
-        for (var i = 0; i < 5; i++) e.Tick();
-        Assert.Equal(2, e.CurrentBreakStreak);
+        // No input for > 180s → idle reset zeroes the streak.
+        TickSeconds(e, 200);
+        Assert.Equal(0, e.CurrentBreakStreak);
     }
 
     // --- Meeting ---
@@ -86,34 +106,50 @@ public class BlinkEngineTests
     [Fact]
     public void MicActive_PutsStateInMeeting()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.RecordKeystroke();
         e.SetMicActive(true);
-        e.Tick();
+        TickSeconds(e, 1);
         Assert.Equal(BlinkEngine.DisplayState.Meeting, e.CurrentState);
     }
 
     [Fact]
     public void MicReleased_ReturnsToWorking()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.RecordKeystroke();
         e.SetMicActive(true);
-        e.Tick();
+        TickSeconds(e, 1);
         Assert.Equal(BlinkEngine.DisplayState.Meeting, e.CurrentState);
 
+        e.RecordKeystroke();
         e.SetMicActive(false);
-        e.Tick();
+        TickSeconds(e, 1);
         Assert.Equal(BlinkEngine.DisplayState.Working, e.CurrentState);
+    }
+
+    [Fact]
+    public void MicActive_ResetsStreakAndTimer()
+    {
+        var e = NewEngine();
+        e.UserTookBreak();
+        Assert.Equal(1, e.CurrentBreakStreak);
+        e.RecordKeystroke();
+        TickSeconds(e, 60);
+        Assert.True(e.RemainingSeconds < 1200);
+
+        e.SetMicActive(true);
+        Assert.Equal(0, e.CurrentBreakStreak);
+        Assert.Equal(1200, e.RemainingSeconds);
     }
 
     [Fact]
     public void CameraActive_AlsoTriggersMeeting()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.RecordKeystroke();
         e.SetCameraActive(true);
-        e.Tick();
+        TickSeconds(e, 1);
         Assert.Equal(BlinkEngine.DisplayState.Meeting, e.CurrentState);
     }
 
@@ -122,9 +158,9 @@ public class BlinkEngineTests
     [Fact]
     public void VideoStart_ResetsTimer()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.RecordKeystroke();
-        for (var i = 0; i < 60; i++) e.Tick();    // burn one minute
+        TickSeconds(e, 60); // burn one minute
         Assert.True(e.RemainingSeconds < 1200);
 
         e.SetVideoPlaying(true);
@@ -132,28 +168,38 @@ public class BlinkEngineTests
     }
 
     [Fact]
+    public void VideoStart_ResetsStreak()
+    {
+        var e = NewEngine();
+        e.UserTookBreak();
+        Assert.Equal(1, e.CurrentBreakStreak);
+        e.SetVideoPlaying(true);
+        Assert.Equal(0, e.CurrentBreakStreak);
+    }
+
+    [Fact]
     public void VideoPlaying_PausesCountdown()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.RecordKeystroke();
         e.SetVideoPlaying(true);
         var before = e.RemainingSeconds;
-        for (var i = 0; i < 30; i++) e.Tick();
+        TickSeconds(e, 30);
         Assert.Equal(before, e.RemainingSeconds);
     }
 
     [Fact]
     public void VideoStop_ResumesCountdown()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.RecordKeystroke();
         e.SetVideoPlaying(true);
-        for (var i = 0; i < 10; i++) e.Tick();
+        TickSeconds(e, 10);
         var paused = e.RemainingSeconds;
 
         e.SetVideoPlaying(false);
         e.RecordKeystroke();
-        for (var i = 0; i < 10; i++) e.Tick();
+        TickSeconds(e, 10);
         Assert.True(e.RemainingSeconds < paused);
     }
 
@@ -162,7 +208,7 @@ public class BlinkEngineTests
     [Fact]
     public void UserTookBreak_FiresStateChangeBack_AndIncrementsStreak()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         var states = new List<BlinkEngine.DisplayState>();
         e.OnStateChange = s => states.Add(s);
         e.UserTookBreak();
@@ -173,7 +219,7 @@ public class BlinkEngineTests
     [Fact]
     public void UserSkippedBreak_DoesNotIncrementStreak()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.UserSkippedBreak();
         Assert.Equal(0, e.CurrentBreakStreak);
     }
@@ -181,9 +227,9 @@ public class BlinkEngineTests
     [Fact]
     public void UserTookBreak_ResetsTimerTo20Min()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.RecordKeystroke();
-        for (var i = 0; i < 60; i++) e.Tick();
+        TickSeconds(e, 60);
         Assert.True(e.RemainingSeconds < 1200);
 
         e.UserTookBreak();
@@ -193,7 +239,7 @@ public class BlinkEngineTests
     [Fact]
     public void UserSnoozed_SetsTimerToProvidedMinutes()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.UserSnoozed(5);
         Assert.Equal(300, e.RemainingSeconds);
     }
@@ -201,27 +247,80 @@ public class BlinkEngineTests
     // --- Sensitivity propagation ---
 
     [Fact]
-    public void Sensitivity_SettingPropagatesToDecisionEngine()
+    public void Sensitivity_SettingPropagates()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         e.Sensitivity = 0.45;
         Assert.Equal(0.45, e.Sensitivity, 6);
-        // No direct accessor for the inner DecisionEngine sensitivity, but the
-        // behavior under HandleBreakDue depends on it. This test just locks the
-        // public surface; tighter coupling is exercised in integration scenarios.
     }
 
     // --- WakeFromSleep ---
 
     [Fact]
-    public void WakeFromSleep_RunsATick()
+    public void WakeFromSleep_ResetsTimerAndStreak()
     {
-        var e = new BlinkEngine();
-        var updates = 0;
-        e.OnTimerUpdate = (_, _) => updates++;
+        var e = NewEngine();
+        e.UserTookBreak();
         e.RecordKeystroke();
+        TickSeconds(e, 60);
+        Assert.True(e.RemainingSeconds < 1200);
+        Assert.Equal(1, e.CurrentBreakStreak);
+
         e.WakeFromSleep();
-        Assert.True(updates > 0);
+        Assert.Equal(1200, e.RemainingSeconds);
+        Assert.Equal(0, e.CurrentBreakStreak);
+    }
+
+    [Fact]
+    public void WakeAfterLongIdle_DoesNotImmediatelyQueueBreak()
+    {
+        // Regression: the phantom-break-on-wake bug. The engine had been
+        // running near the wall-clock cap; the machine sleeps for a long time
+        // and wakes. The idle reset MUST clear the wall-clock cap before it
+        // can fire, so waking after a long gap does NOT immediately queue a
+        // break.
+        var e = NewEngine();
+        e.MaxWallClockSeconds = 1800; // 30 min cap
+
+        var breakShown = false;
+        e.OnShowBreak = _ => breakShown = true;
+
+        // Work right up near the cap.
+        for (var i = 0; i < 1700; i++)
+        {
+            Advance(e, 1);
+            e.RecordKeystroke();
+            e.Tick();
+        }
+        Assert.False(breakShown, "should not have hit the cap yet");
+
+        // Machine sleeps for an hour, then a tick fires on wake. The long idle
+        // gap (> 180s) must trip the idle reset before the wall-clock cap.
+        Advance(e, 3600);
+        e.Tick();
+        Assert.False(breakShown, "wake after long idle must NOT queue a phantom break");
+
+        // Confirm the cap was reset: a fresh tick with input doesn't fire either.
+        Advance(e, 1);
+        e.RecordKeystroke();
+        e.Tick();
+        Assert.False(breakShown);
+    }
+
+    [Fact]
+    public void Grace_Is20Seconds()
+    {
+        // Within 20s of a break ending, idle is forced to 0 (no flapping). At
+        // exactly 20s the grace window has closed. We verify the state stays
+        // Working through a 19s post-break gap with no input (grace masks idle),
+        // which it could not if grace were shorter than the gap.
+        var e = NewEngine();
+        e.RecordKeystroke();
+        e.UserTookBreak(); // sets lastBreakEndedAt = now
+
+        // 19s of ticks with NO input. Idle would be ~19s but grace masks it to 0.
+        TickSeconds(e, 19);
+        Assert.Equal(BlinkEngine.DisplayState.Working, e.CurrentState);
     }
 
     // --- Compliance accessor ---
@@ -229,7 +328,21 @@ public class BlinkEngineTests
     [Fact]
     public void Compliance_ReachableThroughEngine()
     {
-        var e = new BlinkEngine();
+        var e = NewEngine();
         Assert.NotNull(e.Compliance);
+    }
+
+    // --- SpotCheck ---
+
+    [Fact]
+    public void SpotCheckFlow_ReportsCurrentApp()
+    {
+        var e = NewEngine();
+        e.SetCurrentApp("Code");
+        e.RecordKeystroke();
+        TickSeconds(e, 120);
+        var s = e.SpotCheckFlow();
+        Assert.Equal("Code", s.CurrentApp);
+        Assert.True(s.CreativeFraction > 0.99, $"all-Code window → creativeFraction ≈ 1.0 (got {s.CreativeFraction})");
     }
 }

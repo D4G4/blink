@@ -35,5 +35,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.*" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.*" />
+    <!-- Provides Microsoft.Win32.SystemEvents (PowerModeChanged) for sleep/wake
+         handling — not implicit in a UseWinUI Microsoft.NET.Sdk project. -->
+    <PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.*" />
   </ItemGroup>
 </Project>

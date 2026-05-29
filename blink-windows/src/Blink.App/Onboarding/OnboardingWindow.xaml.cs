@@ -16,18 +16,31 @@ public sealed partial class OnboardingWindow : Window
     private double _sensitivity;
     private string _selectedPreset = "balanced";
 
+    // Onboarding always opens in the LIGHT variant — Peach-in-light is the
+    // brand's first impression, regardless of the user's system appearance.
+    // The "Preview dark" toggle flips this on demand. This deliberately does
+    // NOT read Application.Current.RequestedTheme; every theme method below
+    // is passed _previewDark so onboarding shows the theme's real light
+    // colors, not the dark-tinted overlay variant. (macOS commit f0f3391.)
+    private bool _previewDark;
+
     public OnboardingWindow(ThemeManager themeManager)
     {
         _themeManager = themeManager;
-        _sensitivity = themeManager.FlowSensitivity;
+        // First-run onboarding always pre-highlights Balanced — the canonical
+        // default a fresh user gets (matches macOS FlowSensitivityView.Preset
+        // .balanced). If the user re-opens onboarding after having set a value,
+        // start from their stored sensitivity instead. Note: we don't inherit
+        // ThemeManager's raw stored default here so the pre-highlighted card
+        // and the value persisted on Get Started always agree.
+        _sensitivity = themeManager.HasCompletedOnboarding
+            ? themeManager.FlowSensitivity
+            : FlowSensitivityPreset.Default;
         InitializeComponent();
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "app.ico"));
 
-        // Start with Peach (or Midnight if system is dark)
-        var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
-        _selectedIndex = isDark
-            ? Array.FindIndex(_themes, t => t.Id == "midnight")
-            : Array.FindIndex(_themes, t => t.Id == "peach");
+        // Always start on Peach (theme list is Peach-first), light variant.
+        _selectedIndex = Array.FindIndex(_themes, t => t.Id == "peach");
         if (_selectedIndex < 0) _selectedIndex = 0;
 
         UpdateThemeDisplay();
@@ -51,7 +64,7 @@ public sealed partial class OnboardingWindow : Window
     private void UpdateThemeDisplay()
     {
         var theme = _themes[_selectedIndex];
-        bool isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
+        bool isDark = _previewDark;
 
         ThemeName.Text = theme.Name;
 
@@ -79,6 +92,26 @@ public sealed partial class OnboardingWindow : Window
         WelcomeTitle.Foreground = textBrush;
         WelcomeSubtitle.Foreground = textBrush;
         ThemeName.Foreground = textBrush;
+
+        // Preview-dark toggle: fg text on a translucent fg capsule (matches macOS).
+        PreviewDarkIcon.Foreground = textBrush;
+        PreviewDarkLabel.Foreground = textBrush;
+        PreviewDarkButton.Background = new SolidColorBrush(
+            Color.FromArgb(38, textColor.R, textColor.G, textColor.B));
+        // Glyph + label flip with the previewed variant: moon when showing
+        // light (offer to preview dark), sun/brightness when showing dark.
+        PreviewDarkLabel.Text = _previewDark ? "Preview light" : "Preview dark";
+        PreviewDarkIcon.Glyph = _previewDark ? PreviewLightGlyph : PreviewDarkGlyph;
+    }
+
+    // Segoe Fluent Icons: E706 = Brightness (sun), E708 = QuietHours (moon).
+    private const string PreviewDarkGlyph = "";
+    private const string PreviewLightGlyph = "";
+
+    private void OnTogglePreviewDark(object sender, RoutedEventArgs e)
+    {
+        _previewDark = !_previewDark;
+        UpdateThemeDisplay();
     }
 
     private void OnPrevious(object sender, RoutedEventArgs e)
@@ -102,7 +135,7 @@ public sealed partial class OnboardingWindow : Window
 
     private void OnWhyExist(object sender, RoutedEventArgs e)
     {
-        var window = new WhyExistWindow(_themes[_selectedIndex], centered: true);
+        var window = new WhyExistWindow(_themes[_selectedIndex], centered: true, previewDark: _previewDark);
         window.Activate();
     }
 
@@ -124,7 +157,7 @@ public sealed partial class OnboardingWindow : Window
     private void ApplyFlowPageTheme()
     {
         var theme = _themes[_selectedIndex];
-        var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
+        var isDark = _previewDark;
         var fg = theme.OnBackgroundText(isDark);
         var fgBrush = new SolidColorBrush(fg);
 
@@ -165,7 +198,7 @@ public sealed partial class OnboardingWindow : Window
     private void UpdatePresetSelection()
     {
         var theme = _themes[_selectedIndex];
-        var isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
+        var isDark = _previewDark;
         var fg = theme.OnBackgroundText(isDark);
         var accent = theme.Accent(isDark);
 
@@ -202,7 +235,7 @@ public sealed partial class OnboardingWindow : Window
     private void OnExploreHowItWorks(object sender, RoutedEventArgs e)
     {
         var theme = _themes[_selectedIndex];
-        var window = new FlowLearnMoreWindow(theme, _sensitivity, centered: true);
+        var window = new FlowLearnMoreWindow(theme, _sensitivity, centered: true, previewDark: _previewDark);
         window.Activate();
     }
 
@@ -215,27 +248,12 @@ public sealed partial class OnboardingWindow : Window
     }
 
     // ── Shared helpers ──
+    // Single source of truth for preset values/labels lives in
+    // FlowSensitivityPreset (Theme/) so onboarding + Settings stay in sync.
 
-    private static double PresetToValue(string preset) => preset switch
-    {
-        "eyeHealth" => 0.45,
-        "balanced" => 0.65,
-        "deepWork" => 0.85,
-        _ => 0.65
-    };
+    private static double PresetToValue(string preset) => FlowSensitivityPreset.ValueFor(preset);
 
-    private static string ClosestPreset(double sensitivity)
-    {
-        if (sensitivity <= 0.55) return "eyeHealth";
-        if (sensitivity <= 0.75) return "balanced";
-        return "deepWork";
-    }
+    private static string ClosestPreset(double sensitivity) => FlowSensitivityPreset.Closest(sensitivity);
 
-    private static string GetPresetDescription(string preset) => preset switch
-    {
-        "eyeHealth" => "Blink prioritizes your eye health.\nBreaks come at 20 min unless your work rhythm is very intense.",
-        "balanced" => "Blink learns your work rhythm and extends when you're truly focused.\nRecommended for most users.",
-        "deepWork" => "Fewer interruptions during focus. Blink reminds you gently.\nBest if you're disciplined about breaks.",
-        _ => ""
-    };
+    private static string GetPresetDescription(string preset) => FlowSensitivityPreset.Description(preset);
 }

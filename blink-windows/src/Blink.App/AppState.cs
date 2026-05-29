@@ -17,8 +17,16 @@ namespace Blink.App;
 /// </summary>
 public sealed class AppState : INotifyPropertyChanged
 {
-    // Engine
-    public BlinkEngine Engine { get; } = new();
+    /// <summary>
+    /// Canonical default sensitivity for a fresh user — the "Balanced" preset.
+    /// Delegates to FlowSensitivityPreset.Default so a single literal is shared
+    /// across onboarding, settings, and engine construction (no internal default
+    /// in Blink.Core).
+    /// </summary>
+    public const double DefaultSensitivity = FlowSensitivityPreset.Default;
+
+    // Engine — constructed in the ctor with the effective (persisted or default) sensitivity.
+    public BlinkEngine Engine { get; }
 
     // Platform monitors
     private WinInputMonitor? _inputMonitor;
@@ -28,6 +36,12 @@ public sealed class AppState : INotifyPropertyChanged
 
     // Timer
     private System.Threading.Timer? _tickTimer;
+
+    // Sleep/wake tracking — when the OS suspends, the tick loop is stopped so
+    // the engine doesn't accumulate phantom time during sleep, and the engine's
+    // streak/timer state is reset on resume (mirrors macOS NSWorkspace handling).
+    private bool _isSystemAsleep;
+    private bool _powerEventsHooked;
 
     // Overlay
     private Overlay.OverlayManager? _overlayManager;
@@ -65,6 +79,11 @@ public sealed class AppState : INotifyPropertyChanged
 
     public AppState()
     {
+        // Construct the engine with the effective sensitivity — the persisted
+        // user value from settings.json (ThemeManager.FlowSensitivity), which
+        // falls back to the canonical default when nothing has been saved.
+        // Blink.Core has no internal default, so this is the only source of truth.
+        Engine = new BlinkEngine(ThemeManager.Instance.FlowSensitivity);
         SetupEngineCallbacks();
         LoadTodayStats();
     }
@@ -74,6 +93,7 @@ public sealed class AppState : INotifyPropertyChanged
         _overlayManager = new Overlay.OverlayManager(dispatcher);
         StartMonitoring();
         StartTimer();
+        HookPowerEvents();
     }
 
     private void SetupEngineCallbacks()
@@ -144,8 +164,73 @@ public sealed class AppState : INotifyPropertyChanged
         _appMonitor.OnWindowTitleChange += () => { }; // no-op, engine doesn't track titles
         _appMonitor.StartMonitoring();
 
+        // Seed the currently-frontmost app at startup. SetWinEventHook only
+        // fires on foreground CHANGES, not for the app already in front — so
+        // without this seed, a user who launches Blink and stays in one app
+        // produces zero app-switch events and the engine's dwell tracking has
+        // no data from t=0 (mirrors macOS NSWorkspace.frontmostApplication seed).
+        var frontmost = WinAppMonitor.GetCurrentProcessName();
+        if (!string.IsNullOrEmpty(frontmost))
+        {
+            Log.Info($"Seeding initial frontmost app: {frontmost}");
+            Engine.SetCurrentApp(frontmost);
+        }
+        else
+        {
+            Log.Info("No frontmost app at startup — dwell tracking starts on first app switch");
+        }
+
         _idleDetector = new WinIdleDetector();
         _contextDetector = new WinContextDetector();
+    }
+
+    /// <summary>
+    /// Subscribes to OS power transitions so the engine matches the macOS
+    /// sleep/wake behavior: stop ticking while suspended (no phantom time),
+    /// and reset streak + timer state on resume.
+    ///
+    /// SystemEvents.PowerModeChanged is the standard Win32 mechanism and works
+    /// in an unpackaged WinUI host because it relies on a hidden message-only
+    /// window pumping WM_POWERBROADCAST on a background thread. The handler can
+    /// fire off the UI thread, so engine calls here are kept simple/thread-safe.
+    /// </summary>
+    private void HookPowerEvents()
+    {
+        if (_powerEventsHooked) return;
+        try
+        {
+            Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
+            _powerEventsHooked = true;
+        }
+        catch (Exception ex)
+        {
+            // SystemEvents requires a running message pump; if the host doesn't
+            // provide one this throws. Log and continue — sleep/wake handling is
+            // degraded but the app still functions.
+            Log.Error("Failed to hook SystemEvents.PowerModeChanged", ex);
+        }
+    }
+
+    private void OnPowerModeChanged(object sender, Microsoft.Win32.PowerModeChangedEventArgs e)
+    {
+        switch (e.Mode)
+        {
+            case Microsoft.Win32.PowerModes.Suspend:
+                Log.Info("System suspending — stopping tick loop");
+                _isSystemAsleep = true;
+                // Pause the 1s tick so the engine doesn't accrue wall-clock time
+                // (which could otherwise fire a phantom break via the cap on wake).
+                _tickTimer?.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                break;
+
+            case Microsoft.Win32.PowerModes.Resume:
+                Log.Info("System resumed — resetting engine state and restarting tick loop");
+                _isSystemAsleep = false;
+                Engine.WakeFromSleep();
+                // Restart the tick loop at the normal 1s cadence.
+                _tickTimer?.Change(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+                break;
+        }
     }
 
     private void StartTimer()
@@ -165,7 +250,7 @@ public sealed class AppState : INotifyPropertyChanged
             Engine.SetVideoPlaying(pauseTimer);
             IsVideoPlaying = pauseTimer;
 
-            if (IsPaused) return;
+            if (IsPaused || _isSystemAsleep) return;
             Engine.Tick();
         }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
     }

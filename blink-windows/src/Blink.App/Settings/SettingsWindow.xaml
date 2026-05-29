@@ -192,7 +192,7 @@
                     <!-- Fine-tune slider (collapsed by default) -->
                     <StackPanel x:Name="FineTunePanel" Spacing="4" Visibility="Collapsed">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Slider x:Name="FlowSensitivitySlider" Width="200" Minimum="40" Maximum="90" StepFrequency="5"
+                            <Slider x:Name="FlowSensitivitySlider" Width="200" Minimum="25" Maximum="90" StepFrequency="5"
                                     ValueChanged="FlowSensitivitySlider_ValueChanged"/>
                             <TextBlock x:Name="FlowSensitivityLabel" VerticalAlignment="Center" Width="40"
                                        FontFamily="Consolas" FontSize="12"/>

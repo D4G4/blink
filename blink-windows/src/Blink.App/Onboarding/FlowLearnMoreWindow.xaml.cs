@@ -14,10 +14,14 @@ public sealed partial class FlowLearnMoreWindow : Window
     private readonly bool _isDark;
     private double _sensitivity;
 
-    public FlowLearnMoreWindow(BlinkTheme theme, double sensitivity, bool centered = false)
+    // `previewDark` is forwarded from onboarding (which always renders light and
+    // carries its own preview-dark toggle) so this window doesn't jump to the
+    // system appearance mid-flow. When opened from Settings the parameter is
+    // omitted (null) and the window follows the system appearance as before.
+    public FlowLearnMoreWindow(BlinkTheme theme, double sensitivity, bool centered = false, bool? previewDark = null)
     {
         _theme = theme;
-        _isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
+        _isDark = previewDark ?? (Application.Current.RequestedTheme == ApplicationTheme.Dark);
         _sensitivity = sensitivity;
 
         InitializeComponent();
@@ -25,8 +29,10 @@ public sealed partial class FlowLearnMoreWindow : Window
 
         // Set Maximum before Minimum to avoid a WinUI 3 XAML-parse ordering bug
         // ("Failed to assign to property RangeBase.Minimum") in unpackaged apps.
+        // Range 25–90% covers all three presets (Eye health 30% → Deep work 75%)
+        // plus headroom for fine-tuning, matching the macOS slider (0.25–0.90).
         SensitivitySlider.Maximum = 90;
-        SensitivitySlider.Minimum = 40;
+        SensitivitySlider.Minimum = 25;
         SensitivitySlider.StepFrequency = 5;
 
         var area = Microsoft.UI.Windowing.DisplayArea.Primary;
@@ -48,7 +54,9 @@ public sealed partial class FlowLearnMoreWindow : Window
 
     private static int GapTolerance(double sensitivity)
     {
-        var t = (sensitivity - 0.4) / (0.9 - 0.4);
+        // Map the slider's 0.25–0.90 range to a 15–90s pause tolerance,
+        // clamped so out-of-range values don't produce negative seconds.
+        var t = Math.Clamp((sensitivity - 0.25) / (0.90 - 0.25), 0.0, 1.0);
         return (int)Math.Round(15 + t * 75);
     }
 

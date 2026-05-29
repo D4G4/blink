@@ -220,6 +220,20 @@ public sealed class GaborExerciseState : INotifyPropertyChanged
         if (CurrentTrial > 0) SaveSession();
     }
 
+    /// <summary>
+    /// Abandon the current attempt (without saving) and return to the picker.
+    /// Disposes any pending feedback timer so it can't advance the trial after
+    /// we've left, and zeroes the counters so a later window-close won't
+    /// persist the abandoned attempt.
+    /// </summary>
+    public void ReturnToPicker()
+    {
+        _feedbackTimer?.Dispose();
+        CurrentTrial = 0;
+        Score = 0;
+        Phase = ExercisePhase.Ready;
+    }
+
     public int AccuracyPercent =>
         CurrentTrial == 0 ? 0 : (int)Math.Round((double)Score / CurrentTrial * 100);
 

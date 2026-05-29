@@ -23,13 +23,13 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0"
+            <TextBlock Grid.Column="0" x:Name="FooterText"
                        Text="For wellness purposes only — not medical advice  ·  Press Esc to exit"
                        FontSize="10" Foreground="White" Opacity="0.6"
                        VerticalAlignment="Center"/>
-            <HyperlinkButton Grid.Column="1" Click="OnShowDisclaimer"
+            <HyperlinkButton Grid.Column="1" x:Name="FooterDisclaimer" Click="OnShowDisclaimer"
                              Content="Disclaimer" FontSize="10" Foreground="White" Padding="0,0,12,0"/>
-            <HyperlinkButton Grid.Column="2" Click="OnCloseClick"
+            <HyperlinkButton Grid.Column="2" x:Name="FooterClose" Click="OnCloseClick"
                              Content="Close" FontSize="10" Foreground="White" Padding="0"/>
         </Grid>
     </Grid>
