@@ -164,12 +164,6 @@ function Dot() {
 function BigNumWithInset({ peach }) {
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {/* Cute wink stroke arched above the live 0 */}
-      <svg width="140" height="60" viewBox="0 0 140 60" style={{
-        position: 'absolute', top: -28, left: '50%', marginLeft: 18, transform: 'translateX(-40%)'
-      }}>
-        <path d="M 12 44 Q 70 4 128 44" stroke={peach} strokeWidth="10" fill="none" strokeLinecap="round" />
-      </svg>
       <div style={{
         fontSize: 540, lineHeight: 0.85, fontFamily: HEAD, color: V2.ink,
         position: 'relative', display: 'flex', alignItems: 'baseline'
@@ -180,6 +174,12 @@ function BigNumWithInset({ peach }) {
           position: 'relative', width: 400, height: 400,
           marginLeft: 18, marginRight: 18, marginBottom: 6
         }}>
+          {/* Cute wink stroke arched above the live 0, centered on the ring */}
+          <svg width="140" height="60" viewBox="0 0 140 60" style={{
+            position: 'absolute', top: -52, left: '50%', transform: 'translateX(-50%)'
+          }}>
+            <path d="M 12 44 Q 70 4 128 44" stroke={peach} strokeWidth="10" fill="none" strokeLinecap="round" />
+          </svg>
           {/* viewBox sized so the 48px stroke (outer radius 194) clears the
               box edge — otherwise the ring clips flat at top/bottom/left/right. */}
           <svg width="400" height="400" viewBox="0 0 400 400" style={{ position: 'absolute', inset: 0 }}>
