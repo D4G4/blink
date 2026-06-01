@@ -8,8 +8,14 @@ final class PreferencesWindowController {
     private var window: NSWindow?
     private var closeObserver: NSObjectProtocol?
 
-    func show(appState: AppState, themeManager: ThemeManager) {
-        Log.i("Preferences.show() called")
+    /// `initialTab` lets callers deep-link straight into a specific
+    /// section — used by surfaces that point users toward a setting
+    /// (e.g. menu bar's "Tap to change" → Flow tab where the detection
+    /// mode picker lives). Tabs: 0=General, 1=Theme, 2=Flow, 3=About.
+    /// Only honored on first show — bringing an already-open window
+    /// to front preserves whichever tab the user was on.
+    func show(appState: AppState, themeManager: ThemeManager, initialTab: Int = 0) {
+        Log.i("Preferences.show() called (initialTab=\(initialTab))")
 
         // If window exists, just bring it to front
         if let win = window, win.isVisible {
@@ -19,7 +25,7 @@ final class PreferencesWindowController {
             return
         }
 
-        let prefsView = SettingsView(appState: appState)
+        let prefsView = SettingsView(appState: appState, initialTab: initialTab)
             .environmentObject(themeManager)
         Log.i("Preferences: view created")
 

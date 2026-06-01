@@ -51,7 +51,7 @@ struct MenuBarView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
-            .padding(.bottom, 12)
+            .padding(.bottom, 16)
 
             // Update banner (only for direct/Homebrew installs, not App Store)
             if !UpdateChecker.isAppStore, updateChecker.updateAvailable, let version = updateChecker.latestVersion {
@@ -87,14 +87,14 @@ struct MenuBarView: View {
                 .padding(.bottom, 4)
             }
 
-            // Timer card — always shown. In basic mode (no Input Monitoring
-            // permission but user opted in) the timer is still running on
-            // the dumb-fallback path, so the user should see the countdown.
-            // A small banner below nudges them to upgrade to smart timing.
+            // Timer card + conditional mode chip. Smart users see no
+            // chip (it's the default — nothing to communicate). Simple-
+            // deliberate users see a subtle "Tap to change" hint. Missing-
+            // IM users see an accent-toned CTA to re-enable Smart timing.
             VStack(spacing: 8) {
                 timerCard
                 if !appState.hasInputMonitoringPermission {
-                    basicModeBanner
+                    detectionModeIndicator
                 }
             }
             .padding(.horizontal, 12)
@@ -110,13 +110,15 @@ struct MenuBarView: View {
                 Spacer()
             }
             .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 10)
+            .padding(.top, 16)
+            .padding(.bottom, 14)
 
             Divider()
                 .padding(.horizontal, 12)
 
-            // Take Break Now button
+            // Take Break Now button — secondary treatment (outlined accent).
+            // The break timer ticks down on its own; the manual trigger is
+            // a fallback, not the primary action.
             if !appState.isBreakPrompted && !appState.isPaused {
                 Button {
                     UIActionLogger.buttonTapped("Take Break Now", context: "MenuBar")
@@ -128,21 +130,23 @@ struct MenuBarView: View {
                         Text("Take Break Now")
                             .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                    .foregroundStyle(accentColor)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 30)
-                    .background(accentColor)
+                    .frame(height: 32)
+                    .background(accentColor.opacity(0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 12)
-                .padding(.top, 4)
+                .padding(.top, 14)
             }
 
             Spacer()
-                .frame(height: 4)
+                .frame(height: 10)
 
-            // Eye Exercise button
+            // Eye Exercise button — primary treatment (filled accent).
+            // The exercise is the discoverable habit-builder we want to
+            // pull users into, so it gets the hero CTA styling here.
             Button {
                 UIActionLogger.buttonTapped("Eye Exercise", context: "MenuBar")
                 let currentTheme = themeManager.current
@@ -158,15 +162,14 @@ struct MenuBarView: View {
                     Text("Eye Exercise")
                         .font(.system(size: 12, weight: .medium))
                 }
-                .foregroundStyle(accentColor)
+                .foregroundStyle(theme.textOnAccent(for: colorScheme))
                 .frame(maxWidth: .infinity)
-                .frame(height: 30)
-                .background(accentColor.opacity(0.12))
+                .frame(height: 32)
+                .background(accentColor)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 12)
-            .padding(.top, 4)
 
             // Bottom buttons
             HStack(spacing: 12) {
@@ -214,7 +217,8 @@ struct MenuBarView: View {
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
         }
         .frame(width: 280)
         .background(Color(nsColor: .windowBackgroundColor))
@@ -419,36 +423,46 @@ struct MenuBarView: View {
 
 
 
-    // MARK: - Basic Mode Banner
+    // MARK: - Detection Mode Indicator
 
-    /// Shown beneath the timer card when running without Input Monitoring
-    /// (the dumb-timer fallback path). Compact, non-alarming — the timer
-    /// is working, the user just doesn't have smart flow detection.
-    private var basicModeBanner: some View {
-        Button {
-            UIActionLogger.buttonTapped("Enable smart timing (from banner)")
-            PermissionManager.openInputMonitoringSettings()
+    /// Conditional chip below the timer card. Only rendered when
+    /// `hasInputMonitoringPermission == false` — Smart-mode users see
+    /// nothing here (the default needs no callout). Two variants:
+    ///   - **Simple deliberate** (basicModeOptIn=true): subtle hourglass
+    ///     chip. Chevron implies tappability → opens Preferences → Flow.
+    ///   - **Missing/revoked IM** (basicModeOptIn=false): accent-toned
+    ///     CTA → opens System Settings → Input Monitoring.
+    private var detectionModeIndicator: some View {
+        let deliberateSimple = UserDefaults.standard.bool(forKey: "basicModeOptIn")
+
+        return Button {
+            if deliberateSimple {
+                UIActionLogger.buttonTapped("Open Preferences → Flow (from Simple-mode chip)")
+                PreferencesWindowController.shared.show(
+                    appState: appState,
+                    themeManager: themeManager,
+                    initialTab: 2  // Flow tab
+                )
+            } else {
+                UIActionLogger.buttonTapped("Enable smart timing (from missing-IM chip)")
+                PermissionManager.openInputMonitoringSettings()
+            }
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(accentColor)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Basic timer mode")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.primary)
-                    Text("Enable Input Monitoring for smart break timing")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                }
+                Image(systemName: deliberateSimple ? "hourglass" : "exclamationmark.triangle.fill")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(deliberateSimple ? .secondary : accentColor)
+                Text(deliberateSimple ? "Simple mode" : "Smart timing off — Enable")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.primary)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(accentColor.opacity(0.08))
+            .padding(.vertical, 7)
+            .background((deliberateSimple ? Color.primary : accentColor).opacity(0.08))
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
@@ -463,8 +477,38 @@ struct MenuBarView: View {
     }
 }
 
-#Preview("Menu Bar - Peach") {
-    MenuBarView(appState: AppState(preview: true))
-        .environmentObject(ThemeManager.shared)
+// MARK: - Previews
+//
+// Smart mode (default) is the no-chip baseline — the default preview
+// covers that. Below are the two states where the chip renders:
+// deliberate Simple (subtle "tap to change") and missing IM (accent CTA).
+// AppState(preview: true) hard-codes hasInputMonitoringPermission=true,
+// so these flip the flag (and the basicModeOptIn UserDefaults key the
+// chip reads to pick its variant). ThemeManager.preview(_:) returns an
+// isolated instance so Midnight previews don't mutate the singleton.
+
+#Preview("Smart mode — default (Peach)") {
+    UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+    return MenuBarView(appState: AppState(preview: true))
+        .environmentObject(ThemeManager.preview(.peach))
         .environmentObject(UpdateChecker.shared)
 }
+
+#Preview("Simple mode, deliberate (Peach)") {
+    UserDefaults.standard.set(true, forKey: "basicModeOptIn")
+    let state = AppState(preview: true)
+    state.hasInputMonitoringPermission = false
+    return MenuBarView(appState: state)
+        .environmentObject(ThemeManager.preview(.peach))
+        .environmentObject(UpdateChecker.shared)
+}
+
+#Preview("Missing IM permission (Peach)") {
+    UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+    let state = AppState(preview: true)
+    state.hasInputMonitoringPermission = false
+    return MenuBarView(appState: state)
+        .environmentObject(ThemeManager.preview(.peach))
+        .environmentObject(UpdateChecker.shared)
+}
+

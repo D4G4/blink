@@ -25,6 +25,35 @@ final class UpdateChecker: ObservableObject {
         Bundle.main.appStoreReceiptURL.flatMap({ FileManager.default.fileExists(atPath: $0.path()) }) == true
     }()
 
+    enum InstallSource {
+        case appStore   // sandboxed install — update checks skipped entirely
+        case homebrew   // installed via the D4G4/homebrew-blink cask
+        case dmg        // direct download from a GitHub release
+    }
+
+    /// Best-effort install-source detection so the update HUD can offer
+    /// the right upgrade path. Homebrew users get a `brew upgrade` command
+    /// to copy; DMG users get a direct download link.
+    ///
+    /// Detection heuristic for Homebrew: check whether `Caskroom/blink`
+    /// exists under either standard prefix (`/opt/homebrew` for Apple
+    /// Silicon, `/usr/local` for Intel). If the directory exists, brew
+    /// has installed blink at some point — and since both install methods
+    /// land the app at `/Applications/Blink.app`, the brew install is
+    /// almost certainly the one currently running. Edge case where a
+    /// user has BOTH a stale Caskroom record AND a hand-installed DMG
+    /// would mis-detect, but the practical impact is showing a brew
+    /// command they could ignore.
+    static let installSource: InstallSource = {
+        if isAppStore { return .appStore }
+        let fm = FileManager.default
+        if fm.fileExists(atPath: "/opt/homebrew/Caskroom/blink")
+            || fm.fileExists(atPath: "/usr/local/Caskroom/blink") {
+            return .homebrew
+        }
+        return .dmg
+    }()
+
     private var periodicTimer: Timer?
 
     func startPeriodicChecks() {
