@@ -110,8 +110,8 @@ struct MenuBarView: View {
                 Spacer()
             }
             .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 14)
+            .padding(.top, 20)
+            .padding(.bottom, 18)
 
             Divider()
                 .padding(.horizontal, 12)
@@ -138,11 +138,11 @@ struct MenuBarView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 12)
-                .padding(.top, 14)
+                .padding(.top, 18)
             }
 
             Spacer()
-                .frame(height: 10)
+                .frame(height: 14)
 
             // Eye Exercise button — primary treatment (filled accent).
             // The exercise is the discoverable habit-builder we want to
