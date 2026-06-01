@@ -11,6 +11,9 @@ struct SettingsView: View {
     @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = false
     @AppStorage("useDarkOverlay") private var useDarkOverlay: Bool = false
     @AppStorage("pauseDuringCalls") private var pauseDuringCalls: Bool = true
+    @AppStorage("chimeEnabled") private var chimeEnabled: Bool = true
+    @AppStorage("chimeID") private var chimeID: String = ChimePlayer.defaultChimeID
+    @AppStorage("chimeVolume") private var chimeVolume: Double = ChimePlayer.defaultVolume
     
     @Environment(\.colorScheme) private var colorScheme
     private var theme: BlinkTheme { themeManager.current }
@@ -90,6 +93,42 @@ struct SettingsView: View {
             settingsSection("Break Screen") {
                 settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
                 settingsCaption("Pure black background instead of themed colors")
+            }
+
+            settingsSection("Break-End Chime") {
+                settingsToggle("Play chime when break ends", isOn: $chimeEnabled)
+                if chimeEnabled {
+                    settingsRow("Sound") {
+                        HStack(spacing: 8) {
+                            Picker("", selection: $chimeID) {
+                                ForEach(ChimePlayer.Chime.all) { chime in
+                                    Text(chime.displayName).tag(chime.id)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 170)
+                            Button {
+                                UIActionLogger.buttonTapped("Preview Chime", context: chimeID)
+                                ChimePlayer.shared.play(id: chimeID, volume: chimeVolume)
+                            } label: {
+                                Image(systemName: "play.circle.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundStyle(accentColor)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Preview")
+                        }
+                    }
+                    settingsRow("Volume") {
+                        HStack {
+                            Slider(value: $chimeVolume, in: 0...1)
+                                .tint(accentColor)
+                            Text("\(Int(chimeVolume * 100))%")
+                                .font(.system(size: 13, design: .monospaced))
+                                .frame(width: 50)
+                        }
+                    }
+                }
             }
 
             settingsSection("Mic Detection") {
@@ -364,6 +403,20 @@ struct SettingsView: View {
                 .foregroundStyle(.tertiary)
 
             Spacer()
+
+            VStack(spacing: 6) {
+                Text("ACKNOWLEDGMENTS")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+                Text(try! AttributedString(
+                    markdown: "Break-end chime “Ding” by [Aiwha](https://freesound.org/people/Aiwha/sounds/196106/) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)"
+                ))
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .tint(accentColor)
+            }
+            .padding(.bottom, 8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
