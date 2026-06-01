@@ -33,6 +33,12 @@ final class AppState: ObservableObject {
     private var updateAvailableHUD: UpdateAvailableWindowController?
     private var updateCheckerCancellable: AnyCancellable?
 
+    // NSWorkspace sleep/wake observer tokens. Stashed so teardownMonitoring()
+    // can remove them on detection-mode hot-swap — otherwise every swap
+    // accumulates another pair of callbacks.
+    private var sleepObserver: NSObjectProtocol?
+    private var wakeObserver: NSObjectProtocol?
+
     // Timers
     private var tickTimer: Timer?
     /// Counts engine ticks since the last input-rate log line. The tick fires
@@ -247,17 +253,26 @@ final class AppState: ObservableObject {
         let previouslyGranted = UserDefaults.standard.bool(forKey: "permissionGranted")
         Log.i("Permission probe: IM=\(granted), mic=\(micStatus.rawValue), basicModeOptIn=\(basicModeOptIn), prevGranted=\(previouslyGranted)")
 
-        if granted {
-            hasInputMonitoringPermission = true
-            UserDefaults.standard.set(true, forKey: "permissionGranted")
-            UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+        // basicModeOptIn wins over the OS-level IM grant. A user who
+        // deliberately chose Simple — and then either clicked "Leave it
+        // granted" on the revoke alert OR didn't revoke yet — would
+        // otherwise be silently flipped back to Smart here on every
+        // launch. That destroys the explicit choice. The only way OUT
+        // of Simple mode is the Settings → Flow → Detection Mode picker
+        // (which clears basicModeOptIn via setDetectionMode(smart: true)).
+        if basicModeOptIn {
+            Log.i("Basic mode opt-in remembered — starting basic-timer fallback (IM=\(granted))")
+            hasInputMonitoringPermission = false
+            // Reflect any prior IM grant in permissionGranted so the
+            // future smart→simple→smart path skips PermissionFlow.
+            if granted { UserDefaults.standard.set(true, forKey: "permissionGranted") }
             startMonitoringAfterAllPermissions()
             return
         }
 
-        if basicModeOptIn {
-            Log.i("Basic mode opt-in remembered — starting basic-timer fallback")
-            hasInputMonitoringPermission = false
+        if granted {
+            hasInputMonitoringPermission = true
+            UserDefaults.standard.set(true, forKey: "permissionGranted")
             startMonitoringAfterAllPermissions()
             return
         }
@@ -319,6 +334,18 @@ final class AppState: ObservableObject {
     /// smart→simple, simple→smart). For simple→smart without IM granted,
     /// presents the PermissionFlow window so the user can grant it.
     func setDetectionMode(smart: Bool) {
+        // Resolve any active break overlay BEFORE tearing down monitors.
+        // Otherwise the engine's break-state stays "prompted", the tick
+        // timer that would auto-dismiss is killed, and the overlay
+        // hangs until kill-switch (or forever if the new tick doesn't
+        // run the same guard). Treat a mode switch as a user-skip.
+        if isBreakPrompted || overlayController.isShowingFullscreen {
+            Log.i("Detection-mode switch while break overlay active — treating as user-skip")
+            engine.userSkippedBreak()
+            isBreakPrompted = false
+            overlayController.dismissImmediately()
+        }
+
         if smart {
             // simple → smart
             let granted = PermissionManager.isPermissionGranted()
@@ -384,12 +411,24 @@ final class AppState: ObservableObject {
         // (Settings, menu bar popover). Activating first because alerts
         // attached to a non-active app can render behind frontmost apps.
         NSApp.activate(ignoringOtherApps: true)
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            UIActionLogger.buttonTapped("Open System Settings (revoke IM)", context: trigger)
-            PermissionManager.openInputMonitoringSettings()
+
+        // Prefer sheet-attachment when there's a key window (the Settings
+        // window when invoked from the picker, the recovery window when
+        // invoked from PermissionFlow). Sheet-attach is non-blocking and
+        // doesn't freeze the parent UI. Fall back to app-modal `runModal`
+        // only when no window is in front (e.g. invoked headlessly).
+        let handler: (NSApplication.ModalResponse) -> Void = { response in
+            if response == .alertFirstButtonReturn {
+                UIActionLogger.buttonTapped("Open System Settings (revoke IM)", context: trigger)
+                PermissionManager.openInputMonitoringSettings()
+            } else {
+                UIActionLogger.buttonTapped("Leave IM granted", context: trigger)
+            }
+        }
+        if let keyWindow = NSApp.keyWindow {
+            alert.beginSheetModal(for: keyWindow, completionHandler: handler)
         } else {
-            UIActionLogger.buttonTapped("Leave IM granted", context: trigger)
+            handler(alert.runModal())
         }
     }
 
@@ -457,6 +496,18 @@ final class AppState: ObservableObject {
         contextDetector = nil
         tickTimer?.invalidate()
         tickTimer = nil
+
+        // Remove the sleep/wake observers added in startMonitoring().
+        // Without this, every detection-mode hot-swap accumulates another
+        // observer pair — N swaps → N+1 callbacks per wake.
+        if let token = sleepObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(token)
+            sleepObserver = nil
+        }
+        if let token = wakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(token)
+            wakeObserver = nil
+        }
     }
 
     /// Guards against the cached-grant silent-failure path:
@@ -547,7 +598,10 @@ final class AppState: ObservableObject {
         // Dismiss overlay before Mac sleeps so it's never stuck on screen at wake.
         // queue: .main guarantees we're on the main thread; MainActor.assumeIsolated
         // tells Swift's actor-isolation checker so we can touch @MainActor state.
-        NSWorkspace.shared.notificationCenter.addObserver(
+        // Tokens are stashed so teardownMonitoring() can remove them — without
+        // this, every detection-mode hot-swap leaks another observer pair and
+        // wake/sleep callbacks multiply.
+        sleepObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.willSleepNotification,
             object: nil,
             queue: .main
@@ -566,7 +620,7 @@ final class AppState: ObservableObject {
         }
 
         // Re-enable CGEventTap after Mac wakes from sleep
-        NSWorkspace.shared.notificationCenter.addObserver(
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification,
             object: nil,
             queue: .main
@@ -802,11 +856,19 @@ final class AppState: ObservableObject {
         let announced = UserDefaults.standard.bool(forKey: "simpleModeAnnounced")
         guard !announced else { return }
         guard hasInputMonitoringPermission else {
-            // User is in Simple mode already (or never granted IM) — the
-            // announcement is for Smart users who'd otherwise never see
-            // the new option. Mark announced so we don't re-prompt later
-            // when they upgrade to Smart.
-            UserDefaults.standard.set(true, forKey: "simpleModeAnnounced")
+            // No IM at runtime — two sub-cases:
+            //   - deliberate Simple (basicModeOptIn=true): user has
+            //     already made the choice, no need to announce. Mark
+            //     announced so they don't see the HUD if they later
+            //     re-enable Smart.
+            //   - stale/revoked IM (basicModeOptIn=false): the user is
+            //     in basic mode INCIDENTALLY and would WANT to see the
+            //     HUD as soon as they recover IM. Leave the flag alone.
+            if UserDefaults.standard.bool(forKey: "basicModeOptIn") {
+                UserDefaults.standard.set(true, forKey: "simpleModeAnnounced")
+            } else {
+                Log.i("Skipping Simple-mode announcement HUD this launch — IM not granted yet, leaving flag for next time")
+            }
             return
         }
         Log.i("Showing one-time Simple-mode announcement HUD")

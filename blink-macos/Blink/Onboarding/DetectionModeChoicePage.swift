@@ -34,7 +34,6 @@ struct DetectionModeChoicePage: View {
         let outerVPad: CGFloat = isCompact ? 20 : 40
 
         let heroFg = theme.onBackgroundText(for: colorScheme)
-        let bodyFg = theme.onBackgroundBodyText(for: colorScheme)
         let bgTop = theme.backgroundTop(for: colorScheme)
 
         ZStack(alignment: .topLeading) {

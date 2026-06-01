@@ -35,21 +35,22 @@ final class UpdateChecker: ObservableObject {
     /// the right upgrade path. Homebrew users get a `brew upgrade` command
     /// to copy; DMG users get a direct download link.
     ///
-    /// Detection heuristic for Homebrew: check whether `Caskroom/blink`
-    /// exists under either standard prefix (`/opt/homebrew` for Apple
-    /// Silicon, `/usr/local` for Intel). If the directory exists, brew
-    /// has installed blink at some point — and since both install methods
-    /// land the app at `/Applications/Blink.app`, the brew install is
-    /// almost certainly the one currently running. Edge case where a
-    /// user has BOTH a stale Caskroom record AND a hand-installed DMG
-    /// would mis-detect, but the practical impact is showing a brew
-    /// command they could ignore.
+    /// Detection heuristic for Homebrew: check whether `Caskroom/blink/`
+    /// contains a versioned subdirectory (e.g. `1.4.0/`) under either
+    /// standard prefix (`/opt/homebrew` for Apple Silicon, `/usr/local`
+    /// for Intel). Checking only for the parent dir's existence
+    /// mis-detects users who once installed via brew and later uninstalled
+    /// — brew sometimes leaves an empty `Caskroom/blink/` behind. A
+    /// non-empty subdirectory listing is the reliable signal that brew
+    /// currently tracks an install.
     static let installSource: InstallSource = {
         if isAppStore { return .appStore }
         let fm = FileManager.default
-        if fm.fileExists(atPath: "/opt/homebrew/Caskroom/blink")
-            || fm.fileExists(atPath: "/usr/local/Caskroom/blink") {
-            return .homebrew
+        for cask in ["/opt/homebrew/Caskroom/blink", "/usr/local/Caskroom/blink"] {
+            if let contents = try? fm.contentsOfDirectory(atPath: cask),
+               !contents.filter({ !$0.hasPrefix(".") }).isEmpty {
+                return .homebrew
+            }
         }
         return .dmg
     }()
