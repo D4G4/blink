@@ -25,6 +25,36 @@ final class UpdateChecker: ObservableObject {
         Bundle.main.appStoreReceiptURL.flatMap({ FileManager.default.fileExists(atPath: $0.path()) }) == true
     }()
 
+    enum InstallSource {
+        case appStore   // sandboxed install — update checks skipped entirely
+        case homebrew   // installed via the D4G4/homebrew-blink cask
+        case dmg        // direct download from a GitHub release
+    }
+
+    /// Best-effort install-source detection so the update HUD can offer
+    /// the right upgrade path. Homebrew users get a `brew upgrade` command
+    /// to copy; DMG users get a direct download link.
+    ///
+    /// Detection heuristic for Homebrew: check whether `Caskroom/blink/`
+    /// contains a versioned subdirectory (e.g. `1.4.0/`) under either
+    /// standard prefix (`/opt/homebrew` for Apple Silicon, `/usr/local`
+    /// for Intel). Checking only for the parent dir's existence
+    /// mis-detects users who once installed via brew and later uninstalled
+    /// — brew sometimes leaves an empty `Caskroom/blink/` behind. A
+    /// non-empty subdirectory listing is the reliable signal that brew
+    /// currently tracks an install.
+    static let installSource: InstallSource = {
+        if isAppStore { return .appStore }
+        let fm = FileManager.default
+        for cask in ["/opt/homebrew/Caskroom/blink", "/usr/local/Caskroom/blink"] {
+            if let contents = try? fm.contentsOfDirectory(atPath: cask),
+               !contents.filter({ !$0.hasPrefix(".") }).isEmpty {
+                return .homebrew
+            }
+        }
+        return .dmg
+    }()
+
     private var periodicTimer: Timer?
 
     func startPeriodicChecks() {

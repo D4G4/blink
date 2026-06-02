@@ -31,6 +31,11 @@ struct InputMonitoringPermissionPage: View {
 
     let theme: BlinkTheme
     var mode: Mode = .standard
+    /// Optional back-navigation hook. When set, renders a back button in
+    /// the top-left that returns to the previous step (the detection-mode
+    /// choice page in PermissionFlow). Nil in the standalone recovery
+    /// window where there's no upstream step.
+    var onBack: (() -> Void)? = nil
     /// Called when this step resolves. `basicMode` is true when the user
     /// explicitly opted out of Input Monitoring (basic-timer-only path).
     /// Always false in `.staleGrant` mode (no opt-out shown).
@@ -81,8 +86,16 @@ struct InputMonitoringPermissionPage: View {
         return ZStack(alignment: .topLeading) {
             theme.backgroundGradient(for: colorScheme).ignoresSafeArea()
 
-            // No back button — PermissionFlow is forward-only, and the
-            // staleGrant recovery window is a standalone surface.
+            // Back button (top-left) — returns to the detection-mode
+            // choice page in PermissionFlow so the user can switch to
+            // Simple after seeing the IM permission ask. Only rendered
+            // when onBack is wired; the standalone .staleGrant recovery
+            // window has no upstream step and gets no back affordance.
+            if let onBack {
+                backButton(heroFg: heroFg, onTap: onBack)
+                    .padding(.top, 16)
+                    .padding(.leading, 18)
+            }
 
             VStack(spacing: 0) {
                 Image(systemName: iconName)
@@ -162,25 +175,43 @@ struct InputMonitoringPermissionPage: View {
                     }
                 }
 
-                // Basic-mode opt-out shown in both modes. In recovery
-                // it lets the user defer the IM re-grant and run the
-                // basic timer until they're ready to deal with TCC. The
-                // copy varies slightly so the action's intent reads
-                // right in each context.
+                // Simple-mode opt-in shown in both flows. Framed as an
+                // equal choice rather than a skip link — the privacy-
+                // conscious user should see this as a deliberate
+                // alternative, not a fallback. (The copy in .staleGrant
+                // mode reads as "defer the re-grant" since the user
+                // already chose smart once and is mid-recovery.)
                 Button {
-                    BlinkLog.permission.info("IM step (mode=\(mode)): user chose basic mode")
+                    BlinkLog.permission.info("IM step (mode=\(mode)): user chose simple timer mode")
                     stopPolling()
                     onComplete(true)
                 } label: {
-                    Text(mode == .staleGrant
-                         ? "Skip for now — use basic timer"
-                         : "Continue with basic timer (no smart timing)")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(heroFg.opacity(0.65))
-                        .underline()
+                    HStack(spacing: 6) {
+                        Image(systemName: "hourglass")
+                            .font(.system(size: 12, weight: .medium))
+                        Text(mode == .staleGrant
+                             ? "Use Simple timer mode for now"
+                             : "Use Simple timer mode — no permissions needed")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundStyle(heroFg)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .background(
+                        Capsule().strokeBorder(heroFg.opacity(0.4), lineWidth: 1)
+                    )
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 16)
+
+                if mode == .standard {
+                    Text("Simple mode runs the 20-min timer without reading your typing — flow detection is off.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(heroFg.opacity(0.6))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                        .padding(.top, 6)
+                }
             }
             // Force the VStack to fill the ZStack — without this the
             // VStack collapses to its widest child and the ZStack's
@@ -264,6 +295,21 @@ struct InputMonitoringPermissionPage: View {
             .background(primary ? fg : fg.opacity(0.22))
             .clipShape(Capsule())
             .shadow(color: primary ? .black.opacity(0.18) : .clear, radius: primary ? 8 : 0, y: primary ? 4 : 0)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func backButton(heroFg: Color, onTap: @escaping () -> Void) -> some View {
+        Button(action: onTap) {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.left").font(.system(size: 12, weight: .bold))
+                Text("Back").font(.system(size: 13, weight: .medium))
+            }
+            .foregroundStyle(heroFg)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(heroFg.opacity(0.15))
+            .clipShape(Capsule())
         }
         .buttonStyle(.plain)
     }

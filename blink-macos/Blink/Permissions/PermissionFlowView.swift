@@ -1,31 +1,63 @@
 import SwiftUI
 
-/// Hosts the microphone + input-monitoring permission steps as a flow
-/// that can be presented OUTSIDE of onboarding. Used when:
+/// Hosts the detection-mode choice + permission steps (mic, input
+/// monitoring) that follow onboarding. Presented OUTSIDE of onboarding
+/// when:
 ///   - First launch after onboarding (theme + flow already chosen)
 ///   - App restart mid-permission-setup (TCC grant restarted Blink before
 ///     the user finished the IM step — see AppState comments)
 ///   - User cleared basicMode opt-in and wants to enable smart mode
 ///
-/// Auto-advances through any already-resolved step
-/// (MicrophonePermissionPage / InputMonitoringPermissionPage each call
+/// Step machine: `.detectionMode` → `.microphone` → `.inputMonitoring`.
+/// From `.microphone` or `.inputMonitoring`, the user can navigate BACK
+/// to `.detectionMode` at any time (so they can switch to Simple after
+/// seeing what Smart requires). Picking Simple on the choice page
+/// completes the flow immediately with no permissions requested.
+///
+/// MicrophonePermissionPage / InputMonitoringPermissionPage each call
 /// onAdvance/onComplete on appear if their permission is already
-/// granted), so a partially-completed setup picks up where it left off.
+/// granted, so a partially-completed setup picks up where it left off.
 struct PermissionFlowView: View {
     let theme: BlinkTheme
-    /// `basicMode` is true when the user explicitly opted out of Input
-    /// Monitoring (basic-timer-only path).
+    /// `basicMode` is true when the user explicitly opted into Simple
+    /// timer mode (no Input Monitoring requested).
     let onComplete: (_ basicMode: Bool) -> Void
 
-    @State private var currentStep: Step = .microphone
+    @State private var currentStep: Step = .detectionMode
 
-    enum Step { case microphone, inputMonitoring }
+    enum Step { case detectionMode, microphone, inputMonitoring }
 
     var body: some View {
         ZStack {
-            if currentStep == .microphone {
+            switch currentStep {
+            case .detectionMode:
+                DetectionModeChoicePage(
+                    theme: theme,
+                    onPickSmart: {
+                        withAnimation(.easeInOut(duration: 0.4)) {
+                            currentStep = .microphone
+                        }
+                    },
+                    onPickSimple: {
+                        // Skip mic + IM entirely. AppState's basicMode
+                        // branch persists the opt-in and starts the
+                        // simple-timer runtime.
+                        onComplete(true)
+                    }
+                )
+                .transition(.asymmetric(
+                    insertion: .move(edge: .leading).combined(with: .opacity),
+                    removal: .move(edge: .leading).combined(with: .opacity)
+                ))
+
+            case .microphone:
                 MicrophonePermissionPage(
                     theme: theme,
+                    onBack: {
+                        withAnimation(.easeInOut(duration: 0.4)) {
+                            currentStep = .detectionMode
+                        }
+                    },
                     onAdvance: {
                         withAnimation(.easeInOut(duration: 0.4)) {
                             currentStep = .inputMonitoring
@@ -33,17 +65,19 @@ struct PermissionFlowView: View {
                     }
                 )
                 .transition(.asymmetric(
-                    insertion: .move(edge: .leading).combined(with: .opacity),
-                    removal: .move(edge: .leading).combined(with: .opacity)
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal: .move(edge: .trailing).combined(with: .opacity)
                 ))
-            } else {
-                // Forward-only — once the user resolves Mic (granted or
-                // skipped) the IM page takes over with no way back. The
-                // earlier back button only added confusion (going back
-                // re-rendered an already-resolved step).
+
+            case .inputMonitoring:
                 InputMonitoringPermissionPage(
                     theme: theme,
                     mode: .standard,
+                    onBack: {
+                        withAnimation(.easeInOut(duration: 0.4)) {
+                            currentStep = .detectionMode
+                        }
+                    },
                     onComplete: { basicMode in
                         onComplete(basicMode)
                     }

@@ -17,6 +17,11 @@ import AVFoundation
 /// Privacy → Microphone without coming back to click Continue.
 struct MicrophonePermissionPage: View {
     let theme: BlinkTheme
+    /// Optional back-navigation hook. When set, renders a back button in
+    /// the top-left that returns to the previous step (the detection-mode
+    /// choice page in PermissionFlow). Nil in contexts where there's
+    /// nowhere to go back to.
+    var onBack: (() -> Void)? = nil
     /// Called when this step is resolved (granted, skipped, or post-denial continue).
     let onAdvance: () -> Void
 
@@ -52,9 +57,16 @@ struct MicrophonePermissionPage: View {
         ZStack(alignment: .topLeading) {
             theme.backgroundGradient(for: colorScheme).ignoresSafeArea()
 
-            // No back button — PermissionFlow is forward-only. The page
-            // is the entry point into a dedicated window, and there's
-            // nowhere to go back to.
+            // Back button (top-left) — returns to the detection-mode
+            // choice page so the user can switch to Simple after seeing
+            // what Smart involves. Only rendered when onBack is wired;
+            // contexts that present this page standalone (none today,
+            // but kept conditional for safety) get no back affordance.
+            if let onBack {
+                backButton(heroFg: heroFg, onTap: onBack)
+                    .padding(.top, 16)
+                    .padding(.leading, 18)
+            }
 
             // `frame(maxWidth: .infinity, maxHeight: .infinity)` forces
             // the content VStack to fill the whole ZStack. Without it,
@@ -259,6 +271,21 @@ struct MicrophonePermissionPage: View {
             .background(primary ? fg : fg.opacity(0.22))
             .clipShape(Capsule())
             .shadow(color: primary ? .black.opacity(0.18) : .clear, radius: primary ? 8 : 0, y: primary ? 4 : 0)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func backButton(heroFg: Color, onTap: @escaping () -> Void) -> some View {
+        Button(action: onTap) {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.left").font(.system(size: 12, weight: .bold))
+                Text("Back").font(.system(size: 13, weight: .medium))
+            }
+            .foregroundStyle(heroFg)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(heroFg.opacity(0.15))
+            .clipShape(Capsule())
         }
         .buttonStyle(.plain)
     }
