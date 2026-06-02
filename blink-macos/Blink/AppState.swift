@@ -741,12 +741,29 @@ final class AppState: ObservableObject {
                 // Periodic input-rate report so logs have a heartbeat
                 // confirming events are flowing. Logs only when there was
                 // any activity in the window — silent if user is away.
+                //
+                // In Simple mode there's no inputMonitor, so the smart-mode
+                // branch is permanently silent. Emit a parallel heartbeat
+                // using the same source pollInputFallback feeds the engine
+                // from (.hidSystemState) so the log reflects what the engine
+                // actually sees — frontmost app + idle seconds + away/pause
+                // flags + timer remaining. Fires every tick interval whether
+                // or not there was activity (idle is the interesting signal
+                // here, not just presence).
                 self.ticksSinceLastInputReport += 1
                 if self.ticksSinceLastInputReport >= Self.inputReportTickInterval {
                     self.ticksSinceLastInputReport = 0
                     if let counts = self.inputMonitor?.drainCounts(),
                        counts.keystrokes + counts.mouseMoves + counts.scrolls + counts.clicks > 0 {
                         Log.i("Input (last \(Self.inputReportTickInterval)s): keystrokes=\(counts.keystrokes), mouseMoves=\(counts.mouseMoves), scrolls=\(counts.scrolls), clicks=\(counts.clicks)")
+                    } else if self.inputMonitor == nil {
+                        let keyIdle = CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .keyDown)
+                        let clickIdle = CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .leftMouseDown)
+                        let scrollIdle = CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .scrollWheel)
+                        let idle = Int(min(keyIdle, min(clickIdle, scrollIdle)))
+                        let app = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "?"
+                        let remaining = Int(self.remainingSeconds)
+                        Log.i("Simple tick: idle=\(idle)s frontmost=\(app) away=\(self.isUserAway) paused=\(self.isPaused) remaining=\(remaining)s")
                     }
                 }
 
