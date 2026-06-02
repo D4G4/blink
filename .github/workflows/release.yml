@@ -50,7 +50,14 @@ jobs:
   macos:
     runs-on: macos-latest
     steps:
+      # fetch-depth: 0 is REQUIRED — build-release.sh derives the
+      # CFBundleVersion from `git rev-list --count HEAD`, which returns
+      # 1 on a shallow (default) checkout. CFBundleVersion=1 = Sparkle
+      # tells every installed user "you're up to date" regardless of
+      # marketing version (see feedback_sparkle_uses_cfbundleversion).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # SSH access to the private BlinkCore repo. The deploy key in the
       # BLINKCORE_DEPLOY_KEY secret is registered as a read-only deploy
