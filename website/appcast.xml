@@ -6,6 +6,18 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.0.4</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.0.4</link>
+      <sparkle:version>317</sparkle:version>
+      <sparkle:shortVersionString>5.0.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Tue, 02 Jun 2026 14:55:49 +0000</pubDate>
+      <description><![CDATA[See <a href="https://github.com/D4G4/blink/releases/tag/v5.0.4">release notes on GitHub</a>.]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.0.4/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="aNdDYOwzGGFlM8G+hkVD7f7TTdNxmm77tjU0wFtfInh11wPBisVCVKE//He2dBcp6VkKeL1t551XhZ7zyTUZDw==" length="8520713" />
+    </item>
+    <item>
       <title>Blink v5.0.3</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.0.3</link>
       <sparkle:version>1</sparkle:version>
