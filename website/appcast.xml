@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Blink — Smart 20-20-20 Eye Break Reminder</title>
+    <link>https://blink20.net/appcast.xml</link>
+    <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
+    <language>en</language>
+    <!--
+      Each <item> is one release. The release script appends a new <item>
+      at the top of <channel> after a successful build:
+        1. Notarize + staple the DMG
+        2. Run `sign_update Blink.dmg` from the Sparkle SPM checkout's bin/
+        3. Append <item> with sparkle:edSignature + length from sign_update
+        4. Set sparkle:version to CFBundleVersion, sparkle:shortVersionString
+           to MARKETING_VERSION, and link to the GitHub release page for
+           the human-readable release notes
+        5. Deploy the website (wrangler deploy) so the new entry goes live
+      Sparkle reads the FIRST matching item whose version is newer than
+      the installed version and presents that as the upgrade target.
+    -->
+  </channel>
+</rss>

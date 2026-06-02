@@ -13,13 +13,15 @@ import AppKit
 @MainActor
 final class InputMonitoringRecoveryWindowController {
     private var window: NSWindow?
+    private var closeDelegate: SetupWindowCloseDelegate?
 
     /// `onResolved` fires once the user resolves the recovery. The
     /// `basicMode` argument is true when the user explicitly skipped
     /// the re-grant (chose to run the basic timer instead), false when
     /// IM was successfully re-granted (detected via the page's internal
-    /// polling or "I've granted access" check).
-    func show(theme: BlinkTheme, onResolved: @escaping (_ basicMode: Bool) -> Void) {
+    /// polling or "I've granted access" check). `onClose` fires when they
+    /// close the window without resolving — AppState defaults to Simple mode.
+    func show(theme: BlinkTheme, onResolved: @escaping (_ basicMode: Bool) -> Void, onClose: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
 
         let windowWidth: CGFloat = 700
@@ -39,26 +41,22 @@ final class InputMonitoringRecoveryWindowController {
             }
         )
 
-        let win = KeyableBorderlessWindow(
+        // Closable titled setup window. The user can re-grant, use the in-page
+        // "Use Simple timer mode" button, or close it (which defaults to Simple
+        // mode via the onClose handler).
+        let win = NSWindow.makeSetupWindow(
             contentRect: NSRect(x: x, y: y, width: windowWidth, height: windowHeight),
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
+            title: "Blink — Input Monitoring"
         )
-        win.isReleasedWhenClosed = false
-        win.isOpaque = false
-        win.backgroundColor = .clear
-        // .floating — sits above normal user windows so it can't be
-        // obscured by Xcode/browser/etc. Safe for recovery because we
-        // never fire a new TCC dialog here (the grant is recorded, just
-        // stale for this binary) — we only deeplink to Settings. The
-        // onboarding wizard used .normal because its first-time CGRequest
-        // CAN spawn an OS dialog, and a .floating wrapper would land
-        // above it; recovery has no such risk.
-        win.level = .floating
         win.hasShadow = true
-        win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         win.appearance = NSApp.effectiveAppearance
+
+        let closeDelegate = SetupWindowCloseDelegate { [weak self] in
+            self?.dismiss()
+            onClose()
+        }
+        win.delegate = closeDelegate
+        self.closeDelegate = closeDelegate
 
         let hosting = NSHostingView(rootView: page)
         hosting.frame = NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight)
@@ -66,13 +64,11 @@ final class InputMonitoringRecoveryWindowController {
         win.contentView = hosting
 
         // Show in the Dock for the duration so the user can recover the
-        // window if they tab away. Mirrors the wizard's approach during
-        // onboarding.
+        // window via the Dock icon if they tab away.
         NSApp.setActivationPolicy(.regular)
 
         win.alphaValue = 0
-        win.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        win.surfaceAtLaunch()
         UIActionLogger.windowOpened("IMRecovery")
 
         NSAnimationContext.runAnimationGroup { ctx in

@@ -80,11 +80,18 @@ The script crops 6% from each side, rounds corners at 16% radius, outputs 1024x1
 ## Homebrew Distribution
 
 - Tap repo: `~/GitHub/D4G4/homebrew-blink` (`Casks/blink.rb`)
-- The app is ad-hoc signed (no Developer ID) — no TeamIdentifier, CDHash changes every build
-- The cask **must** have a `postflight` that runs `xattr -cr` on the installed app — this strips `com.apple.quarantine` so Gatekeeper doesn't block launch with "Apple could not verify"
-- Don't remove the `xattr -cr` postflight — without it the app won't launch at all
-- Input Monitoring permission (`CGPreflightListenEventAccess` / `CGRequestListenEventAccess`) works for ad-hoc signed apps only when quarantine is stripped first; removing the postflight breaks both launch and permission persistence
-- Because the app is ad-hoc signed, the TCC grant is tied to the binary's CDHash — upgrading to a new version (new CDHash) may require re-granting Input Monitoring permission
+- The app is **Developer ID signed + notarized** (Team ID `6V6FZW3FFN`, hardened runtime). The DMG is also signed + notarized + stapled.
+- No `xattr -cr` postflight needed — Gatekeeper trusts the notarized + stapled DMG and the .app inside it. (The cask had this postflight in the ad-hoc era pre-v4.0; it's been removed since 4.0.2.)
+- Input Monitoring permission persists across versions because the binary's TeamIdentifier is stable.
+
+## Auto-update (Sparkle)
+
+- v5.0.0+ ships [Sparkle 2.x](https://sparkle-project.org/) for in-app auto-update. SPM dep in `project.yml`. Wrapper at `Blink/BlinkUpdater.swift` (instantiated in `BlinkApp` `applicationDidFinishLaunching` to start the scheduled-check loop).
+- **EdDSA keypair lives in the developer's login Keychain** (item: `https://sparkle-project.org`). The matching public key is hard-coded in `Info.plist` as `SUPublicEDKey`. Lose the private key → no future updates can ever be signed for installed users. Keep iCloud Keychain sync on.
+- The standalone Sparkle tarball (for `generate_keys` etc.) lives outside the repo at `~/.local/sparkle-2.9.2/` — never commit Sparkle binaries into Blink's public repo.
+- Appcast lives at `website/appcast.xml` and is served from `https://blink20.net/appcast.xml`. Release script (`scripts/build-release.sh`) signs the DMG with `sign_update` and prints a ready-to-paste `<item>` block.
+- Sparkle runs for everyone (DMG, Homebrew). Brew users get auto-updated by Sparkle; the brew cask version then lags until the next cask bump.
+- `entitlements`: `com.apple.security.temporary-exception.mach-lookup.global-name` includes `com.blink20.app-spks` so Sparkle 2's Installer.xpc can be reached from the sandboxed parent app.
 
 ## Git Setup
 

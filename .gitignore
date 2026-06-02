@@ -27,3 +27,6 @@ blink-macos/build/
 
 # Local Claude Code settings
 .claude/settings.local.json
+
+# Wrangler local cache (state from `npx wrangler deploy`)
+.wrangler/

@@ -10,11 +10,24 @@ import AppKit
 ///   - User wants to re-engage smart mode after opting into basic
 final class PermissionFlowWindowController {
     private var window: NSWindow?
+    private var closeDelegate: SetupWindowCloseDelegate?
 
-    /// `onResolved` fires once the user resolves the permission flow.
-    /// `basicMode` is true if they explicitly opted out of Input
-    /// Monitoring (basic-timer-only path), false if IM is granted.
-    func show(theme: BlinkTheme, onResolved: @escaping (_ basicMode: Bool) -> Void) {
+    /// `onResolved` fires when the user resolves the flow by choosing — Simple
+    /// (basicMode true) or granting IM (false). `onClose` fires when they close
+    /// the window without choosing (red button / Cmd-W) — AppState defaults to
+    /// Simple mode and shows a confirming HUD.
+    ///
+    /// `forceLight`: true only when shown immediately after onboarding (which
+    /// is forced light) — keeps the window light to avoid a light→dark jump.
+    /// false (the default, standalone launch) honors the system appearance.
+    ///
+    /// `startAtPermissions`: skip the detection-mode choice page and open on
+    /// the mic step (used when the user already chose Smart in Settings).
+    func show(theme: BlinkTheme,
+              forceLight: Bool = false,
+              startAtPermissions: Bool = false,
+              onResolved: @escaping (_ basicMode: Bool) -> Void,
+              onClose: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
 
         let visible = screen.visibleFrame
@@ -31,41 +44,49 @@ final class PermissionFlowWindowController {
         let x = visible.midX - windowWidth / 2
         let y = visible.midY - windowHeight / 2
 
-        // Forced light to match the onboarding window — the permission flow
-        // follows it immediately, so a system-following appearance here would
-        // cause a light→dark jump mid-flow.
-        let view = PermissionFlowView(theme: theme) { [weak self] basicMode in
+        // Appearance: standalone launches honor the system (light/dark
+        // titlebar + gradient — the pages render both schemes, see the
+        // Midnight previews). When shown straight out of onboarding
+        // (forceLight), stay light to match the forced-light onboarding window
+        // and avoid a light→dark jump mid-flow.
+        let view = PermissionFlowView(
+            theme: theme,
+            initialStep: startAtPermissions ? .microphone : .detectionMode
+        ) { [weak self] basicMode in
             self?.dismiss()
             onResolved(basicMode)
         }
-        .preferredColorScheme(.light)
+        .preferredColorScheme(forceLight ? .light : nil)
 
-        let win = KeyableBorderlessWindow(
+        // Closable titled setup window (traffic lights + Dock icon + native
+        // window management). Closing it (without choosing) defaults to Simple
+        // mode via the onClose handler.
+        let win = NSWindow.makeSetupWindow(
             contentRect: NSRect(x: x, y: y, width: windowWidth, height: windowHeight),
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
+            title: "Set Up Blink"
         )
-        win.isReleasedWhenClosed = false
-        win.isOpaque = false
-        win.backgroundColor = .clear
-        win.level = .normal
         win.hasShadow = true
-        win.appearance = NSAppearance(named: .aqua)
+        win.appearance = forceLight ? NSAppearance(named: .aqua) : nil
+
+        let closeDelegate = SetupWindowCloseDelegate { [weak self] in
+            self?.dismiss()
+            onClose()
+        }
+        win.delegate = closeDelegate
+        self.closeDelegate = closeDelegate
 
         let hosting = NSHostingView(rootView: view)
         hosting.frame = NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight)
         hosting.autoresizingMask = [.width, .height]
         win.contentView = hosting
 
-        // Show Blink in the Dock for the duration so the user can
-        // recover the window if it gets obscured by another app. Mirrors
-        // what onboarding does.
+        // Show Blink in the Dock for the duration so the user can recover the
+        // window via the Dock icon if it gets buried (AppDelegate's
+        // applicationShouldHandleReopen re-fronts it).
         NSApp.setActivationPolicy(.regular)
 
         win.alphaValue = 0
-        win.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        win.surfaceAtLaunch()
         UIActionLogger.windowOpened("PermissionFlow")
 
         NSAnimationContext.runAnimationGroup { ctx in

@@ -13,8 +13,7 @@ final class MenuBarSnapshotTests: SnapshotTestCase {
                 let label = "\(name)_\(cs == .dark ? "dark" : "light")"
                 assertSnapshot(
                     of: MenuBarView(appState: AppState(preview: true))
-                        .environmentObject(ThemeManager.preview(theme))
-                        .environmentObject(UpdateChecker.shared),
+                        .environmentObject(ThemeManager.preview(theme)),
                     named: "menu_bar_\(label)",
                     width: 280, height: 350,
                     colorScheme: cs

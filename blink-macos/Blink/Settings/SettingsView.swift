@@ -19,7 +19,12 @@ struct SettingsView: View {
     private var theme: BlinkTheme { themeManager.current }
     private var accentColor: Color { theme.accent(for: colorScheme) }
     
-    @State private var selectedTab: Int = 0
+    @State private var selectedTab: Int
+
+    init(appState: AppState, initialTab: Int = 0) {
+        self.appState = appState
+        self._selectedTab = State(initialValue: initialTab)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -158,70 +163,20 @@ struct SettingsView: View {
                 settingsToggle("Debug notifications", isOn: $appState.debugNotifications)
                 settingsCaption("Show toasts for timer resets, state changes, and idle detection")
                 
-                settingsRow("Input Monitoring") {
-                    if appState.hasInputMonitoringPermission {
-                        HStack(spacing: 4) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                                .font(.system(size: 13))
-                            Text("Granted")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.green)
-                        }
-                    } else {
-                        Button("Grant") {
-                            UIActionLogger.buttonTapped("Grant Input Monitoring")
-                            PermissionManager.openInputMonitoringSettings()
-                        }
-                        .font(.system(size: 12))
-                        .buttonStyle(.borderedProminent)
-                        .tint(accentColor)
-                        .controlSize(.small)
+                Button {
+                    UIActionLogger.buttonTapped("Check for Updates")
+                    BlinkUpdater.shared.checkForUpdates()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 11))
+                        Text("Check for Updates")
+                            .font(.system(size: 12))
                     }
+                    .foregroundStyle(accentColor)
                 }
-                
-                if !UpdateChecker.isAppStore {
-                    HStack(spacing: 8) {
-                        Button {
-                            UIActionLogger.buttonTapped("Check for Updates")
-                            UpdateChecker.shared.checkForUpdate()
-                        } label: {
-                            HStack(spacing: 4) {
-                                if UpdateChecker.shared.isChecking {
-                                    ProgressView()
-                                        .controlSize(.small)
-                                        .scaleEffect(0.7)
-                                } else {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
-                                        .font(.system(size: 11))
-                                }
-                                Text("Check for Updates")
-                                    .font(.system(size: 12))
-                            }
-                            .foregroundStyle(accentColor)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(UpdateChecker.shared.isChecking)
-                        
-                        if let result = UpdateChecker.shared.lastCheckResult {
-                            switch result {
-                            case .upToDate:
-                                Text("You're up to date")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                            case .available(let version):
-                                Text("v\(version) available")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(accentColor)
-                            case .failed:
-                                Text("Check failed")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.red)
-                            }
-                        }
-                    }
-                    .padding(.top, 4)
-                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
                 
                 Button {
                     UIActionLogger.buttonTapped("Restart Onboarding")
@@ -314,55 +269,115 @@ struct SettingsView: View {
 
     private var flowContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            settingsSection("Flow Detection") {
-                FlowSensitivityView(
-                    sensitivity: $flowSensitivity,
-                    accentColor: accentColor,
-                    foregroundColor: .primary,
-                    style: .settings,
-                    onResearchTapped: { [weak themeManager] in
-                        UIActionLogger.buttonTapped("Read the Research", context: "Settings")
-                        ResearchWindowController.shared.show(theme: themeManager?.current ?? .peach)
-                    },
-                    onLearnMoreTapped: {
-                        UIActionLogger.buttonTapped("See impact", context: "Settings")
-                        FlowLearnMoreWindowController.shared.show(theme: ThemeManager.shared.current)
-                    }
-                )
-                .onChange(of: flowSensitivity) { _, newValue in
-                    appState.engine.sensitivity = newValue
-                }
+            settingsSection("Detection Mode") {
+                detectionModePicker
+                settingsCaption(appState.hasInputMonitoringPermission
+                    ? "Smart mode reads typing rhythm and mouse activity through Input Monitoring, so breaks land at natural pauses and adapt to flow state. Simple is a fixed 20-minute timer that asks for zero macOS permissions."
+                    : "Simple timer mode runs without Input Monitoring or Accessibility — just a steady 20-minute timer that skips when you're idle. Switch to Smart for flow-aware break timing.")
             }
 
-            settingsSection("Flow Check") {
-                VStack(alignment: .leading, spacing: 10) {
-                    Button {
-                        let check = appState.engine.spotCheckFlow()
-                        flowCheckDetail = check.description
-                        Log.i("Flow spot check (Preferences):\n\(check.description)")
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "waveform.path.ecg")
-                                .font(.system(size: 12))
-                            Text("Run Flow Check")
-                                .font(.system(size: 12, weight: .medium))
+            // Sensitivity + Flow Check are only meaningful when Smart
+            // mode is on. In Simple mode they're inert — sensitivity
+            // doesn't drive anything, and Flow Check would just report
+            // zeros. Replace both with a single prompt that switches
+            // the user to Smart (which triggers the IM permission flow
+            // if needed, via setDetectionMode hot-swap).
+            if appState.hasInputMonitoringPermission {
+                settingsSection("Flow Detection") {
+                    FlowSensitivityView(
+                        sensitivity: $flowSensitivity,
+                        accentColor: accentColor,
+                        foregroundColor: .primary,
+                        style: .settings,
+                        onResearchTapped: { [weak themeManager] in
+                            UIActionLogger.buttonTapped("Read the Research", context: "Settings")
+                            ResearchWindowController.shared.show(theme: themeManager?.current ?? .peach)
+                        },
+                        onLearnMoreTapped: {
+                            UIActionLogger.buttonTapped("See impact", context: "Settings")
+                            FlowLearnMoreWindowController.shared.show(theme: ThemeManager.shared.current)
                         }
-                        .foregroundStyle(accentColor)
-                    }
-                    .buttonStyle(.plain)
-
-                    if let detail = flowCheckDetail {
-                        Text(detail)
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
-                            .padding(10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.primary.opacity(0.05))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    )
+                    .onChange(of: flowSensitivity) { _, newValue in
+                        appState.engine.sensitivity = newValue
                     }
                 }
+
+                settingsSection("Flow Check") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Button {
+                            let check = appState.engine.spotCheckFlow()
+                            flowCheckDetail = check.description
+                            Log.i("Flow spot check (Preferences):\n\(check.description)")
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "waveform.path.ecg")
+                                    .font(.system(size: 12))
+                                Text("Run Flow Check")
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .foregroundStyle(accentColor)
+                        }
+                        .buttonStyle(.plain)
+
+                        if let detail = flowCheckDetail {
+                            Text(detail)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                                .padding(10)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.primary.opacity(0.05))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                    }
+                }
+            } else {
+                settingsSection("Flow Detection") {
+                    flowDetectionLockedPrompt
+                }
             }
+        }
+    }
+
+    /// Shown in place of the sensitivity slider + Flow Check when the
+    /// user is in Simple timer mode. Explains why those controls are
+    /// hidden, and offers a one-tap shortcut to switch to Smart (which
+    /// surfaces the IM permission flow if needed).
+    private var flowDetectionLockedPrompt: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Text("Flow sensitivity is a Smart-mode feature")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
+            }
+
+            Text("You're in Simple timer mode — Blink runs a fixed 20-minute timer without reading your input, so there's no flow signal to tune. Switch to Smart to bring this back.")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                UIActionLogger.buttonTapped("Switch to Smart (from Flow lock prompt)")
+                appState.setDetectionMode(smart: true)
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Switch to Smart mode")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(accentColor)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 2)
         }
     }
     
@@ -421,6 +436,66 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
+    // MARK: - Detection Mode Picker
+
+    /// Two-card picker — Smart mode vs Simple timer mode. Reads from
+    /// `appState.hasInputMonitoringPermission`, writes through
+    /// `appState.setDetectionMode(smart:)` so the hot-swap path handles
+    /// the teardown/restart cycle (and triggers the IM permission flow
+    /// if the user picks Smart without a grant).
+    private var detectionModePicker: some View {
+        HStack(spacing: 10) {
+            detectionModeCard(
+                title: "Smart",
+                subtitle: "Flow-aware",
+                icon: "sparkles",
+                isSelected: appState.hasInputMonitoringPermission,
+                action: {
+                    UIActionLogger.settingChanged("detectionMode", value: "smart")
+                    appState.setDetectionMode(smart: true)
+                }
+            )
+            detectionModeCard(
+                title: "Simple",
+                subtitle: "Fixed timer",
+                icon: "hourglass",
+                isSelected: !appState.hasInputMonitoringPermission,
+                action: {
+                    UIActionLogger.settingChanged("detectionMode", value: "simple")
+                    appState.setDetectionMode(smart: false)
+                }
+            )
+        }
+    }
+
+    private func detectionModeCard(title: String, subtitle: String, icon: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(isSelected ? accentColor : .secondary)
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(isSelected ? .primary : .secondary)
+                Text(subtitle)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isSelected ? accentColor.opacity(0.12) : Color.primary.opacity(0.04))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isSelected ? accentColor : Color.clear, lineWidth: 1.5)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Reusable Components
     
     private func settingsSection(_ title: String, @ViewBuilder content: () -> some View) -> some View {
@@ -492,7 +567,34 @@ struct SettingsView: View {
     }
 }
 
-#Preview {
+#Preview("Settings - General (Smart)") {
     SettingsView(appState: AppState(preview: true))
+        .environmentObject(ThemeManager.shared)
+}
+
+// Tabs are 0=General, 1=Theme, 2=Flow, 3=About.
+// AppState(preview: true) hard-codes hasInputMonitoringPermission=true,
+// so the Flow tab renders its full sensitivity slider + Flow Check by
+// default. To see the Simple-mode locked-Flow prompt, the previews
+// below flip the flag and land directly on the Flow tab.
+
+#Preview("Settings - Flow tab (Smart)") {
+    SettingsView(appState: AppState(preview: true), initialTab: 2)
+        .environmentObject(ThemeManager.shared)
+}
+
+#Preview("Settings - Flow tab (Simple, locked)") {
+    UserDefaults.standard.set(true, forKey: "basicModeOptIn")
+    let state = AppState(preview: true)
+    state.hasInputMonitoringPermission = false
+    return SettingsView(appState: state, initialTab: 2)
+        .environmentObject(ThemeManager.shared)
+}
+
+#Preview("Settings - Flow tab (missing IM permission)") {
+    UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+    let state = AppState(preview: true)
+    state.hasInputMonitoringPermission = false
+    return SettingsView(appState: state, initialTab: 2)
         .environmentObject(ThemeManager.shared)
 }

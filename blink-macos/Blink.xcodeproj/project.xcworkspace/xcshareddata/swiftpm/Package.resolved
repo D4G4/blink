@@ -1,5 +1,5 @@
 {
-  "originHash" : "404f429c6d28e0f7838e7a2884d4aeca5b6a42d49ac6624060ab37bb75d1b4e7",
+  "originHash" : "1b2e6a71047b7a2ca39ae1bc9e51335f20c1eaea3691a64281fc6e8df780b2a9",
   "pins" : [
     {
       "identity" : "blink-core",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "9c77e528149c42364893f70a7f8e0497e5c9e75a",
         "version" : "2.7.0"
+      }
+    },
+    {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sparkle-project/Sparkle",
+      "state" : {
+        "revision" : "6276ba2b404829d139c45ff98427cf90e2efc59b",
+        "version" : "2.9.2"
       }
     }
   ],

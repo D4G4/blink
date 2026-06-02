@@ -15,6 +15,14 @@ packages:
     # account's read permission on D4G4/blink-core.
     url: https://github.com/D4G4/blink-core.git
     from: "2.7.0"
+  Sparkle:
+    # Auto-update framework. EdDSA-signs each DMG so the user's Mac can
+    # verify before installing — SUPublicEDKey in Info.plist must match
+    # the private key in the developer's login Keychain (created via
+    # ~/.local/sparkle-2.9.2/bin/generate_keys, signed via sign_update
+    # at release time).
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.9.0"
 
 schemes:
   Blink:
@@ -36,6 +44,7 @@ targets:
       - Blink
     dependencies:
       - package: BlinkCore
+      - package: Sparkle
     info:
       path: Blink/Info.plist
       properties:
@@ -52,10 +61,22 @@ targets:
         # live in a real Info.plist file like this one or it silently drops.
         NSInputMonitoringUsageDescription: "Blink monitors keyboard and mouse timing to detect flow state and deliver breaks at the right moment. No keystrokes or content are recorded."
         NSMicrophoneUsageDescription: "Blink checks whether the microphone is in use so it can pause break reminders during calls. No audio is recorded or transmitted."
+        # Sparkle auto-update wiring. SUPublicEDKey is the EdDSA public
+        # key whose private half lives in the developer's login Keychain
+        # (item: "https://sparkle-project.org"). sign_update uses the
+        # private key at release time; the app uses the public key here
+        # to verify each downloaded DMG before installing. Lose the
+        # private key → no future signed updates possible. Sync the
+        # login Keychain to iCloud.
+        SUFeedURL: "https://blink20.net/appcast.xml"
+        SUPublicEDKey: "agdJmL4C1ciE/qX6oEcxkZgc8fu264R45/vCfg09BKY="
+        SUEnableAutomaticChecks: true
+        SUScheduledCheckInterval: 86400
+        SUEnableInstallerLauncherService: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.blink20.app
-        MARKETING_VERSION: "4.2.0"
+        MARKETING_VERSION: "5.0.0"
         CURRENT_PROJECT_VERSION: "1"
         ENABLE_HARDENED_RUNTIME: true
         CODE_SIGN_STYLE: Automatic
@@ -68,6 +89,12 @@ targets:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
         com.apple.security.device.audio-input: true
+        # Sparkle 2.x with sandboxing: the Installer.xpc service launches
+        # via a mach lookup keyed off the host bundle ID. Without this
+        # exception the installer cannot be reached from the sandboxed
+        # app and updates fail silently at the install step.
+        com.apple.security.temporary-exception.mach-lookup.global-name:
+          - "com.blink20.app-spks"
 
   BlinkSnapshotTests:
     type: bundle.unit-test

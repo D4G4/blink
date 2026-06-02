@@ -32,5 +32,15 @@
 	<string>Blink monitors keyboard and mouse timing to detect flow state and deliver breaks at the right moment. No keystrokes or content are recorded.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Blink checks whether the microphone is in use so it can pause break reminders during calls. No audio is recorded or transmitted.</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://blink20.net/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>agdJmL4C1ciE/qX6oEcxkZgc8fu264R45/vCfg09BKY=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>
