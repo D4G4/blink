@@ -324,45 +324,61 @@ struct MenuBarView: View {
 
     // MARK: - Detection Mode Indicator
 
-    /// Conditional chip below the timer card. Only rendered when
-    /// `hasInputMonitoringPermission == false` — Smart-mode users see
-    /// nothing here (the default needs no callout). Two variants:
-    ///   - **Simple deliberate** (basicModeOptIn=true): subtle hourglass
-    ///     chip. Chevron implies tappability → opens Preferences → Flow.
-    ///   - **Missing/revoked IM** (basicModeOptIn=false): accent-toned
-    ///     CTA → opens System Settings → Input Monitoring.
+    /// Conditional card below the timer. Only rendered when
+    /// `hasInputMonitoringPermission == false` — Smart-mode users see nothing
+    /// here. A calm two-line card (sparkles tile + title + subtitle + chevron)
+    /// rather than an alarming warning banner: being in Simple mode is a valid
+    /// state, not an error. Both states share the layout; only the subtitle
+    /// and tap target differ:
+    ///   - **Simple deliberate** (basicModeOptIn=true) → Preferences → Flow
+    ///   - **Missing/revoked IM** (basicModeOptIn=false) → System Settings → IM
     private var detectionModeIndicator: some View {
         let deliberateSimple = UserDefaults.standard.bool(forKey: "basicModeOptIn")
+        let subtitle = deliberateSimple
+            ? "Switch to Smart for flow-aware timing"
+            : "Enable Input Monitoring for smart timing"
 
         return Button {
             if deliberateSimple {
-                UIActionLogger.buttonTapped("Open Preferences → Flow (from Simple-mode chip)")
+                UIActionLogger.buttonTapped("Open Preferences → Flow (from Simple-mode card)")
                 PreferencesWindowController.shared.show(
                     appState: appState,
                     themeManager: themeManager,
                     initialTab: 2  // Flow tab
                 )
             } else {
-                UIActionLogger.buttonTapped("Enable smart timing (from missing-IM chip)")
+                UIActionLogger.buttonTapped("Enable smart timing (from Simple-mode card)")
                 PermissionManager.openInputMonitoringSettings()
             }
         } label: {
-            HStack(spacing: 8) {
-                Image(systemName: deliberateSimple ? "hourglass" : "exclamationmark.triangle.fill")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(deliberateSimple ? .secondary : accentColor)
-                Text(deliberateSimple ? "Simple mode" : "Smart timing off — Enable")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.primary)
-                Spacer(minLength: 0)
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(accentColor)
+                    .frame(width: 28, height: 28)
+                    .background(accentColor.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Simple timer mode")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 4)
+
                 Image(systemName: "chevron.right")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(.tertiary)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background((deliberateSimple ? Color.primary : accentColor).opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color.primary.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .buttonStyle(.plain)
     }
