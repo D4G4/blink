@@ -8,6 +8,18 @@
     <item>
       <title>Blink v5.0.4</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.0.4</link>
+      <sparkle:version>1</sparkle:version>
+      <sparkle:shortVersionString>5.0.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Tue, 02 Jun 2026 15:11:28 +0000</pubDate>
+      <description><![CDATA[See <a href="https://github.com/D4G4/blink/releases/tag/v5.0.4">release notes on GitHub</a>.]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.0.4/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="tSt5/tfL1gRnsk/wZGRXGbCLVTD6LhXZkgztJXOaapyTPvcamxzNTRzK3H6tqJEOiKb+eoOfKZ0MgaT6X/RcDg==" length="8491303" />
+    </item>
+    <item>
+      <title>Blink v5.0.4</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.0.4</link>
       <sparkle:version>317</sparkle:version>
       <sparkle:shortVersionString>5.0.4</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
