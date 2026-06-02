@@ -142,7 +142,18 @@ class SnapshotTestCase: XCTestCase {
         }
     }
 
-    /// Returns the fraction of pixels that differ between two PNG images (0.0 = identical, 1.0 = completely different).
+    /// Returns the fraction of pixels that differ *perceptibly* between two PNG
+    /// images (0.0 = identical, 1.0 = completely different).
+    ///
+    /// A pixel counts as different only when its per-channel color delta sums
+    /// above `perceptibleDelta`. Exact-equality comparison was too strict:
+    /// ImageRenderer emits sub-LSB antialiasing noise that varies run-to-run
+    /// (soft shadows, gradients, resampled raster icons), producing 3–14%
+    /// exact-different pixels that are 0.000% perceptibly different — enough to
+    /// fail the 0.5% tolerance intermittently. A real regression (text/layout/
+    /// color change) moves pixels far past this threshold, so it's still caught.
+    private static let perceptibleDelta = 0.12  // sum of |Δr|+|Δg|+|Δb|, ~0.04/channel
+
     private static func pixelMismatchFraction(_ data1: Data, _ data2: Data) -> Double {
         guard let rep1 = NSBitmapImageRep(data: data1),
               let rep2 = NSBitmapImageRep(data: data2) else { return 1.0 }
@@ -160,9 +171,12 @@ class SnapshotTestCase: XCTestCase {
         let total = w * h
         for y in 0..<h {
             for x in 0..<w {
-                let c1 = rep1.colorAt(x: x, y: y)
-                let c2 = rep2.colorAt(x: x, y: y)
-                if c1 != c2 { mismatched += 1 }
+                guard let c1 = rep1.colorAt(x: x, y: y),
+                      let c2 = rep2.colorAt(x: x, y: y) else { continue }
+                let delta = abs(c1.redComponent - c2.redComponent)
+                    + abs(c1.greenComponent - c2.greenComponent)
+                    + abs(c1.blueComponent - c2.blueComponent)
+                if delta > perceptibleDelta { mismatched += 1 }
             }
         }
         return Double(mismatched) / Double(total)
