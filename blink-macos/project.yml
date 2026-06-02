@@ -76,7 +76,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.blink20.app
-        MARKETING_VERSION: "5.0.5"
+        MARKETING_VERSION: "5.0.6"
         # CURRENT_PROJECT_VERSION (= CFBundleVersion) is the integer
         # Sparkle uses as its PRIMARY version comparator. The value here
         # is only a development/local-build placeholder — scripts/build-release.sh
@@ -98,12 +98,20 @@ targets:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
         com.apple.security.device.audio-input: true
-        # Sparkle 2.x with sandboxing: the Installer.xpc service launches
-        # via a mach lookup keyed off the host bundle ID. Without this
-        # exception the installer cannot be reached from the sandboxed
-        # app and updates fail silently at the install step.
+        # Sparkle 2.x with sandboxing: the installer pipeline spans TWO
+        # XPC services keyed off the host bundle ID:
+        #   -spks → Installer Launcher (host app launches it to begin install)
+        #   -spki → Installer Status (Updater.app reports progress back via it)
+        # Per Sparkle's official sandboxed-sample entitlements file, both
+        # are required. Missing -spki only manifests at install time —
+        # find/download works (those use network.client), then install
+        # fails with the generic "An error occurred while running the
+        # updater" because the status channel is blocked. v5.0.0–v5.0.5
+        # all shipped without -spki and Sparkle install never worked for
+        # any user; v5.0.6 adds it.
         com.apple.security.temporary-exception.mach-lookup.global-name:
           - "com.blink20.app-spks"
+          - "com.blink20.app-spki"
 
   BlinkSnapshotTests:
     type: bundle.unit-test
