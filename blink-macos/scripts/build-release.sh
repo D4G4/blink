@@ -157,11 +157,19 @@ xcrun stapler staple "$DMG_PATH"
 echo "→ Gatekeeper assessment..."
 spctl --assess --type open --context context:primary-signature -vv "$DMG_PATH" 2>&1 | tail -3
 
-# Sign the DMG with the EdDSA key for Sparkle. sign_update reads the
-# private key out of the developer's login Keychain (item
-# "https://sparkle-project.org") and prints an XML attribute fragment
-# containing sparkle:edSignature + length="<bytes>". We capture that
-# verbatim so we can paste it into the appcast item below.
+# Sign the DMG with the EdDSA key for Sparkle.
+#
+# Key source — two paths:
+#   1. Local Mac: sign_update reads the private key from the developer's
+#      login Keychain (item "https://sparkle-project.org"). This is what
+#      `generate_keys` writes to when called interactively.
+#   2. CI: SPARKLE_PRIVATE_KEY_FILE env var points at a file containing
+#      the base64-decoded EdDSA private key (the same key, just exported
+#      from the Keychain via `generate_keys -x`). sign_update's
+#      --ed-key-file reads it directly — no keychain access, no ACL
+#      prompts. This is mandatory on a headless CI runner: without it,
+#      sign_update triggers a "Allow access?" dialog that no human can
+#      answer and the build hangs forever.
 #
 # sign_update lives inside the Sparkle SPM checkout once the package is
 # resolved. Prefer the SPM-resolved binary so we don't depend on the
@@ -185,7 +193,11 @@ if [ ! -x "$SPARKLE_BIN" ]; then
     echo "Error: sign_update not found. Build the app once so Xcode resolves the Sparkle SPM package, or extract Sparkle to ~/.local/sparkle-2.9.2/."
     exit 1
 fi
-SPARKLE_SIG_LINE=$("$SPARKLE_BIN" "$DMG_PATH")
+if [ -n "${SPARKLE_PRIVATE_KEY_FILE:-}" ]; then
+    SPARKLE_SIG_LINE=$("$SPARKLE_BIN" --ed-key-file "$SPARKLE_PRIVATE_KEY_FILE" "$DMG_PATH")
+else
+    SPARKLE_SIG_LINE=$("$SPARKLE_BIN" "$DMG_PATH")
+fi
 echo "  $SPARKLE_SIG_LINE"
 
 # Summary

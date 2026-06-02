@@ -147,40 +147,37 @@ jobs:
           xcodebuild -project Blink.xcodeproj -scheme Blink \
             -resolvePackageDependencies > /dev/null
 
-      # Import the Sparkle EdDSA private key into the runner's keychain so
-      # `sign_update` (called from build-release.sh) can find it and sign
-      # the DMG. The key was exported once via
-      #   ~/.local/sparkle-2.9.2/bin/generate_keys -x /tmp/sparkle.key
-      # then base64-encoded into the SPARKLE_PRIVATE_KEY secret. Imported
-      # with generate_keys -f, which stores it under the same keychain
-      # item that sign_update reads ("https://sparkle-project.org").
+      # Stage the Sparkle EdDSA private key as a file. build-release.sh
+      # picks it up via SPARKLE_PRIVATE_KEY_FILE and passes it to
+      # `sign_update --ed-key-file`. We deliberately DO NOT import it
+      # into a keychain on the runner — sign_update's default keychain
+      # path triggers a "Allow access?" ACL prompt on first use, which
+      # cannot be dismissed on a headless runner and hangs the job
+      # forever. Was the root cause of the v5.0.0 release hangs.
       #
-      # If this key ever leaks, every Blink user is permanently stranded
-      # on whatever version they have — there's no key-rotation story in
-      # Sparkle. Treat SPARKLE_PRIVATE_KEY as the highest-trust secret.
-      - name: Import Sparkle EdDSA private key
+      # The key was exported once locally via
+      #   ~/.local/sparkle-2.9.2/bin/generate_keys -x /tmp/sparkle.key
+      # then base64-encoded into the SPARKLE_PRIVATE_KEY secret. Highest
+      # trust secret in the repo — if it leaks, every shipped Blink is
+      # stranded (no key-rotation story in Sparkle).
+      - name: Decode Sparkle EdDSA private key to file
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
           set -e
-          KEY_FILE=$(mktemp)
-          echo -n "$SPARKLE_PRIVATE_KEY" | base64 --decode > "$KEY_FILE"
-          GEN_KEYS=$(find ~/Library/Developer/Xcode/DerivedData \
-            -type f -name generate_keys -path '*Sparkle*/bin/generate_keys' \
-            2>/dev/null | head -1)
-          if [ -z "$GEN_KEYS" ]; then
-            echo "Error: could not locate generate_keys binary in DerivedData."
-            exit 1
-          fi
-          "$GEN_KEYS" -f "$KEY_FILE"
-          rm "$KEY_FILE"
+          echo -n "$SPARKLE_PRIVATE_KEY" | base64 --decode > "$RUNNER_TEMP/sparkle.key"
+          chmod 600 "$RUNNER_TEMP/sparkle.key"
 
       # Build, sign, notarize, staple, AND EdDSA-sign for Sparkle in one
-      # go via the build script. Anything that's wrong with signing,
-      # notarization, or Sparkle signing fails here rather than producing
-      # a bad DMG. The script writes both Blink.dmg and appcast-item.xml
-      # into blink-macos/build/.
+      # go via the build script. The SPARKLE_PRIVATE_KEY_FILE env var
+      # routes sign_update to read the key from a file instead of the
+      # keychain — bypasses the ACL prompt that hangs CI. Anything else
+      # that's wrong (signing, notarization, Sparkle key mismatch) fails
+      # here rather than producing a bad DMG. The script writes both
+      # Blink.dmg and appcast-item.xml into blink-macos/build/.
       - name: Build signed + notarized + EdDSA-signed DMG
+        env:
+          SPARKLE_PRIVATE_KEY_FILE: ${{ runner.temp }}/sparkle.key
         run: bash blink-macos/scripts/build-release.sh
 
       - name: Upload DMG artifact
