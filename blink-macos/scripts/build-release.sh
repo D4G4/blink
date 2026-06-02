@@ -12,6 +12,20 @@ if [ -z "$VERSION" ]; then
     exit 1
 fi
 
+# Auto-derive CFBundleVersion from git commit count. Sparkle uses
+# sparkle:version (= CFBundleVersion) as its PRIMARY integer
+# comparator — if two releases share the same value, Sparkle answers
+# "up to date" regardless of the shortVersionString. v5.0.0–v5.0.3
+# all shipped with CFBundleVersion=1 (hardcoded in project.yml) and
+# every installed user got stuck on whatever they first installed.
+# git rev-list --count is monotonic per merged commit and reproducible
+# from any clone, so it's the right per-release build number.
+BUILD_NUMBER=$(git rev-list --count HEAD)
+if [ -z "$BUILD_NUMBER" ]; then
+    echo "Error: could not compute build number from git"
+    exit 1
+fi
+
 BUILD_DIR="build"
 ARCHIVE_PATH="$BUILD_DIR/Blink.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
@@ -51,7 +65,8 @@ xcodebuild archive \
     -quiet \
     CODE_SIGN_STYLE=Manual \
     CODE_SIGN_IDENTITY="Developer ID Application" \
-    DEVELOPMENT_TEAM=6V6FZW3FFN
+    DEVELOPMENT_TEAM=6V6FZW3FFN \
+    CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
 
 # Export with Developer ID Application signing.
 # method=developer-id tells xcodebuild to sign with the Developer ID

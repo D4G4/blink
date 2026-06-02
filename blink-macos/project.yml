@@ -76,7 +76,16 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.blink20.app
-        MARKETING_VERSION: "5.0.3"
+        MARKETING_VERSION: "5.0.4"
+        # CURRENT_PROJECT_VERSION (= CFBundleVersion) is the integer
+        # Sparkle uses as its PRIMARY version comparator. The value here
+        # is only a development/local-build placeholder — scripts/build-release.sh
+        # overrides it with `git rev-list --count HEAD` so each release
+        # ships with a monotonically-increasing build number. Do NOT
+        # hardcode a specific number for shipping; every release must
+        # have a higher CFBundleVersion than the previous one or
+        # Sparkle answers "up to date" for users on prior versions
+        # regardless of MARKETING_VERSION.
         CURRENT_PROJECT_VERSION: "1"
         ENABLE_HARDENED_RUNTIME: true
         CODE_SIGN_STYLE: Automatic
