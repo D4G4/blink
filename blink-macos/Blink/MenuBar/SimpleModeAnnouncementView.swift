@@ -6,11 +6,50 @@ import SwiftUI
 /// Persists `simpleTimerModeAnnounced=true` after dismissal so it never
 /// reappears.
 struct SimpleModeAnnouncementView: View {
+    /// Two scenarios share this HUD:
+    ///   - `.announce`: one-time "did you know Simple mode exists?" for
+    ///     existing Smart users. Primary = "Show me", secondary = "Keep Smart".
+    ///   - `.activeByDefault`: confirms Simple mode is now on because the user
+    ///     closed setup without choosing. Primary = "Open Preferences",
+    ///     secondary = "Got it".
+    enum Style { case announce, activeByDefault }
+
     let theme: BlinkTheme
+    var style: Style = .announce
     var onShowMe: () -> Void = {}
     var onDismiss: () -> Void = {}
 
     @Environment(\.colorScheme) private var colorScheme
+
+    private var title: String {
+        switch style {
+        case .announce: return "New: Simple timer mode"
+        case .activeByDefault: return "Simple timer mode is on"
+        }
+    }
+
+    private var subtitle: String {
+        switch style {
+        case .announce:
+            return "Run Blink with zero macOS permissions — no typing detection, just a smart-enough 20-min timer."
+        case .activeByDefault:
+            return "Blink runs a steady 20-min timer with zero permissions. Switch to Smart anytime in Preferences → Flow."
+        }
+    }
+
+    private var secondaryLabel: String {
+        switch style {
+        case .announce: return "Keep Smart mode"
+        case .activeByDefault: return "Got it"
+        }
+    }
+
+    private var primaryLabel: String {
+        switch style {
+        case .announce: return "Show me"
+        case .activeByDefault: return "Open Preferences"
+        }
+    }
 
     var body: some View {
         let fg = theme.onBackgroundText(for: colorScheme)
@@ -27,10 +66,10 @@ struct SimpleModeAnnouncementView: View {
                     )
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("New: Simple timer mode")
+                    Text(title)
                         .font(.system(size: 14, weight: .bold, design: .rounded))
                         .foregroundStyle(fg)
-                    Text("Run Blink with zero macOS permissions — no typing detection, just a smart-enough 20-min timer.")
+                    Text(subtitle)
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(fg.opacity(0.85))
                         .fixedSize(horizontal: false, vertical: true)
@@ -39,7 +78,7 @@ struct SimpleModeAnnouncementView: View {
 
             HStack(spacing: 8) {
                 Button(action: onDismiss) {
-                    Text("Keep Smart mode")
+                    Text(secondaryLabel)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(fg)
                         .frame(maxWidth: .infinity)
@@ -52,7 +91,7 @@ struct SimpleModeAnnouncementView: View {
                 .buttonStyle(.plain)
 
                 Button(action: onShowMe) {
-                    Text("Show me")
+                    Text(primaryLabel)
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(theme.backgroundTop(for: colorScheme))
                         .frame(maxWidth: .infinity)

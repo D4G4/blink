@@ -23,9 +23,18 @@ struct PermissionFlowView: View {
     /// timer mode (no Input Monitoring requested).
     let onComplete: (_ basicMode: Bool) -> Void
 
-    @State private var currentStep: Step = .detectionMode
+    @State private var currentStep: Step
 
     enum Step { case detectionMode, microphone, inputMonitoring }
+
+    /// `initialStep` defaults to the detection-mode choice page. Callers that
+    /// know the user already chose Smart (Settings → Flow → Smart) pass
+    /// `.microphone` to skip the choice and land on the permission steps.
+    init(theme: BlinkTheme, initialStep: Step = .detectionMode, onComplete: @escaping (_ basicMode: Bool) -> Void) {
+        self.theme = theme
+        self.onComplete = onComplete
+        self._currentStep = State(initialValue: initialStep)
+    }
 
     var body: some View {
         ZStack {

@@ -10,7 +10,7 @@ import AppKit
 final class SimpleModeAnnouncementWindowController {
     private var window: NSWindow?
 
-    func show(theme: BlinkTheme, onShowMe: @escaping () -> Void, onDismiss: @escaping () -> Void) {
+    func show(theme: BlinkTheme, style: SimpleModeAnnouncementView.Style = .announce, onShowMe: @escaping () -> Void, onDismiss: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
 
         let width: CGFloat = 360
@@ -24,6 +24,7 @@ final class SimpleModeAnnouncementWindowController {
 
         let view = SimpleModeAnnouncementView(
             theme: theme,
+            style: style,
             onShowMe: { [weak self] in
                 self?.dismiss(animated: true)
                 onShowMe()

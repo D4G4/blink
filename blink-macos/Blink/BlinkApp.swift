@@ -11,7 +11,6 @@ struct BlinkApp: App {
         MenuBarExtra {
             MenuBarView(appState: appState)
                 .environmentObject(themeManager)
-                .environmentObject(UpdateChecker.shared)
         } label: {
             Group {
                 if showTimerInMenuBar && appState.hasInputMonitoringPermission {
@@ -69,7 +68,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } else {
             NSApp.setActivationPolicy(.accessory)
-            UpdateChecker.shared.startPeriodicChecks()
         }
+        // Instantiate the updater so Sparkle's scheduled-check loop and
+        // SUEnableAutomaticChecks=YES take effect from launch. The
+        // singleton holds the SPUStandardUpdaterController for the
+        // lifetime of the app.
+        _ = BlinkUpdater.shared
+    }
+
+    /// Dock-icon click recovery. Blink's onboarding / detection-mode choice /
+    /// permission / recovery surfaces are non-dismissible setup windows. They
+    /// have a Dock icon (their flows set activation policy to .regular), but if
+    /// one gets buried behind another app, clicking the Dock icon should raise
+    /// it. Re-front any open window tagged `.blinkSetupWindow`.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        let surfaced = sender.windows.filter { $0.identifier == .blinkSetupWindow && $0.isVisible }
+        for window in surfaced {
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+        }
+        if !surfaced.isEmpty {
+            NSApp.activate()
+        }
+        return true
     }
 }

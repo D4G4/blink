@@ -4,6 +4,7 @@ import AppKit
 /// Controls the onboarding window lifecycle.
 final class OnboardingWindowController {
     private var window: NSWindow?
+    private var closeDelegate: SetupWindowCloseDelegate?
 
     func show(themeManager: ThemeManager, onComplete: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
@@ -39,21 +40,21 @@ final class OnboardingWindowController {
         )
         .preferredColorScheme(.light)
 
-        let win = KeyableBorderlessWindow(
-            contentRect: windowFrame,
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
-        )
-        win.isOpaque = false
-        win.backgroundColor = .clear
-        win.level = .normal
+        // Closable titled setup window (traffic lights + Dock icon + native
+        // window management). OS rounds the corners, so OnboardingView no
+        // longer applies its own clipShape.
+        let win = NSWindow.makeSetupWindow(contentRect: windowFrame, title: "Welcome to Blink")
         win.hasShadow = true
         win.appearance = NSAppearance(named: .aqua)
         win.contentView = NSHostingView(rootView: onboardingView)
-        win.makeKeyAndOrderFront(nil)
 
-        NSApp.activate(ignoringOtherApps: true)
+        // Onboarding is shown before any detection mode is presented, so
+        // there's nothing to "default to" if the user closes it — quit.
+        let closeDelegate = SetupWindowCloseDelegate { NSApp.terminate(nil) }
+        win.delegate = closeDelegate
+        self.closeDelegate = closeDelegate
+
+        win.surfaceAtLaunch()
 
         self.window = win
     }

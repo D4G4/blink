@@ -157,17 +157,78 @@ xcrun stapler staple "$DMG_PATH"
 echo "→ Gatekeeper assessment..."
 spctl --assess --type open --context context:primary-signature -vv "$DMG_PATH" 2>&1 | tail -3
 
+# Sign the DMG with the EdDSA key for Sparkle. sign_update reads the
+# private key out of the developer's login Keychain (item
+# "https://sparkle-project.org") and prints an XML attribute fragment
+# containing sparkle:edSignature + length="<bytes>". We capture that
+# verbatim so we can paste it into the appcast item below.
+#
+# sign_update lives inside the Sparkle SPM checkout once the package is
+# resolved. Prefer the SPM-resolved binary so we don't depend on the
+# standalone tarball at ~/.local/sparkle-2.9.2/. Fall back to that
+# location if the SPM checkout isn't built yet (e.g. fresh clone).
+echo "→ EdDSA-signing DMG for Sparkle..."
+SPARKLE_BIN=""
+SPM_CACHES=(
+    "$HOME/Library/Developer/Xcode/DerivedData"
+    "$HOME/Library/Caches/org.swift.swiftpm"
+)
+for cache in "${SPM_CACHES[@]}"; do
+    if [ -z "$SPARKLE_BIN" ]; then
+        FOUND=$(find "$cache" -type f -name sign_update -path "*Sparkle*/bin/sign_update" 2>/dev/null | head -1)
+        [ -n "$FOUND" ] && SPARKLE_BIN="$FOUND"
+    fi
+done
+[ -z "$SPARKLE_BIN" ] && SPARKLE_BIN="$HOME/.local/sparkle-2.9.2/bin/sign_update"
+
+if [ ! -x "$SPARKLE_BIN" ]; then
+    echo "Error: sign_update not found. Build the app once so Xcode resolves the Sparkle SPM package, or extract Sparkle to ~/.local/sparkle-2.9.2/."
+    exit 1
+fi
+SPARKLE_SIG_LINE=$("$SPARKLE_BIN" "$DMG_PATH")
+echo "  $SPARKLE_SIG_LINE"
+
 # Summary
 DMG_SIZE=$(du -h "$DMG_PATH" | cut -f1)
 DMG_SHA=$(shasum -a 256 "$DMG_PATH" | cut -d' ' -f1)
+DMG_BYTES=$(stat -f %z "$DMG_PATH")
+PUBDATE=$(date -u +"%a, %d %b %Y %H:%M:%S +0000")
+DOWNLOAD_URL="https://github.com/D4G4/blink/releases/download/v${VERSION}/Blink.dmg"
+RELEASE_NOTES_URL="https://github.com/D4G4/blink/releases/tag/v${VERSION}"
+
+# Compose the appcast entry. We DON'T auto-append to website/appcast.xml
+# here — Sparkle's appcast lives in the website repo and gets deployed
+# via wrangler, and pasting into the XML by hand keeps a single point
+# of human review before users on every installed version receive the
+# update broadcast. Print the snippet ready to paste.
+APPCAST_ITEM=$(cat <<XML
+    <item>
+      <title>Blink v${VERSION}</title>
+      <link>${RELEASE_NOTES_URL}</link>
+      <sparkle:version>$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$EXPORT_DIR/Blink.app/Contents/Info.plist")</sparkle:version>
+      <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>${PUBDATE}</pubDate>
+      <description><![CDATA[See <a href="${RELEASE_NOTES_URL}">release notes on GitHub</a>.]]></description>
+      <enclosure url="${DOWNLOAD_URL}"
+                 type="application/octet-stream"
+                 ${SPARKLE_SIG_LINE} />
+    </item>
+XML
+)
 
 echo ""
 echo "=== Done ==="
 echo "  DMG: $DMG_PATH ($DMG_SIZE)"
-echo "  SHA: $DMG_SHA"
+echo "  SHA: $DMG_SHA ($DMG_BYTES bytes)"
 echo "  Version: $VERSION"
+echo ""
+echo "=== Appcast item — paste this into website/appcast.xml after <channel> ==="
+echo "$APPCAST_ITEM"
 echo ""
 echo "Next steps:"
 echo "  1. git tag v$VERSION && git push --tags"
 echo "  2. gh release create v$VERSION $DMG_PATH --title \"v$VERSION\" --generate-notes"
-echo "  3. Update homebrew-blink: version + sha256 (remove xattr postflight)"
+echo "  3. Paste the appcast item above into website/appcast.xml"
+echo "  4. Deploy website: cd .. && wrangler deploy"
+echo "  5. Update homebrew-blink: version + sha256"

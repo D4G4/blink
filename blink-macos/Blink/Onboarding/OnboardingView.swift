@@ -107,7 +107,6 @@ struct OnboardingView: View {
             })
             .frame(width: 480, height: 700)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 20))
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 iconScale = 1.0

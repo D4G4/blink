@@ -30,8 +30,6 @@ final class AppState: ObservableObject {
     private var permissionFlow: PermissionFlowWindowController?
     private var launchHUD: LaunchHUDWindowController?
     private var simpleModeAnnouncement: SimpleModeAnnouncementWindowController?
-    private var updateAvailableHUD: UpdateAvailableWindowController?
-    private var updateCheckerCancellable: AnyCancellable?
 
     // NSWorkspace sleep/wake observer tokens. Stashed so teardownMonitoring()
     // can remove them on detection-mode hot-swap — otherwise every swap
@@ -123,8 +121,6 @@ final class AppState: ObservableObject {
 
         let savedWallClock = UserDefaults.standard.integer(forKey: "maxWallClockMinutes")
         if savedWallClock > 0 { engine.maxWallClockSeconds = TimeInterval(savedWallClock * 60) }
-
-        subscribeToUpdateChecker()
 
         if ThemeManager.shared.hasCompletedOnboarding {
             checkPermissionsAndStart()
@@ -235,7 +231,7 @@ final class AppState: ObservableObject {
         // maybeShowSimpleModeAnnouncement skips them.
         UserDefaults.standard.set(true, forKey: "simpleModeAnnounced")
         Log.i("Onboarding completed (theme + flow) — running permission check")
-        checkPermissionsAndStart()
+        checkPermissionsAndStart(cameFromOnboarding: true)
     }
 
     /// Decides what to do once onboarding (theme + flow) is recorded as
@@ -246,7 +242,7 @@ final class AppState: ObservableObject {
     ///     (first-time mic + IM setup)
     ///   - Neither, but previously granted (IM revoked / stale grant
     ///     after a binary update) → show the staleGrant recovery window
-    private func checkPermissionsAndStart() {
+    private func checkPermissionsAndStart(cameFromOnboarding: Bool = false) {
         let granted = PermissionManager.isPermissionGranted()
         let micStatus = PermissionManager.microphoneAuthorizationStatus()
         let basicModeOptIn = UserDefaults.standard.bool(forKey: "basicModeOptIn")
@@ -292,7 +288,7 @@ final class AppState: ObservableObject {
             showRecoveryWindow()
         } else {
             Log.i("No IM yet — showing first-time PermissionFlow window")
-            showPermissionFlow()
+            showPermissionFlow(forceLight: cameFromOnboarding)
         }
     }
 
@@ -300,31 +296,47 @@ final class AppState: ObservableObject {
     /// onboarding completes, and on any subsequent launch where the user
     /// hasn't yet granted IM and hasn't opted into basic mode (e.g. a
     /// TCC restart mid-permission-grant put us back here on relaunch).
-    private func showPermissionFlow() {
+    ///
+    /// `forceLight` is true only when this immediately follows onboarding —
+    /// onboarding is forced light, so the permission flow stays light to avoid
+    /// a light→dark jump mid-flow. Standalone launches (and the Settings
+    /// simple→smart path) pass false to honor the system appearance.
+    /// - forceLight: keep the window light to match forced-light onboarding
+    ///   (true only when shown straight after onboarding).
+    /// - startAtPermissions: skip the detection-mode choice page and land on
+    ///   the mic/IM steps directly. True when the user already chose Smart in
+    ///   Settings → Flow, so re-showing the choice would be redundant.
+    private func showPermissionFlow(forceLight: Bool = false, startAtPermissions: Bool = false) {
         permissionFlow = PermissionFlowWindowController()
-        permissionFlow?.show(theme: ThemeManager.shared.current) { [weak self] basicMode in
-            guard let self else { return }
-            self.permissionFlow = nil
-            if basicMode {
-                Log.i("PermissionFlow resolved via skip — entering basic mode")
-                UserDefaults.standard.set(true, forKey: "basicModeOptIn")
-                UserDefaults.standard.set(false, forKey: "permissionGranted")
-                self.hasInputMonitoringPermission = false
-            } else {
-                Log.i("PermissionFlow resolved — IM granted")
-                UserDefaults.standard.set(true, forKey: "permissionGranted")
-                UserDefaults.standard.set(false, forKey: "basicModeOptIn")
-                self.hasInputMonitoringPermission = true
+        permissionFlow?.show(
+            theme: ThemeManager.shared.current,
+            forceLight: forceLight,
+            startAtPermissions: startAtPermissions,
+            onResolved: { [weak self] basicMode in
+                guard let self else { return }
+                self.permissionFlow = nil
+                if basicMode {
+                    Log.i("PermissionFlow resolved via skip — entering basic mode")
+                    self.enterSimpleModeAndStart(announceLaunch: true)
+                    // Offer the revoke step if the OS still holds an IM grant.
+                    self.maybeOfferToRevokeIMGrant(trigger: "PermissionFlow skip")
+                } else {
+                    Log.i("PermissionFlow resolved — IM granted")
+                    UserDefaults.standard.set(true, forKey: "permissionGranted")
+                    UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+                    self.hasInputMonitoringPermission = true
+                    self.startMonitoringAfterAllPermissions()
+                }
+            },
+            onClose: { [weak self] in
+                guard let self else { return }
+                self.permissionFlow = nil
+                Log.i("PermissionFlow closed without choosing — defaulting to Simple timer mode")
+                self.enterSimpleModeAndStart(announceLaunch: false)
+                self.maybeOfferToRevokeIMGrant(trigger: "PermissionFlow close")
+                self.showSimpleModeActiveHUD()
             }
-            self.startMonitoringAfterAllPermissions()
-            // After monitors are running, offer the revoke step if the
-            // user opted into Simple but the OS still holds a grant
-            // (e.g. they granted, switched to Simple, then came back here
-            // via a future restart). No-op if IM is not granted at OS.
-            if basicMode {
-                self.maybeOfferToRevokeIMGrant(trigger: "PermissionFlow skip")
-            }
-        }
+        )
     }
 
     // MARK: - Detection mode switching (Settings-driven)
@@ -359,12 +371,12 @@ final class AppState: ObservableObject {
                 startTimer()
                 verifyTapAliveOrReprompt()
             } else {
-                // No IM grant yet — surface the same permission flow the
-                // user would have seen on first launch. Auto-skips mic if
-                // already resolved. After the flow resolves we re-apply
-                // the same teardown/restart cycle.
-                Log.i("Settings: switching simple → smart (need to request IM) — showing PermissionFlow")
-                showPermissionFlow()
+                // No IM grant yet. The user already chose Smart in Settings,
+                // so skip the detection-mode choice page and land directly on
+                // the mic/IM permission steps. Honor system appearance (not an
+                // onboarding follow-up).
+                Log.i("Settings: switching simple → smart (need to request IM) — showing PermissionFlow at permissions")
+                showPermissionFlow(forceLight: false, startAtPermissions: true)
             }
         } else {
             // smart → simple (or simple → simple, idempotent)
@@ -438,34 +450,40 @@ final class AppState: ObservableObject {
     /// Granted — But Not Working" + the toggle-off-then-on guidance.
     private func showRecoveryWindow() {
         permissionRecovery = InputMonitoringRecoveryWindowController()
-        permissionRecovery?.show(theme: ThemeManager.shared.current) { [weak self] basicMode in
-            guard let self else { return }
-            self.permissionRecovery = nil
-            if basicMode {
-                // User clicked "Continue with basic timer" — opted out of
-                // smart mode for now. Persisted as basicModeOptIn=true so
-                // future launches don't keep re-popping the recovery
-                // window. The opt-in is automatically cleared the next
-                // time IM is actually granted (see checkPermissionsAndStart).
-                Log.i("Recovery dismissed via skip — entering basic mode")
-                UserDefaults.standard.set(true, forKey: "basicModeOptIn")
-                UserDefaults.standard.set(false, forKey: "permissionGranted")
-                self.hasInputMonitoringPermission = false
-            } else {
-                Log.i("Recovery resolved — IM re-granted")
-                UserDefaults.standard.set(true, forKey: "permissionGranted")
-                UserDefaults.standard.set(false, forKey: "basicModeOptIn")
-                self.hasInputMonitoringPermission = true
+        permissionRecovery?.show(
+            theme: ThemeManager.shared.current,
+            onResolved: { [weak self] basicMode in
+                guard let self else { return }
+                self.permissionRecovery = nil
+                if basicMode {
+                    // User clicked "Continue with basic timer" — opted out of
+                    // smart mode for now. Persisted as basicModeOptIn=true so
+                    // future launches don't keep re-popping the recovery
+                    // window. The opt-in is automatically cleared the next
+                    // time IM is actually granted (see checkPermissionsAndStart).
+                    Log.i("Recovery dismissed via skip — entering basic mode")
+                    self.enterSimpleModeAndStart(announceLaunch: true)
+                    // The recovery window appears specifically because IM was
+                    // previously granted (stale CDHash), so the OS grant is
+                    // almost certainly still present — offer the revoke step.
+                    self.maybeOfferToRevokeIMGrant(trigger: "Recovery skip")
+                } else {
+                    Log.i("Recovery resolved — IM re-granted")
+                    UserDefaults.standard.set(true, forKey: "permissionGranted")
+                    UserDefaults.standard.set(false, forKey: "basicModeOptIn")
+                    self.hasInputMonitoringPermission = true
+                    self.startMonitoringAfterAllPermissions()
+                }
+            },
+            onClose: { [weak self] in
+                guard let self else { return }
+                self.permissionRecovery = nil
+                Log.i("Recovery closed without choosing — defaulting to Simple timer mode")
+                self.enterSimpleModeAndStart(announceLaunch: false)
+                self.maybeOfferToRevokeIMGrant(trigger: "Recovery close")
+                self.showSimpleModeActiveHUD()
             }
-            self.startMonitoringAfterAllPermissions()
-            // The recovery window appears specifically because IM was
-            // previously granted (stale CDHash). If the user bailed to
-            // Simple here, the OS grant is almost certainly still present
-            // — offer the revoke step.
-            if basicMode {
-                self.maybeOfferToRevokeIMGrant(trigger: "Recovery skip")
-            }
-        }
+        )
     }
 
     /// Idempotent: tears down any existing monitors/timer first, then
@@ -473,13 +491,45 @@ final class AppState: ObservableObject {
     /// and on recovery (e.g. user re-granted IM after seeing the
     /// staleGrant window). The launch HUD shows on every path — it's the
     /// "Blink is running, here's where to find it" prompt.
-    private func startMonitoringAfterAllPermissions() {
+    private func startMonitoringAfterAllPermissions(announceLaunch: Bool = true) {
         teardownMonitoring()
         startMonitoring()
         startTimer()
-        showLaunchHUD()
+        // The close→Simple path shows its own "Simple mode is active" HUD, so
+        // it suppresses the generic launch HUD to avoid two HUDs stacking in
+        // the same top-right corner.
+        if announceLaunch { showLaunchHUD() }
         Log.i("Monitors and timers started")
         verifyTapAliveOrReprompt()
+    }
+
+    /// Persists Simple-mode opt-in and (re)starts the runtime in Simple mode.
+    /// Shared by the explicit "Use Simple timer mode" choice and the
+    /// close-without-choosing default. `announceLaunch` is false for the close
+    /// path, which shows its own confirming HUD instead.
+    private func enterSimpleModeAndStart(announceLaunch: Bool) {
+        UserDefaults.standard.set(true, forKey: "basicModeOptIn")
+        UserDefaults.standard.set(false, forKey: "permissionGranted")
+        hasInputMonitoringPermission = false
+        startMonitoringAfterAllPermissions(announceLaunch: announceLaunch)
+    }
+
+    /// Shows the "Simple timer mode is on" confirmation HUD after the user
+    /// closed a setup window without choosing. "Open Preferences" deep-links to
+    /// the Flow tab where the detection-mode picker lives.
+    private func showSimpleModeActiveHUD() {
+        simpleModeAnnouncement = SimpleModeAnnouncementWindowController()
+        simpleModeAnnouncement?.show(
+            theme: ThemeManager.shared.current,
+            style: .activeByDefault,
+            onShowMe: { [weak self] in
+                self?.simpleModeAnnouncement = nil
+                self?.openPreferences(initialTab: 2)  // Flow
+            },
+            onDismiss: { [weak self] in
+                self?.simpleModeAnnouncement = nil
+            }
+        )
     }
 
     /// Stop any running monitors + timer so startMonitoringAfterAllPermissions
@@ -771,80 +821,6 @@ final class AppState: ObservableObject {
         )
     }
 
-    // MARK: - Update available HUD
-
-    /// Subscribe to UpdateChecker.shared.$updateAvailable so a transition
-    /// to true (from launch check or 24h periodic check) surfaces the
-    /// floating HUD. We don't re-fire for the same version — once
-    /// `updateAnnouncedVersion` matches `latestVersion`, the HUD stays
-    /// suppressed until a newer version drops.
-    ///
-    /// App Store builds skip update checks entirely (UpdateChecker
-    /// short-circuits in startPeriodicChecks), so `updateAvailable`
-    /// never flips there → no HUD, no special-case needed.
-    private func subscribeToUpdateChecker() {
-        updateCheckerCancellable = UpdateChecker.shared.$updateAvailable
-            .removeDuplicates()
-            .sink { [weak self] available in
-                guard available else { return }
-                Task { @MainActor in
-                    self?.maybeShowUpdateAvailable()
-                }
-            }
-    }
-
-    private func maybeShowUpdateAvailable() {
-        guard let version = UpdateChecker.shared.latestVersion else { return }
-        let lastAnnounced = UserDefaults.standard.string(forKey: "updateAnnouncedVersion")
-        guard lastAnnounced != version else {
-            Log.i("Update HUD: v\(version) already announced — suppressing")
-            return
-        }
-        Log.i("Update HUD: surfacing v\(version) (last announced: \(lastAnnounced ?? "none"))")
-
-        // Delay so the launch HUD and Simple-mode announcement HUD have
-        // time to settle. Update checks can resolve as fast as ~500ms
-        // after launch on a warm DNS cache — landing this HUD on top
-        // of the launch HUD would be jarring.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
-            guard let self else { return }
-            // Re-check version in case the user dismissed via menu bar
-            // banner or another path in the meantime.
-            let currentLastAnnounced = UserDefaults.standard.string(forKey: "updateAnnouncedVersion")
-            guard currentLastAnnounced != version else { return }
-
-            let installSource = UpdateChecker.installSource
-            self.updateAvailableHUD = UpdateAvailableWindowController()
-            self.updateAvailableHUD?.show(
-                theme: ThemeManager.shared.current,
-                version: version,
-                installSource: installSource,
-                onPrimary: { [weak self] in
-                    UserDefaults.standard.set(version, forKey: "updateAnnouncedVersion")
-                    switch installSource {
-                    case .homebrew:
-                        // Copy the brew upgrade command so the user can
-                        // paste it into Terminal. Avoids the parallel-
-                        // install footgun of pointing a brew user at the
-                        // DMG download.
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(UpdateChecker.brewCommand, forType: .string)
-                        Log.i("Update HUD: copied brew command to clipboard")
-                    case .dmg, .appStore:
-                        if let url = UpdateChecker.shared.downloadURL {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }
-                    self?.updateAvailableHUD = nil
-                },
-                onSkip: { [weak self] in
-                    UserDefaults.standard.set(version, forKey: "updateAnnouncedVersion")
-                    self?.updateAvailableHUD = nil
-                }
-            )
-        }
-    }
-
     /// One-time HUD telling existing Smart-mode users that Simple timer
     /// mode is now an option. Trigger conditions:
     ///   - User has already granted IM (i.e. they're a pre-existing Smart
@@ -899,9 +875,10 @@ final class AppState: ObservableObject {
 
     /// Opens the Preferences window. Called from the launch HUD tap so
     /// the user has somewhere obvious to land if they can't find the menu
-    /// bar icon.
-    func openPreferences() {
-        PreferencesWindowController.shared.show(appState: self, themeManager: ThemeManager.shared)
+    /// bar icon. `initialTab` deep-links to a tab (0=General, 1=Theme,
+    /// 2=Flow, 3=About) — honored only when the window isn't already open.
+    func openPreferences(initialTab: Int = 0) {
+        PreferencesWindowController.shared.show(appState: self, themeManager: ThemeManager.shared, initialTab: initialTab)
     }
 
     // MARK: - Public actions (for menu bar buttons)
