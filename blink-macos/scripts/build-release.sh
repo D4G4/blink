@@ -225,6 +225,11 @@ echo "  Version: $VERSION"
 echo ""
 echo "=== Appcast item — paste this into website/appcast.xml after <channel> ==="
 echo "$APPCAST_ITEM"
+# Also write to a file so CI can splice it into website/appcast.xml without
+# re-parsing stdout. The release workflow's `appcast` job uploads this as
+# an artifact, then a downstream job awks it into website/appcast.xml and
+# deploys via wrangler.
+echo "$APPCAST_ITEM" > "$BUILD_DIR/appcast-item.xml"
 echo ""
 echo "Next steps:"
 echo "  1. git tag v$VERSION && git push --tags"

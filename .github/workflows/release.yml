@@ -136,17 +136,66 @@ jobs:
             --key-id "$AC_API_KEY_ID" \
             --issuer "$AC_API_ISSUER_ID"
 
-      # Build, sign, notarize, and staple in one go via the build script.
-      # Anything that's wrong with signing or notarization fails here
-      # rather than producing a bad DMG.
-      - name: Build signed + notarized DMG
+      # Resolve SPM packages early so generate_keys (ships inside the
+      # Sparkle SPM checkout under DerivedData) exists before we try to
+      # import the EdDSA private key. xcodegen runs again inside
+      # build-release.sh — running it here is fine, idempotent.
+      - name: Resolve SPM packages (needed to find generate_keys)
+        run: |
+          cd blink-macos
+          xcodegen generate
+          xcodebuild -project Blink.xcodeproj -scheme Blink \
+            -resolvePackageDependencies > /dev/null
+
+      # Import the Sparkle EdDSA private key into the runner's keychain so
+      # `sign_update` (called from build-release.sh) can find it and sign
+      # the DMG. The key was exported once via
+      #   ~/.local/sparkle-2.9.2/bin/generate_keys -x /tmp/sparkle.key
+      # then base64-encoded into the SPARKLE_PRIVATE_KEY secret. Imported
+      # with generate_keys -f, which stores it under the same keychain
+      # item that sign_update reads ("https://sparkle-project.org").
+      #
+      # If this key ever leaks, every Blink user is permanently stranded
+      # on whatever version they have — there's no key-rotation story in
+      # Sparkle. Treat SPARKLE_PRIVATE_KEY as the highest-trust secret.
+      - name: Import Sparkle EdDSA private key
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          set -e
+          KEY_FILE=$(mktemp)
+          echo -n "$SPARKLE_PRIVATE_KEY" | base64 --decode > "$KEY_FILE"
+          GEN_KEYS=$(find ~/Library/Developer/Xcode/DerivedData \
+            -type f -name generate_keys -path '*Sparkle*/bin/generate_keys' \
+            2>/dev/null | head -1)
+          if [ -z "$GEN_KEYS" ]; then
+            echo "Error: could not locate generate_keys binary in DerivedData."
+            exit 1
+          fi
+          "$GEN_KEYS" -f "$KEY_FILE"
+          rm "$KEY_FILE"
+
+      # Build, sign, notarize, staple, AND EdDSA-sign for Sparkle in one
+      # go via the build script. Anything that's wrong with signing,
+      # notarization, or Sparkle signing fails here rather than producing
+      # a bad DMG. The script writes both Blink.dmg and appcast-item.xml
+      # into blink-macos/build/.
+      - name: Build signed + notarized + EdDSA-signed DMG
         run: bash blink-macos/scripts/build-release.sh
 
-      - name: Upload artifact
+      - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
           name: Blink-macOS
           path: blink-macos/build/Blink.dmg
+
+      # Separate artifact so the appcast job can pick up the snippet
+      # without re-downloading the DMG.
+      - name: Upload appcast item artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Blink-appcast-item
+          path: blink-macos/build/appcast-item.xml
 
   # ── GitHub Release ───────────────────────────────────────────────
   release:
@@ -168,6 +217,62 @@ jobs:
             artifacts/Blink-x64/Blink-x64.exe
             artifacts/Blink-arm64/Blink-arm64.exe
             artifacts/Blink-macOS/Blink.dmg
+
+  # ── Publish Sparkle appcast + redeploy website ───────────────────
+  # Must run after `release` so the DMG enclosure URL in the appcast
+  # item is live by the time the appcast is published. Otherwise the
+  # first user to fetch the new appcast would hit a 404 on download.
+  appcast:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+
+      - name: Download appcast item
+        uses: actions/download-artifact@v4
+        with:
+          name: Blink-appcast-item
+          path: artifacts
+
+      # Splice the new <item> into website/appcast.xml right after the
+      # <language>en</language> tag (top of <channel>). awk handles the
+      # multi-line insertion without us shelling out to sed.
+      - name: Splice into website/appcast.xml
+        run: |
+          set -e
+          awk '
+            /<language>en<\/language>/ {
+              print
+              while ((getline line < "artifacts/appcast-item.xml") > 0)
+                print line
+              close("artifacts/appcast-item.xml")
+              next
+            }
+            { print }
+          ' website/appcast.xml > website/appcast.xml.new
+          mv website/appcast.xml.new website/appcast.xml
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add website/appcast.xml
+          git commit -m "chore(appcast): publish ${GITHUB_REF_NAME}"
+          git push origin HEAD:main
+
+      # Push the updated appcast to blink20.net so installed Blinks can
+      # fetch it on their next scheduled check. Without this step the
+      # commit lands in the repo but the live URL still serves the old
+      # appcast — users would never see the update.
+      - name: Deploy website (publishes new appcast)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx wrangler deploy
 
   # ── Update Homebrew cask (notarized → no xattr workaround needed) ─
   homebrew:
@@ -194,7 +299,7 @@ jobs:
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           path: homebrew-blink
 
-      - name: Update cask (version + sha + drop xattr postflight)
+      - name: Update cask (version + sha + drop xattr postflight + auto_updates)
         run: |
           set -e
           cd homebrew-blink
@@ -204,21 +309,34 @@ jobs:
           # Remove the entire postflight block — the DMG is now signed
           # + notarized + stapled, so Gatekeeper trusts it on download
           # and the `xattr -cr` workaround is no longer needed.
-          # Removes lines from 'postflight do' through the matching 'end'.
+          # Also add `auto_updates true` if it's not already there — tells
+          # brew that the app self-updates via Sparkle, so it shouldn't be
+          # surprised when the installed version drifts ahead of the cask
+          # (which is the normal state once Sparkle pushes updates).
           python3 - <<'PY'
           import re
           path = "Casks/blink.rb"
           with open(path) as f:
               src = f.read()
           # Match `postflight do\n ... \nend\n` (one block, no nested do/end)
-          new = re.sub(
+          src = re.sub(
               r"\n?[ \t]*postflight do\n(?:.*\n)*?[ \t]*end\n",
               "\n",
               src,
               count=1,
           )
+          # Idempotent insert: only add `auto_updates true` if missing.
+          # Place it right after the sha256 line so the cask file reads
+          # cleanly top-to-bottom.
+          if "auto_updates" not in src:
+              src = re.sub(
+                  r'(\n[ \t]*sha256 ".*?"\n)',
+                  r'\1\n  auto_updates true\n',
+                  src,
+                  count=1,
+              )
           with open(path, "w") as f:
-              f.write(new)
+              f.write(src)
           PY
 
       - name: Commit and push
