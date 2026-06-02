@@ -219,6 +219,14 @@ jobs:
   # Must run after `release` so the DMG enclosure URL in the appcast
   # item is live by the time the appcast is published. Otherwise the
   # first user to fetch the new appcast would hit a 404 on download.
+  #
+  # Pushes use RELEASE_PAT (a fine-grained PAT scoped to D4G4/blink with
+  # contents:write) instead of the default GITHUB_TOKEN. The repo's
+  # ruleset on `main` requires PRs + signed commits, and the bypass list
+  # exempts role-based actors (Repository admin / Write) which match
+  # human users — github-actions[bot] is a service account and isn't
+  # matched by role bypasses. The PAT acts as the human owner, who IS
+  # in the bypass list, so the push succeeds.
   appcast:
     needs: release
     runs-on: ubuntu-latest
@@ -227,7 +235,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PAT }}
           ref: main
 
       - name: Download appcast item
