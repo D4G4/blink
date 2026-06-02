@@ -69,6 +69,7 @@ Total wall-clock: **~5 minutes** end-to-end from `git push origin v5.x.y`.
 1. **`actions/checkout` defaults to `fetch-depth: 1` (shallow)** — `git rev-list --count HEAD` returns 1 → CFBundleVersion=1 → Sparkle "up to date" bug. Fix: `with: fetch-depth: 0` on the macos checkout.
 2. **`sign_update` reads from the macOS Keychain by default** — triggers an ACL prompt that hangs headless CI forever. Fix: pass the key file via `--ed-key-file`.
 3. **GitHub Rulesets bypass list matches by role, not by token** — `github-actions[bot]` runs at "Write" level but isn't matched by the "Write" role bypass entry. Fix: use a fine-grained PAT (`RELEASE_PAT`) for the appcast push.
+4. **Sparkle sandbox needs BOTH `<bundle>-spks` AND `<bundle>-spki`** in the `mach-lookup.global-name` entitlements array. With only `-spks`, find + download work but install fails with the generic "An error occurred while running the updater" — the InstallerStatus XPC channel is blocked. v5.0.0–v5.0.5 shipped with only `-spks` and Sparkle install never worked for any user; fix landed in v5.0.6. Verify with `codesign -d --entitlements - Blink.app`.
 
 ## Required GitHub repo secrets
 
