@@ -76,7 +76,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.blink20.app
-        MARKETING_VERSION: "5.0.1"
+        MARKETING_VERSION: "5.0.2"
         CURRENT_PROJECT_VERSION: "1"
         ENABLE_HARDENED_RUNTIME: true
         CODE_SIGN_STYLE: Automatic
