@@ -114,6 +114,7 @@
 		6D7EB67FF6E84BF16E4BB2B0 /* toast_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 6B793ECAEAB36968FDAEF56F /* toast_midnight_light.png */; };
 		6E21A5A8CBAAAF05E2816C3E /* OverlaySnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B3ECD2AA24890F29A887882 /* OverlaySnapshotTests.swift */; };
 		6EB79F909BF0DA4A97EFC66D /* why_exist_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = A75DE47BE5C32027ADDB4F12 /* why_exist_mono_light.png */; };
+		6F67843256E402223B096844 /* ChimePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34AF2FC8002815DDD831DB35 /* ChimePlayer.swift */; };
 		6F79930A495B70BDA50A660F /* research_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 651434F30DE247FB076D017D /* research_peach_dark.png */; };
 		712C0DAE66C1B9D08F6DFD90 /* im_permission_stale_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = E426EB6FC5FC0499DA2928FF /* im_permission_stale_sand_dark.png */; };
 		71DDA90772E11550128D362D /* FlowSensitivityPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4489BDE637012610175AC573 /* FlowSensitivityPage.swift */; };
@@ -239,6 +240,7 @@
 		F7A97034A603D5FB8742D68F /* toast_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = C9E5F65A51052CF5A6E436E9 /* toast_sand_dark.png */; };
 		F7E04F1A2FAF902BEA406965 /* gabor_exercise_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = BF18D8947C4851BE0DCA382A /* gabor_exercise_mono_light.png */; };
 		F82E154879D54815D72ECFAD /* timer_extended_mono_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = AE3CDBB361696A648D02BBE9 /* timer_extended_mono_dark.png */; };
+		FA525605B543EBB99F34C3CC /* blink_ding.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 45E9B256ABFACDCED06DFA87 /* blink_ding.m4a */; };
 		FBA8CE39FA1E397EECD6380C /* im_permission_standard_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = F906AF331761EDC5139E75A8 /* im_permission_standard_sand_light.png */; };
 		FD55356C942F1A6AA88B7F01 /* flow_learn_more_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = EA29D1D96C261B83F29559C7 /* flow_learn_more_sand_light.png */; };
 		FDA907BFAF11D9A378D0EF4D /* break_timer_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 3DD7C7DA62E52F2AEFE94165 /* break_timer_midnight_dark.png */; };
@@ -304,6 +306,7 @@
 		32D0AD0CA0A07A73EF86986B /* BlinkLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkLog.swift; sourceTree = "<group>"; };
 		33C26081F983682E94818D8E /* toast_sage_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = toast_sage_dark.png; sourceTree = "<group>"; };
 		33FD3F1BBDB28C4D80919251 /* mic_permission_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = mic_permission_mono_light.png; sourceTree = "<group>"; };
+		34AF2FC8002815DDD831DB35 /* ChimePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChimePlayer.swift; sourceTree = "<group>"; };
 		34F3ED3215925C1450E0CBCD /* timer_extended_dark_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = timer_extended_dark_light.png; sourceTree = "<group>"; };
 		3623FC422A5D80C91F4B198D /* im_permission_standard_peach_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = im_permission_standard_peach_dark.png; sourceTree = "<group>"; };
 		37391D156968BBA919AD2A97 /* gabor_exercise_sage_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_exercise_sage_dark.png; sourceTree = "<group>"; };
@@ -319,6 +322,7 @@
 		440E357BDCF5160381F71C75 /* im_permission_stale_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = im_permission_stale_peach_light.png; sourceTree = "<group>"; };
 		4489BDE637012610175AC573 /* FlowSensitivityPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityPage.swift; sourceTree = "<group>"; };
 		454E601831980C64BDA0BDD1 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
+		45E9B256ABFACDCED06DFA87 /* blink_ding.m4a */ = {isa = PBXFileReference; path = blink_ding.m4a; sourceTree = "<group>"; };
 		4764737D26993A9105D2E9BB /* flow_learn_more_sage_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_learn_more_sage_light.png; sourceTree = "<group>"; };
 		47F40C3E146DB8BEEE4BC324 /* timer_extended_sage_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = timer_extended_sage_dark.png; sourceTree = "<group>"; };
 		48431B2C296BDB92BF0BB93C /* Blink.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blink.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -524,6 +528,7 @@
 			isa = PBXGroup;
 			children = (
 				2B15A88459421C77F80ACFC3 /* BreakNotificationManager.swift */,
+				34AF2FC8002815DDD831DB35 /* ChimePlayer.swift */,
 				EDCB6EA78FBAD3A0E6F29598 /* OverlayWindow.swift */,
 			);
 			path = Notifications;
@@ -610,6 +615,7 @@
 				E081B047DEFA84D90CC10185 /* Previews */,
 				91CADECEB89E682897857F7D /* Research */,
 				082C8BA94E0BCFA337FD2181 /* Settings */,
+				D681EB80F7F3C13200E01B50 /* Sounds */,
 				73D24F7B2165BC5E03F1C38C /* Theme */,
 			);
 			path = Blink;
@@ -680,6 +686,14 @@
 				19FC27B0F8FB2E58712CA09D /* SimpleModeAnnouncementWindowController.swift */,
 			);
 			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		D681EB80F7F3C13200E01B50 /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				45E9B256ABFACDCED06DFA87 /* blink_ding.m4a */,
+			);
+			path = Sounds;
 			sourceTree = "<group>";
 		};
 		E081B047DEFA84D90CC10185 /* Previews */ = {
@@ -969,6 +983,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				35EA33C9B1B23682BB31DCED /* Assets.xcassets in Resources */,
+				FA525605B543EBB99F34C3CC /* blink_ding.m4a in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1154,6 +1169,7 @@
 				51B85A79F15C502885A3F8C2 /* BlinkTheme.swift in Sources */,
 				4FB43B1BCEC9BBCF0E7E92AF /* BlinkUpdater.swift in Sources */,
 				DE5BDA2DC244F80E4D05FDA7 /* BreakNotificationManager.swift in Sources */,
+				6F67843256E402223B096844 /* ChimePlayer.swift in Sources */,
 				159469841FEF6919842DE463 /* DetectionModeChoicePage.swift in Sources */,
 				42E3217149CAF5FF6E5873ED /* FlowLearnMorePreviews.swift in Sources */,
 				09A1C80B8AA67D8958C07429 /* FlowLearnMoreView.swift in Sources */,

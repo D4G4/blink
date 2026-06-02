@@ -163,6 +163,7 @@ final class AppState: ObservableObject {
                         self?.overlayShownAt = nil
                         self?.breaksTakenToday += 1
                         self?.overlayController.dismiss()
+                        self?.playBreakEndChime()
                     }
                 },
                 onSkip: { [weak self] in
@@ -906,6 +907,7 @@ final class AppState: ObservableObject {
                     self?.overlayShownAt = nil
                     self?.breaksTakenToday += 1
                     self?.overlayController.dismiss()
+                    self?.playBreakEndChime()
                 }
             },
             onSkip: { [weak self] in
@@ -918,6 +920,19 @@ final class AppState: ObservableObject {
                 }
             }
         )
+    }
+
+    // MARK: - Break-End Chime
+
+    private func playBreakEndChime() {
+        let defaults = UserDefaults.standard
+        // Default-on: only treat an explicit `false` as muted; missing key = enabled.
+        let enabled = (defaults.object(forKey: "chimeEnabled") as? Bool) ?? true
+        guard enabled else { return }
+        let id = defaults.string(forKey: "chimeID") ?? ChimePlayer.defaultChimeID
+        let volume = (defaults.object(forKey: "chimeVolume") as? Double) ?? ChimePlayer.defaultVolume
+        Log.i("Playing break-end chime: \(id) at \(Int(volume * 100))%")
+        ChimePlayer.shared.play(id: id, volume: volume)
     }
 
     // MARK: - Persistence
