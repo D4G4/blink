@@ -35,4 +35,22 @@ final class BlinkUpdater {
     func checkForUpdates() {
         controller.checkForUpdates(nil)
     }
+
+    /// Fire a silent background update check ~15s after launch. SPUStandardUpdaterController
+    /// deliberately does NOT check on launch by default — it waits until the next
+    /// scheduled tick (SUScheduledCheckInterval since SULastCheckTime). For a menu bar
+    /// app that's relaunched after sleep/reboot/quit, the expected UX is "check now, my
+    /// app just started" — so we explicitly trigger a background check shortly after
+    /// launch. The 15s delay is to avoid competing with the launch HUD animation,
+    /// permission flow, and initial network stack init.
+    ///
+    /// `checkForUpdatesInBackground()` is silent when no update is available; when one is,
+    /// it surfaces the standard Sparkle "Update Available" dialog — same path as the
+    /// scheduled 24h check, just kicked off at a different time. No conflict with the
+    /// scheduled check loop.
+    func checkForUpdatesInBackgroundAfterLaunchSettle() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+            self?.controller.updater.checkForUpdatesInBackground()
+        }
+    }
 }

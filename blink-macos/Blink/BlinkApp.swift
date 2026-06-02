@@ -74,6 +74,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // singleton holds the SPUStandardUpdaterController for the
         // lifetime of the app.
         _ = BlinkUpdater.shared
+        // Sparkle's stock behaviour is to wait until the next scheduled
+        // interval (24h since SULastCheckTime) before background-checking.
+        // For a menu bar app that gets relaunched after sleep/reboot/quit,
+        // the user expectation is "check now, I just opened it." Fire a
+        // silent background check ~15s post-launch so any pending update
+        // surfaces promptly without competing with launch UI.
+        BlinkUpdater.shared.checkForUpdatesInBackgroundAfterLaunchSettle()
     }
 
     /// Dock-icon click recovery. Blink's onboarding / detection-mode choice /
