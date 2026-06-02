@@ -5,6 +5,18 @@
     <link>https://blink20.net/appcast.xml</link>
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
+    <item>
+      <title>Blink v5.0.0</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.0.0</link>
+      <sparkle:version>1</sparkle:version>
+      <sparkle:shortVersionString>5.0.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Tue, 02 Jun 2026 06:07:06 +0000</pubDate>
+      <description><![CDATA[See <a href="https://github.com/D4G4/blink/releases/tag/v5.0.0">release notes on GitHub</a>.]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.0.0/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="spT/7pul2jD5fSYgV8djQ+KjjL3EZ/Bzo9CpMWoCXCNIkFhf/+wbiIoGKFmyr5hwIfHk+EkJlDk8sb/W7oEjCQ==" length="8518359" />
+    </item>
     <!--
       Each <item> is one release. The release script appends a new <item>
       at the top of <channel> after a successful build:
