@@ -15,6 +15,7 @@
 		09A1C80B8AA67D8958C07429 /* FlowLearnMoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93AFC6B8A3F31456180739C1 /* FlowLearnMoreView.swift */; };
 		0A343322F21E7C5500E3163C /* AdaptiveStaircase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06436D890269E4C851271B66 /* AdaptiveStaircase.swift */; };
 		0AF1EB410D21A0FAD63E48EA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D310BA2552802E7D6905702 /* SettingsView.swift */; };
+		0B94C895109DE4BCC325F35C /* DetectionModeCardSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202CAF4CACB2F0935E18B8D1 /* DetectionModeCardSnapshotTests.swift */; };
 		0D89D2F23032E0ABCD6071EF /* menu_bar_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 7BF0C0DEFAE21739E15D93D4 /* menu_bar_peach_dark.png */; };
 		0FEE1066FF8A7B430A2D0DF5 /* PermissionPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C52EC0F95A3EDFAEB7BF5EF /* PermissionPreviews.swift */; };
 		10276944C44E73570F2BA3C3 /* SettingsSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21FD11E9D68B96F023FC575A /* SettingsSnapshotTests.swift */; };
@@ -282,6 +283,7 @@
 		1D90476A0FF0CE042B23CFEE /* im_permission_standard_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = im_permission_standard_midnight_dark.png; sourceTree = "<group>"; };
 		1E2637452EFECC7AB9CC0487 /* flow_sensitivity_settings_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_sensitivity_settings_midnight_light.png; sourceTree = "<group>"; };
 		1FA52BA42B04BF1BE905DDA7 /* research_sand_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = research_sand_dark.png; sourceTree = "<group>"; };
+		202CAF4CACB2F0935E18B8D1 /* DetectionModeCardSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectionModeCardSnapshotTests.swift; sourceTree = "<group>"; };
 		216A16F819CB23807A4A69BF /* MacAppMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAppMonitor.swift; sourceTree = "<group>"; };
 		21FD11E9D68B96F023FC575A /* SettingsSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSnapshotTests.swift; sourceTree = "<group>"; };
 		255E49A1468CD8D9DFBA1E65 /* BreakPhaseModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakPhaseModelTests.swift; sourceTree = "<group>"; };
@@ -538,6 +540,7 @@
 			isa = PBXGroup;
 			children = (
 				255E49A1468CD8D9DFBA1E65 /* BreakPhaseModelTests.swift */,
+				202CAF4CACB2F0935E18B8D1 /* DetectionModeCardSnapshotTests.swift */,
 				964212701D5ED9457FCD5925 /* FlowSensitivitySnapshotTests.swift */,
 				A7D117D06FC441AD7EAF0DAF /* GaborExerciseSnapshotTests.swift */,
 				A57EE2E757649DCFBF0714B2 /* MenuBarSnapshotTests.swift */,
@@ -1233,6 +1236,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E261642A5327D3F3515E3C35 /* BreakPhaseModelTests.swift in Sources */,
+				0B94C895109DE4BCC325F35C /* DetectionModeCardSnapshotTests.swift in Sources */,
 				EC80B94B73F08EB078CAC1DE /* FlowSensitivitySnapshotTests.swift in Sources */,
 				029B5C110DF8E16A5C64AB1D /* GaborExerciseSnapshotTests.swift in Sources */,
 				6121A22C1EC0596320DAF7FE /* MenuBarSnapshotTests.swift in Sources */,
