@@ -59,16 +59,14 @@ final class SettingsSnapshotTests: SnapshotTestCase {
                 // SettingsView wraps its content in a ScrollView; ImageRenderer
                 // doesn't measure that and the result is a blank tab bar.
                 // assertHostedSnapshot routes through NSHostingView so the
-                // ScrollView lays out properly. Frame matches SettingsView's
-                // own .frame(width: 440, height: 440) cap so the snapshot
-                // shows exactly what a user sees when they open Preferences —
-                // tab bar + Menu Bar section + Break Screen section (where
-                // the new "Smart break suggestions" toggle lives).
+                // ScrollView lays out properly. Tall frame (1200pt) so the
+                // full General tab renders end-to-end and every iconified
+                // row is visible without the snapshot needing to scroll.
                 assertHostedSnapshot(
                     of: SettingsView(appState: AppState(preview: true))
                         .environmentObject(ThemeManager.preview(theme)),
                     named: "settings_\(label)",
-                    width: 440, height: 440,
+                    width: 440, height: 1200,
                     colorScheme: cs
                 )
             }

@@ -58,7 +58,13 @@ struct SettingsView: View {
                 .padding(20)
             }
         }
-        .frame(width: 440, height: 440)
+        // Width locked to 440 (the design target); height fills the
+        // hosting window so the ScrollView has as much room as available.
+        // Previously height was also pinned to 440, which left wasted
+        // space in the actual prefs window (520×450) and broke snapshots
+        // that wanted to render the General tab end-to-end with icons.
+        .frame(width: 440)
+        .frame(maxHeight: .infinity)
         .tint(accentColor)
     }
     
@@ -95,11 +101,23 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 20) {
 
             settingsSection("Menu Bar") {
-                settingsToggle("Show countdown timer", isOn: $showTimerInMenuBar)
+                settingsToggleWithIcon(
+                    "Show countdown timer",
+                    icon: {
+                        CountdownTimerIcon(accent: accentColor, foreground: .primary)
+                    },
+                    isOn: $showTimerInMenuBar
+                )
             }
-            
+
             settingsSection("Break Screen") {
-                settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
+                settingsToggleWithIcon(
+                    "Use dark overlay",
+                    icon: {
+                        DarkOverlayIcon(accent: accentColor, foreground: .primary)
+                    },
+                    isOn: $useDarkOverlay
+                )
                 settingsCaption("Pure black background instead of themed colors")
 
                 SmartSuggestionsSettingControls(
@@ -111,7 +129,7 @@ struct SettingsView: View {
             }
 
             settingsSection("Break-End Chime") {
-                settingsToggle("Play chime when break ends", isOn: $chimeEnabled)
+                settingsToggleWithIcon("Play chime when break ends", systemImage: "bell.fill", isOn: $chimeEnabled)
                 if chimeEnabled {
                     settingsRow("Sound") {
                         HStack(spacing: 8) {
@@ -147,30 +165,37 @@ struct SettingsView: View {
             }
 
             settingsSection("Mic Detection") {
-                settingsToggle("Pause timer during calls", isOn: $pauseDuringCalls)
+                settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
                 settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
             }
-            
+
             settingsSection("Timer") {
-                settingsRow("Base interval") {
-                    HStack {
-                        Slider(value: $baseInterval, in: 10...45, step: 5)
-                            .tint(accentColor)
-                        Text("\(Int(baseInterval)) min")
-                            .font(.system(size: 13, design: .monospaced))
-                            .frame(width: 50)
+                HStack(spacing: 10) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(accentColor)
+                        .symbolRenderingMode(.hierarchical)
+                        .frame(width: 32, alignment: .center)
+                    settingsRow("Base interval") {
+                        HStack {
+                            Slider(value: $baseInterval, in: 10...45, step: 5)
+                                .tint(accentColor)
+                            Text("\(Int(baseInterval)) min")
+                                .font(.system(size: 13, design: .monospaced))
+                                .frame(width: 50)
+                        }
                     }
                 }
             }
-            
+
             settingsSection("System") {
-                settingsToggle("Launch at login", isOn: $launchAtLogin)
+                settingsToggleWithIcon("Launch at login", systemImage: "power.circle.fill", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, newValue in
                         UIActionLogger.settingChanged("launchAtLogin", value: "\(newValue)")
                         updateLaunchAtLogin(newValue)
                     }
-                
-                settingsToggle("Debug notifications", isOn: $appState.debugNotifications)
+
+                settingsToggleWithIcon("Debug notifications", systemImage: "ant.fill", isOn: $appState.debugNotifications)
                 settingsCaption("Show toasts for timer resets, state changes, and idle detection")
                 
                 Button {
@@ -541,6 +566,38 @@ struct SettingsView: View {
             .toggleStyle(ThemedToggleStyle(theme: theme))
     }
 
+    /// Toggle with a leading icon column. `icon` can be any View — an
+    /// SF Symbol via `Image(systemName:)` or a hand-rolled SwiftUI icon
+    /// (see `SettingIcons.swift`). The icon column is a fixed 32pt wide
+    /// so labels align across rows regardless of glyph aspect.
+    private func settingsToggleWithIcon<Icon: View>(
+        _ label: String,
+        @ViewBuilder icon: () -> Icon,
+        isOn: Binding<Bool>
+    ) -> some View {
+        HStack(spacing: 10) {
+            icon()
+                .frame(width: 32, alignment: .center)
+            Toggle(label, isOn: isOn)
+                .font(.system(size: 15))
+                .toggleStyle(ThemedToggleStyle(theme: theme))
+        }
+    }
+
+    /// Convenience for the common SF Symbol case — keeps call sites short.
+    private func settingsToggleWithIcon(
+        _ label: String,
+        systemImage: String,
+        isOn: Binding<Bool>
+    ) -> some View {
+        settingsToggleWithIcon(label, icon: {
+            Image(systemName: systemImage)
+                .font(.system(size: 17))
+                .foregroundStyle(accentColor)
+                .symbolRenderingMode(.hierarchical)
+        }, isOn: isOn)
+    }
+
     /// Caption text shown under toggles / rows. Sized + colored for
     /// readability — the previous combination (`size: 11` +
     /// `.tertiary`) was painful to read on white backgrounds, and the
@@ -550,7 +607,11 @@ struct SettingsView: View {
             .font(.system(size: 13))
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.leading, 4)
+            // 42pt = 32pt icon column + 10pt spacing. Captions sit under
+            // iconified toggles and align with the toggle's label, not
+            // the icon. The General tab now uses icons on every row, so
+            // captions get the same indent uniformly.
+            .padding(.leading, 42)
     }
     
     private func stateRow(_ label: String, value: String) -> some View {
