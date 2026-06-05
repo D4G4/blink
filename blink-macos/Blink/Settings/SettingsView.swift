@@ -617,7 +617,13 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 6) {
             content()
         }
-        .padding(.horizontal, 4)
+        // 12pt horizontal breathing room so icons (especially the
+        // hand-rolled CountdownTimerIcon / DarkOverlayIcon that fill
+        // their 32pt frame) aren't flush against the card edge, and the
+        // toggle on the right side has room before the trailing edge.
+        // Intentionally breaks the title↔icon left alignment — title
+        // stays at .leading(4) on the section, content sits 8pt inward.
+        .padding(.horizontal, 12)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
