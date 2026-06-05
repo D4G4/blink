@@ -250,9 +250,9 @@ struct SettingsView: View {
 
                 // Action links sit flat with no card background — they're
                 // commands, not configurable settings, and shouldn't read
-                // as such. Grouped tighter together (2pt) with a small top
-                // gap from the last card above.
-                VStack(alignment: .leading, spacing: 6) {
+                // as such. 12pt vertical spacing so each link reads as a
+                // distinct command rather than a tight list.
+                VStack(alignment: .leading, spacing: 12) {
                     Button {
                         UIActionLogger.buttonTapped("Check for Updates")
                         BlinkUpdater.shared.checkForUpdates()
