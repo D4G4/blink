@@ -17,6 +17,33 @@ struct SettingsView: View {
     @AppStorage("breakSuggestionsEnabled") private var breakSuggestionsEnabled: Bool = true
 
     @State private var showSuggestionsHelp: Bool = false
+
+    /// Sentinel value for the "None" entry in the chime picker. Selecting it
+    /// flips `chimeEnabled` to false; selecting any real chime flips it true
+    /// AND fires a preview so the user hears what they picked. Stored
+    /// separately from `chimeID` so toggling None then back to the previous
+    /// chime preserves the prior selection.
+    static let noneChimeTag: String = "__none__"
+
+    /// Bridges the picker (which is a single `String` selection across
+    /// None + real chimes) to the two underlying defaults
+    /// (`chimeEnabled` + `chimeID`). On set: None disables, anything else
+    /// enables and previews.
+    private var chimeSelection: Binding<String> {
+        Binding(
+            get: { chimeEnabled ? chimeID : Self.noneChimeTag },
+            set: { newValue in
+                if newValue == Self.noneChimeTag {
+                    chimeEnabled = false
+                } else {
+                    chimeEnabled = true
+                    chimeID = newValue
+                    UIActionLogger.settingChanged("chimeID", value: newValue)
+                    ChimePlayer.shared.play(id: newValue, volume: chimeVolume)
+                }
+            }
+        )
+    }
     
     @Environment(\.colorScheme) private var colorScheme
     private var theme: BlinkTheme { themeManager.current }
@@ -129,37 +156,40 @@ struct SettingsView: View {
             }
 
             settingsSection("Break-End Chime") {
-                settingsToggleWithIcon("Play chime when break ends", systemImage: "bell.fill", isOn: $chimeEnabled)
-                if chimeEnabled {
-                    settingsRow("Sound") {
-                        HStack(spacing: 8) {
-                            Picker("", selection: $chimeID) {
-                                ForEach(ChimePlayer.Chime.all) { chime in
-                                    Text(chime.displayName).tag(chime.id)
-                                }
-                            }
-                            .labelsHidden()
-                            .frame(width: 170)
-                            Button {
-                                UIActionLogger.buttonTapped("Preview Chime", context: chimeID)
-                                ChimePlayer.shared.play(id: chimeID, volume: chimeVolume)
-                            } label: {
-                                Image(systemName: "play.circle.fill")
-                                    .font(.system(size: 18))
-                                    .foregroundStyle(accentColor)
-                            }
-                            .buttonStyle(.plain)
-                            .help("Preview")
+                // Single iconified row — the picker IS the on/off control:
+                // "None" disables the chime, anything else enables and
+                // auto-previews on selection. Removes the separate toggle
+                // + Play button that previously crowded this section.
+                HStack(spacing: 10) {
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(accentColor)
+                        .symbolRenderingMode(.hierarchical)
+                        .frame(width: 32, alignment: .center)
+                    Text("Sound")
+                        .font(.system(size: 15))
+                    Spacer()
+                    Picker("", selection: chimeSelection) {
+                        Text("None").tag(Self.noneChimeTag)
+                        ForEach(ChimePlayer.Chime.all) { chime in
+                            Text(chime.displayName).tag(chime.id)
                         }
                     }
-                    settingsRow("Volume") {
-                        HStack {
-                            Slider(value: $chimeVolume, in: 0...1)
-                                .tint(accentColor)
-                            Text("\(Int(chimeVolume * 100))%")
-                                .font(.system(size: 13, design: .monospaced))
-                                .frame(width: 50)
-                        }
+                    .labelsHidden()
+                    .frame(width: 150)
+                }
+                if chimeEnabled {
+                    HStack(spacing: 10) {
+                        // Empty 32pt column so Volume aligns with "Sound" above.
+                        Color.clear.frame(width: 32)
+                        Text("Volume")
+                            .font(.system(size: 15))
+                        Slider(value: $chimeVolume, in: 0...1)
+                            .tint(accentColor)
+                        Text("\(Int(chimeVolume * 100))%")
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 36, alignment: .trailing)
                     }
                 }
             }
@@ -170,21 +200,25 @@ struct SettingsView: View {
             }
 
             settingsSection("Timer") {
+                // Hand-rolled HStack instead of settingsRow because
+                // settingsRow uses .top alignment with a 4pt label inset,
+                // which mis-aligned the clock icon, "Base interval" label,
+                // and the slider relative to each other. Plain .center
+                // HStack lines everything up on its midpoint.
                 HStack(spacing: 10) {
                     Image(systemName: "clock.fill")
                         .font(.system(size: 17))
                         .foregroundStyle(accentColor)
                         .symbolRenderingMode(.hierarchical)
                         .frame(width: 32, alignment: .center)
-                    settingsRow("Base interval") {
-                        HStack {
-                            Slider(value: $baseInterval, in: 10...45, step: 5)
-                                .tint(accentColor)
-                            Text("\(Int(baseInterval)) min")
-                                .font(.system(size: 13, design: .monospaced))
-                                .frame(width: 50)
-                        }
-                    }
+                    Text("Base interval")
+                        .font(.system(size: 15))
+                    Slider(value: $baseInterval, in: 10...45, step: 5)
+                        .tint(accentColor)
+                    Text("\(Int(baseInterval)) min")
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 50, alignment: .trailing)
                 }
             }
 

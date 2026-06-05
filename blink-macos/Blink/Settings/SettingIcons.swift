@@ -26,20 +26,25 @@ struct CountdownTimerIcon: View {
 
             // The menu bar strip itself.
             VStack(spacing: 0) {
-                HStack(spacing: 3) {
+                HStack(spacing: 2) {
                     Spacer(minLength: 0)
                     // Eye glyph, theme-tinted.
                     Image(systemName: "eye.fill")
-                        .font(.system(size: 6))
+                        .font(.system(size: 5))
                         .foregroundStyle(accent)
                     // Countdown number — fixed copy, signals "20:00 left."
+                    // lineLimit(1) + minimumScaleFactor: in a 32pt-wide
+                    // icon the text would otherwise wrap to a second
+                    // line, which looks broken. Force a single line.
                     Text("20:00")
                         .font(.system(size: 5, weight: .medium, design: .monospaced))
                         .foregroundStyle(foreground.opacity(0.85))
-                        .padding(.trailing, 2)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .padding(.trailing, 1.5)
                 }
                 .padding(.vertical, 1.5)
-                .padding(.horizontal, 2)
+                .padding(.leading, 1.5)
                 .background(foreground.opacity(0.08))
                 .clipShape(
                     .rect(
