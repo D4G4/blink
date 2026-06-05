@@ -14,6 +14,9 @@ struct SettingsView: View {
     @AppStorage("chimeEnabled") private var chimeEnabled: Bool = true
     @AppStorage("chimeID") private var chimeID: String = ChimePlayer.defaultChimeID
     @AppStorage("chimeVolume") private var chimeVolume: Double = ChimePlayer.defaultVolume
+    @AppStorage("breakSuggestionsEnabled") private var breakSuggestionsEnabled: Bool = true
+
+    @State private var showSuggestionsHelp: Bool = false
     
     @Environment(\.colorScheme) private var colorScheme
     private var theme: BlinkTheme { themeManager.current }
@@ -98,6 +101,29 @@ struct SettingsView: View {
             settingsSection("Break Screen") {
                 settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
                 settingsCaption("Pure black background instead of themed colors")
+
+                settingsToggle("Smart break suggestions", isOn: $breakSuggestionsEnabled)
+                settingsCaption("Replaces the eye-rest title with a context-aware action (drink water, get up, breathe…) when it fits the moment. Breaks get 5 extra seconds when a suggestion is shown so you have time to read it.")
+
+                Button {
+                    UIActionLogger.buttonTapped("Learn more about smart break suggestions")
+                    showSuggestionsHelp = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 11))
+                        Text("Learn more")
+                            .font(.system(size: 12))
+                    }
+                    .foregroundStyle(accentColor)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+                .sheet(isPresented: $showSuggestionsHelp) {
+                    BreakSuggestionsHelpView(theme: theme) {
+                        showSuggestionsHelp = false
+                    }
+                }
             }
 
             settingsSection("Break-End Chime") {

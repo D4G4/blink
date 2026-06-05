@@ -31,10 +31,14 @@ final class BreakTimerSnapshotTests: SnapshotTestCase {
         ]
         for v in variants {
             for s in suggestions {
+                // Variant breaks get 25s (vs 20 for the default) so the
+                // user has time to read the subtitle. Mirror that here so
+                // the snapshot reflects the duration the live overlay
+                // would actually show.
                 assertSnapshot(
                     of: BreakPhaseView(
                         theme: v.theme,
-                        model: BreakPhaseModel(),
+                        model: BreakPhaseModel(duration: 25),
                         suggestion: s,
                         onComplete: {}, onSkip: {}
                     ),

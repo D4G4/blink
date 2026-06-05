@@ -2,6 +2,22 @@ import XCTest
 import SwiftUI
 @testable import Blink
 
+final class BreakSuggestionsHelpSnapshotTests: SnapshotTestCase {
+    @MainActor func testHelpSheet() {
+        for v in [
+            ThemeVariant(name: "peach", theme: .peach, colorScheme: .light),
+            ThemeVariant(name: "midnight", theme: .midnight, colorScheme: .dark),
+        ] {
+            assertSnapshot(
+                of: BreakSuggestionsHelpView(theme: v.theme, onClose: {}),
+                named: "break_suggestions_help_\(v.snapshotName)",
+                width: 540, height: 640,
+                colorScheme: v.colorScheme
+            )
+        }
+    }
+}
+
 final class SettingsSnapshotTests: SnapshotTestCase {
     @MainActor func testSettings() {
         let themes: [(String, BlinkTheme)] = [

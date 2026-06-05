@@ -389,7 +389,11 @@ final class OverlayWindowController {
             onSkip()
         }
 
-        let breakModel = BreakPhaseModel()
+        // Default eye-rest keeps the canonical 20-20-20 second window.
+        // The five enriched suggestions (with icon + subtitle copy) get
+        // 25s so the user actually has time to read the prompt.
+        let breakDuration = (suggestion == .lookFarAway) ? 20 : 25
+        let breakModel = BreakPhaseModel(duration: breakDuration)
         let breakView = BreakPhaseView(
             theme: theme,
             model: breakModel,
@@ -694,15 +698,24 @@ struct CountdownPhaseView: View {
 // MARK: - Break phase model (shared with key handler)
 
 final class BreakPhaseModel: ObservableObject {
-    @Published var remaining: Int = 20
-    @Published var total: Int = 20
+    @Published var remaining: Int
+    @Published var total: Int
     @Published var showExtendHint: Bool = false
     var timer: Timer?
 
     /// Wall-clock timestamp when the countdown started (for surviving sleep).
     private var countdownStartDate: Date?
     /// Total seconds that were on the clock at start (adjusted for extends).
-    private var countdownStartTotal: Int = 20
+    private var countdownStartTotal: Int
+
+    /// `duration` defaults to the 20-20-20 rule's 20s. Caller may pass a
+    /// longer duration (e.g. 25s) when the break overlay shows a
+    /// suggestion subtitle the user needs time to read.
+    init(duration: Int = 20) {
+        self.remaining = duration
+        self.total = duration
+        self.countdownStartTotal = duration
+    }
 
     deinit {
         stopTimer()

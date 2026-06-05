@@ -992,7 +992,16 @@ final class AppState: ObservableObject {
     /// Build the picker context from current state and pick a suggestion.
     /// Side effect: updates `lastBreakSuggestion` so the next break's
     /// novelty filter has the right input.
+    ///
+    /// Returns `.lookFarAway` unconditionally when the user has disabled
+    /// the feature in Settings (`breakSuggestionsEnabled` defaults true).
     private func pickBreakSuggestion() -> BreakSuggestion {
+        let enabled = (UserDefaults.standard.object(forKey: "breakSuggestionsEnabled") as? Bool) ?? true
+        guard enabled else {
+            Log.i("Break suggestion: disabled in Settings — defaulting to lookFarAway")
+            lastBreakSuggestion = .lookFarAway
+            return .lookFarAway
+        }
         let sedentary = Date().timeIntervalSince(lastMovementAt)
         let hour = Calendar.current.component(.hour, from: Date())
 
