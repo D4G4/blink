@@ -55,6 +55,22 @@ final class AppState: ObservableObject {
     // Day tracking — reset break counters at midnight
     private var lastStatsDay: Int = Calendar.current.component(.day, from: Date())
 
+    // Sedentary tracking — wall-clock since the user was last continuously
+    // idle for sedentaryResetThreshold seconds (i.e. since they actually
+    // got up). Feeds BreakSuggestionPicker. Initialized at launch so a freshly
+    // launched user looks "just got back to the desk" rather than instantly
+    // sedentary.
+    private var lastMovementAt: Date = Date()
+    private var wasIdleLastTick: Bool = false
+    /// Min idle (seconds) that counts as "they got up". Matches the
+    /// 90s idleBreakThreshold elsewhere in the codebase plus 30s slack.
+    private static let sedentaryResetThreshold: TimeInterval = 120
+
+    // Last suggestion shown — used by BreakSuggestionPicker's novelty filter
+    // to avoid two identical suggestions back-to-back. In-memory only;
+    // resetting on app restart is fine.
+    private var lastBreakSuggestion: BreakSuggestion?
+
     // Break overlay
     private let overlayController = OverlayWindowController()
 
@@ -153,8 +169,10 @@ final class AppState: ObservableObject {
             self.isBreakPrompted = true
             self.overlayShownAt = Date()
             self.breaksPromptedToday += 1
+            let suggestion = self.pickBreakSuggestion()
             self.overlayController.showBreak(
                 breakNumber: breakNumber,
+                suggestion: suggestion,
                 onComplete: { [weak self] in
                     Task { @MainActor in
                         Log.i("Break completed (countdown finished)")
@@ -723,6 +741,21 @@ final class AppState: ObservableObject {
                     self.micAlwaysOnWarning = false
                 }
 
+                // Sedentary tracking — detect the rising edge from
+                // "idle ≥ threshold" back to "active again", which is when
+                // the user has actually returned to the desk. Reset baseline
+                // then so BreakSuggestionPicker.sedentarySeconds counts from
+                // that moment forward. CGEventSource.secondsSinceLastEventType
+                // (hidSystemState) needs no permission — works in Simple mode too.
+                let keyIdle = CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .keyDown)
+                let clickIdle = CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .leftMouseDown)
+                let minIdle = min(keyIdle, clickIdle)
+                let isIdleNow = minIdle >= Self.sedentaryResetThreshold
+                if self.wasIdleLastTick && !isIdleNow {
+                    self.lastMovementAt = Date()
+                }
+                self.wasIdleLastTick = isIdleNow
+
                 // Tap health check + fallback polling
                 self.inputMonitor?.reEnableTapIfNeeded()
                 if self.inputMonitor?.isTapAlive != true {
@@ -913,8 +946,10 @@ final class AppState: ObservableObject {
         isBreakPrompted = true
         overlayShownAt = Date()
         breaksPromptedToday += 1
+        let suggestion = pickBreakSuggestion()
         overlayController.showBreak(
             breakNumber: breakNum,
+            suggestion: suggestion,
             skipToast: true,
             onComplete: { [weak self] in
                 Task { @MainActor in
@@ -950,6 +985,45 @@ final class AppState: ObservableObject {
         let volume = (defaults.object(forKey: "chimeVolume") as? Double) ?? ChimePlayer.defaultVolume
         Log.i("Playing break-end chime: \(id) at \(Int(volume * 100))%")
         ChimePlayer.shared.play(id: id, volume: volume)
+    }
+
+    // MARK: - Break suggestion
+
+    /// Build the picker context from current state and pick a suggestion.
+    /// Side effect: updates `lastBreakSuggestion` so the next break's
+    /// novelty filter has the right input.
+    private func pickBreakSuggestion() -> BreakSuggestion {
+        let sedentary = Date().timeIntervalSince(lastMovementAt)
+        let hour = Calendar.current.component(.hour, from: Date())
+
+        // Count noncompliance in the last 3 records of today.
+        let recent = persistence.loadTodayRecords().suffix(3)
+        let noncompliant = recent.filter { rec in
+            switch rec.compliance {
+            case .dismissed, .ignored: return true
+            case .taken, .delayed:     return false
+            }
+        }.count
+
+        // `wasInFlow` is true when the engine extended the timer at least
+        // once before deciding to break — proxy for "user was in sustained
+        // flow." Reading from spotCheck because BlinkEngine doesn't expose
+        // FlowState directly.
+        let wasInFlow = engine.spotCheckFlow().extensionCount >= 1
+
+        let ctx = BreakSuggestionContext(
+            sedentarySeconds: sedentary,
+            wasInFlow: wasInFlow,
+            hourOfDay: hour,
+            recentNoncompliance: noncompliant,
+            lastSuggestion: lastBreakSuggestion
+        )
+        let picked = BreakSuggestionPicker.pick(ctx)
+        Log.i("Break suggestion: \(picked.rawValue) "
+            + "(sedentary=\(Int(sedentary))s, wasInFlow=\(wasInFlow), "
+            + "hour=\(hour), nonCompliance=\(noncompliant)/3)")
+        lastBreakSuggestion = picked
+        return picked
     }
 
     // MARK: - Persistence

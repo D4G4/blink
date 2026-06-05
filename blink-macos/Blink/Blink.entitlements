@@ -11,6 +11,7 @@
 	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
 	<array>
 		<string>com.blink20.app-spks</string>
+		<string>com.blink20.app-spki</string>
 	</array>
 </dict>
 </plist>

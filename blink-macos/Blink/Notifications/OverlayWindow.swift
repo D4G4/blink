@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import BlinkCore
 
 /// Manages the break overlay flow:
 /// 1. Mini toast in bottom-right (3s heads-up)
@@ -22,17 +23,21 @@ final class OverlayWindowController {
         : ThemeManager.shared.current
     }
     
-    func showBreak(breakNumber: Int = 0, skipToast: Bool = false, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
+    func showBreak(breakNumber: Int = 0,
+                   suggestion: BreakSuggestion = .lookFarAway,
+                   skipToast: Bool = false,
+                   onComplete: @escaping () -> Void,
+                   onSkip: @escaping () -> Void) {
         if skipToast {
             // Manual trigger — go directly to break timer without toast
-            Log.i("Break overlay: skipping toast, showing fullscreen directly (break #\(breakNumber))")
-            showBreakTimer(breakNumber: breakNumber, onComplete: onComplete, onSkip: onSkip)
+            Log.i("Break overlay: skipping toast, showing fullscreen directly (break #\(breakNumber), suggestion=\(suggestion.rawValue))")
+            showBreakTimer(breakNumber: breakNumber, suggestion: suggestion, onComplete: onComplete, onSkip: onSkip)
         } else {
             // Automatic trigger — show toast first
-            Log.i("Break overlay: showing 3s toast before fullscreen (break #\(breakNumber))")
+            Log.i("Break overlay: showing 3s toast before fullscreen (break #\(breakNumber), suggestion=\(suggestion.rawValue))")
             showToast(onToastDone: { [weak self] in
                 self?.dismissToast()
-                self?.showBreakTimer(breakNumber: breakNumber, onComplete: onComplete, onSkip: onSkip)
+                self?.showBreakTimer(breakNumber: breakNumber, suggestion: suggestion, onComplete: onComplete, onSkip: onSkip)
             })
         }
     }
@@ -344,7 +349,10 @@ final class OverlayWindowController {
     
     // MARK: - Fullscreen break timer
     
-    private func showBreakTimer(breakNumber: Int = 0, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
+    private func showBreakTimer(breakNumber: Int = 0,
+                                suggestion: BreakSuggestion = .lookFarAway,
+                                onComplete: @escaping () -> Void,
+                                onSkip: @escaping () -> Void) {
         Log.i("Fullscreen break overlay: creating window (break #\(breakNumber))")
         guard let screen = NSScreen.main else { return }
 
@@ -385,7 +393,7 @@ final class OverlayWindowController {
         let breakView = BreakPhaseView(
             theme: theme,
             model: breakModel,
-            showWalkSuggestion: breakNumber >= 4,
+            suggestion: suggestion,
             onDismiss: { [weak self] in
                 // Kill-switch: try normal dismiss, then nuke if still alive
                 Log.i("Break overlay: X button (kill-switch) tapped")
@@ -746,11 +754,15 @@ final class BreakPhaseModel: ObservableObject {
 struct BreakPhaseView: View {
     let theme: BlinkTheme
     @ObservedObject var model: BreakPhaseModel
-    var showWalkSuggestion: Bool = false
+    var suggestion: BreakSuggestion = .lookFarAway
     var onDismiss: (() -> Void)?
     let onComplete: () -> Void
     let onSkip: () -> Void
     @Environment(\.colorScheme) private var colorScheme
+
+    // Drives the icon+title slide+fade entrance animation. Starts false so
+    // .onAppear flips it true with an animation, producing the entrance.
+    @State private var suggestionRevealed: Bool = false
 
     var body: some View {
         let fg = theme.onBackgroundText(for: colorScheme)
@@ -760,23 +772,30 @@ struct BreakPhaseView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Title row with 20ft badge
+                // Suggestion header — icon, title, short subtitle.
+                // Replaces the old fixed "Look at something far away" copy;
+                // the actual suggestion is chosen by BreakSuggestionPicker.
                 HStack {
                     Spacer()
-                    VStack(spacing: 6) {
-                        Text("Look at something far away")
-                            .font(.system(size: 24, weight: .medium))
+                    VStack(spacing: 10) {
+                        Image(systemName: suggestion.iconName)
+                            .font(.system(size: 36, weight: .light))
                             .foregroundStyle(fg)
-                        if showWalkSuggestion {
-                            HStack(spacing: 6) {
-                                Image(systemName: "figure.walk")
-                                    .font(.system(size: 13))
-                                Text("You've taken 4+ breaks — consider a quick walk!")
-                                    .font(.system(size: 14, weight: .medium))
-                            }
+                            .symbolRenderingMode(.hierarchical)
+
+                        Text(suggestion.title)
+                            .font(.system(size: 26, weight: .medium))
                             .foregroundStyle(fg)
-                        }
+                            .multilineTextAlignment(.center)
+
+                        Text(suggestion.subtitle)
+                            .font(.system(size: 14))
+                            .foregroundStyle(fg.opacity(0.75))
+                            .multilineTextAlignment(.center)
                     }
+                    .opacity(suggestionRevealed ? 1 : 0)
+                    .offset(y: suggestionRevealed ? 0 : 12)
+                    .animation(.easeOut(duration: 0.55).delay(0.1), value: suggestionRevealed)
                     Spacer()
                 }
                 .padding(.top, 80)
@@ -846,7 +865,11 @@ struct BreakPhaseView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
         }
-        .onAppear { model.startTimer(onComplete: onComplete) }
+        .onAppear {
+            model.startTimer(onComplete: onComplete)
+            // Trigger the suggestion's slide+fade entrance after layout.
+            DispatchQueue.main.async { suggestionRevealed = true }
+        }
         .onDisappear { model.stopTimer() }
     }
 }
@@ -963,18 +986,23 @@ private struct DebugToastView: View {
         .frame(width: 600, height: 400)
 }
 
-#Preview("Break Timer - Peach") {
+#Preview("Break Timer - Peach (default)") {
     BreakPhaseView(theme: .peach, model: BreakPhaseModel(), onComplete: {}, onSkip: {})
         .frame(width: 600, height: 500)
 }
 
-#Preview("Break Timer - Midnight") {
-    BreakPhaseView(theme: .midnight, model: BreakPhaseModel(), onComplete: {}, onSkip: {})
+#Preview("Break Timer - Midnight (breathe)") {
+    BreakPhaseView(theme: .midnight, model: BreakPhaseModel(), suggestion: .breathe, onComplete: {}, onSkip: {})
         .frame(width: 600, height: 500)
 }
 
-#Preview("Break Timer - Sage") {
-    BreakPhaseView(theme: .sage, model: BreakPhaseModel(), onComplete: {}, onSkip: {})
+#Preview("Break Timer - Sage (walk)") {
+    BreakPhaseView(theme: .sage, model: BreakPhaseModel(), suggestion: .takeAWalk, onComplete: {}, onSkip: {})
+        .frame(width: 600, height: 500)
+}
+
+#Preview("Break Timer - Sand (touch grass)") {
+    BreakPhaseView(theme: .sand, model: BreakPhaseModel(), suggestion: .touchGrass, onComplete: {}, onSkip: {})
         .frame(width: 600, height: 500)
 }
 
