@@ -56,7 +56,15 @@ final class SettingsSnapshotTests: SnapshotTestCase {
         for (name, theme) in themes {
             for cs in [ColorScheme.light, .dark] {
                 let label = "\(name)_\(cs == .dark ? "dark" : "light")"
-                assertSnapshot(
+                // SettingsView wraps its content in a ScrollView; ImageRenderer
+                // doesn't measure that and the result is a blank tab bar.
+                // assertHostedSnapshot routes through NSHostingView so the
+                // ScrollView lays out properly. Frame matches SettingsView's
+                // own .frame(width: 440, height: 440) cap so the snapshot
+                // shows exactly what a user sees when they open Preferences —
+                // tab bar + Menu Bar section + Break Screen section (where
+                // the new "Smart break suggestions" toggle lives).
+                assertHostedSnapshot(
                     of: SettingsView(appState: AppState(preview: true))
                         .environmentObject(ThemeManager.preview(theme)),
                     named: "settings_\(label)",
