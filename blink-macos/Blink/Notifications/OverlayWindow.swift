@@ -782,21 +782,31 @@ struct BreakPhaseView: View {
                 HStack {
                     Spacer()
                     VStack(spacing: 10) {
-                        Image(systemName: suggestion.iconName)
-                            .font(.system(size: 32, weight: .light))
-                            .foregroundStyle(fg)
-                            .symbolRenderingMode(.hierarchical)
-                            .symbolEffect(.bounce, options: .nonRepeating, value: headerEntered)
+                        // The default eye-rest suggestion keeps the
+                        // original minimal design: title only, no icon
+                        // or subtitle. The other 5 suggestions get the
+                        // full icon + title + subtitle treatment because
+                        // they're calls-to-action (drink, walk, breathe…)
+                        // where the icon adds quick visual semantics.
+                        if suggestion != .lookFarAway {
+                            Image(systemName: suggestion.iconName)
+                                .font(.system(size: 32, weight: .light))
+                                .foregroundStyle(fg)
+                                .symbolRenderingMode(.hierarchical)
+                                .symbolEffect(.bounce, options: .nonRepeating, value: headerEntered)
+                        }
 
                         Text(suggestion.title)
                             .font(.system(size: 24, weight: .medium))
                             .foregroundStyle(fg)
                             .multilineTextAlignment(.center)
 
-                        Text(suggestion.subtitle)
-                            .font(.system(size: 13))
-                            .foregroundStyle(fg.opacity(0.75))
-                            .multilineTextAlignment(.center)
+                        if suggestion != .lookFarAway {
+                            Text(suggestion.subtitle)
+                                .font(.system(size: 13))
+                                .foregroundStyle(fg.opacity(0.75))
+                                .multilineTextAlignment(.center)
+                        }
                     }
                     // scaleEffect is the only entrance-gated property —
                     // a 0.96 → 1.0 spring on appear. At rest (snapshot

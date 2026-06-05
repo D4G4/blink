@@ -1,5 +1,6 @@
 import XCTest
 import SwiftUI
+import BlinkCore
 @testable import Blink
 
 final class BreakTimerSnapshotTests: SnapshotTestCase {
@@ -11,6 +12,37 @@ final class BreakTimerSnapshotTests: SnapshotTestCase {
                 width: 500, height: 420,
                 colorScheme: v.colorScheme
             )
+        }
+    }
+
+    /// Render every non-default suggestion variant so the icon+subtitle
+    /// layout is captured (the default `.lookFarAway` keeps the minimal
+    /// title-only design and is already covered by `testBreakTimer`).
+    /// We pick one light + one dark theme rather than the full 12-variant
+    /// matrix — the cross-theme rendering is already verified above; here
+    /// we're verifying the per-suggestion content (icon glyph, copy).
+    @MainActor func testBreakTimerSuggestions() {
+        let suggestions: [BreakSuggestion] = [
+            .breathe, .drinkWater, .getUp, .takeAWalk, .touchGrass
+        ]
+        let variants: [ThemeVariant] = [
+            ThemeVariant(name: "peach", theme: .peach, colorScheme: .light),
+            ThemeVariant(name: "midnight", theme: .midnight, colorScheme: .dark),
+        ]
+        for v in variants {
+            for s in suggestions {
+                assertSnapshot(
+                    of: BreakPhaseView(
+                        theme: v.theme,
+                        model: BreakPhaseModel(),
+                        suggestion: s,
+                        onComplete: {}, onSkip: {}
+                    ),
+                    named: "break_timer_\(s.rawValue)_\(v.snapshotName)",
+                    width: 500, height: 420,
+                    colorScheme: v.colorScheme
+                )
+            }
         }
     }
 }
