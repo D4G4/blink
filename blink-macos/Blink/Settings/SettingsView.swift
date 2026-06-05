@@ -128,78 +128,89 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 20) {
 
             settingsSection("Menu Bar") {
-                settingsToggleWithIcon(
-                    "Show countdown timer",
-                    icon: {
-                        CountdownTimerIcon(accent: accentColor, foreground: .primary)
-                    },
-                    isOn: $showTimerInMenuBar
-                )
+                settingsItem {
+                    settingsToggleWithIcon(
+                        "Show countdown timer",
+                        icon: {
+                            CountdownTimerIcon(accent: accentColor, foreground: .primary)
+                        },
+                        isOn: $showTimerInMenuBar
+                    )
+                }
             }
 
             settingsSection("Break Screen") {
-                settingsToggleWithIcon(
-                    "Use dark overlay",
-                    icon: {
-                        DarkOverlayIcon(accent: accentColor, foreground: .primary)
-                    },
-                    isOn: $useDarkOverlay
-                )
-                settingsCaption("Pure black background instead of themed colors")
+                settingsItem {
+                    settingsToggleWithIcon(
+                        "Use dark overlay",
+                        icon: {
+                            DarkOverlayIcon(accent: accentColor, foreground: .primary)
+                        },
+                        isOn: $useDarkOverlay
+                    )
+                    settingsCaption("Pure black background instead of themed colors")
+                }
 
-                SmartSuggestionsSettingControls(
-                    theme: theme,
-                    accentColor: accentColor,
-                    isOn: $breakSuggestionsEnabled,
-                    showHelp: $showSuggestionsHelp
-                )
+                settingsItem {
+                    SmartSuggestionsSettingControls(
+                        theme: theme,
+                        accentColor: accentColor,
+                        isOn: $breakSuggestionsEnabled,
+                        showHelp: $showSuggestionsHelp
+                    )
+                }
             }
 
             settingsSection("Break-End Chime") {
-                // Single iconified row — the picker IS the on/off control:
-                // "None" disables the chime, anything else enables and
-                // auto-previews on selection. Removes the separate toggle
-                // + Play button that previously crowded this section.
-                HStack(spacing: 10) {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 17))
-                        .foregroundStyle(accentColor)
-                        .symbolRenderingMode(.hierarchical)
-                        .frame(width: 32, alignment: .center)
-                    Text("Sound")
-                        .font(.system(size: 15))
-                    Spacer()
-                    Picker("", selection: chimeSelection) {
-                        Text("None").tag(Self.noneChimeTag)
-                        ForEach(ChimePlayer.Chime.all) { chime in
-                            Text(chime.displayName).tag(chime.id)
-                        }
-                    }
-                    .labelsHidden()
-                    .frame(width: 150)
-                }
-                if chimeEnabled {
+                settingsItem {
+                    // Single iconified row — the picker IS the on/off control:
+                    // "None" disables the chime, anything else enables and
+                    // auto-previews on selection. Removes the separate toggle
+                    // + Play button that previously crowded this section.
                     HStack(spacing: 10) {
-                        // Empty 32pt column so Volume aligns with "Sound" above.
-                        Color.clear.frame(width: 32)
-                        Text("Volume")
+                        Image(systemName: "bell.fill")
+                            .font(.system(size: 17))
+                            .foregroundStyle(accentColor)
+                            .symbolRenderingMode(.hierarchical)
+                            .frame(width: 32, alignment: .center)
+                        Text("Sound")
                             .font(.system(size: 15))
-                        Slider(value: $chimeVolume, in: 0...1)
-                            .tint(accentColor)
-                        Text("\(Int(chimeVolume * 100))%")
-                            .font(.system(size: 12, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 36, alignment: .trailing)
+                        Spacer()
+                        Picker("", selection: chimeSelection) {
+                            Text("None").tag(Self.noneChimeTag)
+                            ForEach(ChimePlayer.Chime.all) { chime in
+                                Text(chime.displayName).tag(chime.id)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 150)
+                    }
+                    if chimeEnabled {
+                        HStack(spacing: 10) {
+                            // Empty 32pt column so Volume aligns with "Sound" above.
+                            Color.clear.frame(width: 32)
+                            Text("Volume")
+                                .font(.system(size: 15))
+                            Slider(value: $chimeVolume, in: 0...1)
+                                .tint(accentColor)
+                            Text("\(Int(chimeVolume * 100))%")
+                                .font(.system(size: 12, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 36, alignment: .trailing)
+                        }
                     }
                 }
             }
 
             settingsSection("Mic Detection") {
-                settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
-                settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
+                settingsItem {
+                    settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
+                    settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
+                }
             }
 
             settingsSection("Timer") {
+                settingsItem {
                 // Hand-rolled HStack instead of settingsRow because
                 // settingsRow uses .top alignment with a 4pt label inset,
                 // which mis-aligned the clock icon, "Base interval" label,
@@ -220,68 +231,78 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                         .frame(width: 50, alignment: .trailing)
                 }
+                }
             }
 
             settingsSection("System") {
-                settingsToggleWithIcon("Launch at login", systemImage: "power.circle.fill", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, newValue in
-                        UIActionLogger.settingChanged("launchAtLogin", value: "\(newValue)")
-                        updateLaunchAtLogin(newValue)
-                    }
+                settingsItem {
+                    settingsToggleWithIcon("Launch at login", systemImage: "power.circle.fill", isOn: $launchAtLogin)
+                        .onChange(of: launchAtLogin) { _, newValue in
+                            UIActionLogger.settingChanged("launchAtLogin", value: "\(newValue)")
+                            updateLaunchAtLogin(newValue)
+                        }
+                }
 
-                settingsToggleWithIcon("Debug notifications", systemImage: "ant.fill", isOn: $appState.debugNotifications)
-                settingsCaption("Show toasts for timer resets, state changes, and idle detection")
-                
-                Button {
-                    UIActionLogger.buttonTapped("Check for Updates")
-                    BlinkUpdater.shared.checkForUpdates()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 11))
-                        Text("Check for Updates")
-                            .font(.system(size: 12))
-                    }
-                    .foregroundStyle(accentColor)
+                settingsItem {
+                    settingsToggleWithIcon("Debug notifications", systemImage: "ant.fill", isOn: $appState.debugNotifications)
+                    settingsCaption("Show toasts for timer resets, state changes, and idle detection")
                 }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
-                
-                Button {
-                    UIActionLogger.buttonTapped("Restart Onboarding")
-                    themeManager.hasCompletedOnboarding = false
-                    let path = Bundle.main.bundleURL.absoluteString
-                    let task = Process()
-                    task.launchPath = "/usr/bin/open"
-                    task.arguments = [path]
-                    task.launch()
-                    NSApp.terminate(nil)
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.counterclockwise")
-                            .font(.system(size: 11))
-                        Text("Restart Onboarding")
-                            .font(.system(size: 12))
+
+                // Action links sit flat with no card background — they're
+                // commands, not configurable settings, and shouldn't read
+                // as such. Grouped tighter together (2pt) with a small top
+                // gap from the last card above.
+                VStack(alignment: .leading, spacing: 6) {
+                    Button {
+                        UIActionLogger.buttonTapped("Check for Updates")
+                        BlinkUpdater.shared.checkForUpdates()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 11))
+                            Text("Check for Updates")
+                                .font(.system(size: 12))
+                        }
+                        .foregroundStyle(accentColor)
                     }
-                    .foregroundStyle(accentColor)
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
-                
-                Button {
-                    UIActionLogger.buttonTapped("Open Log Files")
-                    LogExporter.revealInFinder()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "folder")
-                            .font(.system(size: 11))
-                        Text("Open Log Files")
-                            .font(.system(size: 12))
+                    .buttonStyle(.plain)
+
+                    Button {
+                        UIActionLogger.buttonTapped("Restart Onboarding")
+                        themeManager.hasCompletedOnboarding = false
+                        let path = Bundle.main.bundleURL.absoluteString
+                        let task = Process()
+                        task.launchPath = "/usr/bin/open"
+                        task.arguments = [path]
+                        task.launch()
+                        NSApp.terminate(nil)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.system(size: 11))
+                            Text("Restart Onboarding")
+                                .font(.system(size: 12))
+                        }
+                        .foregroundStyle(accentColor)
                     }
-                    .foregroundStyle(accentColor)
+                    .buttonStyle(.plain)
+
+                    Button {
+                        UIActionLogger.buttonTapped("Open Log Files")
+                        LogExporter.revealInFinder()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "folder")
+                                .font(.system(size: 11))
+                            Text("Open Log Files")
+                                .font(.system(size: 12))
+                        }
+                        .foregroundStyle(accentColor)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
+                .padding(.leading, 4)
+                .padding(.top, 6)
             }
         }
     }
@@ -568,33 +589,41 @@ struct SettingsView: View {
     // MARK: - Reusable Components
     
     private func settingsSection(_ title: String, @ViewBuilder content: () -> some View) -> some View {
-        // Title stays OUTSIDE the card (original structure preserved).
-        // Card's internal horizontal padding matches the title's leading
-        // inset (4pt) so the icon column inside the card aligns with the
-        // title's left edge — previously the title was at x=4 while card
-        // content was padded 14pt, leaving icons 10pt to the right.
-        //
-        // Background uses Color.secondary.opacity to actually show up:
-        // .controlBackgroundColor resolves to white in light mode
-        // (matching the page bg) and only a hair lighter than windowBg in
-        // dark mode, so the card was visually invisible.
+        // Title outside the card group. Inner VStack collects per-setting
+        // cards (one per `settingsItem` call) so each setting gets its
+        // own visual container — easier to scan than a single card
+        // lumping several unrelated toggles together. Spacing 8pt
+        // between cards is tight enough to read as "same section" but
+        // open enough that each item feels distinct.
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(accentColor)
                 .padding(.leading, 4)
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
                 content()
             }
-            .padding(.horizontal, 4)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.secondary.opacity(0.06))
-            )
         }
+    }
+
+    /// Wraps a single setting's controls (toggle + optional caption +
+    /// optional Learn more) in a subtle card. Sections that show
+    /// multiple unrelated settings call this once per setting so each
+    /// gets its own card; action links that shouldn't read as
+    /// settings (Check for Updates, Restart Onboarding) skip this and
+    /// sit flat.
+    private func settingsItem<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            content()
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.secondary.opacity(0.06))
+        )
     }
     
     private func settingsRow(_ label: String, @ViewBuilder content: () -> some View) -> some View {
