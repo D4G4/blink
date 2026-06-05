@@ -102,28 +102,12 @@ struct SettingsView: View {
                 settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
                 settingsCaption("Pure black background instead of themed colors")
 
-                settingsToggle("Smart break suggestions", isOn: $breakSuggestionsEnabled)
-                settingsCaption("Replaces the eye-rest title with a context-aware action (drink water, get up, breathe…) when it fits the moment. Breaks get 5 extra seconds when a suggestion is shown so you have time to read it.")
-
-                Button {
-                    UIActionLogger.buttonTapped("Learn more about smart break suggestions")
-                    showSuggestionsHelp = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 11))
-                        Text("Learn more")
-                            .font(.system(size: 12))
-                    }
-                    .foregroundStyle(accentColor)
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
-                .sheet(isPresented: $showSuggestionsHelp) {
-                    BreakSuggestionsHelpView(theme: theme) {
-                        showSuggestionsHelp = false
-                    }
-                }
+                SmartSuggestionsSettingControls(
+                    theme: theme,
+                    accentColor: accentColor,
+                    isOn: $breakSuggestionsEnabled,
+                    showHelp: $showSuggestionsHelp
+                )
             }
 
             settingsSection("Break-End Chime") {

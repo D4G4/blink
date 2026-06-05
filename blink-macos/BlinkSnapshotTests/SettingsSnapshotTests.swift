@@ -2,6 +2,35 @@ import XCTest
 import SwiftUI
 @testable import Blink
 
+final class SmartSuggestionsSettingControlsSnapshotTests: SnapshotTestCase {
+    /// Focused snapshot of the toggle + caption + Learn-more entry point
+    /// the user added to General settings. Snapshotted as a standalone
+    /// View because the SettingsView body wraps its content in a
+    /// ScrollView that ImageRenderer doesn't measure — the full Settings
+    /// snapshot renders blank below the tab bar, which is why this
+    /// section needs its own coverage.
+    @MainActor func testSmartSuggestionsSettingControls() {
+        for v in [
+            ThemeVariant(name: "peach", theme: .peach, colorScheme: .light),
+            ThemeVariant(name: "midnight", theme: .midnight, colorScheme: .dark),
+        ] {
+            let accent = v.theme.accent(for: v.colorScheme)
+            assertSnapshot(
+                of: SmartSuggestionsSettingControls(
+                    theme: v.theme,
+                    accentColor: accent,
+                    isOn: .constant(true),
+                    showHelp: .constant(false)
+                )
+                .padding(20),
+                named: "smart_suggestions_settings_\(v.snapshotName)",
+                width: 440, height: 200,
+                colorScheme: v.colorScheme
+            )
+        }
+    }
+}
+
 final class BreakSuggestionsHelpSnapshotTests: SnapshotTestCase {
     @MainActor func testHelpSheet() {
         for v in [

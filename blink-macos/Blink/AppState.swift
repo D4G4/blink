@@ -30,6 +30,7 @@ final class AppState: ObservableObject {
     private var permissionFlow: PermissionFlowWindowController?
     private var launchHUD: LaunchHUDWindowController?
     private var simpleModeAnnouncement: SimpleModeAnnouncementWindowController?
+    private var whatsNewController: WhatsNewWindowController?
 
     // NSWorkspace sleep/wake observer tokens. Stashed so teardownMonitoring()
     // can remove them on detection-mode hot-swap — otherwise every swap
@@ -160,17 +161,17 @@ final class AppState: ObservableObject {
             // Don't show overlay, don't record a break, don't reset the timer.
             // The engine tick is already suppressed by isUserAway, but this is
             // defense-in-depth in case a break was pending before sleep.
-            if self.isUserAway {
+            if isUserAway {
                 Log.i("Break due but user is away — suppressing (no overlay, no recording)")
                 return
             }
 
             Log.i("Break #\(breakNumber) — showing overlay")
-            self.isBreakPrompted = true
-            self.overlayShownAt = Date()
-            self.breaksPromptedToday += 1
-            let suggestion = self.pickBreakSuggestion()
-            self.overlayController.showBreak(
+            isBreakPrompted = true
+            overlayShownAt = Date()
+            breaksPromptedToday += 1
+            let suggestion = pickBreakSuggestion()
+            overlayController.showBreak(
                 breakNumber: breakNumber,
                 suggestion: suggestion,
                 onComplete: { [weak self] in
@@ -199,7 +200,7 @@ final class AppState: ObservableObject {
         engine.onShowExtendToast = { [weak self] reason in
             guard let self else { return }
             Log.i("Break decision: extend — \(reason)")
-            self.overlayController.showFlowNudge(
+            overlayController.showFlowNudge(
                 message: "\(reason) — extended 10 min",
                 // e.g. "Focused — extended 10 min"
                 onTakeBreak: { [weak self] in
@@ -212,17 +213,18 @@ final class AppState: ObservableObject {
         }
 
         engine.onTimerUpdate = { [weak self] remaining, total in
-            self?.remainingSeconds = remaining
-            self?.timerTotal = total
+            guard let self else { return }
+            remainingSeconds = remaining
+            timerTotal = total
         }
 
         engine.onStateChange = { [weak self] state in
             guard let self else { return }
-            let prev = self.displayState
+            let prev = displayState
             if prev != state {
                 Log.i("Engine state: \(prev) → \(state)")
             }
-            self.displayState = state
+            displayState = state
         }
 
         engine.compliance.onBreakRecorded = { [weak self] record in
@@ -520,6 +522,7 @@ final class AppState: ObservableObject {
         if announceLaunch { showLaunchHUD() }
         Log.i("Monitors and timers started")
         verifyTapAliveOrReprompt()
+        maybeShowWhatsNew()
     }
 
     /// Persists Simple-mode opt-in and (re)starts the runtime in Simple mode.
@@ -919,6 +922,33 @@ final class AppState: ObservableObject {
                 onDismiss: { [weak self] in
                     UserDefaults.standard.set(true, forKey: "simpleModeAnnounced")
                     self?.simpleModeAnnouncement = nil
+                }
+            )
+        }
+    }
+
+    /// Show the What's New window if this launch is the first on a new
+    /// version. Deferred ~1.8s so it lands after the launch HUD's own
+    /// settle — otherwise both windows compete for focus simultaneously.
+    /// `WhatsNewManifest.itemsToShowOnLaunch()` owns the actual decision
+    /// + bookkeeping; nil = don't show (brand-new install, same version,
+    /// or empty manifest).
+    private func maybeShowWhatsNew() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
+            guard let self else { return }
+            guard let items = WhatsNewManifest.itemsToShowOnLaunch() else { return }
+            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+            Log.i("Showing What's New window for v\(version) with \(items.count) item(s)")
+            whatsNewController = WhatsNewWindowController()
+            whatsNewController?.show(
+                theme: ThemeManager.shared.current,
+                version: version,
+                items: items,
+                onOpenAction: { [weak self] action in
+                    switch action {
+                    case .preferences(let tab):
+                        self?.openPreferences(initialTab: tab)
+                    }
                 }
             )
         }
