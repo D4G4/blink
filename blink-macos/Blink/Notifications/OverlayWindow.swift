@@ -760,10 +760,6 @@ struct BreakPhaseView: View {
     let onSkip: () -> Void
     @Environment(\.colorScheme) private var colorScheme
 
-    // Drives the icon+title slide+fade entrance animation. Starts false so
-    // .onAppear flips it true with an animation, producing the entrance.
-    @State private var suggestionRevealed: Bool = false
-
     var body: some View {
         let fg = theme.onBackgroundText(for: colorScheme)
         ZStack {
@@ -772,30 +768,16 @@ struct BreakPhaseView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Suggestion header — icon, title, short subtitle.
-                // Replaces the old fixed "Look at something far away" copy;
-                // the actual suggestion is chosen by BreakSuggestionPicker.
+                // Title — direct replacement for the old fixed
+                // "Look at something far away" copy. The text is chosen
+                // by BreakSuggestionPicker based on flow + sedentary + time
+                // of day + recent compliance.
                 HStack {
                     Spacer()
-                    VStack(spacing: 10) {
-                        Image(systemName: suggestion.iconName)
-                            .font(.system(size: 36, weight: .light))
-                            .foregroundStyle(fg)
-                            .symbolRenderingMode(.hierarchical)
-
-                        Text(suggestion.title)
-                            .font(.system(size: 26, weight: .medium))
-                            .foregroundStyle(fg)
-                            .multilineTextAlignment(.center)
-
-                        Text(suggestion.subtitle)
-                            .font(.system(size: 14))
-                            .foregroundStyle(fg.opacity(0.75))
-                            .multilineTextAlignment(.center)
-                    }
-                    .opacity(suggestionRevealed ? 1 : 0)
-                    .offset(y: suggestionRevealed ? 0 : 12)
-                    .animation(.easeOut(duration: 0.55).delay(0.1), value: suggestionRevealed)
+                    Text(suggestion.title)
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundStyle(fg)
+                        .multilineTextAlignment(.center)
                     Spacer()
                 }
                 .padding(.top, 80)
@@ -865,11 +847,7 @@ struct BreakPhaseView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
         }
-        .onAppear {
-            model.startTimer(onComplete: onComplete)
-            // Trigger the suggestion's slide+fade entrance after layout.
-            DispatchQueue.main.async { suggestionRevealed = true }
-        }
+        .onAppear { model.startTimer(onComplete: onComplete) }
         .onDisappear { model.stopTimer() }
     }
 }
