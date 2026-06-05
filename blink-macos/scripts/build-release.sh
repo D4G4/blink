@@ -3,6 +3,26 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Parse args.
+# --channel <name>: emit <sparkle:channel>name</sparkle:channel> in the
+#   printed <item> block so the appcast routes this release only to users
+#   who opted into that channel. Omitted = stable (no channel tag, visible
+#   to everyone).
+CHANNEL=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --channel)
+            CHANNEL="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            echo "Usage: $0 [--channel <name>]"
+            exit 1
+            ;;
+    esac
+done
+
 # Read version from project.yml — match the assignment line specifically
 # ("MARKETING_VERSION:" with a colon) so we don't also catch the
 # CFBundleShortVersionString: $(MARKETING_VERSION) substitution line.
@@ -228,10 +248,21 @@ RELEASE_NOTES_URL="https://github.com/D4G4/blink/releases/tag/v${VERSION}"
 # via wrangler, and pasting into the XML by hand keeps a single point
 # of human review before users on every installed version receive the
 # update broadcast. Print the snippet ready to paste.
+#
+# Channel routing: when --channel was passed, inject a
+# <sparkle:channel> element so the item only reaches users whose
+# updaters have opted into that channel (BlinkUpdater's
+# allowedChannels(for:) delegate). Stable items omit the channel tag
+# and reach everyone.
+CHANNEL_LINE=""
+if [ -n "$CHANNEL" ]; then
+    CHANNEL_LINE="      <sparkle:channel>${CHANNEL}</sparkle:channel>"
+fi
 APPCAST_ITEM=$(cat <<XML
     <item>
       <title>Blink v${VERSION}</title>
-      <link>${RELEASE_NOTES_URL}</link>
+      <link>${RELEASE_NOTES_URL}</link>${CHANNEL_LINE:+
+$CHANNEL_LINE}
       <sparkle:version>$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$EXPORT_DIR/Blink.app/Contents/Info.plist")</sparkle:version>
       <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>

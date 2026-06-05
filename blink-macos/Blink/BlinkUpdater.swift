@@ -15,16 +15,31 @@ import Sparkle
 /// The controller is instantiated once at app launch in BlinkApp; it owns
 /// the periodic background check, the user-driven menu action, and the
 /// standard UI flow (notice → download → ready-to-install → relaunch).
+///
+/// Beta channel: Sparkle 2 ships a `<sparkle:channel>` item attribute that
+/// gates which appcast items reach which users. By default an updater
+/// only consumes items with NO channel tag (= stable). When the user
+/// opts into the beta channel via Settings, `allowedChannels(for:)` below
+/// returns `["beta"]` — beta items become visible, AND stable items
+/// remain visible (channel filtering is additive). Stable users never
+/// see beta items.
 @MainActor
-final class BlinkUpdater {
+final class BlinkUpdater: NSObject {
     static let shared = BlinkUpdater()
 
-    private let controller: SPUStandardUpdaterController
+    private var controller: SPUStandardUpdaterController!
 
-    private init() {
+    /// UserDefaults key for the "Receive beta updates" toggle in Settings.
+    /// Read via `UserDefaults.standard` rather than `@AppStorage` because
+    /// this object is not a View — but the toggle UI binds to the same
+    /// key so changes propagate.
+    static let betaChannelKey = "betaChannelEnabled"
+
+    private override init() {
+        super.init()
         controller = SPUStandardUpdaterController(
             startingUpdater: true,
-            updaterDelegate: nil,
+            updaterDelegate: self,
             userDriverDelegate: nil
         )
     }
@@ -52,5 +67,18 @@ final class BlinkUpdater {
         DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
             self?.controller.updater.checkForUpdatesInBackground()
         }
+    }
+}
+
+// MARK: - SPUUpdaterDelegate
+
+extension BlinkUpdater: SPUUpdaterDelegate {
+    /// Returns the additional channels this install accepts items from.
+    /// Default install: empty → stable-only. Beta-opted-in install:
+    /// `["beta"]` → stable + beta. Read fresh from UserDefaults every
+    /// call so a toggle change takes effect on the very next check.
+    nonisolated func allowedChannels(for updater: SPUUpdater) -> Set<String> {
+        let enabled = UserDefaults.standard.bool(forKey: Self.betaChannelKey)
+        return enabled ? ["beta"] : []
     }
 }

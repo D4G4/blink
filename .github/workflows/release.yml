@@ -175,6 +175,28 @@ jobs:
           echo -n "$SPARKLE_PRIVATE_KEY" | base64 --decode > "$RUNNER_TEMP/sparkle.key"
           chmod 600 "$RUNNER_TEMP/sparkle.key"
 
+      # Detect pre-release tags so we route them to the Sparkle beta
+      # channel instead of broadcasting to everyone. Tag conventions:
+      #   v5.1.0           → stable (no channel tag, all users get it)
+      #   v5.1.0-beta.1    → beta   (sparkle:channel=beta in appcast item;
+      #                              only users with "Receive beta updates"
+      #                              ON via BlinkUpdater.allowedChannels
+      #                              see the item)
+      #   v5.1.0-rc.1      → beta   (release candidates ride the same
+      #                              channel — they're not stable yet)
+      - name: Determine release channel from tag
+        id: channel
+        run: |
+          if [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-(beta|rc) ]]; then
+            echo "flag=--channel beta" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "→ pre-release tag $GITHUB_REF_NAME → beta channel"
+          else
+            echo "flag=" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "→ stable tag $GITHUB_REF_NAME → no channel tag"
+          fi
+
       # Build, sign, notarize, staple, AND EdDSA-sign for Sparkle in one
       # go via the build script. The SPARKLE_PRIVATE_KEY_FILE env var
       # routes sign_update to read the key from a file instead of the
@@ -185,7 +207,7 @@ jobs:
       - name: Build signed + notarized + EdDSA-signed DMG
         env:
           SPARKLE_PRIVATE_KEY_FILE: ${{ runner.temp }}/sparkle.key
-        run: bash blink-macos/scripts/build-release.sh
+        run: bash blink-macos/scripts/build-release.sh ${{ steps.channel.outputs.flag }}
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
@@ -217,6 +239,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          # Pre-release tags (v*-beta.*, v*-rc.*) get marked as "Pre-release"
+          # on GitHub so they don't show up as "Latest release" on the repo
+          # home page. The Sparkle appcast still publishes them (with the
+          # beta channel tag) so opted-in users receive them.
+          prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
             artifacts/Blink-x64/Blink-x64.exe
             artifacts/Blink-arm64/Blink-arm64.exe
@@ -287,8 +314,13 @@ jobs:
         run: npx wrangler deploy
 
   # ── Update Homebrew cask (notarized → no xattr workaround needed) ─
+  # Stable releases only. Beta tags (v*-beta.*, v*-rc.*) skip this job —
+  # the Homebrew cask points at the stable channel; beta users install the
+  # beta DMG directly from the GitHub Release (or get it via Sparkle once
+  # they've toggled "Receive beta updates" on a prior install).
   homebrew:
     needs: release
+    if: ${{ !contains(github.ref_name, '-') }}
     runs-on: ubuntu-latest
     steps:
       - name: Get version from tag

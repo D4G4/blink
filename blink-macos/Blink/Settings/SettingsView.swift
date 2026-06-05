@@ -15,6 +15,7 @@ struct SettingsView: View {
     @AppStorage("chimeID") private var chimeID: String = ChimePlayer.defaultChimeID
     @AppStorage("chimeVolume") private var chimeVolume: Double = ChimePlayer.defaultVolume
     @AppStorage("breakSuggestionsEnabled") private var breakSuggestionsEnabled: Bool = true
+    @AppStorage(BlinkUpdater.betaChannelKey) private var betaChannelEnabled: Bool = false
 
     @State private var showSuggestionsHelp: Bool = false
 
@@ -246,6 +247,11 @@ struct SettingsView: View {
                 settingsItem {
                     settingsToggleWithIcon("Debug notifications", systemImage: "ant.fill", isOn: $appState.debugNotifications)
                     settingsCaption("Show toasts for timer resets, state changes, and idle detection")
+                }
+
+                settingsItem {
+                    settingsToggleWithIcon("Receive beta updates", systemImage: "flask.fill", isOn: $betaChannelEnabled)
+                    settingsCaption("Get new features before everyone else. Beta builds may be less stable; you can switch off any time to roll back to the next stable release.")
                 }
 
                 // Action links sit flat with no card background — they're
