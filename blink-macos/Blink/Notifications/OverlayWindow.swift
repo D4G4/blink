@@ -760,6 +760,13 @@ struct BreakPhaseView: View {
     let onSkip: () -> Void
     @Environment(\.colorScheme) private var colorScheme
 
+    // Drives the entrance animation. Defaults false; flipped true in
+    // .onAppear. Crucially, only `scaleEffect` and SF Symbol bounce are
+    // gated on this — opacity stays at 1 at rest so synchronous renders
+    // (ImageRenderer / snapshot tests) capture a fully-visible header
+    // even when .onAppear's DispatchQueue.main.async never runs.
+    @State private var headerEntered: Bool = false
+
     var body: some View {
         let fg = theme.onBackgroundText(for: colorScheme)
         ZStack {
@@ -768,16 +775,35 @@ struct BreakPhaseView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Title — direct replacement for the old fixed
-                // "Look at something far away" copy. The text is chosen
-                // by BreakSuggestionPicker based on flow + sedentary + time
-                // of day + recent compliance.
+                // Suggestion header — icon, title, short subtitle.
+                // Replaces the old fixed "Look at something far away" copy;
+                // the actual suggestion is chosen by BreakSuggestionPicker
+                // from flow + sedentary + time-of-day + recent compliance.
                 HStack {
                     Spacer()
-                    Text(suggestion.title)
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundStyle(fg)
-                        .multilineTextAlignment(.center)
+                    VStack(spacing: 10) {
+                        Image(systemName: suggestion.iconName)
+                            .font(.system(size: 32, weight: .light))
+                            .foregroundStyle(fg)
+                            .symbolRenderingMode(.hierarchical)
+                            .symbolEffect(.bounce, options: .nonRepeating, value: headerEntered)
+
+                        Text(suggestion.title)
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundStyle(fg)
+                            .multilineTextAlignment(.center)
+
+                        Text(suggestion.subtitle)
+                            .font(.system(size: 13))
+                            .foregroundStyle(fg.opacity(0.75))
+                            .multilineTextAlignment(.center)
+                    }
+                    // scaleEffect is the only entrance-gated property —
+                    // a 0.96 → 1.0 spring on appear. At rest (snapshot
+                    // pass) the header renders at 0.96× scale, fully
+                    // visible. Opacity is never touched.
+                    .scaleEffect(headerEntered ? 1.0 : 0.96)
+                    .animation(.spring(duration: 0.55, bounce: 0.25), value: headerEntered)
                     Spacer()
                 }
                 .padding(.top, 80)
@@ -847,7 +873,14 @@ struct BreakPhaseView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
         }
-        .onAppear { model.startTimer(onComplete: onComplete) }
+        .onAppear {
+            model.startTimer(onComplete: onComplete)
+            // Trigger the scale-spring + icon bounce a beat after the
+            // window's own NSAnimationContext fade-in starts.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                headerEntered = true
+            }
+        }
         .onDisappear { model.stopTimer() }
     }
 }
