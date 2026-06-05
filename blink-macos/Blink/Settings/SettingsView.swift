@@ -568,31 +568,33 @@ struct SettingsView: View {
     // MARK: - Reusable Components
     
     private func settingsSection(_ title: String, @ViewBuilder content: () -> some View) -> some View {
-        // Title and content share the card's internal padding so they
-        // align on the same x. Previous layout had the title at .leading 4
-        // and content padded 14pt inside the card → icons sat 10pt to the
-        // right of the title and the whole thing felt "pushed."
+        // Title stays OUTSIDE the card (original structure preserved).
+        // Card's internal horizontal padding matches the title's leading
+        // inset (4pt) so the icon column inside the card aligns with the
+        // title's left edge — previously the title was at x=4 while card
+        // content was padded 14pt, leaving icons 10pt to the right.
         //
         // Background uses Color.secondary.opacity to actually show up:
         // .controlBackgroundColor resolves to white in light mode
         // (matching the page bg) and only a hair lighter than windowBg in
-        // dark mode, so the card was visually invisible. Same approach as
-        // BreakSuggestionsHelpView's rule cards.
+        // dark mode, so the card was visually invisible.
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(accentColor)
+                .padding(.leading, 4)
 
             VStack(alignment: .leading, spacing: 12) {
                 content()
             }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.secondary.opacity(0.06))
+            )
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.secondary.opacity(0.06))
-        )
     }
     
     private func settingsRow(_ label: String, @ViewBuilder content: () -> some View) -> some View {
