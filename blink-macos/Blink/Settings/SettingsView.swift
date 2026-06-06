@@ -18,6 +18,7 @@ struct SettingsView: View {
     @AppStorage(BlinkUpdater.betaChannelKey) private var betaChannelEnabled: Bool = false
 
     @State private var showSuggestionsHelp: Bool = false
+    @State private var debugExpanded: Bool = false
 
     /// Sentinel value for the "None" entry in the chime picker. Selecting it
     /// flips `chimeEnabled` to false; selecting any real chime flips it true
@@ -141,19 +142,18 @@ struct SettingsView: View {
             }
 
             settingsSection("Break Screen") {
-                settingsItem(icon: {
-                    DarkOverlayIcon(accent: accentColor, foreground: .primary)
-                }) {
-                    settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
-                    settingsCaptionFlat("Pure black background instead of themed colors")
+                settingsItem {
+                    settingsToggleWithIcon(
+                        "Use dark overlay",
+                        icon: {
+                            DarkOverlayIcon(accent: accentColor, foreground: .primary)
+                        },
+                        isOn: $useDarkOverlay
+                    )
+                    settingsCaption("Pure black background instead of themed colors")
                 }
 
-                settingsItem(icon: {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 17))
-                        .foregroundStyle(accentColor)
-                        .symbolRenderingMode(.hierarchical)
-                }) {
+                settingsItem {
                     SmartSuggestionsSettingControls(
                         theme: theme,
                         accentColor: accentColor,
@@ -164,24 +164,16 @@ struct SettingsView: View {
             }
 
             settingsSection("Break-End Chime") {
-                // Bell icon lives at the outer-icon level so it centers
-                // vertically between the Sound row and the Volume row
-                // (when chime is enabled). The picker IS the on/off
-                // control — "None" disables, any real chime enables AND
-                // auto-previews on selection.
-                settingsItem(icon: {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 17))
-                        .foregroundStyle(accentColor)
-                        .symbolRenderingMode(.hierarchical)
-                }) {
-                    // Explicit inner VStack with 14pt spacing — the
-                    // settingsItem's default 6pt is fine for toggle +
-                    // caption pairs but feels cramped here where two
-                    // distinct controls (picker, slider) live on
-                    // separate rows.
+                settingsItem {
+                    // The picker IS the on/off control — "None" disables,
+                    // any real chime enables AND auto-previews on selection.
                     VStack(alignment: .leading, spacing: 14) {
                         HStack(spacing: 10) {
+                            Image(systemName: "bell.fill")
+                                .font(.system(size: 17))
+                                .foregroundStyle(accentColor)
+                                .symbolRenderingMode(.hierarchical)
+                                .frame(width: 32, alignment: .center)
                             Text("Sound")
                                 .font(.system(size: 15))
                             Spacer()
@@ -196,6 +188,8 @@ struct SettingsView: View {
                         }
                         if chimeEnabled {
                             HStack(spacing: 10) {
+                                // Empty 32pt column so Volume aligns with "Sound" above.
+                                Color.clear.frame(width: 32)
                                 Text("Volume")
                                     .font(.system(size: 15))
                                 Slider(value: $chimeVolume, in: 0...1)
@@ -211,14 +205,9 @@ struct SettingsView: View {
             }
 
             settingsSection("Mic Detection") {
-                settingsItem(icon: {
-                    Image(systemName: "mic.fill")
-                        .font(.system(size: 17))
-                        .foregroundStyle(accentColor)
-                        .symbolRenderingMode(.hierarchical)
-                }) {
-                    settingsToggle("Pause timer during calls", isOn: $pauseDuringCalls)
-                    settingsCaptionFlat("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
+                settingsItem {
+                    settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
+                    settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
                 }
             }
 
@@ -256,86 +245,124 @@ struct SettingsView: View {
                         }
                 }
 
-                settingsItem(icon: {
-                    Image(systemName: "ant.fill")
-                        .font(.system(size: 17))
-                        .foregroundStyle(accentColor)
-                        .symbolRenderingMode(.hierarchical)
-                }) {
-                    settingsToggle("Debug notifications", isOn: $appState.debugNotifications)
-                    settingsCaptionFlat("Show toasts for timer resets, state changes, and idle detection")
+                settingsItem {
+                    settingsToggleWithIcon("Receive beta updates", systemImage: "flask.fill", isOn: $betaChannelEnabled)
+                    settingsCaption("Get new features before everyone else. Beta builds may be less stable; you can switch off any time to roll back to the next stable release.")
                 }
 
-                settingsItem(icon: {
-                    Image(systemName: "flask.fill")
-                        .font(.system(size: 17))
-                        .foregroundStyle(accentColor)
-                        .symbolRenderingMode(.hierarchical)
-                }) {
-                    settingsToggle("Receive beta updates", isOn: $betaChannelEnabled)
-                    settingsCaptionFlat("Get new features before everyone else. Beta builds may be less stable; you can switch off any time to roll back to the next stable release.")
+                // Check for Updates as a primary call-to-action — full
+                // width, accent-coloured, more discoverable than the
+                // previous flat link.
+                Button {
+                    UIActionLogger.buttonTapped("Check for Updates")
+                    BlinkUpdater.shared.checkForUpdates()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 13, weight: .medium))
+                        Text("Check for Updates")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(accentColor)
+                    )
                 }
+                .buttonStyle(.plain)
+                .padding(.top, 2)
 
-                // Action links sit flat with no card background — they're
-                // commands, not configurable settings, and shouldn't read
-                // as such. Centered so they read as page-foot utility
-                // links rather than left-rail toggles. 12pt vertical
-                // spacing so each link reads as a distinct command.
-                VStack(alignment: .center, spacing: 12) {
-                    Button {
-                        UIActionLogger.buttonTapped("Check for Updates")
-                        BlinkUpdater.shared.checkForUpdates()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                                .font(.system(size: 11))
-                            Text("Check for Updates")
-                                .font(.system(size: 12))
-                        }
-                        .foregroundStyle(accentColor)
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        UIActionLogger.buttonTapped("Restart Onboarding")
-                        themeManager.hasCompletedOnboarding = false
-                        let path = Bundle.main.bundleURL.absoluteString
-                        let task = Process()
-                        task.launchPath = "/usr/bin/open"
-                        task.arguments = [path]
-                        task.launch()
-                        NSApp.terminate(nil)
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.counterclockwise")
-                                .font(.system(size: 11))
-                            Text("Restart Onboarding")
-                                .font(.system(size: 12))
-                        }
-                        .foregroundStyle(accentColor)
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        UIActionLogger.buttonTapped("Open Log Files")
-                        LogExporter.revealInFinder()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "folder")
-                                .font(.system(size: 11))
-                            Text("Open Log Files")
-                                .font(.system(size: 12))
-                        }
-                        .foregroundStyle(accentColor)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 6)
+                // Debug section — collapsible. Houses the dev/diagnostic
+                // controls (toast notifications, log files, onboarding
+                // reset) that most users won't touch. Defaults collapsed
+                // so the bottom of the General tab stays clean.
+                debugDisclosure
             }
         }
     }
-    
+
+    // MARK: - Debug disclosure (System section)
+
+    /// Collapsible "Debug" group at the bottom of System. Houses the
+    /// diagnostic controls (debug toasts, log files, onboarding reset)
+    /// most users never touch. Defaults closed so the General tab's
+    /// foot stays clean.
+    private var debugDisclosure: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.18)) {
+                    debugExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(debugExpanded ? 90 : 0))
+                    Text("Debug")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 4)
+            .padding(.top, 6)
+
+            if debugExpanded {
+                settingsItem {
+                    settingsToggleWithIcon("Debug notifications", systemImage: "ant.fill", isOn: $appState.debugNotifications)
+                    settingsCaption("Show toasts for timer resets, state changes, and idle detection")
+                }
+
+                debugActionButton(label: "Restart Onboarding", systemImage: "arrow.counterclockwise") {
+                    UIActionLogger.buttonTapped("Restart Onboarding")
+                    themeManager.hasCompletedOnboarding = false
+                    let path = Bundle.main.bundleURL.absoluteString
+                    let task = Process()
+                    task.launchPath = "/usr/bin/open"
+                    task.arguments = [path]
+                    task.launch()
+                    NSApp.terminate(nil)
+                }
+
+                debugActionButton(label: "Open Log Files", systemImage: "folder") {
+                    UIActionLogger.buttonTapped("Open Log Files")
+                    LogExporter.revealInFinder()
+                }
+            }
+        }
+    }
+
+    /// Secondary-style button used for Restart Onboarding + Open Log Files
+    /// inside the debug disclosure. Lower visual weight than the primary
+    /// Check for Updates button above the disclosure, matching their
+    /// diagnostic-utility role.
+    private func debugActionButton(label: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 12))
+                Text(label)
+                    .font(.system(size: 13))
+                Spacer()
+            }
+            .foregroundStyle(accentColor)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.secondary.opacity(0.06))
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Theme
     
     private var themeContent: some View {

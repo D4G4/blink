@@ -12,21 +12,25 @@ struct SmartSuggestionsSettingControls: View {
     @Binding var showHelp: Bool
 
     var body: some View {
-        // Emits inner content only — no icon, no card chrome. The
-        // caller is responsible for wrapping this in
-        // `settingsItem(icon: sparkles, content: { ... })` which provides
-        // the leading icon column AND the card background. Keeps the
-        // icon vertical-centering consistent with every other
-        // iconified+captioned row in General.
         VStack(alignment: .leading, spacing: 6) {
-            Toggle("Smart break suggestions", isOn: $isOn)
-                .font(.system(size: 15))
-                .toggleStyle(ThemedToggleStyle(theme: theme))
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 17))
+                    .foregroundStyle(accentColor)
+                    .symbolRenderingMode(.hierarchical)
+                    .frame(width: 32, alignment: .center)
+                Toggle("Smart break suggestions", isOn: $isOn)
+                    .font(.system(size: 15))
+                    .toggleStyle(ThemedToggleStyle(theme: theme))
+            }
 
+            // Caption indents past the icon column so it aligns with the
+            // toggle label, not the icon.
             Text("Replaces the eye-rest title with a context-aware action (drink water, get up, breathe\u{2026}) when it fits the moment. Breaks get 5 extra seconds when a suggestion is shown so you have time to read it.")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.leading, 42)
 
             Button {
                 UIActionLogger.buttonTapped("Learn more about smart break suggestions")
@@ -42,6 +46,7 @@ struct SmartSuggestionsSettingControls: View {
             }
             .buttonStyle(.plain)
             .padding(.top, 4)
+            .padding(.leading, 42)
             .sheet(isPresented: $showHelp) {
                 BreakSuggestionsHelpView(theme: theme) {
                     showHelp = false
