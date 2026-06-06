@@ -278,58 +278,6 @@ jobs:
           name: Blink-appcast-item
           path: artifacts
 
-      # Replace the placeholder "See release notes on GitHub" stub that
-      # build-release.sh wrote into <description> with the actual release
-      # body so Sparkle's update prompt shows real notes inline instead
-      # of just a link. The GH release body is markdown; rendered via
-      # Python's `markdown` package which is pip-installable on the
-      # ubuntu-latest runner. If the fetch or render fails, the original
-      # placeholder stays so the prompt at least has a working link.
-      - name: Inject release notes into appcast description
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -e
-          pip install --quiet markdown
-          python3 <<'PY'
-          import os, re, subprocess, sys
-
-          tag = os.environ["GITHUB_REF_NAME"]
-          try:
-              body_md = subprocess.check_output(
-                  ["gh", "release", "view", tag, "--json", "body", "--jq", ".body"],
-                  text=True,
-              ).strip()
-          except subprocess.CalledProcessError as e:
-              print(f"::warning::gh release view failed for {tag}: {e}; leaving placeholder", file=sys.stderr)
-              sys.exit(0)
-
-          if not body_md:
-              print(f"::warning::empty release body for {tag}; leaving placeholder", file=sys.stderr)
-              sys.exit(0)
-
-          try:
-              import markdown
-              body_html = markdown.markdown(body_md, extensions=["extra", "sane_lists"])
-          except Exception as e:
-              print(f"::warning::markdown render failed: {e}; leaving placeholder", file=sys.stderr)
-              sys.exit(0)
-
-          path = "artifacts/appcast-item.xml"
-          with open(path) as f:
-              item = f.read()
-          item = re.sub(
-              r"<description><!\[CDATA\[.*?\]\]></description>",
-              f"<description><![CDATA[{body_html}]]></description>",
-              item,
-              flags=re.DOTALL,
-              count=1,
-          )
-          with open(path, "w") as f:
-              f.write(item)
-          print(f"Injected {len(body_html)} chars of release-notes HTML for {tag}")
-          PY
-
       # Splice the new <item> into website/appcast.xml right after the
       # <language>en</language> tag (top of <channel>). awk handles the
       # multi-line insertion without us shelling out to sed.
