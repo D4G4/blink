@@ -16,14 +16,21 @@ struct WhatsNewView: View {
         VStack(spacing: 0) {
             header(accent: accent)
 
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(items) { item in
-                    itemRow(item, accent: accent)
+            // ScrollView so a back-catalogue digest (stale user catching up
+            // across several releases) doesn't get clipped by the fixed
+            // 460pt window height. Single short release still renders the
+            // exact same way — the scroller only appears when content
+            // overflows.
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(items) { item in
+                        itemRow(item, accent: accent)
+                    }
                 }
-                Spacer(minLength: 0)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
 
             Divider()
             footerBar(accent: accent)
