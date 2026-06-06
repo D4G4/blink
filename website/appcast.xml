@@ -6,6 +6,18 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.1.0</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.1.0</link>
+      <sparkle:version>341</sparkle:version>
+      <sparkle:shortVersionString>5.1.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Sat, 06 Jun 2026 15:11:09 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">Changes since v5.0.8</h3><ul><li>chore(macos): bump to 5.1.0</li><li>feat(whats-new): per-item version gating + scroll, pulse + duration log (#20)</li><li>feat(break): smart healthy-action suggestions on the break overlay (#19)</li><li>chore(appcast): publish v5.1.0-beta.6</li><li>chore(appcast): publish v5.1.0-beta.5</li><li>chore(appcast): publish v5.1.0-beta.4</li><li>chore(appcast): publish v5.1.0-beta.3</li><li>chore(appcast): publish v5.1.0-beta.2</li><li>chore(appcast): publish v5.1.0-beta.1</li><li>chore(appcast): publish v5.0.8</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.1.0">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.1.0/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="bI0QWqhOBv0oscpkfSEsLKjuBhw8im0Mmh3KPoqVTO4hTFs6V20TvzZE2qfBXFgCBg6u0iulNblSAAI9063GBQ==" length="8612112" />
+    </item>
+    <item>
       <title>Blink v5.1.0-beta.6</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.1.0-beta.6</link>
       <sparkle:channel>beta</sparkle:channel>
