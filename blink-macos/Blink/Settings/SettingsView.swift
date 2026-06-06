@@ -141,18 +141,19 @@ struct SettingsView: View {
             }
 
             settingsSection("Break Screen") {
-                settingsItem {
-                    settingsToggleWithIcon(
-                        "Use dark overlay",
-                        icon: {
-                            DarkOverlayIcon(accent: accentColor, foreground: .primary)
-                        },
-                        isOn: $useDarkOverlay
-                    )
-                    settingsCaption("Pure black background instead of themed colors")
+                settingsItem(icon: {
+                    DarkOverlayIcon(accent: accentColor, foreground: .primary)
+                }) {
+                    settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
+                    settingsCaptionFlat("Pure black background instead of themed colors")
                 }
 
-                settingsItem {
+                settingsItem(icon: {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 17))
+                        .foregroundStyle(accentColor)
+                        .symbolRenderingMode(.hierarchical)
+                }) {
                     SmartSuggestionsSettingControls(
                         theme: theme,
                         accentColor: accentColor,
@@ -204,9 +205,14 @@ struct SettingsView: View {
             }
 
             settingsSection("Mic Detection") {
-                settingsItem {
-                    settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
-                    settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
+                settingsItem(icon: {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(accentColor)
+                        .symbolRenderingMode(.hierarchical)
+                }) {
+                    settingsToggle("Pause timer during calls", isOn: $pauseDuringCalls)
+                    settingsCaptionFlat("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
                 }
             }
 
@@ -244,14 +250,24 @@ struct SettingsView: View {
                         }
                 }
 
-                settingsItem {
-                    settingsToggleWithIcon("Debug notifications", systemImage: "ant.fill", isOn: $appState.debugNotifications)
-                    settingsCaption("Show toasts for timer resets, state changes, and idle detection")
+                settingsItem(icon: {
+                    Image(systemName: "ant.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(accentColor)
+                        .symbolRenderingMode(.hierarchical)
+                }) {
+                    settingsToggle("Debug notifications", isOn: $appState.debugNotifications)
+                    settingsCaptionFlat("Show toasts for timer resets, state changes, and idle detection")
                 }
 
-                settingsItem {
-                    settingsToggleWithIcon("Receive beta updates", systemImage: "flask.fill", isOn: $betaChannelEnabled)
-                    settingsCaption("Get new features before everyone else. Beta builds may be less stable; you can switch off any time to roll back to the next stable release.")
+                settingsItem(icon: {
+                    Image(systemName: "flask.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(accentColor)
+                        .symbolRenderingMode(.hierarchical)
+                }) {
+                    settingsToggle("Receive beta updates", isOn: $betaChannelEnabled)
+                    settingsCaptionFlat("Get new features before everyone else. Beta builds may be less stable; you can switch off any time to roll back to the next stable release.")
                 }
 
                 // Action links sit flat with no card background — they're
@@ -637,6 +653,46 @@ struct SettingsView: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.secondary.opacity(0.06))
         )
+    }
+
+    /// Variant with the icon at the outer level — it sits in its own
+    /// 32pt-wide leading column, vertically centered with the entire
+    /// content VStack. Use when a row has both a toggle AND a caption
+    /// (and maybe more): the previous pattern locked the icon next to
+    /// the toggle via `settingsToggleWithIcon`, leaving the icon at the
+    /// top edge while the caption hung below it. With the icon at this
+    /// level, it centers between the top of the toggle and the bottom
+    /// of the caption automatically.
+    private func settingsItem<Icon: View, Content: View>(
+        @ViewBuilder icon: () -> Icon,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            icon()
+                .frame(width: 32, alignment: .center)
+            VStack(alignment: .leading, spacing: 6) {
+                content()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.secondary.opacity(0.06))
+        )
+    }
+
+    /// Caption styled for use inside an outer-icon settingsItem. No
+    /// leading indent — the parent HStack's icon column already shifts
+    /// the content VStack to the right of the icon, so the caption
+    /// naturally sits under the toggle label.
+    private func settingsCaptionFlat(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13))
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
     
     private func settingsRow(_ label: String, @ViewBuilder content: () -> some View) -> some View {

@@ -110,7 +110,6 @@
 		5154540CB1DCED7F7961D427 /* flow_learn_more_mono_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 2F2DEAAEEA8BFA8CA2F3D8CA /* flow_learn_more_mono_dark.png */; };
 		51AC644E064F720D3C37D7C6 /* flow_nudge_mono_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 28D8E8D41AAF5B18DBE4EB5C /* flow_nudge_mono_dark.png */; };
 		51B85A79F15C502885A3F8C2 /* BlinkTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0886829FB1518795A9E605C /* BlinkTheme.swift */; };
-		51C4B6B5C20C0D0C169DC978 /* smart_suggestions_settings_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 7EFA6E0E8A45B0471ABE4FB0 /* smart_suggestions_settings_midnight_dark.png */; };
 		52AC7BA2C1A05F529D3DEEC3 /* break_timer_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 96481A9A0ADD73C9B5770336 /* break_timer_peach_dark.png */; };
 		532162CFE274B0488679F7BA /* toast_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = AA3971FEB89E4B6FBFC237F3 /* toast_peach_dark.png */; };
 		54E7CE6044B9285652CCCB3D /* countdown_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E3099E0B244DB773C3FE472F /* countdown_midnight_light.png */; };
@@ -133,7 +132,6 @@
 		61E2DAB23CC5A94049C3A6A8 /* SetupFlowSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C2B9C8AB9E73996A3E78E03 /* SetupFlowSnapshotTests.swift */; };
 		6236E723BC574777D616DE37 /* BlinkCore in Frameworks */ = {isa = PBXBuildFile; productRef = B3D1D1183FB72FCF22C0F8F6 /* BlinkCore */; };
 		640EC569F374A773B22B77F0 /* flow_sensitivity_settings_mono_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D861CF51C62B8CB9CE3C06E /* flow_sensitivity_settings_mono_dark.png */; };
-		6436CAD16A14E7BAD488FE4B /* smart_suggestions_settings_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 2EE979F2F0E87191E9D9F90C /* smart_suggestions_settings_peach_light.png */; };
 		6525874A350824CA7CC3513D /* im_rationale_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 129C11C4E483C21F20CE402E /* im_rationale_peach_dark.png */; };
 		65C12D8A21338A35EA145BB6 /* menu_bar_simple_peach_deliberate_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 69135861EBA18254E4B829C3 /* menu_bar_simple_peach_deliberate_light.png */; };
 		69948A67BDEA503721642536 /* WhatsNewManifestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F26A4DF1773D23D2097C08FF /* WhatsNewManifestTests.swift */; };
@@ -379,7 +377,6 @@
 		2DE3CA78A39AB2A76BF6E5C3 /* flow_sensitivity_settings_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_sensitivity_settings_mono_light.png; sourceTree = "<group>"; };
 		2E3FF8453019A5976CEE2C81 /* break_suggestions_help_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_suggestions_help_midnight_dark.png; sourceTree = "<group>"; };
 		2E5C625C8E4A68EAD964C3B9 /* break_timer_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_timer_midnight_light.png; sourceTree = "<group>"; };
-		2EE979F2F0E87191E9D9F90C /* smart_suggestions_settings_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = smart_suggestions_settings_peach_light.png; sourceTree = "<group>"; };
 		2F2DEAAEEA8BFA8CA2F3D8CA /* flow_learn_more_mono_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_learn_more_mono_dark.png; sourceTree = "<group>"; };
 		30121397DABA4A607FE50F47 /* flow_nudge_sand_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_nudge_sand_light.png; sourceTree = "<group>"; };
 		30BBD76AFCFA47665FD661BB /* whats_new_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = whats_new_midnight_dark.png; sourceTree = "<group>"; };
@@ -477,7 +474,6 @@
 		7BDF5153E498B2DEFD9EAEBF /* LogExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogExporter.swift; sourceTree = "<group>"; };
 		7BF0C0DEFAE21739E15D93D4 /* menu_bar_peach_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_peach_dark.png; sourceTree = "<group>"; };
 		7D82E84A031C6147E572EA96 /* flow_learn_more_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_learn_more_peach_light.png; sourceTree = "<group>"; };
-		7EFA6E0E8A45B0471ABE4FB0 /* smart_suggestions_settings_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = smart_suggestions_settings_midnight_dark.png; sourceTree = "<group>"; };
 		80195DCC491A47DA7C93486C /* im_permission_standard_sage_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = im_permission_standard_sage_light.png; sourceTree = "<group>"; };
 		801D11C459C5DF674130B105 /* im_permission_standard_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = im_permission_standard_peach_light.png; sourceTree = "<group>"; };
 		8155256B978232A47E986CE4 /* flow_learn_more_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_learn_more_mono_light.png; sourceTree = "<group>"; };
@@ -1051,8 +1047,6 @@
 				C75C82EBDE73DE19251BE26A /* simple_announcement_announce_midnight_light.png */,
 				D1F69BEBFB6EE53148F112A2 /* simple_announcement_announce_peach_dark.png */,
 				071B933F149E272633E33CFE /* simple_announcement_announce_peach_light.png */,
-				7EFA6E0E8A45B0471ABE4FB0 /* smart_suggestions_settings_midnight_dark.png */,
-				2EE979F2F0E87191E9D9F90C /* smart_suggestions_settings_peach_light.png */,
 				8E8C7CD3DA5AE2820D21BAA9 /* timer_extended_dark_dark.png */,
 				34F3ED3215925C1450E0CBCD /* timer_extended_dark_light.png */,
 				74D3636A139F9C2514A7198D /* timer_extended_midnight_dark.png */,
@@ -1366,8 +1360,6 @@
 				5B90B4BE8873E1BD7B8840A5 /* simple_announcement_announce_midnight_light.png in Resources */,
 				7EA5BE55927AABED383F2D04 /* simple_announcement_announce_peach_dark.png in Resources */,
 				E9A572E5FF0DFBFDCCC9E62D /* simple_announcement_announce_peach_light.png in Resources */,
-				51C4B6B5C20C0D0C169DC978 /* smart_suggestions_settings_midnight_dark.png in Resources */,
-				6436CAD16A14E7BAD488FE4B /* smart_suggestions_settings_peach_light.png in Resources */,
 				BF86BFAC37DB95C11EC407D3 /* timer_extended_dark_dark.png in Resources */,
 				AE5AD1CC2B0ECEB24C85034E /* timer_extended_dark_light.png in Resources */,
 				48F252E1BC75E344EA13D83B /* timer_extended_midnight_dark.png in Resources */,
@@ -1681,7 +1673,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 5.0.8;
+				MARKETING_VERSION = "5.1.0-beta.1";
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -1726,7 +1718,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 5.0.8;
+				MARKETING_VERSION = "5.1.0-beta.1";
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
