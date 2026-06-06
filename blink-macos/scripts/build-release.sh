@@ -32,18 +32,51 @@ if [ -z "$VERSION" ]; then
     exit 1
 fi
 
-# Auto-derive CFBundleVersion from git commit count. Sparkle uses
-# sparkle:version (= CFBundleVersion) as its PRIMARY integer
-# comparator — if two releases share the same value, Sparkle answers
-# "up to date" regardless of the shortVersionString. v5.0.0–v5.0.3
-# all shipped with CFBundleVersion=1 (hardcoded in project.yml) and
-# every installed user got stuck on whatever they first installed.
-# git rev-list --count is monotonic per merged commit and reproducible
-# from any clone, so it's the right per-release build number.
-BUILD_NUMBER=$(git rev-list --count HEAD)
-if [ -z "$BUILD_NUMBER" ]; then
+# Auto-derive CFBundleVersion. Sparkle uses sparkle:version (=
+# CFBundleVersion) as its PRIMARY integer comparator — if two releases
+# share the same value, Sparkle answers "up to date" regardless of the
+# shortVersionString. v5.0.0–v5.0.3 all shipped with CFBundleVersion=1
+# (hardcoded in project.yml) and every installed user got stuck on
+# whatever they first installed.
+#
+# Two failure modes to defend against:
+#
+# 1. STATIC PLACEHOLDER (v5.0.0–v5.0.3 incident): fixed at the source
+#    by deriving from `git rev-list --count HEAD`, which is monotonic
+#    per merged commit and reproducible from any clone.
+#
+# 2. SQUASH MERGE SHRINKS THE COUNT (v5.1.0 incident): when a feature
+#    branch has N commits and the PR is squash-merged into main, main
+#    gains 1 commit while the branch's other N-1 commits become
+#    unreachable from main. Beta tags on the branch (e.g.
+#    v5.1.0-beta.6 → 357 commits via branch history) outranked the
+#    subsequent v5.1.0 stable on main (341 commits) → Sparkle told
+#    beta.6 users "you're up to date" forever.
+#
+#    Fix: floor the build number at (max published sparkle:version in
+#    the live appcast) + 1. The appcast is the authoritative record of
+#    what's already out there; we just refuse to ever publish a value
+#    that isn't strictly greater. If the network fetch fails the floor
+#    silently degrades to 0 (back to plain rev-list count), keeping
+#    offline / sandboxed builds working.
+RAW_BUILD_NUMBER=$(git rev-list --count HEAD)
+if [ -z "$RAW_BUILD_NUMBER" ]; then
     echo "Error: could not compute build number from git"
     exit 1
+fi
+
+APPCAST_URL="${APPCAST_URL:-https://blink20.net/appcast.xml}"
+APPCAST_MAX=$(curl -fsSL --max-time 10 "$APPCAST_URL" 2>/dev/null \
+    | grep -oE '<sparkle:version>[0-9]+</sparkle:version>' \
+    | grep -oE '[0-9]+' \
+    | sort -n | tail -1)
+
+if [ -n "$APPCAST_MAX" ] && [ "$APPCAST_MAX" -ge "$RAW_BUILD_NUMBER" ]; then
+    BUILD_NUMBER=$((APPCAST_MAX + 1))
+    echo "→ floored build number: rev-list=$RAW_BUILD_NUMBER, appcast max=$APPCAST_MAX, using $BUILD_NUMBER"
+else
+    BUILD_NUMBER=$RAW_BUILD_NUMBER
+    echo "→ build number: rev-list=$BUILD_NUMBER (appcast max=${APPCAST_MAX:-unreachable})"
 fi
 
 BUILD_DIR="build"
