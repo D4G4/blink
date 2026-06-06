@@ -258,6 +258,42 @@ CHANNEL_LINE=""
 if [ -n "$CHANNEL" ]; then
     CHANNEL_LINE="      <sparkle:channel>${CHANNEL}</sparkle:channel>"
 fi
+
+# Build the description HTML inline from git log between the previous
+# release tag and HEAD. Sparkle's update prompt renders this CDATA as
+# HTML in a WebView, so the user sees the actual changelog without
+# clicking through to GitHub. GitHub's auto-generated release body
+# (which we previously fetched at appcast-publish time) is empty for
+# our beta tags because we don't squash via PRs, so this is the only
+# way to surface real notes.
+#
+# Previous tag: most recent annotated/lightweight tag (excluding the
+# tag we're currently building, which may already exist locally). If
+# there's no previous tag (first release ever), the changelog block
+# is skipped and the description falls back to the link-only blurb.
+PREV_TAG=$(git tag --sort=-v:refname --merged HEAD \
+    | grep -v "^v${VERSION}$" \
+    | head -1 || true)
+
+CHANGELOG_BLOCK=""
+if [ -n "$PREV_TAG" ]; then
+    # Escape HTML special chars in commit subjects (& < >) so messages
+    # like "fix: <T> doesn't render" don't break the HTML structure.
+    # Wrap each non-empty subject in <li>. --no-merges keeps the list
+    # focused on real changes. Plain sed for portability — no python
+    # dependency on the macOS runner.
+    CHANGELOG_LIS=$(git log --no-merges --pretty=format:"%s" "${PREV_TAG}..HEAD" \
+        | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' \
+        | sed -e 's|^|<li>|' -e 's|$|</li>|' \
+        | tr -d '\n')
+    if [ -n "$CHANGELOG_LIS" ]; then
+        CHANGELOG_BLOCK="<h3 style=\"margin-top:0\">Changes since ${PREV_TAG}</h3><ul>${CHANGELOG_LIS}</ul>"
+    fi
+fi
+
+# Compose the full description. Changelog block when we have one,
+# always include the GitHub link as the trailing "more info" footer.
+DESCRIPTION_HTML="${CHANGELOG_BLOCK}<p style=\"margin-bottom:0\">Full release on <a href=\"${RELEASE_NOTES_URL}\">GitHub</a>.</p>"
 APPCAST_ITEM=$(cat <<XML
     <item>
       <title>Blink v${VERSION}</title>
@@ -267,7 +303,7 @@ $CHANNEL_LINE}
       <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <pubDate>${PUBDATE}</pubDate>
-      <description><![CDATA[See <a href="${RELEASE_NOTES_URL}">release notes on GitHub</a>.]]></description>
+      <description><![CDATA[${DESCRIPTION_HTML}]]></description>
       <enclosure url="${DOWNLOAD_URL}"
                  type="application/octet-stream"
                  ${SPARKLE_SIG_LINE} />
