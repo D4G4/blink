@@ -164,17 +164,18 @@ struct SettingsView: View {
             }
 
             settingsSection("Break-End Chime") {
-                settingsItem {
-                    // Single iconified row — the picker IS the on/off control:
-                    // "None" disables the chime, anything else enables and
-                    // auto-previews on selection. Removes the separate toggle
-                    // + Play button that previously crowded this section.
+                // Bell icon lives at the outer-icon level so it centers
+                // vertically between the Sound row and the Volume row
+                // (when chime is enabled). The picker IS the on/off
+                // control — "None" disables, any real chime enables AND
+                // auto-previews on selection.
+                settingsItem(icon: {
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(accentColor)
+                        .symbolRenderingMode(.hierarchical)
+                }) {
                     HStack(spacing: 10) {
-                        Image(systemName: "bell.fill")
-                            .font(.system(size: 17))
-                            .foregroundStyle(accentColor)
-                            .symbolRenderingMode(.hierarchical)
-                            .frame(width: 32, alignment: .center)
                         Text("Sound")
                             .font(.system(size: 15))
                         Spacer()
@@ -189,8 +190,6 @@ struct SettingsView: View {
                     }
                     if chimeEnabled {
                         HStack(spacing: 10) {
-                            // Empty 32pt column so Volume aligns with "Sound" above.
-                            Color.clear.frame(width: 32)
                             Text("Volume")
                                 .font(.system(size: 15))
                             Slider(value: $chimeVolume, in: 0...1)
