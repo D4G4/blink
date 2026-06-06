@@ -175,29 +175,36 @@ struct SettingsView: View {
                         .foregroundStyle(accentColor)
                         .symbolRenderingMode(.hierarchical)
                 }) {
-                    HStack(spacing: 10) {
-                        Text("Sound")
-                            .font(.system(size: 15))
-                        Spacer()
-                        Picker("", selection: chimeSelection) {
-                            Text("None").tag(Self.noneChimeTag)
-                            ForEach(ChimePlayer.Chime.all) { chime in
-                                Text(chime.displayName).tag(chime.id)
-                            }
-                        }
-                        .labelsHidden()
-                        .frame(width: 150)
-                    }
-                    if chimeEnabled {
+                    // Explicit inner VStack with 14pt spacing — the
+                    // settingsItem's default 6pt is fine for toggle +
+                    // caption pairs but feels cramped here where two
+                    // distinct controls (picker, slider) live on
+                    // separate rows.
+                    VStack(alignment: .leading, spacing: 14) {
                         HStack(spacing: 10) {
-                            Text("Volume")
+                            Text("Sound")
                                 .font(.system(size: 15))
-                            Slider(value: $chimeVolume, in: 0...1)
-                                .tint(accentColor)
-                            Text("\(Int(chimeVolume * 100))%")
-                                .font(.system(size: 12, design: .monospaced))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 36, alignment: .trailing)
+                            Spacer()
+                            Picker("", selection: chimeSelection) {
+                                Text("None").tag(Self.noneChimeTag)
+                                ForEach(ChimePlayer.Chime.all) { chime in
+                                    Text(chime.displayName).tag(chime.id)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 150)
+                        }
+                        if chimeEnabled {
+                            HStack(spacing: 10) {
+                                Text("Volume")
+                                    .font(.system(size: 15))
+                                Slider(value: $chimeVolume, in: 0...1)
+                                    .tint(accentColor)
+                                Text("\(Int(chimeVolume * 100))%")
+                                    .font(.system(size: 12, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 36, alignment: .trailing)
+                            }
                         }
                     }
                 }
