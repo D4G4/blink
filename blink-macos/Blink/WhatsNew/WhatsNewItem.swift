@@ -15,6 +15,14 @@ struct WhatsNewItem: Identifiable {
     /// One short paragraph — why it matters or how to use it.
     let body: String
 
+    /// Marketing version this item first shipped in, e.g. "5.1.0". Used by
+    /// `WhatsNewManifest.itemsToShowOnLaunch` to only surface items the user
+    /// hasn't already seen — items where `introducedIn > lastSeen`. Pre-release
+    /// suffixes are stripped during comparison so the same item doesn't replay
+    /// on every beta bump within the same x.y.z (e.g. 5.1.0-beta.5 → 5.1.0-beta.6
+    /// → 5.1.0 all collapse to 5.1.0).
+    let introducedIn: String
+
     /// Optional deep-link callback fired when the user taps the item's
     /// chevron. Use for "Open Settings" / "Try it now" entry points.
     /// nil → no chevron, item renders as static info only.

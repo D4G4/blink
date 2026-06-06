@@ -353,7 +353,7 @@ final class OverlayWindowController {
                                 suggestion: BreakSuggestion = .lookFarAway,
                                 onComplete: @escaping () -> Void,
                                 onSkip: @escaping () -> Void) {
-        Log.i("Fullscreen break overlay: creating window (break #\(breakNumber))")
+        Log.i("Fullscreen break overlay: creating window (break #\(breakNumber), suggestion=\(suggestion.rawValue))")
         guard let screen = NSScreen.main else { return }
 
         // Borderless overlay at .screenSaver level — covers everything instantly.
@@ -393,6 +393,7 @@ final class OverlayWindowController {
         // The five enriched suggestions (with icon + subtitle copy) get
         // 25s so the user actually has time to read the prompt.
         let breakDuration = (suggestion == .lookFarAway) ? 20 : 25
+        Log.i("Break overlay: countdown duration = \(breakDuration)s (suggestion=\(suggestion.rawValue))")
         let breakModel = BreakPhaseModel(duration: breakDuration)
         let breakView = BreakPhaseView(
             theme: theme,
@@ -780,6 +781,14 @@ struct BreakPhaseView: View {
     // even when .onAppear's DispatchQueue.main.async never runs.
     @State private var headerEntered: Bool = false
 
+    // Drives the slow attention pulse on the suggestion title (non-
+    // .lookFarAway only). Defaults false → rest scale is 1.0, so snapshot
+    // tests still capture the title at its natural size. After the
+    // entrance settles we flip it true and the title gently breathes
+    // between 1.0 and 1.035 in an autoreversed easeInOut loop so the
+    // user's eye lands on the call-to-action.
+    @State private var titlePulse: Bool = false
+
     var body: some View {
         let fg = theme.onBackgroundText(for: colorScheme)
         ZStack {
@@ -813,6 +822,11 @@ struct BreakPhaseView: View {
                             .font(.system(size: 24, weight: .medium))
                             .foregroundStyle(fg)
                             .multilineTextAlignment(.center)
+                            .scaleEffect(titlePulse ? 1.035 : 1.0)
+                            .animation(
+                                .easeInOut(duration: 1.3).repeatForever(autoreverses: true),
+                                value: titlePulse
+                            )
 
                         if suggestion != .lookFarAway {
                             Text(suggestion.subtitle)
@@ -902,6 +916,15 @@ struct BreakPhaseView: View {
             // window's own NSAnimationContext fade-in starts.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 headerEntered = true
+            }
+            // Start the title-pulse after the entrance spring settles, and
+            // only for real suggestions — the default "Look at something
+            // far away" deliberately stays still (it doesn't need a
+            // call-to-action nudge).
+            if suggestion != .lookFarAway {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    titlePulse = true
+                }
             }
         }
         .onDisappear { model.stopTimer() }
