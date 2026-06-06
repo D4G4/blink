@@ -53,7 +53,11 @@ struct WhatsNewView: View {
     }
 
     private func itemRow(_ item: WhatsNewItem, accent: Color) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+        // When the item has an openAction, wrap the entire row in a Button
+        // so the whole card is tappable — the chevron alone is too small a
+        // target and people naturally tap the title. .contentShape ensures
+        // the empty space inside the row counts as part of the hit area.
+        let row = HStack(alignment: .top, spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(accent.opacity(0.14))
@@ -75,23 +79,31 @@ struct WhatsNewView: View {
 
             Spacer(minLength: 0)
 
-            if let action = item.openAction {
-                Button {
-                    onOpenAction(action)
-                } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
+            if item.openAction != nil {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 4)
             }
         }
         .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.secondary.opacity(0.06))
         )
+        .contentShape(Rectangle())
+
+        if let action = item.openAction {
+            return AnyView(
+                Button {
+                    onOpenAction(action)
+                } label: { row }
+                .buttonStyle(.plain)
+            )
+        } else {
+            return AnyView(row)
+        }
     }
 
     private func footerBar(accent: Color) -> some View {
