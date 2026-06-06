@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import BlinkCore
 
 /// Manages the break overlay flow:
 /// 1. Mini toast in bottom-right (3s heads-up)
@@ -22,17 +23,21 @@ final class OverlayWindowController {
         : ThemeManager.shared.current
     }
     
-    func showBreak(breakNumber: Int = 0, skipToast: Bool = false, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
+    func showBreak(breakNumber: Int = 0,
+                   suggestion: BreakSuggestion = .lookFarAway,
+                   skipToast: Bool = false,
+                   onComplete: @escaping () -> Void,
+                   onSkip: @escaping () -> Void) {
         if skipToast {
             // Manual trigger — go directly to break timer without toast
-            Log.i("Break overlay: skipping toast, showing fullscreen directly (break #\(breakNumber))")
-            showBreakTimer(breakNumber: breakNumber, onComplete: onComplete, onSkip: onSkip)
+            Log.i("Break overlay: skipping toast, showing fullscreen directly (break #\(breakNumber), suggestion=\(suggestion.rawValue))")
+            showBreakTimer(breakNumber: breakNumber, suggestion: suggestion, onComplete: onComplete, onSkip: onSkip)
         } else {
             // Automatic trigger — show toast first
-            Log.i("Break overlay: showing 3s toast before fullscreen (break #\(breakNumber))")
+            Log.i("Break overlay: showing 3s toast before fullscreen (break #\(breakNumber), suggestion=\(suggestion.rawValue))")
             showToast(onToastDone: { [weak self] in
                 self?.dismissToast()
-                self?.showBreakTimer(breakNumber: breakNumber, onComplete: onComplete, onSkip: onSkip)
+                self?.showBreakTimer(breakNumber: breakNumber, suggestion: suggestion, onComplete: onComplete, onSkip: onSkip)
             })
         }
     }
@@ -344,7 +349,10 @@ final class OverlayWindowController {
     
     // MARK: - Fullscreen break timer
     
-    private func showBreakTimer(breakNumber: Int = 0, onComplete: @escaping () -> Void, onSkip: @escaping () -> Void) {
+    private func showBreakTimer(breakNumber: Int = 0,
+                                suggestion: BreakSuggestion = .lookFarAway,
+                                onComplete: @escaping () -> Void,
+                                onSkip: @escaping () -> Void) {
         Log.i("Fullscreen break overlay: creating window (break #\(breakNumber))")
         guard let screen = NSScreen.main else { return }
 
@@ -381,11 +389,15 @@ final class OverlayWindowController {
             onSkip()
         }
 
-        let breakModel = BreakPhaseModel()
+        // Default eye-rest keeps the canonical 20-20-20 second window.
+        // The five enriched suggestions (with icon + subtitle copy) get
+        // 25s so the user actually has time to read the prompt.
+        let breakDuration = (suggestion == .lookFarAway) ? 20 : 25
+        let breakModel = BreakPhaseModel(duration: breakDuration)
         let breakView = BreakPhaseView(
             theme: theme,
             model: breakModel,
-            showWalkSuggestion: breakNumber >= 4,
+            suggestion: suggestion,
             onDismiss: { [weak self] in
                 // Kill-switch: try normal dismiss, then nuke if still alive
                 Log.i("Break overlay: X button (kill-switch) tapped")
@@ -686,15 +698,24 @@ struct CountdownPhaseView: View {
 // MARK: - Break phase model (shared with key handler)
 
 final class BreakPhaseModel: ObservableObject {
-    @Published var remaining: Int = 20
-    @Published var total: Int = 20
+    @Published var remaining: Int
+    @Published var total: Int
     @Published var showExtendHint: Bool = false
     var timer: Timer?
 
     /// Wall-clock timestamp when the countdown started (for surviving sleep).
     private var countdownStartDate: Date?
     /// Total seconds that were on the clock at start (adjusted for extends).
-    private var countdownStartTotal: Int = 20
+    private var countdownStartTotal: Int
+
+    /// `duration` defaults to the 20-20-20 rule's 20s. Caller may pass a
+    /// longer duration (e.g. 25s) when the break overlay shows a
+    /// suggestion subtitle the user needs time to read.
+    init(duration: Int = 20) {
+        self.remaining = duration
+        self.total = duration
+        self.countdownStartTotal = duration
+    }
 
     deinit {
         stopTimer()
@@ -746,11 +767,18 @@ final class BreakPhaseModel: ObservableObject {
 struct BreakPhaseView: View {
     let theme: BlinkTheme
     @ObservedObject var model: BreakPhaseModel
-    var showWalkSuggestion: Bool = false
+    var suggestion: BreakSuggestion = .lookFarAway
     var onDismiss: (() -> Void)?
     let onComplete: () -> Void
     let onSkip: () -> Void
     @Environment(\.colorScheme) private var colorScheme
+
+    // Drives the entrance animation. Defaults false; flipped true in
+    // .onAppear. Crucially, only `scaleEffect` and SF Symbol bounce are
+    // gated on this — opacity stays at 1 at rest so synchronous renders
+    // (ImageRenderer / snapshot tests) capture a fully-visible header
+    // even when .onAppear's DispatchQueue.main.async never runs.
+    @State private var headerEntered: Bool = false
 
     var body: some View {
         let fg = theme.onBackgroundText(for: colorScheme)
@@ -760,23 +788,45 @@ struct BreakPhaseView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Title row with 20ft badge
+                // Suggestion header — icon, title, short subtitle.
+                // Replaces the old fixed "Look at something far away" copy;
+                // the actual suggestion is chosen by BreakSuggestionPicker
+                // from flow + sedentary + time-of-day + recent compliance.
                 HStack {
                     Spacer()
-                    VStack(spacing: 6) {
-                        Text("Look at something far away")
+                    VStack(spacing: 10) {
+                        // The default eye-rest suggestion keeps the
+                        // original minimal design: title only, no icon
+                        // or subtitle. The other 5 suggestions get the
+                        // full icon + title + subtitle treatment because
+                        // they're calls-to-action (drink, walk, breathe…)
+                        // where the icon adds quick visual semantics.
+                        if suggestion != .lookFarAway {
+                            Image(systemName: suggestion.iconName)
+                                .font(.system(size: 32, weight: .light))
+                                .foregroundStyle(fg)
+                                .symbolRenderingMode(.hierarchical)
+                                .symbolEffect(.bounce, options: .nonRepeating, value: headerEntered)
+                        }
+
+                        Text(suggestion.title)
                             .font(.system(size: 24, weight: .medium))
                             .foregroundStyle(fg)
-                        if showWalkSuggestion {
-                            HStack(spacing: 6) {
-                                Image(systemName: "figure.walk")
-                                    .font(.system(size: 13))
-                                Text("You've taken 4+ breaks — consider a quick walk!")
-                                    .font(.system(size: 14, weight: .medium))
-                            }
-                            .foregroundStyle(fg)
+                            .multilineTextAlignment(.center)
+
+                        if suggestion != .lookFarAway {
+                            Text(suggestion.subtitle)
+                                .font(.system(size: 13))
+                                .foregroundStyle(fg.opacity(0.75))
+                                .multilineTextAlignment(.center)
                         }
                     }
+                    // scaleEffect is the only entrance-gated property —
+                    // a 0.96 → 1.0 spring on appear. At rest (snapshot
+                    // pass) the header renders at 0.96× scale, fully
+                    // visible. Opacity is never touched.
+                    .scaleEffect(headerEntered ? 1.0 : 0.96)
+                    .animation(.spring(duration: 0.55, bounce: 0.25), value: headerEntered)
                     Spacer()
                 }
                 .padding(.top, 80)
@@ -846,7 +896,14 @@ struct BreakPhaseView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
         }
-        .onAppear { model.startTimer(onComplete: onComplete) }
+        .onAppear {
+            model.startTimer(onComplete: onComplete)
+            // Trigger the scale-spring + icon bounce a beat after the
+            // window's own NSAnimationContext fade-in starts.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                headerEntered = true
+            }
+        }
         .onDisappear { model.stopTimer() }
     }
 }
@@ -963,18 +1020,23 @@ private struct DebugToastView: View {
         .frame(width: 600, height: 400)
 }
 
-#Preview("Break Timer - Peach") {
+#Preview("Break Timer - Peach (default)") {
     BreakPhaseView(theme: .peach, model: BreakPhaseModel(), onComplete: {}, onSkip: {})
         .frame(width: 600, height: 500)
 }
 
-#Preview("Break Timer - Midnight") {
-    BreakPhaseView(theme: .midnight, model: BreakPhaseModel(), onComplete: {}, onSkip: {})
+#Preview("Break Timer - Midnight (breathe)") {
+    BreakPhaseView(theme: .midnight, model: BreakPhaseModel(), suggestion: .breathe, onComplete: {}, onSkip: {})
         .frame(width: 600, height: 500)
 }
 
-#Preview("Break Timer - Sage") {
-    BreakPhaseView(theme: .sage, model: BreakPhaseModel(), onComplete: {}, onSkip: {})
+#Preview("Break Timer - Sage (walk)") {
+    BreakPhaseView(theme: .sage, model: BreakPhaseModel(), suggestion: .takeAWalk, onComplete: {}, onSkip: {})
+        .frame(width: 600, height: 500)
+}
+
+#Preview("Break Timer - Sand (touch grass)") {
+    BreakPhaseView(theme: .sand, model: BreakPhaseModel(), suggestion: .touchGrass, onComplete: {}, onSkip: {})
         .frame(width: 600, height: 500)
 }
 

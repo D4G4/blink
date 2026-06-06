@@ -14,6 +14,38 @@ struct SettingsView: View {
     @AppStorage("chimeEnabled") private var chimeEnabled: Bool = true
     @AppStorage("chimeID") private var chimeID: String = ChimePlayer.defaultChimeID
     @AppStorage("chimeVolume") private var chimeVolume: Double = ChimePlayer.defaultVolume
+    @AppStorage("breakSuggestionsEnabled") private var breakSuggestionsEnabled: Bool = true
+    @AppStorage(BlinkUpdater.betaChannelKey) private var betaChannelEnabled: Bool = false
+
+    @State private var showSuggestionsHelp: Bool = false
+    @State private var debugExpanded: Bool = false
+
+    /// Sentinel value for the "None" entry in the chime picker. Selecting it
+    /// flips `chimeEnabled` to false; selecting any real chime flips it true
+    /// AND fires a preview so the user hears what they picked. Stored
+    /// separately from `chimeID` so toggling None then back to the previous
+    /// chime preserves the prior selection.
+    static let noneChimeTag: String = "__none__"
+
+    /// Bridges the picker (which is a single `String` selection across
+    /// None + real chimes) to the two underlying defaults
+    /// (`chimeEnabled` + `chimeID`). On set: None disables, anything else
+    /// enables and previews.
+    private var chimeSelection: Binding<String> {
+        Binding(
+            get: { chimeEnabled ? chimeID : Self.noneChimeTag },
+            set: { newValue in
+                if newValue == Self.noneChimeTag {
+                    chimeEnabled = false
+                } else {
+                    chimeEnabled = true
+                    chimeID = newValue
+                    UIActionLogger.settingChanged("chimeID", value: newValue)
+                    ChimePlayer.shared.play(id: newValue, volume: chimeVolume)
+                }
+            }
+        )
+    }
     
     @Environment(\.colorScheme) private var colorScheme
     private var theme: BlinkTheme { themeManager.current }
@@ -55,7 +87,13 @@ struct SettingsView: View {
                 .padding(20)
             }
         }
-        .frame(width: 440, height: 440)
+        // Width locked to 440 (the design target); height fills the
+        // hosting window so the ScrollView has as much room as available.
+        // Previously height was also pinned to 440, which left wasted
+        // space in the actual prefs window (520×450) and broke snapshots
+        // that wanted to render the General tab end-to-end with icons.
+        .frame(width: 440)
+        .frame(maxHeight: .infinity)
         .tint(accentColor)
     }
     
@@ -92,93 +130,195 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 20) {
 
             settingsSection("Menu Bar") {
-                settingsToggle("Show countdown timer", isOn: $showTimerInMenuBar)
+                settingsItem {
+                    settingsToggleWithIcon(
+                        "Show countdown timer",
+                        icon: {
+                            CountdownTimerIcon(accent: accentColor, foreground: .primary)
+                        },
+                        isOn: $showTimerInMenuBar
+                    )
+                }
             }
-            
+
             settingsSection("Break Screen") {
-                settingsToggle("Use dark overlay", isOn: $useDarkOverlay)
-                settingsCaption("Pure black background instead of themed colors")
+                settingsItem {
+                    settingsToggleWithIcon(
+                        "Use dark overlay",
+                        icon: {
+                            DarkOverlayIcon(accent: accentColor, foreground: .primary)
+                        },
+                        isOn: $useDarkOverlay
+                    )
+                    settingsCaption("Pure black background instead of themed colors")
+                }
+
+                settingsItem {
+                    SmartSuggestionsSettingControls(
+                        theme: theme,
+                        accentColor: accentColor,
+                        isOn: $breakSuggestionsEnabled,
+                        showHelp: $showSuggestionsHelp
+                    )
+                }
             }
 
             settingsSection("Break-End Chime") {
-                settingsToggle("Play chime when break ends", isOn: $chimeEnabled)
-                if chimeEnabled {
-                    settingsRow("Sound") {
-                        HStack(spacing: 8) {
-                            Picker("", selection: $chimeID) {
+                settingsItem {
+                    // The picker IS the on/off control — "None" disables,
+                    // any real chime enables AND auto-previews on selection.
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "bell.fill")
+                                .font(.system(size: 17))
+                                .foregroundStyle(accentColor)
+                                .symbolRenderingMode(.hierarchical)
+                                .frame(width: 32, alignment: .center)
+                            Text("Sound")
+                                .font(.system(size: 15))
+                            Spacer()
+                            Picker("", selection: chimeSelection) {
+                                Text("None").tag(Self.noneChimeTag)
                                 ForEach(ChimePlayer.Chime.all) { chime in
                                     Text(chime.displayName).tag(chime.id)
                                 }
                             }
                             .labelsHidden()
-                            .frame(width: 170)
-                            Button {
-                                UIActionLogger.buttonTapped("Preview Chime", context: chimeID)
-                                ChimePlayer.shared.play(id: chimeID, volume: chimeVolume)
-                            } label: {
-                                Image(systemName: "play.circle.fill")
-                                    .font(.system(size: 18))
-                                    .foregroundStyle(accentColor)
-                            }
-                            .buttonStyle(.plain)
-                            .help("Preview")
+                            .frame(width: 150)
                         }
-                    }
-                    settingsRow("Volume") {
-                        HStack {
-                            Slider(value: $chimeVolume, in: 0...1)
-                                .tint(accentColor)
-                            Text("\(Int(chimeVolume * 100))%")
-                                .font(.system(size: 13, design: .monospaced))
-                                .frame(width: 50)
+                        if chimeEnabled {
+                            HStack(spacing: 10) {
+                                // Empty 32pt column so Volume aligns with "Sound" above.
+                                Color.clear.frame(width: 32)
+                                Text("Volume")
+                                    .font(.system(size: 15))
+                                Slider(value: $chimeVolume, in: 0...1)
+                                    .tint(accentColor)
+                                Text("\(Int(chimeVolume * 100))%")
+                                    .font(.system(size: 12, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 36, alignment: .trailing)
+                            }
                         }
                     }
                 }
             }
 
             settingsSection("Mic Detection") {
-                settingsToggle("Pause timer during calls", isOn: $pauseDuringCalls)
-                settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
-            }
-            
-            settingsSection("Timer") {
-                settingsRow("Base interval") {
-                    HStack {
-                        Slider(value: $baseInterval, in: 10...45, step: 5)
-                            .tint(accentColor)
-                        Text("\(Int(baseInterval)) min")
-                            .font(.system(size: 13, design: .monospaced))
-                            .frame(width: 50)
-                    }
+                settingsItem {
+                    settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
+                    settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
                 }
             }
-            
+
+            settingsSection("Timer") {
+                settingsItem {
+                // Hand-rolled HStack instead of settingsRow because
+                // settingsRow uses .top alignment with a 4pt label inset,
+                // which mis-aligned the clock icon, "Base interval" label,
+                // and the slider relative to each other. Plain .center
+                // HStack lines everything up on its midpoint.
+                HStack(spacing: 10) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(accentColor)
+                        .symbolRenderingMode(.hierarchical)
+                        .frame(width: 32, alignment: .center)
+                    Text("Base interval")
+                        .font(.system(size: 15))
+                    Slider(value: $baseInterval, in: 10...45, step: 5)
+                        .tint(accentColor)
+                    Text("\(Int(baseInterval)) min")
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 50, alignment: .trailing)
+                }
+                }
+            }
+
             settingsSection("System") {
-                settingsToggle("Launch at login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, newValue in
-                        UIActionLogger.settingChanged("launchAtLogin", value: "\(newValue)")
-                        updateLaunchAtLogin(newValue)
-                    }
-                
-                settingsToggle("Debug notifications", isOn: $appState.debugNotifications)
-                settingsCaption("Show toasts for timer resets, state changes, and idle detection")
-                
+                settingsItem {
+                    settingsToggleWithIcon("Launch at login", systemImage: "power.circle.fill", isOn: $launchAtLogin)
+                        .onChange(of: launchAtLogin) { _, newValue in
+                            UIActionLogger.settingChanged("launchAtLogin", value: "\(newValue)")
+                            updateLaunchAtLogin(newValue)
+                        }
+                }
+
+                settingsItem {
+                    settingsToggleWithIcon("Receive beta updates", systemImage: "flask.fill", isOn: $betaChannelEnabled)
+                    settingsCaption("Get new features before everyone else. Beta builds may be less stable; you can switch off any time to roll back to the next stable release.")
+                }
+
+                // Check for Updates as a primary call-to-action — full
+                // width, accent-coloured, more discoverable than the
+                // previous flat link.
                 Button {
                     UIActionLogger.buttonTapped("Check for Updates")
                     BlinkUpdater.shared.checkForUpdates()
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 11))
+                            .font(.system(size: 13, weight: .medium))
                         Text("Check for Updates")
-                            .font(.system(size: 12))
+                            .font(.system(size: 13, weight: .semibold))
                     }
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(accentColor)
+                    )
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 4)
-                
-                Button {
+                .padding(.top, 2)
+
+                // Debug section — collapsible. Houses the dev/diagnostic
+                // controls (toast notifications, log files, onboarding
+                // reset) that most users won't touch. Defaults collapsed
+                // so the bottom of the General tab stays clean.
+                debugDisclosure
+            }
+        }
+    }
+
+    // MARK: - Debug disclosure (System section)
+
+    /// Collapsible "Debug" group at the bottom of System. Houses the
+    /// diagnostic controls (debug toasts, log files, onboarding reset)
+    /// most users never touch. Defaults closed so the General tab's
+    /// foot stays clean.
+    private var debugDisclosure: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.18)) {
+                    debugExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(debugExpanded ? 90 : 0))
+                    Text("Debug")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 4)
+            .padding(.top, 6)
+
+            if debugExpanded {
+                settingsItem {
+                    settingsToggleWithIcon("Debug notifications", systemImage: "ant.fill", isOn: $appState.debugNotifications)
+                    settingsCaption("Show toasts for timer resets, state changes, and idle detection")
+                }
+
+                debugActionButton(label: "Restart Onboarding", systemImage: "arrow.counterclockwise") {
                     UIActionLogger.buttonTapped("Restart Onboarding")
                     themeManager.hasCompletedOnboarding = false
                     let path = Bundle.main.bundleURL.absoluteString
@@ -187,36 +327,42 @@ struct SettingsView: View {
                     task.arguments = [path]
                     task.launch()
                     NSApp.terminate(nil)
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.counterclockwise")
-                            .font(.system(size: 11))
-                        Text("Restart Onboarding")
-                            .font(.system(size: 12))
-                    }
-                    .foregroundStyle(accentColor)
                 }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
-                
-                Button {
+
+                debugActionButton(label: "Open Log Files", systemImage: "folder") {
                     UIActionLogger.buttonTapped("Open Log Files")
                     LogExporter.revealInFinder()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "folder")
-                            .font(.system(size: 11))
-                        Text("Open Log Files")
-                            .font(.system(size: 12))
-                    }
-                    .foregroundStyle(accentColor)
                 }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
             }
         }
     }
-    
+
+    /// Secondary-style button used for Restart Onboarding + Open Log Files
+    /// inside the debug disclosure. Lower visual weight than the primary
+    /// Check for Updates button above the disclosure, matching their
+    /// diagnostic-utility role.
+    private func debugActionButton(label: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 12))
+                Text(label)
+                    .font(.system(size: 13))
+                Spacer()
+            }
+            .foregroundStyle(accentColor)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.secondary.opacity(0.06))
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Theme
     
     private var themeContent: some View {
@@ -499,20 +645,87 @@ struct SettingsView: View {
     // MARK: - Reusable Components
     
     private func settingsSection(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+        // Title outside the card group. Inner VStack collects per-setting
+        // cards (one per `settingsItem` call) so each setting gets its
+        // own visual container — easier to scan than a single card
+        // lumping several unrelated toggles together. Spacing 8pt
+        // between cards is tight enough to read as "same section" but
+        // open enough that each item feels distinct.
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(accentColor)
                 .padding(.leading, 4)
-            
-            VStack(alignment: .leading, spacing: 12) {
+
+            VStack(alignment: .leading, spacing: 8) {
                 content()
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
         }
+    }
+
+    /// Wraps a single setting's controls (toggle + optional caption +
+    /// optional Learn more) in a subtle card. Sections that show
+    /// multiple unrelated settings call this once per setting so each
+    /// gets its own card; action links that shouldn't read as
+    /// settings (Check for Updates, Restart Onboarding) skip this and
+    /// sit flat.
+    private func settingsItem<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            content()
+        }
+        // 12pt horizontal breathing room so icons (especially the
+        // hand-rolled CountdownTimerIcon / DarkOverlayIcon that fill
+        // their 32pt frame) aren't flush against the card edge, and the
+        // toggle on the right side has room before the trailing edge.
+        // Intentionally breaks the title↔icon left alignment — title
+        // stays at .leading(4) on the section, content sits 8pt inward.
+        .padding(.horizontal, 12)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.secondary.opacity(0.06))
+        )
+    }
+
+    /// Variant with the icon at the outer level — it sits in its own
+    /// 32pt-wide leading column, vertically centered with the entire
+    /// content VStack. Use when a row has both a toggle AND a caption
+    /// (and maybe more): the previous pattern locked the icon next to
+    /// the toggle via `settingsToggleWithIcon`, leaving the icon at the
+    /// top edge while the caption hung below it. With the icon at this
+    /// level, it centers between the top of the toggle and the bottom
+    /// of the caption automatically.
+    private func settingsItem<Icon: View, Content: View>(
+        @ViewBuilder icon: () -> Icon,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            icon()
+                .frame(width: 32, alignment: .center)
+            VStack(alignment: .leading, spacing: 6) {
+                content()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.secondary.opacity(0.06))
+        )
+    }
+
+    /// Caption styled for use inside an outer-icon settingsItem. No
+    /// leading indent — the parent HStack's icon column already shifts
+    /// the content VStack to the right of the icon, so the caption
+    /// naturally sits under the toggle label.
+    private func settingsCaptionFlat(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13))
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
     
     private func settingsRow(_ label: String, @ViewBuilder content: () -> some View) -> some View {
@@ -531,6 +744,38 @@ struct SettingsView: View {
             .toggleStyle(ThemedToggleStyle(theme: theme))
     }
 
+    /// Toggle with a leading icon column. `icon` can be any View — an
+    /// SF Symbol via `Image(systemName:)` or a hand-rolled SwiftUI icon
+    /// (see `SettingIcons.swift`). The icon column is a fixed 32pt wide
+    /// so labels align across rows regardless of glyph aspect.
+    private func settingsToggleWithIcon<Icon: View>(
+        _ label: String,
+        @ViewBuilder icon: () -> Icon,
+        isOn: Binding<Bool>
+    ) -> some View {
+        HStack(spacing: 10) {
+            icon()
+                .frame(width: 32, alignment: .center)
+            Toggle(label, isOn: isOn)
+                .font(.system(size: 15))
+                .toggleStyle(ThemedToggleStyle(theme: theme))
+        }
+    }
+
+    /// Convenience for the common SF Symbol case — keeps call sites short.
+    private func settingsToggleWithIcon(
+        _ label: String,
+        systemImage: String,
+        isOn: Binding<Bool>
+    ) -> some View {
+        settingsToggleWithIcon(label, icon: {
+            Image(systemName: systemImage)
+                .font(.system(size: 17))
+                .foregroundStyle(accentColor)
+                .symbolRenderingMode(.hierarchical)
+        }, isOn: isOn)
+    }
+
     /// Caption text shown under toggles / rows. Sized + colored for
     /// readability — the previous combination (`size: 11` +
     /// `.tertiary`) was painful to read on white backgrounds, and the
@@ -540,7 +785,11 @@ struct SettingsView: View {
             .font(.system(size: 13))
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.leading, 4)
+            // 42pt = 32pt icon column + 10pt spacing. Captions sit under
+            // iconified toggles and align with the toggle's label, not
+            // the icon. The General tab now uses icons on every row, so
+            // captions get the same indent uniformly.
+            .padding(.leading, 42)
     }
     
     private func stateRow(_ label: String, value: String) -> some View {

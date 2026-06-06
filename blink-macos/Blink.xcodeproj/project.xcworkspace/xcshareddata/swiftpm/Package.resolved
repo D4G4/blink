@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/D4G4/blink-core.git",
       "state" : {
-        "revision" : "9c77e528149c42364893f70a7f8e0497e5c9e75a",
-        "version" : "2.7.0"
+        "revision" : "01d60f14407ac5e375fb185a1ea6e430328a29d6",
+        "version" : "2.8.0"
       }
     },
     {

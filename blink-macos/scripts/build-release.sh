@@ -3,6 +3,26 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Parse args.
+# --channel <name>: emit <sparkle:channel>name</sparkle:channel> in the
+#   printed <item> block so the appcast routes this release only to users
+#   who opted into that channel. Omitted = stable (no channel tag, visible
+#   to everyone).
+CHANNEL=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --channel)
+            CHANNEL="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            echo "Usage: $0 [--channel <name>]"
+            exit 1
+            ;;
+    esac
+done
+
 # Read version from project.yml — match the assignment line specifically
 # ("MARKETING_VERSION:" with a colon) so we don't also catch the
 # CFBundleShortVersionString: $(MARKETING_VERSION) substitution line.
@@ -228,15 +248,62 @@ RELEASE_NOTES_URL="https://github.com/D4G4/blink/releases/tag/v${VERSION}"
 # via wrangler, and pasting into the XML by hand keeps a single point
 # of human review before users on every installed version receive the
 # update broadcast. Print the snippet ready to paste.
+#
+# Channel routing: when --channel was passed, inject a
+# <sparkle:channel> element so the item only reaches users whose
+# updaters have opted into that channel (BlinkUpdater's
+# allowedChannels(for:) delegate). Stable items omit the channel tag
+# and reach everyone.
+CHANNEL_LINE=""
+if [ -n "$CHANNEL" ]; then
+    CHANNEL_LINE="      <sparkle:channel>${CHANNEL}</sparkle:channel>"
+fi
+
+# Build the description HTML inline from git log between the previous
+# release tag and HEAD. Sparkle's update prompt renders this CDATA as
+# HTML in a WebView, so the user sees the actual changelog without
+# clicking through to GitHub. GitHub's auto-generated release body
+# (which we previously fetched at appcast-publish time) is empty for
+# our beta tags because we don't squash via PRs, so this is the only
+# way to surface real notes.
+#
+# Previous tag: most recent annotated/lightweight tag (excluding the
+# tag we're currently building, which may already exist locally). If
+# there's no previous tag (first release ever), the changelog block
+# is skipped and the description falls back to the link-only blurb.
+PREV_TAG=$(git tag --sort=-v:refname --merged HEAD \
+    | grep -v "^v${VERSION}$" \
+    | head -1 || true)
+
+CHANGELOG_BLOCK=""
+if [ -n "$PREV_TAG" ]; then
+    # Escape HTML special chars in commit subjects (& < >) so messages
+    # like "fix: <T> doesn't render" don't break the HTML structure.
+    # Wrap each non-empty subject in <li>. --no-merges keeps the list
+    # focused on real changes. Plain sed for portability — no python
+    # dependency on the macOS runner.
+    CHANGELOG_LIS=$(git log --no-merges --pretty=format:"%s" "${PREV_TAG}..HEAD" \
+        | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' \
+        | sed -e 's|^|<li>|' -e 's|$|</li>|' \
+        | tr -d '\n')
+    if [ -n "$CHANGELOG_LIS" ]; then
+        CHANGELOG_BLOCK="<h3 style=\"margin-top:0\">Changes since ${PREV_TAG}</h3><ul>${CHANGELOG_LIS}</ul>"
+    fi
+fi
+
+# Compose the full description. Changelog block when we have one,
+# always include the GitHub link as the trailing "more info" footer.
+DESCRIPTION_HTML="${CHANGELOG_BLOCK}<p style=\"margin-bottom:0\">Full release on <a href=\"${RELEASE_NOTES_URL}\">GitHub</a>.</p>"
 APPCAST_ITEM=$(cat <<XML
     <item>
       <title>Blink v${VERSION}</title>
-      <link>${RELEASE_NOTES_URL}</link>
+      <link>${RELEASE_NOTES_URL}</link>${CHANNEL_LINE:+
+$CHANNEL_LINE}
       <sparkle:version>$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$EXPORT_DIR/Blink.app/Contents/Info.plist")</sparkle:version>
       <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <pubDate>${PUBDATE}</pubDate>
-      <description><![CDATA[See <a href="${RELEASE_NOTES_URL}">release notes on GitHub</a>.]]></description>
+      <description><![CDATA[${DESCRIPTION_HTML}]]></description>
       <enclosure url="${DOWNLOAD_URL}"
                  type="application/octet-stream"
                  ${SPARKLE_SIG_LINE} />

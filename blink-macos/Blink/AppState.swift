@@ -30,6 +30,7 @@ final class AppState: ObservableObject {
     private var permissionFlow: PermissionFlowWindowController?
     private var launchHUD: LaunchHUDWindowController?
     private var simpleModeAnnouncement: SimpleModeAnnouncementWindowController?
+    private var whatsNewController: WhatsNewWindowController?
 
     // NSWorkspace sleep/wake observer tokens. Stashed so teardownMonitoring()
     // can remove them on detection-mode hot-swap — otherwise every swap
@@ -54,6 +55,22 @@ final class AppState: ObservableObject {
 
     // Day tracking — reset break counters at midnight
     private var lastStatsDay: Int = Calendar.current.component(.day, from: Date())
+
+    // Sedentary tracking — wall-clock since the user was last continuously
+    // idle for sedentaryResetThreshold seconds (i.e. since they actually
+    // got up). Feeds BreakSuggestionPicker. Initialized at launch so a freshly
+    // launched user looks "just got back to the desk" rather than instantly
+    // sedentary.
+    private var lastMovementAt: Date = Date()
+    private var wasIdleLastTick: Bool = false
+    /// Min idle (seconds) that counts as "they got up". Matches the
+    /// 90s idleBreakThreshold elsewhere in the codebase plus 30s slack.
+    private static let sedentaryResetThreshold: TimeInterval = 120
+
+    // Last suggestion shown — used by BreakSuggestionPicker's novelty filter
+    // to avoid two identical suggestions back-to-back. In-memory only;
+    // resetting on app restart is fine.
+    private var lastBreakSuggestion: BreakSuggestion?
 
     // Break overlay
     private let overlayController = OverlayWindowController()
@@ -144,17 +161,19 @@ final class AppState: ObservableObject {
             // Don't show overlay, don't record a break, don't reset the timer.
             // The engine tick is already suppressed by isUserAway, but this is
             // defense-in-depth in case a break was pending before sleep.
-            if self.isUserAway {
+            if isUserAway {
                 Log.i("Break due but user is away — suppressing (no overlay, no recording)")
                 return
             }
 
             Log.i("Break #\(breakNumber) — showing overlay")
-            self.isBreakPrompted = true
-            self.overlayShownAt = Date()
-            self.breaksPromptedToday += 1
-            self.overlayController.showBreak(
+            isBreakPrompted = true
+            overlayShownAt = Date()
+            breaksPromptedToday += 1
+            let suggestion = pickBreakSuggestion()
+            overlayController.showBreak(
                 breakNumber: breakNumber,
+                suggestion: suggestion,
                 onComplete: { [weak self] in
                     Task { @MainActor in
                         Log.i("Break completed (countdown finished)")
@@ -181,7 +200,7 @@ final class AppState: ObservableObject {
         engine.onShowExtendToast = { [weak self] reason in
             guard let self else { return }
             Log.i("Break decision: extend — \(reason)")
-            self.overlayController.showFlowNudge(
+            overlayController.showFlowNudge(
                 message: "\(reason) — extended 10 min",
                 // e.g. "Focused — extended 10 min"
                 onTakeBreak: { [weak self] in
@@ -194,17 +213,18 @@ final class AppState: ObservableObject {
         }
 
         engine.onTimerUpdate = { [weak self] remaining, total in
-            self?.remainingSeconds = remaining
-            self?.timerTotal = total
+            guard let self else { return }
+            remainingSeconds = remaining
+            timerTotal = total
         }
 
         engine.onStateChange = { [weak self] state in
             guard let self else { return }
-            let prev = self.displayState
+            let prev = displayState
             if prev != state {
                 Log.i("Engine state: \(prev) → \(state)")
             }
-            self.displayState = state
+            displayState = state
         }
 
         engine.compliance.onBreakRecorded = { [weak self] record in
@@ -502,6 +522,7 @@ final class AppState: ObservableObject {
         if announceLaunch { showLaunchHUD() }
         Log.i("Monitors and timers started")
         verifyTapAliveOrReprompt()
+        maybeShowWhatsNew()
     }
 
     /// Persists Simple-mode opt-in and (re)starts the runtime in Simple mode.
@@ -723,6 +744,21 @@ final class AppState: ObservableObject {
                     self.micAlwaysOnWarning = false
                 }
 
+                // Sedentary tracking — detect the rising edge from
+                // "idle ≥ threshold" back to "active again", which is when
+                // the user has actually returned to the desk. Reset baseline
+                // then so BreakSuggestionPicker.sedentarySeconds counts from
+                // that moment forward. CGEventSource.secondsSinceLastEventType
+                // (hidSystemState) needs no permission — works in Simple mode too.
+                let keyIdle = CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .keyDown)
+                let clickIdle = CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .leftMouseDown)
+                let minIdle = min(keyIdle, clickIdle)
+                let isIdleNow = minIdle >= Self.sedentaryResetThreshold
+                if self.wasIdleLastTick && !isIdleNow {
+                    self.lastMovementAt = Date()
+                }
+                self.wasIdleLastTick = isIdleNow
+
                 // Tap health check + fallback polling
                 self.inputMonitor?.reEnableTapIfNeeded()
                 if self.inputMonitor?.isTapAlive != true {
@@ -891,6 +927,33 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Show the What's New window if this launch is the first on a new
+    /// version. Deferred ~1.8s so it lands after the launch HUD's own
+    /// settle — otherwise both windows compete for focus simultaneously.
+    /// `WhatsNewManifest.itemsToShowOnLaunch()` owns the actual decision
+    /// + bookkeeping; nil = don't show (brand-new install, same version,
+    /// or empty manifest).
+    private func maybeShowWhatsNew() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
+            guard let self else { return }
+            guard let items = WhatsNewManifest.itemsToShowOnLaunch() else { return }
+            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+            Log.i("Showing What's New window for v\(version) with \(items.count) item(s)")
+            whatsNewController = WhatsNewWindowController()
+            whatsNewController?.show(
+                theme: ThemeManager.shared.current,
+                version: version,
+                items: items,
+                onOpenAction: { [weak self] action in
+                    switch action {
+                    case .preferences(let tab):
+                        self?.openPreferences(initialTab: tab)
+                    }
+                }
+            )
+        }
+    }
+
     /// Opens the Preferences window. Called from the launch HUD tap so
     /// the user has somewhere obvious to land if they can't find the menu
     /// bar icon. `initialTab` deep-links to a tab (0=General, 1=Theme,
@@ -913,8 +976,10 @@ final class AppState: ObservableObject {
         isBreakPrompted = true
         overlayShownAt = Date()
         breaksPromptedToday += 1
+        let suggestion = pickBreakSuggestion()
         overlayController.showBreak(
             breakNumber: breakNum,
+            suggestion: suggestion,
             skipToast: true,
             onComplete: { [weak self] in
                 Task { @MainActor in
@@ -950,6 +1015,54 @@ final class AppState: ObservableObject {
         let volume = (defaults.object(forKey: "chimeVolume") as? Double) ?? ChimePlayer.defaultVolume
         Log.i("Playing break-end chime: \(id) at \(Int(volume * 100))%")
         ChimePlayer.shared.play(id: id, volume: volume)
+    }
+
+    // MARK: - Break suggestion
+
+    /// Build the picker context from current state and pick a suggestion.
+    /// Side effect: updates `lastBreakSuggestion` so the next break's
+    /// novelty filter has the right input.
+    ///
+    /// Returns `.lookFarAway` unconditionally when the user has disabled
+    /// the feature in Settings (`breakSuggestionsEnabled` defaults true).
+    private func pickBreakSuggestion() -> BreakSuggestion {
+        let enabled = (UserDefaults.standard.object(forKey: "breakSuggestionsEnabled") as? Bool) ?? true
+        guard enabled else {
+            Log.i("Break suggestion: disabled in Settings — defaulting to lookFarAway")
+            lastBreakSuggestion = .lookFarAway
+            return .lookFarAway
+        }
+        let sedentary = Date().timeIntervalSince(lastMovementAt)
+        let hour = Calendar.current.component(.hour, from: Date())
+
+        // Count noncompliance in the last 3 records of today.
+        let recent = persistence.loadTodayRecords().suffix(3)
+        let noncompliant = recent.filter { rec in
+            switch rec.compliance {
+            case .dismissed, .ignored: return true
+            case .taken, .delayed:     return false
+            }
+        }.count
+
+        // `wasInFlow` is true when the engine extended the timer at least
+        // once before deciding to break — proxy for "user was in sustained
+        // flow." Reading from spotCheck because BlinkEngine doesn't expose
+        // FlowState directly.
+        let wasInFlow = engine.spotCheckFlow().extensionCount >= 1
+
+        let ctx = BreakSuggestionContext(
+            sedentarySeconds: sedentary,
+            wasInFlow: wasInFlow,
+            hourOfDay: hour,
+            recentNoncompliance: noncompliant,
+            lastSuggestion: lastBreakSuggestion
+        )
+        let picked = BreakSuggestionPicker.pick(ctx)
+        Log.i("Break suggestion: \(picked.rawValue) "
+            + "(sedentary=\(Int(sedentary))s, wasInFlow=\(wasInFlow), "
+            + "hour=\(hour), nonCompliance=\(noncompliant)/3)")
+        lastBreakSuggestion = picked
+        return picked
     }
 
     // MARK: - Persistence

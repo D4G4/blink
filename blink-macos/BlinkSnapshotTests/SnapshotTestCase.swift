@@ -79,6 +79,79 @@ class SnapshotTestCase: XCTestCase {
             return
         }
 
+        compareOrRecord(pngData: pngData, named: name, file: file, line: line)
+    }
+
+    /// Snapshot a SwiftUI view via `NSHostingView` instead of `ImageRenderer`.
+    ///
+    /// Use this for views that contain `ScrollView`, `LazyVStack`, or any
+    /// other layout that needs a real AppKit container size to render its
+    /// content. `ImageRenderer` doesn't measure those correctly and emits
+    /// a blank content area. `NSHostingView` participates in real AppKit
+    /// layout, so the content lays out properly. To avoid the ScrollView
+    /// actually clipping anything, pass a `height` ≥ the natural content
+    /// height — the snapshot will be tall but show everything end-to-end.
+    @MainActor func assertHostedSnapshot<V: View>(
+        of view: V,
+        named name: String,
+        width: CGFloat = 500,
+        height: CGFloat = 1200,
+        colorScheme: ColorScheme = .light,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let appearance: NSAppearance? = colorScheme == .dark
+            ? NSAppearance(named: .darkAqua)
+            : NSAppearance(named: .aqua)
+        let bgColor: Color = colorScheme == .dark
+            ? Color(nsColor: NSColor(white: 0.12, alpha: 1))
+            : .white
+        let wrapped = ZStack {
+            bgColor
+            view
+        }
+        .environment(\.colorScheme, colorScheme)
+
+        let hosting = NSHostingView(rootView: wrapped)
+        hosting.appearance = appearance
+        hosting.frame = NSRect(x: 0, y: 0, width: width, height: height)
+
+        // Attach to an offscreen NSWindow so AppKit gives the hosting view
+        // a real layout context. Without this, NSHostingView's layer-backed
+        // rendering for ScrollView stays deferred and we get a blank capture.
+        let win = NSWindow(
+            contentRect: hosting.frame,
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        win.appearance = appearance
+        win.contentView = hosting
+        hosting.layoutSubtreeIfNeeded()
+
+        guard let rep = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) else {
+            XCTFail("NSHostingView produced no bitmap rep for \(name)", file: file, line: line)
+            return
+        }
+        rep.size = hosting.bounds.size
+        hosting.cacheDisplay(in: hosting.bounds, to: rep)
+
+        guard let pngData = rep.representation(using: .png, properties: [:]) else {
+            XCTFail("Failed to create PNG data for \(name)", file: file, line: line)
+            return
+        }
+
+        compareOrRecord(pngData: pngData, named: name, file: file, line: line)
+    }
+
+    /// Shared comparison + record logic for both ImageRenderer and
+    /// NSHostingView-based snapshot paths.
+    @MainActor private func compareOrRecord(
+        pngData: Data,
+        named name: String,
+        file: StaticString,
+        line: UInt
+    ) {
         let refURL = sourceSnapshotDir.appendingPathComponent("\(name).png")
 
         // Recording mode (SNAPSHOT_RECORD=1) — write to the container's
