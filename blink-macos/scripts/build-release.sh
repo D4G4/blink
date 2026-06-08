@@ -310,17 +310,32 @@ PREV_TAG=$(git tag --sort=-v:refname --merged HEAD \
 
 CHANGELOG_BLOCK=""
 if [ -n "$PREV_TAG" ]; then
-    # Escape HTML special chars in commit subjects (& < >) so messages
-    # like "fix: <T> doesn't render" don't break the HTML structure.
-    # Wrap each non-empty subject in <li>. --no-merges keeps the list
-    # focused on real changes. Plain sed for portability — no python
-    # dependency on the macOS runner.
+    # Turn conventional-commit subjects into user-readable bullets:
+    #   1. Drop internal types (chore/ci/build/docs/test/refactor/style/
+    #      release) — users don't care about appcast bumps or CI fixes.
+    #   1b. Drop internal scopes (release/appcast/deps/ci) regardless of
+    #      type — `fix(release): ...` is still infra, not a user fix.
+    #   2. Strip the leading `<type>(<scope>)!?: ` from what's left so
+    #      "feat(break): smart suggestions" → "smart suggestions".
+    #   3. Drop trailing ` (#NNN)` PR refs — the linked PR isn't reachable
+    #      from inside the Sparkle prompt anyway.
+    #   4. Escape HTML special chars (& < >) so messages like
+    #      "fix: <T> doesn't render" don't break the markup.
+    #   5. Capitalize the first letter so the bullet reads like prose.
+    # If every commit gets filtered out (CI-only patch release), the
+    # block stays empty and the description falls back to the GitHub
+    # link blurb — better than showing engineer-speak bullets.
     CHANGELOG_LIS=$(git log --no-merges --pretty=format:"%s" "${PREV_TAG}..HEAD" \
+        | sed -E '/^(chore|ci|build|docs|test|refactor|style|release)(\([^)]*\))?!?:/d' \
+        | sed -E '/^[a-z]+\((release|appcast|deps|ci|build)\)!?:/d' \
+        | sed -E 's/^(feat|fix|perf|revert)(\([^)]*\))?!?: ?//' \
+        | sed -E 's/ \(#[0-9]+\)$//' \
         | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' \
+        | awk 'NF { print toupper(substr($0,1,1)) substr($0,2) }' \
         | sed -e 's|^|<li>|' -e 's|$|</li>|' \
         | tr -d '\n')
     if [ -n "$CHANGELOG_LIS" ]; then
-        CHANGELOG_BLOCK="<h3 style=\"margin-top:0\">Changes since ${PREV_TAG}</h3><ul>${CHANGELOG_LIS}</ul>"
+        CHANGELOG_BLOCK="<h3 style=\"margin-top:0\">What's new in ${VERSION}</h3><ul>${CHANGELOG_LIS}</ul>"
     fi
 fi
 
