@@ -37,6 +37,11 @@ final class AppState: ObservableObject {
     // accumulates another pair of callbacks.
     private var sleepObserver: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
+    // DistributedNotificationCenter screen lock/unlock tokens. Mirrors the
+    // sleep/wake pattern. Screen lock without display sleep has no
+    // NSWorkspace event — these are the only signal the OS gives us.
+    private var screenLockObserver: NSObjectProtocol?
+    private var screenUnlockObserver: NSObjectProtocol?
 
     // Timers
     private var tickTimer: Timer?
@@ -97,10 +102,13 @@ final class AppState: ObservableObject {
     }
 
     /// True when the screen is at the login window / screensaver lock.
-    private var isScreenLocked: Bool {
-        guard let dict = CGSessionCopyCurrentDictionary() as? [String: Any] else { return false }
-        return dict["CGSSessionScreenIsLocked"] as? Bool ?? false
-    }
+    /// Driven by `com.apple.screenIsLocked` / `com.apple.screenIsUnlocked`
+    /// on `DistributedNotificationCenter`, seeded once from
+    /// `CGSSessionScreenIsLocked` at observer setup. Event-driven so the
+    /// idle reset and wall-clock cap in BlinkEngine see "user is away"
+    /// before the loginwindow → real-app switch on unlock bumps
+    /// lastActivityTime and starves both safety nets.
+    private var isScreenLocked = false
 
     /// True when the user can't possibly see the overlay (asleep or locked).
     private var isUserAway: Bool { isSystemAsleep || isScreenLocked }
@@ -580,6 +588,14 @@ final class AppState: ObservableObject {
             NSWorkspace.shared.notificationCenter.removeObserver(token)
             wakeObserver = nil
         }
+        if let token = screenLockObserver {
+            DistributedNotificationCenter.default().removeObserver(token)
+            screenLockObserver = nil
+        }
+        if let token = screenUnlockObserver {
+            DistributedNotificationCenter.default().removeObserver(token)
+            screenUnlockObserver = nil
+        }
     }
 
     /// Guards against the cached-grant silent-failure path:
@@ -705,6 +721,59 @@ final class AppState: ObservableObject {
                 // Defense-in-depth: if any overlay survived sleep, kill it immediately.
                 if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
                     Log.i("Break overlay still present on wake — dismissing")
+                    self.engine.userSkippedBreak()
+                    self.isBreakPrompted = false
+                    self.overlayController.dismissImmediately()
+                }
+                self.engine.wakeFromSleep()
+            }
+        }
+
+        // Screen lock / unlock. NSWorkspace has no equivalent for plain
+        // screen lock (Cmd+Ctrl+Q with display awake), so we listen on
+        // DistributedNotificationCenter. On unlock we run the same path as
+        // wake from sleep: a locked screen = user wasn't looking, treat as
+        // eye rest, reset the timer state. Without this, the loginwindow →
+        // real-app switch macOS fires on unlock bumps lastActivityTime,
+        // which starves both BlinkEngine's stale-pending guard (step 1) and
+        // its idle reset (step 4) — the wall-clock cap (step 5) then trips
+        // on the first post-unlock tick and a phantom break fires.
+        let dnc = DistributedNotificationCenter.default()
+        // Seed once from the session dictionary in case we start up while
+        // the screen is already locked (rare but possible).
+        if let dict = CGSessionCopyCurrentDictionary() as? [String: Any],
+           dict["CGSSessionScreenIsLocked"] as? Bool == true {
+            isScreenLocked = true
+        }
+        screenLockObserver = dnc.addObserver(
+            forName: NSNotification.Name("com.apple.screenIsLocked"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                Log.i("Screen locked")
+                guard let self else { return }
+                self.isScreenLocked = true
+                if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
+                    Log.i("Break overlay active before lock — dismissing")
+                    self.engine.userSkippedBreak()
+                    self.isBreakPrompted = false
+                    self.overlayController.dismissImmediately()
+                }
+            }
+        }
+        screenUnlockObserver = dnc.addObserver(
+            forName: NSNotification.Name("com.apple.screenIsUnlocked"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                Log.i("Screen unlocked")
+                guard let self else { return }
+                self.isScreenLocked = false
+                self.inputMonitor?.reEnableTapIfNeeded()
+                if self.isBreakPrompted || self.overlayController.isShowingFullscreen {
+                    Log.i("Break overlay still present on unlock — dismissing")
                     self.engine.userSkippedBreak()
                     self.isBreakPrompted = false
                     self.overlayController.dismissImmediately()
