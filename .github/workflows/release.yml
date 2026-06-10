@@ -9,6 +9,7 @@ on:
 jobs:
   # ── Windows ──────────────────────────────────────────────────────
   windows:
+    if: ${{ false }}  # TEMP: skipping windows builds
     runs-on: windows-latest
     strategy:
       matrix:
@@ -225,7 +226,7 @@ jobs:
 
   # ── GitHub Release ───────────────────────────────────────────────
   release:
-    needs: [windows, macos]
+    needs: [macos]  # TEMP: skipping windows builds — restore [windows, macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -245,9 +246,10 @@ jobs:
           # beta channel tag) so opted-in users receive them.
           prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
-            artifacts/Blink-x64/Blink-x64.exe
-            artifacts/Blink-arm64/Blink-arm64.exe
             artifacts/Blink-macOS/Blink.dmg
+            # TEMP: skipping windows builds — restore:
+            # artifacts/Blink-x64/Blink-x64.exe
+            # artifacts/Blink-arm64/Blink-arm64.exe
 
   # ── Publish Sparkle appcast + redeploy website ───────────────────
   # Must run after `release` so the DMG enclosure URL in the appcast
