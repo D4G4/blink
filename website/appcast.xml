@@ -6,6 +6,18 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.1.3</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.1.3</link>
+      <sparkle:version>360</sparkle:version>
+      <sparkle:shortVersionString>5.1.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Wed, 10 Jun 2026 04:02:44 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.1.3</h3><ul><li>Reset timer on screen unlock so phantom break doesn't fire</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.1.3">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.1.3/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="RBy1MKQyUElTPq/loD5n7amfRGSkCzpXNH440U1I5WtBnxPUiDd5KKj2C4NIIUdkXa6z4hMil0defYqdwfuHDQ==" length="8614941" />
+    </item>
+    <item>
       <title>Blink v5.1.2</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.1.2</link>
       <sparkle:version>359</sparkle:version>
