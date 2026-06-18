@@ -49,6 +49,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var onboardingController: OnboardingWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Must run first: reads the previous-session post-mortem flag and
+        // installs signal handlers before anything else can crash.
+        LifecycleLogger.install()
         UserDefaults.standard.register(defaults: [
             "pauseDuringCalls": true,
         ])
