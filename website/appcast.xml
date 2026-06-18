@@ -6,6 +6,19 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.1.4-beta.1</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.1.4-beta.1</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>361</sparkle:version>
+      <sparkle:shortVersionString>5.1.4-beta.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Thu, 18 Jun 2026 18:28:00 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.1.4-beta.1</h3><ul><li>Log session lifecycle to diagnose silent quits</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.1.4-beta.1">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.1.4-beta.1/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="aJCrCToa8SiKO2dI+3scAVUWJX4MLAli5NJuaCiKd6bsFH+qIDNx7Z8eS/LKKTSZlbafmn6VhH29IJKjmVmYDQ==" length="8622837" />
+    </item>
+    <item>
       <title>Blink v5.1.3</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.1.3</link>
       <sparkle:version>360</sparkle:version>
