@@ -69,6 +69,7 @@
 		2DD334DF9F7167181DB04515 /* key_hint_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 56857420CD108C94BCD9D400 /* key_hint_peach_dark.png */; };
 		2E31E85460A7A28705020290 /* timer_extended_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 31EC198F54D1B1D30BC7FB96 /* timer_extended_mono_light.png */; };
 		2E4B14368F5CD5C66E84775F /* onboarding_picker_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 496D990E6296DA43EC3278B1 /* onboarding_picker_peach_dark.png */; };
+		2EE0DACEFEB1FCC06593080F /* LifecycleLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C268BE9805BA68BDD4AC874B /* LifecycleLogger.swift */; };
 		2F73F1185DB099F906615BA5 /* countdown_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = ECC5F9B73EFE6D17E4809FFF /* countdown_midnight_dark.png */; };
 		2FD6918B409473F8DA43C0D6 /* LaunchHUDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94561199EC6A720C6B0B5941 /* LaunchHUDView.swift */; };
 		2FF43ACECCF77373C5EFCCA4 /* LogExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BDF5153E498B2DEFD9EAEBF /* LogExporter.swift */; };
@@ -583,6 +584,7 @@
 		BDC7A406373F0EF880032986 /* mic_permission_sand_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = mic_permission_sand_light.png; sourceTree = "<group>"; };
 		BF18D8947C4851BE0DCA382A /* gabor_exercise_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_exercise_mono_light.png; sourceTree = "<group>"; };
 		C0B0E45638AD481DDA60A12E /* mic_permission_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = mic_permission_midnight_dark.png; sourceTree = "<group>"; };
+		C268BE9805BA68BDD4AC874B /* LifecycleLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleLogger.swift; sourceTree = "<group>"; };
 		C297E5B4123F547A89FF49DF /* simple_announcement_active_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = simple_announcement_active_midnight_light.png; sourceTree = "<group>"; };
 		C2B5274EAAC775A45BD421DD /* flow_nudge_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_nudge_mono_light.png; sourceTree = "<group>"; };
 		C2DF08D3CF5B2E54B8262562 /* WhatsNewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewView.swift; sourceTree = "<group>"; };
@@ -782,6 +784,7 @@
 				740D1AA5D2999B2DC6F4AF46 /* BlinkUpdater.swift */,
 				EDA291436352B986E47616EA /* FlowSensitivityView.swift */,
 				0B47EB8B7273BB95141192DE /* Info.plist */,
+				C268BE9805BA68BDD4AC874B /* LifecycleLogger.swift */,
 				7BDF5153E498B2DEFD9EAEBF /* LogExporter.swift */,
 				D0FF6DFB2A34886365FDFBEE /* UIActionLogger.swift */,
 				C00BFADCBA5113CA1FC9A656 /* GaborExercise */,
@@ -1501,6 +1504,7 @@
 				41255C2CF76FA4324266D1E1 /* InputMonitoringRecoveryWindowController.swift in Sources */,
 				2FD6918B409473F8DA43C0D6 /* LaunchHUDView.swift in Sources */,
 				C392738F4FD96DEA4FC724CE /* LaunchHUDWindowController.swift in Sources */,
+				2EE0DACEFEB1FCC06593080F /* LifecycleLogger.swift in Sources */,
 				2FF43ACECCF77373C5EFCCA4 /* LogExporter.swift in Sources */,
 				9D56F7DF83742BCC96EA977B /* MacAppMonitor.swift in Sources */,
 				D5C6DCF4BA41B2C014A4D3C8 /* MacContextDetector.swift in Sources */,
@@ -1737,7 +1741,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 5.1.2;
+				MARKETING_VERSION = "5.1.4-beta.1";
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -1782,7 +1786,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 5.1.2;
+				MARKETING_VERSION = "5.1.4-beta.1";
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
