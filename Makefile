@@ -1,0 +1,53 @@
+# Blink release helpers.
+#
+# The release pipeline is tag-driven (see RELEASING.md): pushing a `vX.Y.Z`
+# tag triggers CI to build, sign, notarize, EdDSA-sign, publish the appcast,
+# and bump Homebrew. CI routes the release by tag name:
+#   vX.Y.Z-beta.N / -rc.N  → Sparkle BETA channel (opt-in users only)
+#   vX.Y.Z                 → STABLE channel (all users) + Homebrew cask bump
+#
+# `make promote` takes the current pre-release version in project.yml, drops
+# the -beta.N / -rc.N suffix, and ships it to the stable channel in one shot.
+
+PROJECT := blink-macos/project.yml
+
+.PHONY: help version promote
+
+help:
+	@echo "Targets:"
+	@echo "  make version   Print the current MARKETING_VERSION"
+	@echo "  make promote   Promote the current beta/rc to a stable release"
+	@echo "                 (drops -beta.N/-rc.N, commits, tags, pushes → CI)"
+	@echo "                 Add CONFIRM=1 to skip the interactive prompt."
+
+version:
+	@grep -m1 'MARKETING_VERSION:' $(PROJECT) | sed -E 's/.*"(.*)".*/\1/'
+
+promote:
+	@cur=$$(grep -m1 'MARKETING_VERSION:' $(PROJECT) | sed -E 's/.*"(.*)".*/\1/'); \
+	case "$$cur" in \
+	  *-beta.*|*-rc.*) ;; \
+	  *) echo "✗ Current version '$$cur' is not a pre-release — nothing to promote."; exit 1;; \
+	esac; \
+	stable=$$(printf '%s' "$$cur" | sed -E 's/-(beta|rc)\.[0-9]+$$//'); \
+	tag="v$$stable"; \
+	branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" != "main" ]; then echo "✗ Not on main (on '$$branch') — promote releases from main."; exit 1; fi; \
+	if [ -n "$$(git status --porcelain)" ]; then echo "✗ Working tree not clean — commit or stash first."; exit 1; fi; \
+	git fetch -q origin; \
+	if [ -n "$$(git rev-list HEAD..origin/main)" ]; then echo "✗ Local main is behind origin/main — pull first."; exit 1; fi; \
+	if git rev-parse -q --verify "refs/tags/$$tag" >/dev/null 2>&1 || git ls-remote --exit-code --tags origin "$$tag" >/dev/null 2>&1; then \
+	  echo "✗ Tag $$tag already exists locally or on origin."; exit 1; fi; \
+	echo "Promote $$cur → $$stable"; \
+	echo "  tag $$tag → STABLE channel (all users) + Homebrew cask bump"; \
+	if [ "$$CONFIRM" != "1" ]; then \
+	  printf "Proceed? [y/N] "; read ans; case "$$ans" in y|Y|yes) ;; *) echo "Aborted."; exit 1;; esac; \
+	fi; \
+	sed -i '' -E "s/(MARKETING_VERSION: )\".*\"/\1\"$$stable\"/" $(PROJECT); \
+	git add $(PROJECT); \
+	git commit -q -m "chore(macos): bump to $$stable"; \
+	git push origin main; \
+	git tag "$$tag"; \
+	git push origin "$$tag"; \
+	echo "✓ Pushed $$tag — CI is building, notarizing, and publishing to the stable channel (~5 min)."; \
+	echo "  Watch: https://github.com/D4G4/blink/actions"
