@@ -14,6 +14,11 @@ final class OverlayWindowController {
     private var clickMonitor: Any?
     private var isDismissing = false
 
+    /// The app that was frontmost just before the break overlay stole focus.
+    /// Captured in `showBreakTimer`, re-activated on dismiss so the user lands
+    /// back in whatever they were doing instead of in Blink.
+    private var previousFrontmostApp: NSRunningApplication?
+
     /// True when the fullscreen break overlay window exists and is visible.
     var isShowingFullscreen: Bool { fullscreenWindow != nil }
 
@@ -446,6 +451,18 @@ final class OverlayWindowController {
         }
 
         win.contentView = NSHostingView(rootView: AnyView(breakView))
+
+        // Remember who was frontmost so we can hand focus back when the break
+        // ends. Skip Blink itself (and any non-regular app) — restoring to our
+        // own menu-bar app would just leave the user staring at nothing.
+        let frontmost = NSWorkspace.shared.frontmostApplication
+        if let frontmost, frontmost.bundleIdentifier != Bundle.main.bundleIdentifier {
+            previousFrontmostApp = frontmost
+            Log.i("Break overlay: captured frontmost app for restore: \(frontmost.bundleIdentifier ?? "?")")
+        } else {
+            previousFrontmostApp = nil
+        }
+
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
@@ -473,6 +490,16 @@ final class OverlayWindowController {
         currentKeyHandler = nil
     }
     
+    /// Hand keyboard focus back to whatever app was frontmost before the break
+    /// stole it. No-op if we never captured one (e.g. Blink was frontmost).
+    private func restorePreviousApp() {
+        guard let app = previousFrontmostApp else { return }
+        previousFrontmostApp = nil
+        guard !app.isTerminated else { return }
+        Log.i("Break overlay: restoring focus to \(app.bundleIdentifier ?? "?")")
+        app.activate(options: [])
+    }
+
     private func dismissFullscreen() {
         guard !isDismissing else { return }
         isDismissing = true
@@ -483,8 +510,9 @@ final class OverlayWindowController {
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.3
             win.animator().alphaValue = 0
-        }, completionHandler: {
+        }, completionHandler: { [weak self] in
             win.orderOut(nil)
+            self?.restorePreviousApp()
         })
     }
 
@@ -505,6 +533,7 @@ final class OverlayWindowController {
         fullscreenWindow = nil
         win.alphaValue = 0
         win.orderOut(nil)
+        restorePreviousApp()
     }
 }
 
