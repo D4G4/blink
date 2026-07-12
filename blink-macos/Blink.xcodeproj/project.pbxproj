@@ -106,6 +106,7 @@
 		44CE8F333A6410F9095C64B3 /* im_permission_stale_sage_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 70DCFDBF61A68BB7739E6E8B /* im_permission_stale_sage_light.png */; };
 		489B49000BDC6DAC9E692730 /* ThemedToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5414954E7C64589362BB613F /* ThemedToggleStyle.swift */; };
 		48F252E1BC75E344EA13D83B /* timer_extended_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 74D3636A139F9C2514A7198D /* timer_extended_midnight_dark.png */; };
+		49DB741A01EE832D31B549EE /* PauseMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E93A55B80DB38A9E8E3B866 /* PauseMode.swift */; };
 		4A2256345DB3668199448708 /* flow_sensitivity_settings_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 2DE3CA78A39AB2A76BF6E5C3 /* flow_sensitivity_settings_mono_light.png */; };
 		4A6C5319370316FCD5CBEA11 /* gabor_exercise_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 40E74CCEC2A59430F52F2B17 /* gabor_exercise_midnight_dark.png */; };
 		4B3EF654033EB371486539C0 /* menu_bar_help_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = DC20DDA79FA92478212A9B57 /* menu_bar_help_midnight_dark.png */; };
@@ -521,6 +522,7 @@
 		8D3C0734B15BE7F92F6CB672 /* menu_bar_sage_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_sage_dark.png; sourceTree = "<group>"; };
 		8D419F30AAA780EDE9B20258 /* why_exist_sage_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = why_exist_sage_dark.png; sourceTree = "<group>"; };
 		8E8C7CD3DA5AE2820D21BAA9 /* timer_extended_dark_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = timer_extended_dark_dark.png; sourceTree = "<group>"; };
+		8E93A55B80DB38A9E8E3B866 /* PauseMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PauseMode.swift; sourceTree = "<group>"; };
 		8EC627A6D2F226D24327583F /* research_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = research_peach_light.png; sourceTree = "<group>"; };
 		8F8B43B02D3AD6D331DEED67 /* break_timer_getUp_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_timer_getUp_midnight_dark.png; sourceTree = "<group>"; };
 		8FCC7DBA7BE593B335C6E842 /* whats_new_multiple_items_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = whats_new_multiple_items_peach_light.png; sourceTree = "<group>"; };
@@ -786,6 +788,7 @@
 				0B47EB8B7273BB95141192DE /* Info.plist */,
 				C268BE9805BA68BDD4AC874B /* LifecycleLogger.swift */,
 				7BDF5153E498B2DEFD9EAEBF /* LogExporter.swift */,
+				8E93A55B80DB38A9E8E3B866 /* PauseMode.swift */,
 				D0FF6DFB2A34886365FDFBEE /* UIActionLogger.swift */,
 				C00BFADCBA5113CA1FC9A656 /* GaborExercise */,
 				C6B99614A55F03D45A44213D /* MenuBar */,
@@ -1522,6 +1525,7 @@
 				AF2AA32997C297584EE5186E /* OnboardingWindow.swift in Sources */,
 				1742115CD05288EFF631D72F /* OverlayPreviews.swift in Sources */,
 				CFB301E36AADFE6AB97FFCE5 /* OverlayWindow.swift in Sources */,
+				49DB741A01EE832D31B549EE /* PauseMode.swift in Sources */,
 				C6988F7F96F47C38AE99F8BB /* PermissionFlowView.swift in Sources */,
 				588840F6F05733C1A7A7D429 /* PermissionFlowWindowController.swift in Sources */,
 				3A60C972DDC5C22A3F5471B4 /* PermissionManager.swift in Sources */,
@@ -1741,7 +1745,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "5.1.4-beta.1";
+				MARKETING_VERSION = 5.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -1786,7 +1790,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "5.1.4-beta.1";
+				MARKETING_VERSION = 5.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;

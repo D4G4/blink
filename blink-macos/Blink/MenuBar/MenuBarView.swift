@@ -35,18 +35,7 @@ struct MenuBarView: View {
 
                 Spacer()
 
-                Button {
-                    appState.togglePause()
-                } label: {
-                    Image(systemName: appState.isPaused ? "play.fill" : "pause.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 28, height: 28)
-                        .background(Color.primary.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-                .buttonStyle(.plain)
-                .help(appState.isPaused ? "Resume Blink" : "Pause Blink")
+                pauseControl
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
@@ -226,6 +215,69 @@ struct MenuBarView: View {
         MenuBarController.shared.close()
     }
 
+    // MARK: - Pause Control
+
+    /// Header-right control. When running, a menu of f.lux-style pause
+    /// durations (1h / 6h / until tomorrow / while the current app is open /
+    /// indefinitely). When paused, a one-tap Resume button. All timed pauses
+    /// auto-resume via `AppState.checkAutoResume()`.
+    @ViewBuilder
+    private var pauseControl: some View {
+        if appState.isPaused {
+            Button {
+                UIActionLogger.buttonTapped("Resume Blink", context: "MenuBar")
+                appState.resume(reason: "menu")
+            } label: {
+                pauseGlyph("play.fill")
+            }
+            .buttonStyle(.plain)
+            .help("Resume Blink")
+        } else {
+            Menu {
+                Button("Pause for 1 hour") {
+                    UIActionLogger.buttonTapped("Pause 1h", context: "MenuBar")
+                    appState.pause(.forDuration(3600))
+                }
+                Button("Pause for 6 hours") {
+                    UIActionLogger.buttonTapped("Pause 6h", context: "MenuBar")
+                    appState.pause(.forDuration(6 * 3600))
+                }
+                Button("Pause until tomorrow") {
+                    UIActionLogger.buttonTapped("Pause until tomorrow", context: "MenuBar")
+                    appState.pause(.untilTomorrow())
+                }
+                if let id = appState.lastActiveAppID, let name = appState.lastActiveAppName {
+                    Divider()
+                    Button("Pause while \(name) is open") {
+                        UIActionLogger.buttonTapped("Pause for current app", context: "MenuBar")
+                        appState.pause(.currentApp(bundleID: id, name: name))
+                    }
+                }
+                Divider()
+                Button("Pause indefinitely") {
+                    UIActionLogger.buttonTapped("Pause indefinitely", context: "MenuBar")
+                    appState.pause(.indefinite)
+                }
+            } label: {
+                pauseGlyph("pause.fill")
+            }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Pause Blink")
+        }
+    }
+
+    private func pauseGlyph(_ systemName: String) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: 12))
+            .foregroundStyle(.secondary)
+            .frame(width: 28, height: 28)
+            .background(Color.primary.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
     // MARK: - Timer Card
 
     private var timerCard: some View {
@@ -300,7 +352,7 @@ struct MenuBarView: View {
     }
 
     private var flowStateLabel: String {
-        if appState.isPaused { return "Paused" }
+        if appState.isPaused { return appState.pauseStatusText }
         if appState.isVideoPlaying { return "Video playing — timer paused" }
         switch appState.displayState {
         case .working: return "Timer running"
