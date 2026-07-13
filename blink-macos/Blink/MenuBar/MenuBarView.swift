@@ -217,10 +217,9 @@ struct MenuBarView: View {
 
     // MARK: - Pause Control
 
-    /// Header-right control. When running, a menu of f.lux-style pause
-    /// durations (1h / 6h / until tomorrow / while the current app is open /
-    /// indefinitely). When paused, a one-tap Resume button. All timed pauses
-    /// auto-resume via `AppState.checkAutoResume()`.
+    /// Header-right control. When running, opens the themed "Pause Blink"
+    /// picker (presets + custom duration). When paused, a one-tap Resume
+    /// button. All timed pauses auto-resume via `AppState.checkAutoResume()`.
     @ViewBuilder
     private var pauseControl: some View {
         if appState.isPaused {
@@ -233,42 +232,17 @@ struct MenuBarView: View {
             .buttonStyle(.plain)
             .help("Resume Blink")
         } else {
-            Menu {
-                Button("Pause for 1 hour") {
-                    UIActionLogger.buttonTapped("Pause 1h", context: "MenuBar")
-                    appState.pause(.forDuration(3600))
-                }
-                Button("Pause for 6 hours") {
-                    UIActionLogger.buttonTapped("Pause 6h", context: "MenuBar")
-                    appState.pause(.forDuration(6 * 3600))
-                }
-                Button("Pause until tomorrow") {
-                    UIActionLogger.buttonTapped("Pause until tomorrow", context: "MenuBar")
-                    appState.pause(.untilTomorrow())
-                }
-                Button("Custom…") {
-                    UIActionLogger.buttonTapped("Pause custom (open)", context: "MenuBar")
-                    CustomPauseWindowController.shared.show(appState: appState, theme: themeManager.current)
-                }
-                if let id = appState.lastActiveAppID, let name = appState.lastActiveAppName {
-                    Divider()
-                    Button("Pause while \(name) is open") {
-                        UIActionLogger.buttonTapped("Pause for current app", context: "MenuBar")
-                        appState.pause(.currentApp(bundleID: id, name: name))
-                    }
-                }
-                Divider()
-                Button("Pause indefinitely") {
-                    UIActionLogger.buttonTapped("Pause indefinitely", context: "MenuBar")
-                    appState.pause(.indefinite)
+            Button {
+                UIActionLogger.buttonTapped("Pause (open picker)", context: "MenuBar")
+                let currentTheme = themeManager.current
+                dismissMenuBarPopover()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    PausePickerWindowController.shared.show(appState: appState, theme: currentTheme)
                 }
             } label: {
                 pauseGlyph("pause.fill")
             }
-            .menuStyle(.button)
             .buttonStyle(.plain)
-            .menuIndicator(.hidden)
-            .fixedSize()
             .help("Pause Blink")
         }
     }

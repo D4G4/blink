@@ -110,13 +110,19 @@ final class ToastSnapshotTests: SnapshotTestCase {
     }
 }
 
-final class CustomPauseSnapshotTests: SnapshotTestCase {
-    @MainActor func testCustomPause() {
+final class PausePickerSnapshotTests: SnapshotTestCase {
+    @MainActor func testPausePicker() {
         for v in allThemeVariants {
             assertSnapshot(
-                of: CustomPauseView(theme: v.theme, onCancel: {}, onPause: { _ in }),
-                named: "custom_pause_\(v.snapshotName)",
-                width: 360, height: 260,
+                of: PausePickerView(
+                    theme: v.theme,
+                    appName: "Chrome",
+                    appBundleID: "com.google.Chrome",
+                    onPreset: { _ in },
+                    onCancel: {}
+                ),
+                named: "pause_picker_\(v.snapshotName)",
+                width: 380, height: 480,
                 colorScheme: v.colorScheme
             )
         }
