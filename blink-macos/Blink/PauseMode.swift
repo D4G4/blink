@@ -35,24 +35,41 @@ enum PauseMode: Equatable, Codable {
 
     // MARK: - Resume decision
 
-    /// Whether the pause should end now.
-    /// - Parameters:
-    ///   - now: current wall-clock time.
-    ///   - frontmostBundleID: the frontmost app's bundle id, with Blink's own
-    ///     id already filtered to `nil` by the caller — so opening Blink's own
-    ///     menu never trips a `.currentApp` resume.
-    func shouldResume(now: Date, frontmostBundleID: String?) -> Bool {
-        switch self {
-        case .indefinite:
-            return false
-        case .timed(let until):
-            return now >= until
-        case .currentApp(let bundleID, _):
-            // Unknown frontmost (nil) → stay paused; only a real switch to a
-            // different app ends the pause.
-            guard let front = frontmostBundleID else { return false }
-            return front != bundleID
+    /// For a `.timed` pause, whether its deadline has passed. Always false for
+    /// `.indefinite` and `.currentApp` (those resume conditions are stateful —
+    /// user action / a grace timer — and live in `AppState.checkAutoResume`).
+    func isElapsed(at now: Date) -> Bool {
+        if case .timed(let until) = self { return now >= until }
+        return false
+    }
+
+    /// Pure grace-timer step for a `.currentApp` pause. Given the current
+    /// frontmost app (Blink's own id already filtered to `nil` by the caller)
+    /// and the moment the user first left the paused app, returns the updated
+    /// "away since" timestamp and whether the pause should now resume.
+    ///
+    /// - Back in the paused app → cancel the grace timer (`awaySince = nil`).
+    /// - Frontmost unknown / Blink's own popover (`nil`) → hold, unchanged.
+    /// - In a different app → start/continue the timer; resume once the
+    ///   continuous absence reaches `graceSeconds`.
+    static func currentAppGraceStep(
+        pausedBundleID: String,
+        frontmostBundleID: String?,
+        awaySince: Date?,
+        now: Date,
+        graceSeconds: TimeInterval
+    ) -> (awaySince: Date?, resume: Bool) {
+        if frontmostBundleID == pausedBundleID {
+            return (nil, false)
         }
+        guard frontmostBundleID != nil else {
+            return (awaySince, false)
+        }
+        let since = awaySince ?? now
+        if now.timeIntervalSince(since) >= graceSeconds {
+            return (nil, true)
+        }
+        return (since, false)
     }
 
     var logDescription: String {

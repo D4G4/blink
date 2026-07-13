@@ -288,12 +288,64 @@ final class OverlayWindowController {
         }
         
         self.toastWindow = panel
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
             self?.dismissToast()
         }
     }
-    
+
+    /// Bottom-right toast confirming Blink auto-resumed (timed pause elapsed or
+    /// the user left a paused app). Non-interactive, auto-dismisses after 5s —
+    /// mirrors the flow-nudge toast styling.
+    func showResumeToast(detail: String) {
+        Log.i("Resume toast: \(detail)")
+        dismissToast()
+
+        guard let screen = NSScreen.main else { return }
+
+        let toastWidth: CGFloat = 320
+        let toastHeight: CGFloat = 72
+        let padding: CGFloat = 16
+
+        let toastFrame = NSRect(
+            x: screen.visibleFrame.maxX - toastWidth - padding,
+            y: screen.visibleFrame.minY + padding,
+            width: toastWidth,
+            height: toastHeight
+        )
+
+        let toastView = ResumeToastView(theme: theme, detail: detail)
+
+        let panel = NSPanel(
+            contentRect: toastFrame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.level = .floating
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.ignoresMouseEvents = true
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = true
+        panel.contentView = NSHostingView(rootView: toastView)
+
+        panel.alphaValue = 0
+        panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.3
+            panel.animator().alphaValue = 1
+        }
+
+        self.toastWindow = panel
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            self?.dismissToast()
+        }
+    }
+
     // MARK: - Phase 1: Mini toast (bottom-right corner)
     
     private func showToast(onToastDone: @escaping () -> Void) {
@@ -1032,6 +1084,40 @@ struct FlowNudgeToastView: View {
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(bg)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+struct ResumeToastView: View {
+    let theme: BlinkTheme
+    let detail: String
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        let bg = theme.overlayBackground(for: colorScheme)
+        let fg = theme.overlayText(for: colorScheme)
+        let accent = theme.accent(for: colorScheme)
+
+        HStack(spacing: 12) {
+            Image(systemName: "eye")
+                .font(.system(size: 20))
+                .foregroundStyle(accent)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Blink resumed")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(fg)
+                Text(detail)
+                    .font(.system(size: 11))
+                    .foregroundStyle(fg.opacity(0.7))
+                    .lineLimit(1)
+            }
+
+            Spacer()
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

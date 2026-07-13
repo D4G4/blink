@@ -246,6 +246,10 @@ struct MenuBarView: View {
                     UIActionLogger.buttonTapped("Pause until tomorrow", context: "MenuBar")
                     appState.pause(.untilTomorrow())
                 }
+                Button("Custom…") {
+                    UIActionLogger.buttonTapped("Pause custom (open)", context: "MenuBar")
+                    CustomPauseWindowController.shared.show(appState: appState, theme: themeManager.current)
+                }
                 if let id = appState.lastActiveAppID, let name = appState.lastActiveAppName {
                     Divider()
                     Button("Pause while \(name) is open") {
