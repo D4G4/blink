@@ -64,7 +64,7 @@ final class CustomPauseWindowController {
     }
 }
 
-private struct CustomPauseView: View {
+struct CustomPauseView: View {
     let theme: BlinkTheme
     let onCancel: () -> Void
     let onPause: (TimeInterval) -> Void
@@ -89,17 +89,9 @@ private struct CustomPauseView: View {
                     .foregroundStyle(.secondary)
             }
 
-            HStack(spacing: 16) {
-                Stepper(value: $hours, in: 0...12) {
-                    Text("\(hours) hr")
-                        .font(.system(size: 14, design: .monospaced))
-                        .frame(width: 52, alignment: .leading)
-                }
-                Stepper(value: $minutes, in: 0...59, step: 5) {
-                    Text("\(minutes) min")
-                        .font(.system(size: 14, design: .monospaced))
-                        .frame(width: 62, alignment: .leading)
-                }
+            HStack(spacing: 20) {
+                stepper(value: $hours, range: 0...12, step: 1, unit: "hr")
+                stepper(value: $minutes, range: 0...59, step: 5, unit: "min")
             }
 
             HStack(spacing: 10) {
@@ -130,6 +122,36 @@ private struct CustomPauseView: View {
         }
         .padding(24)
         .frame(width: 360, height: 260)
+    }
+
+    /// Themed −/＋ stepper. Custom buttons rather than SwiftUI `Stepper` so it
+    /// renders on-brand and captures correctly in snapshots (native steppers
+    /// render as placeholder glyphs under ImageRenderer).
+    private func stepper(value: Binding<Int>, range: ClosedRange<Int>, step: Int, unit: String) -> some View {
+        HStack(spacing: 8) {
+            stepButton("minus", enabled: value.wrappedValue > range.lowerBound) {
+                value.wrappedValue = max(range.lowerBound, value.wrappedValue - step)
+            }
+            Text("\(value.wrappedValue) \(unit)")
+                .font(.system(size: 15, weight: .medium, design: .monospaced))
+                .frame(width: 62, alignment: .center)
+            stepButton("plus", enabled: value.wrappedValue < range.upperBound) {
+                value.wrappedValue = min(range.upperBound, value.wrappedValue + step)
+            }
+        }
+    }
+
+    private func stepButton(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(enabled ? accent : Color.secondary.opacity(0.4))
+                .frame(width: 28, height: 28)
+                .background(Color.primary.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
     }
 }
 
