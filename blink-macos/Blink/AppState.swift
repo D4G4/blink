@@ -337,6 +337,29 @@ final class AppState: ObservableObject {
         let previouslyGranted = UserDefaults.standard.bool(forKey: "permissionGranted")
         Log.i("Permission probe: IM=\(granted), mic=\(micStatus.rawValue), basicModeOptIn=\(basicModeOptIn), prevGranted=\(previouslyGranted)")
 
+        // Self-heal a mic authorization stuck at .notDetermined. AVFoundation
+        // only syncs a microphone grant made in System Settings once the app
+        // has called requestAccess at least once — until then
+        // authorizationStatus keeps returning .notDetermined even though the
+        // toggle is ON (long-standing behavior: Apple DTS thread 738986). A
+        // major macOS upgrade migrates the TCC database and re-exposes this:
+        // an existing user's previously-working grant now reads
+        // .notDetermined, so MacContextDetector.isMicrophoneActive()'s
+        // `== .authorized` gate silently kills meeting detection and breaks
+        // fire mid-call. requestAccess resolves it — returns immediately with
+        // NO prompt when the grant already exists, shows the standard dialog
+        // only when it genuinely doesn't. Gated on the mic-detection setting
+        // so users who turned "Pause during calls" off get zero mic
+        // interaction, matching MacContextDetector.micDetectionDisabled.
+        let micDetectionOn = (UserDefaults.standard.object(forKey: "pauseDuringCalls") as? Bool) ?? true
+        if micStatus == .notDetermined && micDetectionOn {
+            Log.i("Mic status .notDetermined with detection on — requesting to sync grant")
+            Task { @MainActor in
+                let granted = await PermissionManager.requestMicrophoneAccess()
+                Log.i("Mic re-request on .notDetermined resolved → \(granted ? "authorized" : "denied")")
+            }
+        }
+
         // basicModeOptIn wins over the OS-level IM grant. A user who
         // deliberately chose Simple — and then either clicked "Leave it
         // granted" on the revoke alert OR didn't revoke yet — would
