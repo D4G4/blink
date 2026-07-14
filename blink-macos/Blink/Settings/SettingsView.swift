@@ -34,16 +34,18 @@ enum SettingsCategory: Int, CaseIterable, Identifiable {
         }
     }
 
-    /// System-Settings-style fixed tile colors — semantic, theme-independent,
-    /// so the sidebar reads as distinct rows regardless of the app accent.
-    var tint: Color {
+    /// The theme whose accent colors this category's icon tile borrows —
+    /// keeps the sidebar's distinct-per-row look but drawn entirely from our
+    /// existing theme palette (no invented colors). Appearance is special-
+    /// cased in the view to track the *current* theme accent. `nil` → current.
+    var paletteTheme: BlinkTheme? {
         switch self {
-        case .general:    return Color(red: 0.56, green: 0.56, blue: 0.58) // gray
-        case .appearance: return Color(red: 0.96, green: 0.34, blue: 0.55) // pink
-        case .breaks:     return Color(red: 0.18, green: 0.72, blue: 0.62) // teal
-        case .focus:      return Color(red: 0.60, green: 0.40, blue: 0.92) // purple
-        case .autoPause:  return Color(red: 0.98, green: 0.58, blue: 0.20) // orange
-        case .about:      return Color(red: 0.20, green: 0.55, blue: 0.96) // blue
+        case .general:    return .midnight   // blue
+        case .appearance: return nil          // live theme accent (coral on Peach)
+        case .breaks:     return .sage        // green
+        case .focus:      return .mono        // graphite (→ white in dark)
+        case .autoPause:  return .sand        // tan
+        case .about:      return .peach       // coral — far from Appearance in the list
         }
     }
 }
@@ -150,7 +152,7 @@ struct SettingsView: View {
             detail
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(minWidth: 700, minHeight: 480)
+        .frame(minWidth: 700, minHeight: 540)
         .tint(accentColor)
     }
 
@@ -171,11 +173,12 @@ struct SettingsView: View {
         .listStyle(.sidebar)
     }
 
-    /// Icon-tile color for a category. Appearance tracks the live theme
-    /// accent (it *is* the theme pane, so its tile previews the current
-    /// theme); every other pane keeps its fixed semantic color.
+    /// Icon-tile color for a category, drawn from our theme palette. Appearance
+    /// tracks the live theme accent (it *is* the theme pane); every other pane
+    /// borrows a fixed theme's accent — `.accent(for:)` so Mono flips to white
+    /// in dark mode instead of vanishing into the dark sidebar.
     private func tintColor(for category: SettingsCategory) -> Color {
-        category == .appearance ? accentColor : category.tint
+        (category.paletteTheme ?? theme).accent(for: colorScheme)
     }
 
     /// System-Settings-style icon tile: a white SF Symbol on a rounded,
@@ -196,12 +199,13 @@ struct SettingsView: View {
     private var detail: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 28) {
                     paneHeader
                     paneContent
                 }
-                .padding(.horizontal, 26)
-                .padding(.vertical, 24)
+                .padding(.horizontal, 34)
+                .padding(.top, 28)
+                .padding(.bottom, 36)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .onAppear { scrollToTargetIfNeeded(proxy) }
@@ -262,7 +266,7 @@ struct SettingsView: View {
     // MARK: - General pane
 
     private var generalPane: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 24) {
             if let recent = appState.recentlyUpdatedVersion {
                 whatsNewCard(version: recent)
             }
@@ -297,19 +301,19 @@ struct SettingsView: View {
                     UIActionLogger.buttonTapped("Check for Updates")
                     BlinkUpdater.shared.checkForUpdates()
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 8) {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: 15, weight: .medium))
                         Text("Check for Updates")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 15, weight: .semibold))
                     }
                     .foregroundStyle(theme.textOnAccent(for: colorScheme))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(accentColor))
+                    .padding(.vertical, 14)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(accentColor))
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 2)
+                .padding(.top, 4)
             }
         }
     }
@@ -366,7 +370,7 @@ struct SettingsView: View {
     // MARK: - Appearance pane
 
     private var appearancePane: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 24) {
             settingsSection("Theme") {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 20), count: 3), spacing: 20) {
                     ForEach(BlinkTheme.all) { t in
@@ -403,24 +407,13 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 4)
             }
-
-            settingsSection("Break Screen") {
-                settingsItem {
-                    settingsToggleWithIcon(
-                        "Use dark overlay",
-                        icon: { DarkOverlayIcon(accent: accentColor, foreground: .primary) },
-                        isOn: $useDarkOverlay
-                    )
-                    settingsCaption("Pure black background instead of themed colors.")
-                }
-            }
         }
     }
 
     // MARK: - Breaks pane
 
     private var breaksPane: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 24) {
             settingsSection("Timing") {
                 settingsItem {
                     HStack(spacing: 10) {
@@ -438,6 +431,17 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                             .frame(width: 50, alignment: .trailing)
                     }
+                }
+            }
+
+            settingsSection("Break Screen") {
+                settingsItem {
+                    settingsToggleWithIcon(
+                        "Use dark overlay",
+                        icon: { DarkOverlayIcon(accent: accentColor, foreground: .primary) },
+                        isOn: $useDarkOverlay
+                    )
+                    settingsCaption("Pure black background instead of themed colors.")
                 }
             }
 
@@ -499,7 +503,7 @@ struct SettingsView: View {
     @State private var flowCheckDetail: String?
 
     private var focusPane: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 24) {
             settingsSection("Detection Mode") {
                 detectionModePicker
                 settingsCaption(appState.hasInputMonitoringPermission
@@ -559,17 +563,17 @@ struct SettingsView: View {
                 UIActionLogger.buttonTapped("Switch to Smart (from Flow lock prompt)")
                 appState.setDetectionMode(smart: true)
             } label: {
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                     Text("Switch to Smart mode")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                 }
                 .foregroundStyle(theme.textOnAccent(for: colorScheme))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .padding(.vertical, 13)
                 .background(accentColor)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
             .padding(.top, 2)
@@ -579,7 +583,7 @@ struct SettingsView: View {
     // MARK: - Auto-Pause pane
 
     private var autoPausePane: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 24) {
             settingsSection("Microphone") {
                 settingsItem {
                     settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
@@ -758,18 +762,18 @@ struct SettingsView: View {
 
     private func debugActionButton(label: String, systemImage: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 12))
-                Text(label)
                     .font(.system(size: 13))
+                Text(label)
+                    .font(.system(size: 14))
                 Spacer()
             }
             .foregroundStyle(accentColor)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.06)))
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.06)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -821,13 +825,13 @@ struct SettingsView: View {
                     .foregroundStyle(.tertiary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 16)
             .background(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 10)
                     .fill(isSelected ? accentColor.opacity(0.12) : Color.primary.opacity(0.04))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 10)
                     .stroke(isSelected ? accentColor : Color.clear, lineWidth: 1.5)
             )
             .contentShape(Rectangle())
@@ -838,13 +842,13 @@ struct SettingsView: View {
     // MARK: - Reusable Components
 
     private func settingsSection(_ title: String, @ViewBuilder content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(accentColor)
                 .padding(.leading, 4)
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
                 content()
             }
         }
@@ -857,10 +861,10 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 6) {
             content()
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.06)))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.06)))
     }
 
     /// Toggle with a leading icon column. `icon` can be any View — an
