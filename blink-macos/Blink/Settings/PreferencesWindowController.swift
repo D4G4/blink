@@ -14,8 +14,8 @@ final class PreferencesWindowController {
     /// mode picker lives). Tabs: 0=General, 1=Theme, 2=Flow, 3=About.
     /// Only honored on first show — bringing an already-open window
     /// to front preserves whichever tab the user was on.
-    func show(appState: AppState, themeManager: ThemeManager, initialTab: Int = 0) {
-        Log.i("Preferences.show() called (initialTab=\(initialTab))")
+    func show(appState: AppState, themeManager: ThemeManager, initialTab: Int = 0, scrollTo: String? = nil) {
+        Log.i("Preferences.show() called (initialTab=\(initialTab), scrollTo=\(scrollTo ?? "nil"))")
 
         // If window exists, just bring it to front
         if let win = window, win.isVisible {
@@ -25,7 +25,7 @@ final class PreferencesWindowController {
             return
         }
 
-        let prefsView = SettingsView(appState: appState, initialTab: initialTab)
+        let prefsView = SettingsView(appState: appState, initialTab: initialTab, scrollTo: scrollTo)
             .environmentObject(themeManager)
         Log.i("Preferences: view created")
 

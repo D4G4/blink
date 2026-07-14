@@ -30,7 +30,19 @@ struct WhatsNewItem: Identifiable {
 
     enum OpenAction {
         /// Open Preferences and land on a tab (0=General, 1=Theme,
-        /// 2=Flow, 3=About).
-        case preferences(tab: Int)
+        /// 2=Flow, 3=About). `scrollTo` optionally scrolls to and briefly
+        /// highlights a specific section within that tab (a `SettingsAnchor`
+        /// id) so a deep-linked setting is actually discoverable, not just
+        /// somewhere in a long scroll view.
+        case preferences(tab: Int, scrollTo: String?)
     }
+}
+
+/// Stable anchor ids for deep-linking to a specific Settings section
+/// (ScrollViewReader targets). Kept as plain strings so they can be shared
+/// across What's New, the discoverability tips, and SettingsView without a
+/// circular dependency.
+enum SettingsAnchor {
+    static let calendar = "calendar"
+    static let pause = "pause"
 }

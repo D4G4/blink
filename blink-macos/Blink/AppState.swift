@@ -1151,7 +1151,18 @@ final class AppState: ObservableObject {
     private func maybeShowWhatsNew() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
             guard let self else { return }
-            guard let items = WhatsNewManifest.itemsToShowOnLaunch() else { return }
+            // itemsToShowOnLaunch() has a side effect (seeds lastSeenVersion),
+            // so it must be called exactly once. nil → fresh install or nothing
+            // new; fall through to the standalone calendar discoverability tip.
+            guard let items = WhatsNewManifest.itemsToShowOnLaunch() else {
+                self.maybeShowCalendarTip()
+                return
+            }
+            // The upgrader is seeing the calendar card here — suppress the
+            // separate tip so we don't double-announce.
+            if items.contains(where: { $0.icon == "calendar" }) {
+                UserDefaults.standard.set(true, forKey: Self.calendarTipShownKey)
+            }
             let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
             Log.i("Showing What's New window for v\(version) with \(items.count) item(s)")
             whatsNewController = WhatsNewWindowController()
@@ -1161,11 +1172,32 @@ final class AppState: ObservableObject {
                 items: items,
                 onOpenAction: { [weak self] action in
                     switch action {
-                    case .preferences(let tab):
-                        self?.openPreferences(initialTab: tab)
+                    case .preferences(let tab, let scrollTo):
+                        self?.openPreferences(initialTab: tab, scrollTo: scrollTo)
                     }
                 }
             )
+        }
+    }
+
+    private static let calendarTipShownKey = "calendarTipShown"
+
+    /// One-time discoverability nudge for fresh users, who never see the
+    /// What's New calendar card (What's New is suppressed on first install).
+    /// Points them at Settings › Calendar with a scroll-to-highlight deep link.
+    private func maybeShowCalendarTip() {
+        guard !UserDefaults.standard.bool(forKey: Self.calendarTipShownKey) else { return }
+        guard ThemeManager.shared.hasCompletedOnboarding else { return }
+        // Already enabled → nothing to discover; mark shown and move on.
+        if UserDefaults.standard.bool(forKey: "pauseDuringCalendarEvents") {
+            UserDefaults.standard.set(true, forKey: Self.calendarTipShownKey)
+            return
+        }
+        guard !isUserAway else { return }  // don't fire while asleep/locked
+        UserDefaults.standard.set(true, forKey: Self.calendarTipShownKey)
+        Log.i("Showing calendar discoverability tip")
+        overlayController.showCalendarTip { [weak self] in
+            self?.openPreferences(initialTab: 0, scrollTo: SettingsAnchor.calendar)
         }
     }
 
@@ -1173,8 +1205,8 @@ final class AppState: ObservableObject {
     /// the user has somewhere obvious to land if they can't find the menu
     /// bar icon. `initialTab` deep-links to a tab (0=General, 1=Theme,
     /// 2=Flow, 3=About) — honored only when the window isn't already open.
-    func openPreferences(initialTab: Int = 0) {
-        PreferencesWindowController.shared.show(appState: self, themeManager: ThemeManager.shared, initialTab: initialTab)
+    func openPreferences(initialTab: Int = 0, scrollTo: String? = nil) {
+        PreferencesWindowController.shared.show(appState: self, themeManager: ThemeManager.shared, initialTab: initialTab, scrollTo: scrollTo)
     }
 
     // MARK: - Public actions (for menu bar buttons)

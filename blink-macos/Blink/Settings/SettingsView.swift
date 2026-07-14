@@ -56,11 +56,19 @@ struct SettingsView: View {
     
     @State private var selectedTab: Int
 
-    init(appState: AppState, initialTab: Int = 0) {
+    /// Optional section anchor to scroll to + briefly highlight on open, so a
+    /// deep-link (What's New card / discoverability tip) lands the user on the
+    /// exact setting instead of the top of a long scroll view.
+    private let scrollTarget: String?
+    /// The anchor currently flashing its highlight (cleared after ~2s).
+    @State private var highlightedAnchor: String?
+
+    init(appState: AppState, initialTab: Int = 0, scrollTo: String? = nil) {
         self.appState = appState
         self._selectedTab = State(initialValue: initialTab)
+        self.scrollTarget = scrollTo
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Custom tab bar
@@ -73,21 +81,24 @@ struct SettingsView: View {
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .padding(.bottom, 8)
-            
+
             Divider()
-            
+
             // Content
-            ScrollView {
-                Group {
-                    switch selectedTab {
-                    case 0: generalContent
-                    case 1: themeContent
-                    case 2: flowContent
-                    case 3: aboutContent
-                    default: generalContent
+            ScrollViewReader { proxy in
+                ScrollView {
+                    Group {
+                        switch selectedTab {
+                        case 0: generalContent
+                        case 1: themeContent
+                        case 2: flowContent
+                        case 3: aboutContent
+                        default: generalContent
+                        }
                     }
+                    .padding(20)
                 }
-                .padding(20)
+                .onAppear { scrollToTargetIfNeeded(proxy) }
             }
         }
         // Width locked to 440 (the design target); height fills the
@@ -126,7 +137,30 @@ struct SettingsView: View {
         }
         .buttonStyle(.plain)
     }
-    
+
+    /// Scroll to the deep-link target (if any) shortly after the window
+    /// appears, then flash a highlight on it for a couple of seconds so the
+    /// user's eye lands on the right setting.
+    private func scrollToTargetIfNeeded(_ proxy: ScrollViewProxy) {
+        guard let target = scrollTarget else { return }
+        // Small delay so the ScrollView has laid out its content first.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            withAnimation(.easeInOut(duration: 0.35)) {
+                proxy.scrollTo(target, anchor: .top)
+            }
+            withAnimation(.easeInOut(duration: 0.3)) { highlightedAnchor = target }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+                withAnimation(.easeInOut(duration: 0.5)) { highlightedAnchor = nil }
+            }
+        }
+    }
+
+    /// Deep-link highlight: a soft accent wash + ring that fades in/out on the
+    /// targeted section. Attach with `.modifier(...)` and the section's anchor.
+    private func deepLinkHighlight(_ anchor: String) -> some ViewModifier {
+        DeepLinkHighlight(isActive: highlightedAnchor == anchor, accent: accentColor)
+    }
+
     // MARK: - General
     
     private var generalContent: some View {
@@ -234,6 +268,8 @@ struct SettingsView: View {
                     }
                 }
             }
+            .id(SettingsAnchor.pause)
+            .modifier(deepLinkHighlight(SettingsAnchor.pause))
 
             settingsSection("Mic Detection") {
                 settingsItem {
@@ -258,6 +294,8 @@ struct SettingsView: View {
                     }
                 }
             }
+            .id(SettingsAnchor.calendar)
+            .modifier(deepLinkHighlight(SettingsAnchor.calendar))
 
             settingsSection("Timer") {
                 settingsItem {
@@ -894,4 +932,27 @@ struct SettingsView: View {
     state.hasInputMonitoringPermission = false
     return SettingsView(appState: state, initialTab: 2)
         .environmentObject(ThemeManager.shared)
+}
+
+/// A brief accent highlight for a deep-linked Settings section — a soft fill
+/// plus a rounded ring that fades in and out. The +8/-8 padding pair insets
+/// the highlight around the section without shifting sibling layout.
+private struct DeepLinkHighlight: ViewModifier {
+    let isActive: Bool
+    let accent: Color
+
+    func body(content: Content) -> some View {
+        content
+            .padding(8)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(accent.opacity(isActive ? 0.12 : 0))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(accent.opacity(isActive ? 0.55 : 0), lineWidth: 1.5)
+            )
+            .padding(-8)
+            .animation(.easeInOut(duration: 0.4), value: isActive)
+    }
 }

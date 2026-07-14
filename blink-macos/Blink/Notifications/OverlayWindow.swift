@@ -384,6 +384,25 @@ final class OverlayWindowController {
         installInteractiveToast(view, width: 320, height: 72, autoDismiss: 15)
     }
 
+    /// One-time discoverability tip pointing fresh users at the calendar
+    /// auto-pause setting. Tapping "Open" deep-links into Settings › Calendar.
+    func showCalendarTip(onOpen: @escaping () -> Void) {
+        Log.i("Calendar discoverability tip shown")
+        let view = MeetingActionToastView(
+            theme: theme,
+            icon: "calendar",
+            title: "Auto-pause during meetings",
+            detail: "Turn it on in Settings › Calendar",
+            actionLabel: "Open",
+            onAction: { [weak self] in
+                Log.i("Calendar tip: 'Open' tapped")
+                self?.dismissToast()
+                onOpen()
+            }
+        )
+        installInteractiveToast(view, width: 340, height: 72, autoDismiss: 12)
+    }
+
     /// Shared setup for an interactive (clickable) bottom-right toast. Mirrors
     /// the `TimerExtendedToastView` / `FlowNudgeToastView` panel config:
     /// `.nonactivatingPanel` + `becomesKeyOnlyIfNeeded` so the button receives
