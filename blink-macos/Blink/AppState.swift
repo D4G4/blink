@@ -1164,20 +1164,55 @@ final class AppState: ObservableObject {
                 UserDefaults.standard.set(true, forKey: Self.calendarTipShownKey)
             }
             let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+            // Record that this update surfaced What's New, so the Settings
+            // "What's New" card can re-open the digest for the next 10 days.
+            UserDefaults.standard.set(Date().timeIntervalSinceReferenceDate, forKey: Self.whatsNewSurfacedDateKey)
+            UserDefaults.standard.set(version, forKey: Self.whatsNewSurfacedVersionKey)
             Log.i("Showing What's New window for v\(version) with \(items.count) item(s)")
-            whatsNewController = WhatsNewWindowController()
-            whatsNewController?.show(
-                theme: ThemeManager.shared.current,
-                version: version,
-                items: items,
-                onOpenAction: { [weak self] action in
-                    switch action {
-                    case .preferences(let tab, let scrollTo):
-                        self?.openPreferences(initialTab: tab, scrollTo: scrollTo)
-                    }
-                }
-            )
+            self.presentWhatsNew(version: version, items: items)
         }
+    }
+
+    static let whatsNewSurfacedDateKey = "whatsNewSurfacedDate"
+    static let whatsNewSurfacedVersionKey = "whatsNewSurfacedVersion"
+    /// How long the Settings "What's New" card stays visible after an update.
+    static let whatsNewBadgeWindow: TimeInterval = 10 * 24 * 60 * 60
+
+    /// Present the What's New window with the given items. Shared by the launch
+    /// one-shot and the Settings "What's New" re-open card.
+    func presentWhatsNew(version: String, items: [WhatsNewItem]) {
+        guard !items.isEmpty else { return }
+        whatsNewController = WhatsNewWindowController()
+        whatsNewController?.show(
+            theme: ThemeManager.shared.current,
+            version: version,
+            items: items,
+            onOpenAction: { [weak self] action in
+                switch action {
+                case .preferences(let tab, let scrollTo):
+                    self?.openPreferences(initialTab: tab, scrollTo: scrollTo)
+                }
+            }
+        )
+    }
+
+    /// Re-open the current build's What's New digest from the Settings card.
+    func showWhatsNewFromSettings() {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        presentWhatsNew(version: version, items: WhatsNewManifest.itemsForVersion(version))
+    }
+
+    /// The version to advertise in the Settings "What's New" card — non-nil
+    /// only for `whatsNewBadgeWindow` (10 days) after an update surfaced the
+    /// window, and only while the running build still matches. nil → no card.
+    var recentlyUpdatedVersion: String? {
+        let d = UserDefaults.standard
+        guard let surfaced = d.string(forKey: Self.whatsNewSurfacedVersionKey) else { return nil }
+        let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        guard surfaced == current else { return nil }
+        let ts = d.double(forKey: Self.whatsNewSurfacedDateKey)
+        guard ts > 0, Date().timeIntervalSinceReferenceDate - ts < Self.whatsNewBadgeWindow else { return nil }
+        return WhatsNewManifest.itemsForVersion(current).isEmpty ? nil : current
     }
 
     private static let calendarTipShownKey = "calendarTipShown"

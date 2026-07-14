@@ -48,6 +48,29 @@ final class BreakSuggestionsHelpSnapshotTests: SnapshotTestCase {
 }
 
 final class SettingsSnapshotTests: SnapshotTestCase {
+    /// The 10-day "What's New" card at the top of General (gated by
+    /// AppState.recentlyUpdatedVersion). Forces the surfaced-version keys on
+    /// so the card renders, then clears them.
+    @MainActor func testWhatsNewCard() {
+        let d = UserDefaults.standard
+        let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        d.set(current, forKey: AppState.whatsNewSurfacedVersionKey)
+        d.set(Date().timeIntervalSinceReferenceDate, forKey: AppState.whatsNewSurfacedDateKey)
+        defer {
+            d.removeObject(forKey: AppState.whatsNewSurfacedVersionKey)
+            d.removeObject(forKey: AppState.whatsNewSurfacedDateKey)
+        }
+        for cs in [ColorScheme.light, .dark] {
+            assertHostedSnapshot(
+                of: SettingsView(appState: AppState(preview: true), category: .general)
+                    .environmentObject(ThemeManager.preview(.peach)),
+                named: "whatsnew_card_\(cs == .dark ? "dark" : "light")",
+                width: 720, height: 560,
+                colorScheme: cs
+            )
+        }
+    }
+
     /// Every sidebar pane (System-Settings redesign), light + dark. This is
     /// the per-screen coverage — one snapshot per category so a layout
     /// regression in any pane is caught, not just the default General view.

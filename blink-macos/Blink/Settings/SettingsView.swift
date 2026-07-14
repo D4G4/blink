@@ -256,6 +256,10 @@ struct SettingsView: View {
 
     private var generalPane: some View {
         VStack(alignment: .leading, spacing: 20) {
+            if let recent = appState.recentlyUpdatedVersion {
+                whatsNewCard(version: recent)
+            }
+
             settingsSection("Startup") {
                 settingsItem {
                     settingsToggleWithIcon("Launch at login", systemImage: "power.circle.fill", isOn: $launchAtLogin)
@@ -300,6 +304,55 @@ struct SettingsView: View {
                 .buttonStyle(.plain)
                 .padding(.top, 2)
             }
+        }
+    }
+
+    /// "What's New" entry point — lives at the top of General for 10 days
+    /// after an update (gated by `AppState.recentlyUpdatedVersion`). Re-opens
+    /// the release digest so users who dismissed the launch window can still
+    /// find it. Beta suffix stripped for a clean "v5.2.0".
+    private func whatsNewCard(version: String) -> some View {
+        let display = version.split(separator: "-").first.map(String.init) ?? version
+        return settingsSection("What's New") {
+            Button {
+                UIActionLogger.buttonTapped("What's New (Settings)")
+                appState.showWhatsNewFromSettings()
+            } label: {
+                HStack(spacing: 12) {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(accentColor)
+                        .frame(width: 32, height: 32)
+                        .overlay(
+                            Image(systemName: "gift.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                        )
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("See what's new in v\(display)")
+                            .font(.system(size: 15))
+                            .foregroundStyle(.primary)
+                        Text("Recent updates and features")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text("NEW")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(accentColor))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 10).fill(accentColor.opacity(0.08)))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
     }
 
