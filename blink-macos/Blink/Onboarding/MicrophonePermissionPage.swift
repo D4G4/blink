@@ -134,6 +134,11 @@ struct MicrophonePermissionPage: View {
             HStack(spacing: 14) {
                 pageButton(label: "Skip", icon: nil, primary: false, fg: heroFg, bgTop: bgTop) {
                     BlinkLog.permission.info("Onboarding mic step: user skipped")
+                    // Record the deliberate skip so the regular-startup mic
+                    // self-heal (AppState.checkPermissionsAndStart) doesn't
+                    // re-prompt a user who chose not to grant. Migrated users
+                    // never hit this (they granted, weren't skipped).
+                    UserDefaults.standard.set(true, forKey: "micOnboardingSkipped")
                     onAdvance()
                 }
                 pageButton(label: "Grant Access", icon: "mic.fill", primary: true, fg: heroFg, bgTop: bgTop) {
@@ -141,6 +146,8 @@ struct MicrophonePermissionPage: View {
                         let granted = await PermissionManager.requestMicrophoneAccess()
                         BlinkLog.permission.info("Onboarding mic step: requestAccess resolved granted=\(granted)")
                         if granted {
+                            // Clear any prior skip — the user opted in.
+                            UserDefaults.standard.set(false, forKey: "micOnboardingSkipped")
                             onAdvance()
                         } else {
                             withAnimation { deniedInSession = true }
