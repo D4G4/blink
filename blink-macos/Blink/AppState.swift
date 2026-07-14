@@ -15,7 +15,15 @@ final class AppState: ObservableObject {
     @Published var breaksPromptedToday: Int = 0
     @Published var hasInputMonitoringPermission: Bool = false
     @Published var isVideoPlaying: Bool = false
-    @Published var isPaused: Bool = false
+    /// How the current manual pause ends. `nil` == running normally.
+    /// Drives the auto-resume logic; `isPaused` is derived from it so every
+    /// existing read site keeps working unchanged.
+    @Published var pauseMode: PauseMode? = nil
+    /// Frontmost non-Blink app, tracked continuously so the "pause while
+    /// <App> is open" menu item and its resume check always have a real
+    /// target — even while Blink's own menu popover is frontmost.
+    @Published private(set) var lastActiveAppID: String?
+    @Published private(set) var lastActiveAppName: String?
     @Published var micAlwaysOnWarning: Bool = false
     @AppStorage("debugNotifications") var debugNotifications: Bool = false
 
@@ -84,12 +92,62 @@ final class AppState: ObservableObject {
     private let persistence = PersistenceManager()
     private var onboardingObserver: NSObjectProtocol?
 
+    // Pause / auto-resume
+    private let ownBundleID = Bundle.main.bundleIdentifier
+    private static let pauseModeKey = "pauseMode"
+    /// Minutes the countdown resets to when a pause begins — a fresh normal
+    /// interval (matches the engine's default working duration).
+    private static let pauseResetMinutes = 20
+    /// Wall-clock moment the user first left a `.currentApp` paused app.
+    /// nil while they're in the app (or the grace timer hasn't started).
+    /// Returning to the app clears it; exceeding the grace window resumes.
+    private var currentAppAwaySince: Date?
+    /// Grace period before a `.currentApp` pause auto-resumes after the user
+    /// leaves the app — so brief tab/app switches mid-meeting don't resume
+    /// Blink. Configurable in Settings (minutes); default 5, clamped ≥ 0.
+    private var currentAppGraceSeconds: TimeInterval {
+        let mins = (UserDefaults.standard.object(forKey: "currentAppGraceMinutes") as? Double) ?? 5
+        return max(0, mins) * 60
+    }
+
     // MARK: - Computed
 
     var formattedRemaining: String {
         let mins = Int(remainingSeconds) / 60
         let secs = Int(remainingSeconds) % 60
         return String(format: "%d:%02d", mins, secs)
+    }
+
+    /// True whenever a manual pause is active (any mode). Derived from
+    /// `pauseMode` so the existing `isPaused` read sites (tick gate, menu
+    /// bar icon opacity, popover labels) keep working untouched.
+    var isPaused: Bool { pauseMode != nil }
+
+    /// Human-readable pause status for the menu popover's state label.
+    var pauseStatusText: String {
+        switch pauseMode {
+        case .none:
+            return ""
+        case .indefinite:
+            return "Paused"
+        case .timed(let until):
+            return "Paused · resumes \(Self.resumeLabel(for: until))"
+        case .currentApp(_, let name):
+            return "Paused while \(name) is open"
+        }
+    }
+
+    /// Short "when it resumes" string: bare time if today, "tomorrow <time>"
+    /// if tomorrow, else the time. Used only for display.
+    private static func resumeLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        formatter.dateStyle = .none
+        let time = formatter.string(from: date)
+        let cal = Calendar.current
+        if cal.isDateInToday(date) { return time }
+        if cal.isDateInTomorrow(date) { return "tomorrow \(time)" }
+        return time
     }
 
     var flowState: FlowState {
@@ -142,6 +200,7 @@ final class AppState: ObservableObject {
 
         setupEngineCallbacks()
         loadTodayStats()
+        restorePauseMode()
         BlinkLog.pruneOldLogs()
 
         let savedWallClock = UserDefaults.standard.integer(forKey: "maxWallClockMinutes")
@@ -664,7 +723,9 @@ final class AppState: ObservableObject {
         let appMon = MacAppMonitor()
         appMon.onAppSwitch = { [weak self] event in
             Log.d("App switch → \(event.appBundleID)")
-            self?.engine.recordAppSwitch(bundleID: event.appBundleID)
+            guard let self else { return }
+            self.engine.recordAppSwitch(bundleID: event.appBundleID)
+            self.recordFrontmostApp(bundleID: event.appBundleID)
         }
         appMon.startMonitoring()
         self.appMonitor = appMon
@@ -679,6 +740,7 @@ final class AppState: ObservableObject {
         if let frontmostID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier {
             Log.i("Seeding initial frontmost app: \(frontmostID)")
             engine.setCurrentApp(bundleID: frontmostID)
+            recordFrontmostApp(bundleID: frontmostID)
         } else {
             Log.i("No frontmost app at startup — dwell tracking will start on first app switch")
         }
@@ -890,6 +952,11 @@ final class AppState: ObservableObject {
                     self.overlayController.dismissImmediately()
                 }
 
+                // End any pause whose resume condition is now met (timer
+                // elapsed, or the user switched away from the paused app)
+                // before deciding whether to advance the engine this tick.
+                self.checkAutoResume()
+
                 if !self.isPaused && !self.isUserAway { self.engine.tick() }
             }
         }
@@ -1033,9 +1100,124 @@ final class AppState: ObservableObject {
 
     // MARK: - Public actions (for menu bar buttons)
 
+    // MARK: - Pause / resume
+
+    /// Enter a pause. Dismisses any live break overlay (pausing means "not
+    /// now") and persists the mode so a timed pause survives relaunch.
+    func pause(_ mode: PauseMode) {
+        if isBreakPrompted || overlayController.isShowingFullscreen {
+            Log.i("Pause requested while break overlay active — treating as skip")
+            engine.userSkippedBreak()
+            isBreakPrompted = false
+            overlayShownAt = nil
+            overlayController.dismissImmediately()
+        }
+        pauseMode = mode
+        currentAppAwaySince = nil
+        // A pause suspends the break functionality — it doesn't freeze the
+        // timer mid-count. Reset to a fresh full interval so resuming (even
+        // after an hour) starts a clean countdown instead of firing a break
+        // seconds later. The tick gate holds it at full until resume.
+        engine.userSnoozed(minutes: Self.pauseResetMinutes)
+        persistPauseMode()
+        Log.i("Paused → \(mode.logDescription)")
+    }
+
+    /// Leave the paused state. No-op if already running.
+    func resume(reason: String = "user") {
+        guard pauseMode != nil else { return }
+        pauseMode = nil
+        currentAppAwaySince = nil
+        persistPauseMode()
+        Log.i("Resumed (\(reason))")
+    }
+
+    /// Header button / legacy entry point: quick indefinite pause ⇄ resume.
     func togglePause() {
-        isPaused.toggle()
-        Log.i("Pause toggled → \(isPaused ? "paused" : "resumed")")
+        if isPaused { resume(reason: "toggle") }
+        else { pause(.indefinite) }
+    }
+
+    /// Runs every tick. Ends a pause whose resume condition is met.
+    private func checkAutoResume() {
+        guard let mode = pauseMode else { return }
+        let now = Date()
+        switch mode {
+        case .indefinite:
+            return
+
+        case .timed(let until):
+            guard now >= until else { return }
+            autoResume(reason: "pause window elapsed", detail: "Your timed pause ended")
+
+        case .currentApp(let bundleID, let name):
+            // Filter out Blink itself so opening our own menu bar popover
+            // (which can briefly make Blink frontmost) doesn't count as
+            // "leaving" the paused app. Grace-timer decision is pure; the
+            // away-since state lives here.
+            let rawFront = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+            let front = (rawFront == ownBundleID) ? nil : rawFront
+            let step = PauseMode.currentAppGraceStep(
+                pausedBundleID: bundleID,
+                frontmostBundleID: front,
+                awaySince: currentAppAwaySince,
+                now: now,
+                graceSeconds: currentAppGraceSeconds
+            )
+            currentAppAwaySince = step.awaySince
+            if step.resume {
+                autoResume(reason: "away from \(name) past grace window",
+                           detail: "You left \(name)")
+            }
+        }
+    }
+
+    /// Resume from an automatic trigger (timer elapsed / left the app) and
+    /// surface a bottom-right toast so the user knows breaks are back on —
+    /// they weren't the one who resumed. Suppressed while the user is away
+    /// (asleep/locked), where a toast would be pointless.
+    private func autoResume(reason: String, detail: String) {
+        resume(reason: reason)
+        if !isUserAway {
+            overlayController.showResumeToast(detail: detail)
+        }
+    }
+
+    /// Track the frontmost non-Blink app so the "pause while <App> is open"
+    /// menu item always targets a real app.
+    private func recordFrontmostApp(bundleID: String) {
+        guard bundleID != ownBundleID else { return }
+        lastActiveAppID = bundleID
+        let running = NSWorkspace.shared.runningApplications.first { $0.bundleIdentifier == bundleID }
+        lastActiveAppName = running?.localizedName ?? bundleID
+    }
+
+    // MARK: Pause persistence
+
+    private func persistPauseMode() {
+        let defaults = UserDefaults.standard
+        if let mode = pauseMode, let data = try? JSONEncoder().encode(mode) {
+            defaults.set(data, forKey: Self.pauseModeKey)
+        } else {
+            defaults.removeObject(forKey: Self.pauseModeKey)
+        }
+    }
+
+    /// Restore a persisted pause at launch, dropping a `.timed` pause whose
+    /// deadline already passed while Blink was quit. `.indefinite` and
+    /// `.currentApp` restore as-is — the grace timer (re)starts from the tick
+    /// loop, so a `.currentApp` pause survives a restart until the user is
+    /// away from the app past the grace window.
+    private func restorePauseMode() {
+        guard let data = UserDefaults.standard.data(forKey: Self.pauseModeKey),
+              let mode = try? JSONDecoder().decode(PauseMode.self, from: data) else { return }
+        if mode.isElapsed(at: Date()) {
+            Log.i("Discarding expired persisted pause (\(mode.logDescription))")
+            UserDefaults.standard.removeObject(forKey: Self.pauseModeKey)
+            return
+        }
+        pauseMode = mode
+        Log.i("Restored pause → \(mode.logDescription)")
     }
 
     func showBreakPrompt() {

@@ -35,18 +35,7 @@ struct MenuBarView: View {
 
                 Spacer()
 
-                Button {
-                    appState.togglePause()
-                } label: {
-                    Image(systemName: appState.isPaused ? "play.fill" : "pause.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 28, height: 28)
-                        .background(Color.primary.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-                .buttonStyle(.plain)
-                .help(appState.isPaused ? "Resume Blink" : "Pause Blink")
+                pauseControl
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
@@ -226,6 +215,47 @@ struct MenuBarView: View {
         MenuBarController.shared.close()
     }
 
+    // MARK: - Pause Control
+
+    /// Header-right control. When running, opens the themed "Pause Blink"
+    /// picker (presets + custom duration). When paused, a one-tap Resume
+    /// button. All timed pauses auto-resume via `AppState.checkAutoResume()`.
+    @ViewBuilder
+    private var pauseControl: some View {
+        if appState.isPaused {
+            Button {
+                UIActionLogger.buttonTapped("Resume Blink", context: "MenuBar")
+                appState.resume(reason: "menu")
+            } label: {
+                pauseGlyph("play.fill")
+            }
+            .buttonStyle(.plain)
+            .help("Resume Blink")
+        } else {
+            Button {
+                UIActionLogger.buttonTapped("Pause (open picker)", context: "MenuBar")
+                let currentTheme = themeManager.current
+                dismissMenuBarPopover()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    PausePickerWindowController.shared.show(appState: appState, theme: currentTheme)
+                }
+            } label: {
+                pauseGlyph("pause.fill")
+            }
+            .buttonStyle(.plain)
+            .help("Pause Blink")
+        }
+    }
+
+    private func pauseGlyph(_ systemName: String) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: 12))
+            .foregroundStyle(.secondary)
+            .frame(width: 28, height: 28)
+            .background(Color.primary.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
     // MARK: - Timer Card
 
     private var timerCard: some View {
@@ -300,7 +330,7 @@ struct MenuBarView: View {
     }
 
     private var flowStateLabel: String {
-        if appState.isPaused { return "Paused" }
+        if appState.isPaused { return appState.pauseStatusText }
         if appState.isVideoPlaying { return "Video playing — timer paused" }
         switch appState.displayState {
         case .working: return "Timer running"

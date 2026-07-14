@@ -97,4 +97,34 @@ final class ToastSnapshotTests: SnapshotTestCase {
             )
         }
     }
+
+    @MainActor func testResumeToast() {
+        for v in allThemeVariants {
+            assertSnapshot(
+                of: ResumeToastView(theme: v.theme, detail: "You left Zoom"),
+                named: "resume_toast_\(v.snapshotName)",
+                width: 320, height: 72,
+                colorScheme: v.colorScheme
+            )
+        }
+    }
+}
+
+final class PausePickerSnapshotTests: SnapshotTestCase {
+    @MainActor func testPausePicker() {
+        for v in allThemeVariants {
+            assertSnapshot(
+                of: PausePickerView(
+                    theme: v.theme,
+                    appName: "Chrome",
+                    appBundleID: "com.google.Chrome",
+                    onPreset: { _ in },
+                    onCancel: {}
+                ),
+                named: "pause_picker_\(v.snapshotName)",
+                width: 380, height: 480,
+                colorScheme: v.colorScheme
+            )
+        }
+    }
 }

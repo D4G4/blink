@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage("showTimerInMenuBar") private var showTimerInMenuBar: Bool = false
     @AppStorage("useDarkOverlay") private var useDarkOverlay: Bool = false
     @AppStorage("pauseDuringCalls") private var pauseDuringCalls: Bool = true
+    @AppStorage("currentAppGraceMinutes") private var currentAppGraceMinutes: Double = 5
     @AppStorage("chimeEnabled") private var chimeEnabled: Bool = true
     @AppStorage("chimeID") private var chimeID: String = ChimePlayer.defaultChimeID
     @AppStorage("chimeVolume") private var chimeVolume: Double = ChimePlayer.defaultVolume
@@ -200,6 +201,34 @@ struct SettingsView: View {
                                     .frame(width: 36, alignment: .trailing)
                             }
                         }
+                    }
+                }
+            }
+
+            settingsSection("Pause") {
+                settingsItem {
+                    // Grace window before a "pause while <App> is open" pause
+                    // auto-resumes after you leave the app — so brief tab/app
+                    // switches during a meeting don't bounce breaks back on.
+                    HStack(spacing: 10) {
+                        Image(systemName: "hourglass")
+                            .font(.system(size: 17))
+                            .foregroundStyle(accentColor)
+                            .symbolRenderingMode(.hierarchical)
+                            .frame(width: 32, alignment: .center)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Resume after leaving app")
+                                .font(.system(size: 15))
+                            Text("Grace before a per-app pause ends")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
+                        Slider(value: $currentAppGraceMinutes, in: 0...30, step: 1)
+                            .tint(accentColor)
+                        Text(currentAppGraceMinutes == 0 ? "Off" : "\(Int(currentAppGraceMinutes)) min")
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 50, alignment: .trailing)
                     }
                 }
             }
