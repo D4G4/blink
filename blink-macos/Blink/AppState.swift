@@ -37,6 +37,10 @@ final class AppState: ObservableObject {
     /// EventKit-backed calendar watcher. nil unless the user has enabled
     /// "Pause during meetings" AND granted calendar access.
     private var calendarMonitor: MacCalendarMonitor?
+    /// Coalesces `.EKEventStoreChanged` bursts (CalDAV syncs fire many in a
+    /// row) into a single trailing re-evaluation so we don't run repeated
+    /// synchronous EventKit queries on the main thread.
+    private var calendarChangeDebounce: DispatchWorkItem?
     private var permissionRecovery: InputMonitoringRecoveryWindowController?
     private var permissionFlow: PermissionFlowWindowController?
     private var launchHUD: LaunchHUDWindowController?
@@ -1322,7 +1326,7 @@ final class AppState: ObservableObject {
         monitor.onStoreChanged = { [weak self] in
             // .EKEventStoreChanged posts on the main queue; hop into MainActor
             // isolation to touch @MainActor state (mirrors the sleep/wake obs).
-            MainActor.assumeIsolated { self?.evaluateCalendar() }
+            MainActor.assumeIsolated { self?.scheduleCalendarReevaluation() }
         }
         monitor.start()
         calendarMonitor = monitor
@@ -1332,8 +1336,20 @@ final class AppState: ObservableObject {
     }
 
     private func stopCalendarMonitor() {
+        calendarChangeDebounce?.cancel()
+        calendarChangeDebounce = nil
         calendarMonitor?.stop()
         calendarMonitor = nil
+    }
+
+    /// Trailing-debounce a calendar re-evaluation after a store change.
+    private func scheduleCalendarReevaluation() {
+        calendarChangeDebounce?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated { self?.evaluateCalendar() }
+        }
+        calendarChangeDebounce = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: work)
     }
 
     /// Query the current meeting window and apply the coordinator's decision.
@@ -1367,18 +1383,31 @@ final class AppState: ObservableObject {
         let provider = meeting.link?.provider.displayName ?? "meeting"
         let detail = "\(provider) · until \(Self.resumeLabel(for: meeting.end))"
         overlayController.showMeetingPausedToast(title: meeting.title, detail: detail) { [weak self] in
-            self?.resume(reason: "calendar undo")
+            guard let self else { return }
+            // Only undo if OUR calendar pause is still the active one — the
+            // toast lingers ~15s, in which the user may have set a different
+            // pause we must not blow away.
+            if case .calendarEvent(_, let key, _) = self.pauseMode, key == meeting.occurrenceKey {
+                self.resume(reason: "calendar undo")
+            }
         }
     }
 
     /// Suggest a pause for a link-less meeting via an interactive toast. Marked
-    /// acted regardless of whether the user pauses, so we don't re-nag.
+    /// acted (once actually shown) so we don't re-nag.
     private func applyCalendarSuggestion(_ meeting: CalendarMeeting) {
-        markCalendarActed(meeting.occurrenceKey)
+        // Don't consume the occurrence while the user can't see the toast —
+        // mark acted only when we actually show it, so it surfaces on unlock.
         guard !isUserAway else { return }
+        markCalendarActed(meeting.occurrenceKey)
         let minutes = max(1, Int(meeting.end.timeIntervalSince(Date()) / 60))
         overlayController.showMeetingSuggestionToast(title: meeting.title, minutes: minutes) { [weak self] in
-            self?.pause(.calendarEvent(until: meeting.end, eventKey: meeting.occurrenceKey, title: meeting.title))
+            guard let self else { return }
+            // Don't override a pause the user set after the toast appeared —
+            // the never-override-a-manual-pause guard must hold for this
+            // deferred action too, not just at decision time.
+            guard !self.isPaused else { return }
+            self.pause(.calendarEvent(until: meeting.end, eventKey: meeting.occurrenceKey, title: meeting.title))
         }
     }
 
