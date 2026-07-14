@@ -6,6 +6,19 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.2.0-beta.7</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.7</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>379</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.7</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Tue, 14 Jul 2026 20:04:54 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.7</h3><ul><li>Respect an onboarding mic-skip in the startup self-heal</li><li>Only self-heal .notDetermined for existing Smart users</li><li>Announce timed Pause + Calendar integration</li><li>Harden deferred toast actions + debounce store changes</li><li>Auto-pause during meetings via EventKit</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.7">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.7/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="qbW6h6ZNvTBdV2NKhg8wVgY/zHCs3UXjUABBFC+oNZrJTnv4iRtzJsqTdye+nO9mBgUH0k4wOLkyra04OfIkDw==" length="8828868" />
+    </item>
+    <item>
       <title>Blink v5.2.0-beta.6</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.6</link>
       <sparkle:channel>beta</sparkle:channel>
