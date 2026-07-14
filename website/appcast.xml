@@ -6,6 +6,19 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.2.0-beta.9</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.9</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>392</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.9</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Tue, 14 Jul 2026 23:05:05 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.9</h3><ul><li>Icon glyphs invisible on white-accent themes</li><li>Add 'Show What's New' debug button</li><li>Move Focus learn links into their own Learn section</li><li>All icons follow theme accent + Flow chip buttons</li><li>Theme-palette icons, macOS spacing, move dark overlay</li><li>Theme the Appearance icon + lighten the Focus pane</li><li>Trim copy + add 10-day What's New card in Settings</li><li>System-Settings-style sidebar redesign</li><li>Deep-link scroll no longer clips the section highlight</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.9">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.9/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="TBBIX8Dcxc9oczfGotUpxo9ANL+TC+OHRWNx+AZtF/f/Eo1vzP3CftKBHuj7BGIWXrbeMm3Yvja5BU6Kb3cCDQ==" length="8878746" />
+    </item>
+    <item>
       <title>Blink v5.2.0-beta.8</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.8</link>
       <sparkle:channel>beta</sparkle:channel>
