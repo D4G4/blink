@@ -376,7 +376,8 @@ final class AppState: ObservableObject {
             // exists; gated on the call-detection setting so users who turned
             // it off see no mic UI.
             let micDetectionOn = (UserDefaults.standard.object(forKey: "pauseDuringCalls") as? Bool) ?? true
-            if micStatus == .notDetermined && micDetectionOn {
+            let micSkipped = UserDefaults.standard.bool(forKey: "micOnboardingSkipped")
+            if micStatus == .notDetermined && micDetectionOn && !micSkipped {
                 Log.i("Existing Smart user with mic .notDetermined — requesting to sync grant")
                 Task { @MainActor in
                     let micGranted = await PermissionManager.requestMicrophoneAccess()
