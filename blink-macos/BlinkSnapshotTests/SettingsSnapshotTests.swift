@@ -48,7 +48,49 @@ final class BreakSuggestionsHelpSnapshotTests: SnapshotTestCase {
 }
 
 final class SettingsSnapshotTests: SnapshotTestCase {
-    @MainActor func testSettings() {
+    /// Every sidebar pane (System-Settings redesign), light + dark. This is
+    /// the per-screen coverage — one snapshot per category so a layout
+    /// regression in any pane is caught, not just the default General view.
+    /// 720×760 matches the real prefs window (720×500) with headroom so each
+    /// pane renders sidebar-and-all without the detail ScrollView clipping.
+    @MainActor func testEveryPane() {
+        for category in SettingsCategory.allCases {
+            for cs in [ColorScheme.light, .dark] {
+                let label = "\(String(describing: category))_\(cs == .dark ? "dark" : "light")"
+                assertHostedSnapshot(
+                    of: SettingsView(appState: AppState(preview: true), category: category)
+                        .environmentObject(ThemeManager.preview(.peach)),
+                    named: "pane_\(label)",
+                    width: 720, height: 760,
+                    colorScheme: cs
+                )
+            }
+        }
+    }
+
+    /// Focus pane in Simple (Input-Monitoring-off) mode — a distinct layout
+    /// from Smart: the sensitivity slider + Flow Check are replaced by the
+    /// locked prompt. `testEveryPane` renders the Smart variant (preview
+    /// hard-codes the permission on), so this covers the other branch.
+    @MainActor func testFocusPaneLocked() {
+        for cs in [ColorScheme.light, .dark] {
+            let state = AppState(preview: true)
+            state.hasInputMonitoringPermission = false
+            assertHostedSnapshot(
+                of: SettingsView(appState: state, category: .focus)
+                    .environmentObject(ThemeManager.preview(.peach)),
+                named: "pane_focus_locked_\(cs == .dark ? "dark" : "light")",
+                width: 720, height: 760,
+                colorScheme: cs
+            )
+        }
+    }
+
+    /// Theme breadth on the General pane — accent color, toggle styling, and
+    /// the selected-theme ring differ per theme. Covers all 5 themes × both
+    /// schemes so a theming regression is caught even though pane *layout* is
+    /// theme-independent (and thus only needs one theme in `testEveryPane`).
+    @MainActor func testGeneralAllThemes() {
         let themes: [(String, BlinkTheme)] = [
             ("peach", .peach), ("midnight", .midnight), ("sage", .sage),
             ("sand", .sand), ("mono", .mono),
@@ -56,11 +98,6 @@ final class SettingsSnapshotTests: SnapshotTestCase {
         for (name, theme) in themes {
             for cs in [ColorScheme.light, .dark] {
                 let label = "\(name)_\(cs == .dark ? "dark" : "light")"
-                // SettingsView is now a sidebar + detail split (System
-                // Settings style). assertHostedSnapshot routes through
-                // NSHostingView so the sidebar List + detail ScrollView lay
-                // out properly. 720×640 matches the real prefs window so the
-                // General pane renders sidebar-and-all.
                 assertHostedSnapshot(
                     of: SettingsView(appState: AppState(preview: true))
                         .environmentObject(ThemeManager.preview(theme)),

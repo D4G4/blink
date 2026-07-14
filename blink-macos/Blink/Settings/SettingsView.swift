@@ -131,6 +131,15 @@ struct SettingsView: View {
         self._selectedCategory = State(initialValue: category)
     }
 
+    /// Direct-category initializer for previews and snapshot tests — the
+    /// public `initialTab`/`scrollTo` init has no deep-link onto Breaks, so
+    /// per-pane coverage needs a way to land on any category.
+    init(appState: AppState, category: SettingsCategory) {
+        self.appState = appState
+        self.scrollTarget = nil
+        self._selectedCategory = State(initialValue: category)
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             sidebar
