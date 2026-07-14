@@ -764,6 +764,14 @@ struct SettingsView: View {
                     }
                 }
 
+                // Force-shows the current build's What's New window. The
+                // real launch flow only surfaces it on a version upgrade
+                // (and once per version), so this is the way to re-view it.
+                debugActionButton(label: "Show What's New", systemImage: "gift") {
+                    UIActionLogger.buttonTapped("Show What's New (debug)")
+                    appState.showWhatsNewFromSettings()
+                }
+
                 debugActionButton(label: "Restart Onboarding", systemImage: "arrow.counterclockwise") {
                     UIActionLogger.buttonTapped("Restart Onboarding")
                     themeManager.hasCompletedOnboarding = false
