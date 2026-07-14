@@ -391,6 +391,33 @@ final class AppState: ObservableObject {
         if granted {
             hasInputMonitoringPermission = true
             UserDefaults.standard.set(true, forKey: "permissionGranted")
+            // Self-heal a mic grant stuck at .notDetermined for an ALREADY
+            // set-up Smart-mode user. AVFoundation only syncs a microphone
+            // grant made in System Settings once the app has called
+            // requestAccess at least once — until then authorizationStatus
+            // keeps returning .notDetermined even though the toggle is ON
+            // (Apple DTS thread 738986). A major macOS upgrade migrates the
+            // TCC database and re-exposes this: a previously-working grant now
+            // reads .notDetermined, so MacContextDetector's `== .authorized`
+            // gate silently kills meeting detection and breaks fire mid-call.
+            // CRITICAL: only here (IM already granted) — NOT the permission-
+            // flow branch below (a fresh install gets the dedicated mic page
+            // at the right onboarding step) and NOT basic mode ("Zero
+            // permissions", which returns above). Putting this at the top of
+            // the method fired the prompt during the detection-mode page, and
+            // even for Simple users — the bug this placement fixes.
+            // requestAccess returns with NO prompt when the grant already
+            // exists; gated on the call-detection setting so users who turned
+            // it off see no mic UI.
+            let micDetectionOn = (UserDefaults.standard.object(forKey: "pauseDuringCalls") as? Bool) ?? true
+            let micSkipped = UserDefaults.standard.bool(forKey: "micOnboardingSkipped")
+            if micStatus == .notDetermined && micDetectionOn && !micSkipped {
+                Log.i("Existing Smart user with mic .notDetermined — requesting to sync grant")
+                Task { @MainActor in
+                    let micGranted = await PermissionManager.requestMicrophoneAccess()
+                    Log.i("Mic re-request resolved → \(micGranted ? "authorized" : "denied")")
+                }
+            }
             startMonitoringAfterAllPermissions()
             return
         }
