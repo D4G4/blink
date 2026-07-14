@@ -126,22 +126,20 @@ struct FlowSensitivityView: View {
                 .foregroundStyle(.secondary)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
 
-            // Compact link row — Fine-tune · How it works · Research. Replaces
-            // the old full-width "How this affects your breaks" button so the
-            // settings pane reads lighter.
-            HStack(spacing: 14) {
+            // Proper chip buttons — Fine-tune · How it works · Research.
+            HStack(spacing: 10) {
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) { showFineTune.toggle() }
                 } label: {
-                    inlineLink(showFineTune ? "chevron.up" : "slider.horizontal.3",
+                    chipButton(showFineTune ? "chevron.up" : "slider.horizontal.3",
                                showFineTune ? "Hide" : "Fine-tune",
-                               color: .secondary)
+                               prominent: false)
                 }
                 .buttonStyle(.plain)
 
                 if onLearnMoreTapped != nil {
                     Button { onLearnMoreTapped?() } label: {
-                        inlineLink("eye", "How it works", color: accentColor)
+                        chipButton("eye", "How it works", prominent: true)
                     }
                     .buttonStyle(.plain)
                 }
@@ -149,7 +147,7 @@ struct FlowSensitivityView: View {
                 Spacer()
 
                 Button { onResearchTapped?() } label: {
-                    inlineLink("book.closed", "Research", color: accentColor)
+                    chipButton("book.closed", "Research", prominent: true)
                 }
                 .buttonStyle(.plain)
             }
@@ -170,15 +168,27 @@ struct FlowSensitivityView: View {
         }
     }
 
-    // Small labelled link used in the settings action row.
-    private func inlineLink(_ symbol: String, _ label: String, color: Color) -> some View {
-        HStack(spacing: 4) {
+    // Proper chip button for the settings action row. `prominent` = accent-
+    // tinted (How it works / Research); otherwise a neutral secondary chip
+    // (Fine-tune).
+    private func chipButton(_ symbol: String, _ label: String, prominent: Bool) -> some View {
+        HStack(spacing: 5) {
             Image(systemName: symbol)
-                .font(.system(size: 10))
+                .font(.system(size: 11, weight: .medium))
             Text(label)
-                .font(.system(size: 11))
+                .font(.system(size: 12, weight: .medium))
         }
-        .foregroundStyle(color)
+        .foregroundStyle(prominent ? accentColor : .secondary)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(prominent ? accentColor.opacity(0.12) : Color.secondary.opacity(0.10))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(prominent ? accentColor.opacity(0.35) : Color.secondary.opacity(0.22), lineWidth: 1)
+        )
     }
 
     // Compact settings preset button — icon + name, no description

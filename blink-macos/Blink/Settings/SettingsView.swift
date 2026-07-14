@@ -34,20 +34,6 @@ enum SettingsCategory: Int, CaseIterable, Identifiable {
         }
     }
 
-    /// The theme whose accent colors this category's icon tile borrows —
-    /// keeps the sidebar's distinct-per-row look but drawn entirely from our
-    /// existing theme palette (no invented colors). Appearance is special-
-    /// cased in the view to track the *current* theme accent. `nil` → current.
-    var paletteTheme: BlinkTheme? {
-        switch self {
-        case .general:    return .midnight   // blue
-        case .appearance: return nil          // live theme accent (coral on Peach)
-        case .breaks:     return .sage        // green
-        case .focus:      return .mono        // graphite (→ white in dark)
-        case .autoPause:  return .sand        // tan
-        case .about:      return .peach       // coral — far from Appearance in the list
-        }
-    }
 }
 
 struct SettingsView: View {
@@ -173,12 +159,10 @@ struct SettingsView: View {
         .listStyle(.sidebar)
     }
 
-    /// Icon-tile color for a category, drawn from our theme palette. Appearance
-    /// tracks the live theme accent (it *is* the theme pane); every other pane
-    /// borrows a fixed theme's accent — `.accent(for:)` so Mono flips to white
-    /// in dark mode instead of vanishing into the dark sidebar.
+    /// Icon-tile color — every pane follows the current theme accent so the
+    /// sidebar reads as one cohesive themed set.
     private func tintColor(for category: SettingsCategory) -> Color {
-        (category.paletteTheme ?? theme).accent(for: colorScheme)
+        accentColor
     }
 
     /// System-Settings-style icon tile: a white SF Symbol on a rounded,
