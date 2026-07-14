@@ -268,8 +268,8 @@ struct SettingsView: View {
                     }
                 }
             }
-            .id(SettingsAnchor.pause)
             .modifier(deepLinkHighlight(SettingsAnchor.pause))
+            .id(SettingsAnchor.pause)
 
             settingsSection("Mic Detection") {
                 settingsItem {
@@ -294,8 +294,8 @@ struct SettingsView: View {
                     }
                 }
             }
-            .id(SettingsAnchor.calendar)
             .modifier(deepLinkHighlight(SettingsAnchor.calendar))
+            .id(SettingsAnchor.calendar)
 
             settingsSection("Timer") {
                 settingsItem {
@@ -935,15 +935,19 @@ struct SettingsView: View {
 }
 
 /// A brief accent highlight for a deep-linked Settings section — a soft fill
-/// plus a rounded ring that fades in and out. The +8/-8 padding pair insets
-/// the highlight around the section without shifting sibling layout.
+/// plus a rounded ring that fades in and out. Uses a small REAL inset padding
+/// (not an overflow) so the fill/ring stay inside the view's own frame: a
+/// negative-padding overflow bled ~8px above the section and got clipped when
+/// ScrollViewReader landed the section flush against the scroll view's top
+/// edge (the "off by a few pixels" scroll target). The 6px inset is always
+/// present (the ring just fades via opacity), so nothing shifts when it flashes.
 private struct DeepLinkHighlight: ViewModifier {
     let isActive: Bool
     let accent: Color
 
     func body(content: Content) -> some View {
         content
-            .padding(8)
+            .padding(6)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(accent.opacity(isActive ? 0.12 : 0))
@@ -952,7 +956,6 @@ private struct DeepLinkHighlight: ViewModifier {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(accent.opacity(isActive ? 0.55 : 0), lineWidth: 1.5)
             )
-            .padding(-8)
             .animation(.easeInOut(duration: 0.4), value: isActive)
     }
 }
