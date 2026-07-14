@@ -503,26 +503,65 @@ struct SettingsView: View {
                         sensitivity: $flowSensitivity,
                         accentColor: accentColor,
                         foregroundColor: .primary,
-                        style: .settings,
-                        onResearchTapped: { [weak themeManager] in
-                            UIActionLogger.buttonTapped("Read the Research", context: "Settings")
-                            ResearchWindowController.shared.show(theme: themeManager?.current ?? .peach)
-                        },
-                        onLearnMoreTapped: {
-                            UIActionLogger.buttonTapped("See impact", context: "Settings")
-                            FlowLearnMoreWindowController.shared.show(theme: ThemeManager.shared.current)
-                        }
+                        style: .settings
                     )
                     .onChange(of: flowSensitivity) { _, newValue in
                         appState.engine.sensitivity = newValue
                     }
                 }
+
+                learnSection
             } else {
                 settingsSection("Flow Detection") {
                     flowDetectionLockedPrompt
                 }
+
+                learnSection
             }
         }
+    }
+
+    /// Learn section — the reference links that used to sit inline under the
+    /// sensitivity presets. Their own section at the bottom of Focus so the
+    /// controls above stay focused on actual settings.
+    private var learnSection: some View {
+        settingsSection("Learn") {
+            settingsLinkRow(icon: "eye", label: "How Smart timing works") {
+                UIActionLogger.buttonTapped("See impact", context: "Settings")
+                FlowLearnMoreWindowController.shared.show(theme: ThemeManager.shared.current)
+            }
+            settingsLinkRow(icon: "book.closed", label: "The research behind it") { [weak themeManager] in
+                UIActionLogger.buttonTapped("Read the Research", context: "Settings")
+                ResearchWindowController.shared.show(theme: themeManager?.current ?? .peach)
+            }
+        }
+    }
+
+    /// A card row that opens a separate window (Learn links). Trailing
+    /// up-right arrow signals it leaves the settings pane.
+    private func settingsLinkRow(icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 17))
+                    .foregroundStyle(accentColor)
+                    .symbolRenderingMode(.hierarchical)
+                    .frame(width: 32, alignment: .center)
+                Text(label)
+                    .font(.system(size: 15))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.06)))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     /// Shown in place of the sensitivity slider + Flow Check when the

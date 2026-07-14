@@ -9,6 +9,9 @@ struct FlowSensitivityView: View {
     let accentColor: Color
     let foregroundColor: Color
     let style: Style
+    // Retained for the onboarding call site (FlowSensitivityPage). The settings
+    // layout no longer renders these — the Learn links moved to their own
+    // Settings section — but the onboarding page still passes onResearchTapped.
     var onResearchTapped: (() -> Void)? = nil
     var onLearnMoreTapped: (() -> Void)? = nil
 
@@ -126,8 +129,9 @@ struct FlowSensitivityView: View {
                 .foregroundStyle(.secondary)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
 
-            // Proper chip buttons — Fine-tune · How it works · Research.
-            HStack(spacing: 10) {
+            // Fine-tune chip — toggles the sensitivity slider. The Learn links
+            // (How it works / Research) live in their own Settings section now.
+            HStack {
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) { showFineTune.toggle() }
                 } label: {
@@ -136,20 +140,7 @@ struct FlowSensitivityView: View {
                                prominent: false)
                 }
                 .buttonStyle(.plain)
-
-                if onLearnMoreTapped != nil {
-                    Button { onLearnMoreTapped?() } label: {
-                        chipButton("eye", "How it works", prominent: true)
-                    }
-                    .buttonStyle(.plain)
-                }
-
                 Spacer()
-
-                Button { onResearchTapped?() } label: {
-                    chipButton("book.closed", "Research", prominent: true)
-                }
-                .buttonStyle(.plain)
             }
 
             if showFineTune {
@@ -316,9 +307,7 @@ private struct FlowSensitivityPreview: View {
         sensitivity: .constant(0.65),
         accentColor: BlinkTheme.peach.accent,
         foregroundColor: .primary,
-        style: .settings,
-        onResearchTapped: {},
-        onLearnMoreTapped: {}
+        style: .settings
     )
     .padding(20)
     .frame(width: 400)
