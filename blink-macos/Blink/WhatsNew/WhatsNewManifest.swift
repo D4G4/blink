@@ -16,6 +16,20 @@ enum WhatsNewManifest {
     /// oldest still-supported install might need to see them.
     static let items: [WhatsNewItem] = [
         WhatsNewItem(
+            icon: "pause.circle",
+            title: "Pause that resumes itself",
+            body: "Need a breather from breaks? Pause Blink for an hour, until tomorrow, or while a chosen app is open — and it turns itself back on automatically when the time's up. No more forgetting you paused it.",
+            introducedIn: "5.2.0",
+            openAction: .preferences(tab: 0)
+        ),
+        WhatsNewItem(
+            icon: "calendar",
+            title: "Auto-pause for meetings",
+            body: "Turn on calendar pausing and Blink quietly steps aside during meetings with a Zoom, Meet, or Teams link — then resumes the moment they end. Events without a link get a gentle \u{201C}pause?\u{201D} nudge you can tap or ignore. Your calendar is read only to spot meeting times; nothing leaves your Mac.",
+            introducedIn: "5.2.0",
+            openAction: .preferences(tab: 0)
+        ),
+        WhatsNewItem(
             icon: "sparkles",
             title: "Smart break suggestions",
             body: "Instead of always saying \u{201C}Look at something far away,\u{201D} Blink can pick a healthier action — drink water, stand up, breathe, step outside — based on time of day, how long you've been sitting, and whether you're coming out of focus.",
