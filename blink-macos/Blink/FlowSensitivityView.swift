@@ -112,7 +112,7 @@ struct FlowSensitivityView: View {
     // MARK: - Settings Style
 
     private var settingsLayout: some View {
-        VStack(alignment: .leading, spacing: 30) {
+        VStack(alignment: .leading, spacing: 16) {
             // Full-width preset buttons
             HStack(spacing: 8) {
                 ForEach(Preset.allCases, id: \.name) { preset in
@@ -126,53 +126,30 @@ struct FlowSensitivityView: View {
                 .foregroundStyle(.secondary)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
 
-            // Learn more button
-            if onLearnMoreTapped != nil {
-                Button {
-                    onLearnMoreTapped?()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "eye")
-                            .font(.system(size: 12))
-                        Text("How this affects your breaks")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundStyle(accentColor)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(accentColor.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-                .buttonStyle(.plain)
-            }
-
-            // Action links
-            HStack(spacing: 12) {
+            // Compact link row — Fine-tune · How it works · Research. Replaces
+            // the old full-width "How this affects your breaks" button so the
+            // settings pane reads lighter.
+            HStack(spacing: 14) {
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) { showFineTune.toggle() }
                 } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: showFineTune ? "chevron.up" : "slider.horizontal.3")
-                            .font(.system(size: 10))
-                        Text(showFineTune ? "Hide" : "Fine-tune")
-                            .font(.system(size: 11))
-                    }
-                    .foregroundStyle(.secondary)
+                    inlineLink(showFineTune ? "chevron.up" : "slider.horizontal.3",
+                               showFineTune ? "Hide" : "Fine-tune",
+                               color: .secondary)
                 }
                 .buttonStyle(.plain)
 
+                if onLearnMoreTapped != nil {
+                    Button { onLearnMoreTapped?() } label: {
+                        inlineLink("eye", "How it works", color: accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 Spacer()
 
-                Button {
-                    onResearchTapped?()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "book.closed")
-                            .font(.system(size: 10))
-                        Text("Research")
-                            .font(.system(size: 11))
-                    }
-                    .foregroundStyle(accentColor)
+                Button { onResearchTapped?() } label: {
+                    inlineLink("book.closed", "Research", color: accentColor)
                 }
                 .buttonStyle(.plain)
             }
@@ -191,6 +168,17 @@ struct FlowSensitivityView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
+    }
+
+    // Small labelled link used in the settings action row.
+    private func inlineLink(_ symbol: String, _ label: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: symbol)
+                .font(.system(size: 10))
+            Text(label)
+                .font(.system(size: 11))
+        }
+        .foregroundStyle(color)
     }
 
     // Compact settings preset button — icon + name, no description

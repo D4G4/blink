@@ -163,12 +163,19 @@ struct SettingsView: View {
                     Text(category.title)
                         .font(.system(size: 13))
                 } icon: {
-                    sidebarIcon(category.symbol, category.tint)
+                    sidebarIcon(category.symbol, tintColor(for: category))
                 }
                 .tag(category)
             }
         }
         .listStyle(.sidebar)
+    }
+
+    /// Icon-tile color for a category. Appearance tracks the live theme
+    /// accent (it *is* the theme pane, so its tile previews the current
+    /// theme); every other pane keeps its fixed semantic color.
+    private func tintColor(for category: SettingsCategory) -> Color {
+        category == .appearance ? accentColor : category.tint
     }
 
     /// System-Settings-style icon tile: a white SF Symbol on a rounded,
@@ -207,7 +214,7 @@ struct SettingsView: View {
     private var paneHeader: some View {
         HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(selectedCategory.tint)
+                .fill(tintColor(for: selectedCategory))
                 .frame(width: 40, height: 40)
                 .overlay(
                     Image(systemName: selectedCategory.symbol)
@@ -496,11 +503,12 @@ struct SettingsView: View {
             settingsSection("Detection Mode") {
                 detectionModePicker
                 settingsCaption(appState.hasInputMonitoringPermission
-                    ? "Smart reads typing and mouse activity (via Input Monitoring) so breaks land at natural pauses. Simple is a fixed 20-minute timer needing no permissions."
-                    : "Simple runs a fixed 20-minute timer with no permissions. Switch to Smart for flow-aware timing.")
+                    ? "Breaks land at natural pauses, adapting to your flow."
+                    : "A fixed 20-minute timer. Switch to Smart for flow-aware timing.")
             }
 
-            // Sensitivity + Flow Check are only meaningful in Smart mode.
+            // Sensitivity only matters in Smart mode. Flow Check (a diagnostic
+            // spot-check) now lives under About › Debug to keep this pane light.
             if appState.hasInputMonitoringPermission {
                 settingsSection("Flow Detection") {
                     FlowSensitivityView(
@@ -519,36 +527,6 @@ struct SettingsView: View {
                     )
                     .onChange(of: flowSensitivity) { _, newValue in
                         appState.engine.sensitivity = newValue
-                    }
-                }
-
-                settingsSection("Flow Check") {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Button {
-                            let check = appState.engine.spotCheckFlow()
-                            flowCheckDetail = check.description
-                            Log.i("Flow spot check (Preferences):\n\(check.description)")
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "waveform.path.ecg")
-                                    .font(.system(size: 12))
-                                Text("Run Flow Check")
-                                    .font(.system(size: 12, weight: .medium))
-                            }
-                            .foregroundStyle(accentColor)
-                        }
-                        .buttonStyle(.plain)
-
-                        if let detail = flowCheckDetail {
-                            Text(detail)
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(.secondary)
-                                .textSelection(.enabled)
-                                .padding(10)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color.primary.opacity(0.05))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
                     }
                 }
             } else {
@@ -734,6 +712,29 @@ struct SettingsView: View {
                 settingsItem {
                     settingsToggleWithIcon("Debug notifications", systemImage: "ant.fill", isOn: $appState.debugNotifications)
                     settingsCaption("Show toasts for timer resets, state changes, and idle detection")
+                }
+
+                // Flow Check — a spot-check of the current flow signal. Lives
+                // here (not on the Focus pane) so Focus stays light; only
+                // meaningful in Smart mode where there's a signal to read.
+                if appState.hasInputMonitoringPermission {
+                    VStack(alignment: .leading, spacing: 10) {
+                        debugActionButton(label: "Run Flow Check", systemImage: "waveform.path.ecg") {
+                            let check = appState.engine.spotCheckFlow()
+                            flowCheckDetail = check.description
+                            Log.i("Flow spot check (Preferences):\n\(check.description)")
+                        }
+                        if let detail = flowCheckDetail {
+                            Text(detail)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                                .padding(10)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.primary.opacity(0.05))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                    }
                 }
 
                 debugActionButton(label: "Restart Onboarding", systemImage: "arrow.counterclockwise") {
