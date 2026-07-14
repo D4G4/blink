@@ -56,17 +56,16 @@ final class SettingsSnapshotTests: SnapshotTestCase {
         for (name, theme) in themes {
             for cs in [ColorScheme.light, .dark] {
                 let label = "\(name)_\(cs == .dark ? "dark" : "light")"
-                // SettingsView wraps its content in a ScrollView; ImageRenderer
-                // doesn't measure that and the result is a blank tab bar.
-                // assertHostedSnapshot routes through NSHostingView so the
-                // ScrollView lays out properly. Tall frame (1200pt) so the
-                // full General tab renders end-to-end and every iconified
-                // row is visible without the snapshot needing to scroll.
+                // SettingsView is now a sidebar + detail split (System
+                // Settings style). assertHostedSnapshot routes through
+                // NSHostingView so the sidebar List + detail ScrollView lay
+                // out properly. 720×640 matches the real prefs window so the
+                // General pane renders sidebar-and-all.
                 assertHostedSnapshot(
                     of: SettingsView(appState: AppState(preview: true))
                         .environmentObject(ThemeManager.preview(theme)),
                     named: "settings_\(label)",
-                    width: 440, height: 1200,
+                    width: 720, height: 640,
                     colorScheme: cs
                 )
             }
