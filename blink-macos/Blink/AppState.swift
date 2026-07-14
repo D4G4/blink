@@ -95,6 +95,9 @@ final class AppState: ObservableObject {
     // Pause / auto-resume
     private let ownBundleID = Bundle.main.bundleIdentifier
     private static let pauseModeKey = "pauseMode"
+    /// Minutes the countdown resets to when a pause begins — a fresh normal
+    /// interval (matches the engine's default working duration).
+    private static let pauseResetMinutes = 20
     /// Wall-clock moment the user first left a `.currentApp` paused app.
     /// nil while they're in the app (or the grace timer hasn't started).
     /// Returning to the app clears it; exceeding the grace window resumes.
@@ -1111,6 +1114,11 @@ final class AppState: ObservableObject {
         }
         pauseMode = mode
         currentAppAwaySince = nil
+        // A pause suspends the break functionality — it doesn't freeze the
+        // timer mid-count. Reset to a fresh full interval so resuming (even
+        // after an hour) starts a clean countdown instead of firing a break
+        // seconds later. The tick gate holds it at full until resume.
+        engine.userSnoozed(minutes: Self.pauseResetMinutes)
         persistPauseMode()
         Log.i("Paused → \(mode.logDescription)")
     }
