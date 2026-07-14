@@ -174,7 +174,10 @@ struct SettingsView: View {
             .overlay(
                 Image(systemName: symbol)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white)
+                    // textOnAccent, not .white — the Mono/Dark theme accent
+                    // resolves to white, so a white glyph would vanish on the
+                    // white tile. This returns black in that case.
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
             )
     }
 
@@ -207,7 +210,7 @@ struct SettingsView: View {
                 .overlay(
                     Image(systemName: selectedCategory.symbol)
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(theme.textOnAccent(for: colorScheme))
                 )
             Text(selectedCategory.title)
                 .font(.system(size: 22, weight: .bold))
