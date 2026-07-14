@@ -346,8 +346,98 @@ final class OverlayWindowController {
         }
     }
 
+    /// Interactive bottom-right toast shown when Blink auto-pauses for a
+    /// calendar meeting with a video link. Tapping "Undo" resumes immediately.
+    func showMeetingPausedToast(title: String, detail: String, onUndo: @escaping () -> Void) {
+        Log.i("Meeting paused toast: \(title) — \(detail)")
+        let view = MeetingActionToastView(
+            theme: theme,
+            icon: "calendar",
+            title: "Paused for \(title)",
+            detail: detail,
+            actionLabel: "Undo",
+            onAction: { [weak self] in
+                Log.i("Meeting paused toast: 'Undo' tapped")
+                self?.dismissToast()
+                onUndo()
+            }
+        )
+        installInteractiveToast(view, width: 320, height: 72, autoDismiss: 15)
+    }
+
+    /// Interactive bottom-right toast suggesting a pause for a calendar event
+    /// that has NO video link. Tapping "Pause" pauses for the event's duration.
+    func showMeetingSuggestionToast(title: String, minutes: Int, onPause: @escaping () -> Void) {
+        Log.i("Meeting suggestion toast: \(title) (\(minutes)m)")
+        let view = MeetingActionToastView(
+            theme: theme,
+            icon: "calendar.badge.clock",
+            title: "\(title) starting",
+            detail: "Pause Blink for \(minutes)m?",
+            actionLabel: "Pause",
+            onAction: { [weak self] in
+                Log.i("Meeting suggestion toast: 'Pause' tapped")
+                self?.dismissToast()
+                onPause()
+            }
+        )
+        installInteractiveToast(view, width: 320, height: 72, autoDismiss: 15)
+    }
+
+    /// Shared setup for an interactive (clickable) bottom-right toast. Mirrors
+    /// the `TimerExtendedToastView` / `FlowNudgeToastView` panel config:
+    /// `.nonactivatingPanel` + `becomesKeyOnlyIfNeeded` so the button receives
+    /// clicks without stealing focus from the LSUIElement app.
+    private func installInteractiveToast<Content: View>(
+        _ content: Content,
+        width: CGFloat,
+        height: CGFloat,
+        autoDismiss: TimeInterval
+    ) {
+        dismissToast()
+        guard let screen = NSScreen.main else { return }
+
+        let padding: CGFloat = 16
+        let frame = NSRect(
+            x: screen.visibleFrame.maxX - width - padding,
+            y: screen.visibleFrame.minY + padding,
+            width: width,
+            height: height
+        )
+
+        let panel = NSPanel(
+            contentRect: frame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.level = .floating
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.ignoresMouseEvents = false
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = true
+        panel.contentView = NSHostingView(rootView: content)
+
+        panel.alphaValue = 0
+        panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.3
+            panel.animator().alphaValue = 1
+        }
+        self.toastWindow = panel
+
+        if autoDismiss > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + autoDismiss) { [weak self] in
+                self?.dismissToast()
+            }
+        }
+    }
+
     // MARK: - Phase 1: Mini toast (bottom-right corner)
-    
+
     private func showToast(onToastDone: @escaping () -> Void) {
         guard let screen = NSScreen.main else { return }
         
@@ -1118,6 +1208,59 @@ struct ResumeToastView: View {
             }
 
             Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(bg)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+/// Interactive toast for calendar-driven pauses: an icon, a one-line title +
+/// detail, and a single accent action button ("Undo" for an auto-pause,
+/// "Pause" for a suggestion). Shares the styling of `FlowNudgeToastView`.
+struct MeetingActionToastView: View {
+    let theme: BlinkTheme
+    let icon: String
+    let title: String
+    let detail: String
+    let actionLabel: String
+    let onAction: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        let bg = theme.overlayBackground(for: colorScheme)
+        let fg = theme.overlayText(for: colorScheme)
+        let accent = theme.accent(for: colorScheme)
+
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundStyle(accent)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(fg)
+                    .lineLimit(1)
+                Text(detail)
+                    .font(.system(size: 11))
+                    .foregroundStyle(fg.opacity(0.7))
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Button(action: onAction) {
+                Text(actionLabel)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(accent)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

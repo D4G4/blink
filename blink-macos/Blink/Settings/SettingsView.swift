@@ -12,6 +12,8 @@ struct SettingsView: View {
     @AppStorage("useDarkOverlay") private var useDarkOverlay: Bool = false
     @AppStorage("pauseDuringCalls") private var pauseDuringCalls: Bool = true
     @AppStorage("currentAppGraceMinutes") private var currentAppGraceMinutes: Double = 5
+    @AppStorage("pauseDuringCalendarEvents") private var pauseDuringCalendarEvents: Bool = false
+    @AppStorage("suggestUnlinkedEvents") private var suggestUnlinkedEvents: Bool = true
     @AppStorage("chimeEnabled") private var chimeEnabled: Bool = true
     @AppStorage("chimeID") private var chimeID: String = ChimePlayer.defaultChimeID
     @AppStorage("chimeVolume") private var chimeVolume: Double = ChimePlayer.defaultVolume
@@ -237,6 +239,23 @@ struct SettingsView: View {
                 settingsItem {
                     settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
                     settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
+                }
+            }
+
+            settingsSection("Calendar") {
+                settingsItem {
+                    settingsToggleWithIcon("Pause during meetings", systemImage: "calendar", isOn: $pauseDuringCalendarEvents)
+                        .onChange(of: pauseDuringCalendarEvents) { _, newValue in
+                            UIActionLogger.settingChanged("pauseDuringCalendarEvents", value: "\(newValue)")
+                            appState.setCalendarIntegration(enabled: newValue)
+                        }
+                    settingsCaption("Auto-pauses breaks during calendar events that have a meeting link (Zoom, Meet, Teams). Blink reads your calendar only to detect meeting times.")
+                }
+                if pauseDuringCalendarEvents {
+                    settingsItem {
+                        settingsToggleWithIcon("Suggest pause for other events", systemImage: "bell.badge", isOn: $suggestUnlinkedEvents)
+                        settingsCaption("For events without a meeting link, show a dismissible pause suggestion instead of pausing automatically.")
+                    }
                 }
             }
 
