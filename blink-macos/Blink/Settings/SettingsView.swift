@@ -253,7 +253,7 @@ struct SettingsView: View {
     // MARK: - General pane
 
     private var generalPane: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 30) {
             if let recent = appState.recentlyUpdatedVersion {
                 whatsNewCard(version: recent)
             }
@@ -357,7 +357,7 @@ struct SettingsView: View {
     // MARK: - Appearance pane
 
     private var appearancePane: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 30) {
             settingsSection("Theme") {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 20), count: 3), spacing: 20) {
                     ForEach(BlinkTheme.all) { t in
@@ -400,7 +400,7 @@ struct SettingsView: View {
     // MARK: - Breaks pane
 
     private var breaksPane: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 30) {
             settingsSection("Timing") {
                 settingsItem {
                     HStack(spacing: 10) {
@@ -490,7 +490,7 @@ struct SettingsView: View {
     @State private var flowCheckDetail: String?
 
     private var focusPane: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 30) {
             settingsSection("Detection Mode") {
                 detectionModePicker
                 settingsCaption(appState.hasInputMonitoringPermission
@@ -609,7 +609,7 @@ struct SettingsView: View {
     // MARK: - Auto-Pause pane
 
     private var autoPausePane: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 30) {
             settingsSection("Microphone") {
                 settingsItem {
                     settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
@@ -876,13 +876,13 @@ struct SettingsView: View {
     // MARK: - Reusable Components
 
     private func settingsSection(_ title: String, @ViewBuilder content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(accentColor)
                 .padding(.leading, 4)
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 12) {
                 content()
             }
         }

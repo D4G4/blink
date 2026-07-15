@@ -115,7 +115,7 @@ struct FlowSensitivityView: View {
     // MARK: - Settings Style
 
     private var settingsLayout: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 24) {
             // Full-width preset buttons
             HStack(spacing: 8) {
                 ForEach(Preset.allCases, id: \.name) { preset in

@@ -65,7 +65,7 @@ final class SettingsSnapshotTests: SnapshotTestCase {
                 of: SettingsView(appState: AppState(preview: true), category: .general)
                     .environmentObject(ThemeManager.preview(.peach)),
                 named: "whatsnew_card_\(cs == .dark ? "dark" : "light")",
-                width: 720, height: 700,
+                width: 720, height: 780,
                 colorScheme: cs
             )
         }
@@ -84,7 +84,7 @@ final class SettingsSnapshotTests: SnapshotTestCase {
                     of: SettingsView(appState: AppState(preview: true), category: category)
                         .environmentObject(ThemeManager.preview(.peach)),
                     named: "pane_\(label)",
-                    width: 720, height: 820,
+                    width: 720, height: 900,
                     colorScheme: cs
                 )
             }
@@ -103,7 +103,7 @@ final class SettingsSnapshotTests: SnapshotTestCase {
                 of: SettingsView(appState: state, category: .focus)
                     .environmentObject(ThemeManager.preview(.peach)),
                 named: "pane_focus_locked_\(cs == .dark ? "dark" : "light")",
-                width: 720, height: 820,
+                width: 720, height: 900,
                 colorScheme: cs
             )
         }
@@ -125,7 +125,7 @@ final class SettingsSnapshotTests: SnapshotTestCase {
                     of: SettingsView(appState: AppState(preview: true))
                         .environmentObject(ThemeManager.preview(theme)),
                     named: "settings_\(label)",
-                    width: 720, height: 720,
+                    width: 720, height: 800,
                     colorScheme: cs
                 )
             }
