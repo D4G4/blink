@@ -6,6 +6,19 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.2.0-beta.10</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.10</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>394</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.10</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Wed, 15 Jul 2026 00:43:19 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.10</h3><ul><li>More breathing room across panes</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.10">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.10/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="NFuvdKTECwFWzUq+FjlTMjz/Lj1hfZ5V8OrQFzacAsrcUq8rUp1/PyNGPy/+FVJ/Inti53elQ2UhSnMlA0vGCw==" length="8878680" />
+    </item>
+    <item>
       <title>Blink v5.2.0-beta.9</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.9</link>
       <sparkle:channel>beta</sparkle:channel>
