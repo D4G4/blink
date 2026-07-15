@@ -360,9 +360,13 @@ final class OverlayWindowController {
                 Log.i("Meeting paused toast: 'Undo' tapped")
                 self?.dismissToast()
                 onUndo()
+            },
+            onClose: { [weak self] in
+                Log.i("Meeting paused toast: closed")
+                self?.dismissToast()
             }
         )
-        installInteractiveToast(view, width: 320, height: 72, autoDismiss: 15)
+        installInteractiveToast(view, width: 320 + MeetingActionToastView.closeInset, height: 72, autoDismiss: 15)
     }
 
     /// Interactive bottom-right toast suggesting a pause for a calendar event
@@ -379,9 +383,13 @@ final class OverlayWindowController {
                 Log.i("Meeting suggestion toast: 'Pause' tapped")
                 self?.dismissToast()
                 onPause()
+            },
+            onClose: { [weak self] in
+                Log.i("Meeting suggestion toast: closed")
+                self?.dismissToast()
             }
         )
-        installInteractiveToast(view, width: 320, height: 72, autoDismiss: 15)
+        installInteractiveToast(view, width: 320 + MeetingActionToastView.closeInset, height: 72, autoDismiss: 15)
     }
 
     /// One-time discoverability tip pointing fresh users at the calendar
@@ -398,9 +406,13 @@ final class OverlayWindowController {
                 Log.i("Calendar tip: 'Open' tapped")
                 self?.dismissToast()
                 onOpen()
+            },
+            onClose: { [weak self] in
+                Log.i("Calendar tip: closed")
+                self?.dismissToast()
             }
         )
-        installInteractiveToast(view, width: 340, height: 72, autoDismiss: 12)
+        installInteractiveToast(view, width: 340 + MeetingActionToastView.closeInset, height: 72, autoDismiss: 12)
     }
 
     /// Shared setup for an interactive (clickable) bottom-right toast. Mirrors
@@ -1245,46 +1257,78 @@ struct MeetingActionToastView: View {
     let detail: String
     let actionLabel: String
     let onAction: () -> Void
+    /// When set, a close (✕) button appears on the card's top-left corner on
+    /// hover — mirroring macOS notifications. Tapping it dismisses the toast.
+    var onClose: (() -> Void)? = nil
     @Environment(\.colorScheme) private var colorScheme
+    @State private var isHovered = false
+
+    /// Space reserved at the top-left so the close button sits centered on the
+    /// card's corner without being clipped by the panel bounds. The card is
+    /// inset by this amount; callers add it to the panel width.
+    static let closeInset: CGFloat = 9
 
     var body: some View {
         let bg = theme.overlayBackground(for: colorScheme)
         let fg = theme.overlayText(for: colorScheme)
         let accent = theme.accent(for: colorScheme)
 
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundStyle(accent)
+        ZStack(alignment: .topLeading) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                    .foregroundStyle(accent)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(fg)
-                    .lineLimit(1)
-                Text(detail)
-                    .font(.system(size: 11))
-                    .foregroundStyle(fg.opacity(0.7))
-                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(fg)
+                        .lineLimit(1)
+                    Text(detail)
+                        .font(.system(size: 11))
+                        .foregroundStyle(fg.opacity(0.7))
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Button(action: onAction) {
+                    Text(actionLabel)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(accent)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .background(bg)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.top, Self.closeInset)
+            .padding(.leading, Self.closeInset)
 
-            Spacer()
-
-            Button(action: onAction) {
-                Text(actionLabel)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(accent)
-                    .clipShape(Capsule())
+            if let onClose {
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 18, height: 18)
+                        .background(Circle().fill(Color.black.opacity(0.6)))
+                        .overlay(Circle().strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5))
+                }
+                .buttonStyle(.plain)
+                .opacity(isHovered ? 1 : 0)
+                .allowsHitTesting(isHovered)
             }
-            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(bg)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .animation(.easeInOut(duration: 0.15), value: isHovered)
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }
 
