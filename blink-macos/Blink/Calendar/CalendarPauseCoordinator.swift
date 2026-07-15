@@ -24,34 +24,42 @@ enum CalendarPauseCoordinator {
     ///     suggested), so a meeting isn't re-acted every tick or re-nagged
     ///     after the user hits Undo.
     ///   - suggestUnlinked: whether link-less events get a suggestion toast.
+    ///   - suggestionLead: how far before a link-less event starts to offer the
+    ///     "pause?" suggestion, so the user has time to react. Auto-pause is
+    ///     unaffected — it still fires exactly at the meeting's start.
     static func decide(
         meetings: [CalendarMeeting],
         now: Date,
         currentlyPaused: Bool,
         actedKeys: Set<String>,
-        suggestUnlinked: Bool
+        suggestUnlinked: Bool,
+        suggestionLead: TimeInterval = 120
     ) -> CalendarPauseAction {
         // Never stomp an existing pause (manual or an earlier calendar pause).
         guard !currentlyPaused else { return .none }
 
-        // Actionable = happening now, real timed event, attending, not yet acted.
-        let candidates = meetings.filter { m in
-            m.isActive(at: now)
-                && !m.isAllDay
-                && !m.isDeclined
-                && !actedKeys.contains(m.occurrenceKey)
+        // Real timed event, attending, not yet acted this run.
+        func eligible(_ m: CalendarMeeting) -> Bool {
+            !m.isAllDay && !m.isDeclined && !actedKeys.contains(m.occurrenceKey)
         }
-        guard !candidates.isEmpty else { return .none }
 
-        // Prefer linked meetings (auto-pause is the primary behavior); among
+        // Auto-pause (primary behavior) — a linked meeting happening NOW. Among
         // ties, earliest start wins so the choice is deterministic.
-        let linked = candidates.filter { $0.hasLink }.sorted { $0.start < $1.start }
+        let linked = meetings
+            .filter { $0.hasLink && $0.isActive(at: now) && eligible($0) }
+            .sorted { $0.start < $1.start }
         if let meeting = linked.first {
             return .autoPause(meeting)
         }
 
         guard suggestUnlinked else { return .none }
-        if let meeting = candidates.sorted(by: { $0.start < $1.start }).first {
+
+        // Suggest — a link-less meeting, offered `suggestionLead` before it
+        // starts through its end.
+        let suggestible = meetings
+            .filter { !$0.hasLink && $0.isSuggestible(at: now, lead: suggestionLead) && eligible($0) }
+            .sorted { $0.start < $1.start }
+        if let meeting = suggestible.first {
             return .suggest(meeting)
         }
         return .none

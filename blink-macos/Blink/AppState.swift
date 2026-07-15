@@ -70,6 +70,13 @@ final class AppState: ObservableObject {
     /// tick); `.EKEventStoreChanged` triggers an extra immediate evaluation.
     private var ticksSinceCalendarCheck: Int = 0
     private static let calendarCheckTickInterval: Int = 30
+    /// How far before a link-less event starts to offer the pause suggestion,
+    /// so the user has time to interact with the toast before the meeting.
+    static let calendarSuggestionLead: TimeInterval = 120  // 2 min
+    /// Monitor look-ahead — must exceed `calendarSuggestionLead` so an upcoming
+    /// event is fetched in time to suggest before it starts (extra margin
+    /// covers the 30s evaluation throttle).
+    private static let calendarLookAhead: TimeInterval = 180
 
     // Sleep / lock tracking — used to suppress overlay when user is away
     private var isSystemAsleep = false
@@ -1450,13 +1457,14 @@ final class AppState: ObservableObject {
     private func evaluateCalendar() {
         guard let monitor = calendarMonitor, monitor.isAuthorized else { return }
         let now = Date()
-        let meetings = monitor.meetings(now: now)
+        let meetings = monitor.meetings(now: now, ahead: Self.calendarLookAhead)
         let action = CalendarPauseCoordinator.decide(
             meetings: meetings,
             now: now,
             currentlyPaused: isPaused,
             actedKeys: calendarActedKeySet,
-            suggestUnlinked: suggestUnlinkedCalendarEvents
+            suggestUnlinked: suggestUnlinkedCalendarEvents,
+            suggestionLead: Self.calendarSuggestionLead
         )
         switch action {
         case .none:

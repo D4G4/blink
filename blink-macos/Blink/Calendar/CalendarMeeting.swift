@@ -29,4 +29,11 @@ struct CalendarMeeting: Equatable {
     func isActive(at now: Date) -> Bool {
         now >= start && now < end
     }
+
+    /// True when a "pause?" suggestion should be offered: from `lead` seconds
+    /// before the event starts through its end. The early lead gives the user
+    /// time to react and pause before the meeting actually begins.
+    func isSuggestible(at now: Date, lead: TimeInterval) -> Bool {
+        now >= start.addingTimeInterval(-lead) && now < end
+    }
 }
