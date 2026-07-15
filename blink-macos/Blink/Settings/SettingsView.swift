@@ -184,18 +184,25 @@ struct SettingsView: View {
     // MARK: - Detail pane
 
     private var detail: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    paneHeader
-                    paneContent
+        GeometryReader { geo in
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 28) {
+                        paneHeader
+                        // Fill the leftover height so a pane can bottom-anchor a
+                        // footer (e.g. General's "Check for Updates") with a
+                        // Spacer. Short panes get the footer pinned to the
+                        // bottom; tall panes just scroll past it as normal.
+                        paneContent
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    }
+                    .padding(.horizontal, 34)
+                    .padding(.top, 28)
+                    .padding(.bottom, 30)
+                    .frame(maxWidth: .infinity, minHeight: geo.size.height, alignment: .leading)
                 }
-                .padding(.horizontal, 34)
-                .padding(.top, 28)
-                .padding(.bottom, 36)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .onAppear { scrollToTargetIfNeeded(proxy) }
             }
-            .onAppear { scrollToTargetIfNeeded(proxy) }
         }
         .background(Color(nsColor: .textBackgroundColor).opacity(0.4))
     }
@@ -283,25 +290,28 @@ struct SettingsView: View {
                     settingsToggleWithIcon("Receive beta updates", systemImage: "flask.fill", isOn: $betaChannelEnabled)
                     settingsCaption("New features early. Beta builds may be less stable.")
                 }
-
-                Button {
-                    UIActionLogger.buttonTapped("Check for Updates")
-                    BlinkUpdater.shared.checkForUpdates()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 13, weight: .medium))
-                        Text("Check for Updates")
-                            .font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(accentColor))
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
             }
+
+            // Push "Check for Updates" to the bottom of the pane (works because
+            // `detail` stretches paneContent to fill the viewport height).
+            Spacer(minLength: 24)
+
+            Button {
+                UIActionLogger.buttonTapped("Check for Updates")
+                BlinkUpdater.shared.checkForUpdates()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 13, weight: .medium))
+                    Text("Check for Updates")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: 12).fill(accentColor))
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -671,7 +681,7 @@ struct SettingsView: View {
     // MARK: - About pane
 
     private var aboutPane: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 34) {
             HStack(spacing: 16) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
