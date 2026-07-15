@@ -204,16 +204,16 @@ struct SettingsView: View {
     /// System Settings puts above every section.
     private var paneHeader: some View {
         HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(tintColor(for: selectedCategory))
-                .frame(width: 40, height: 40)
+                .frame(width: 30, height: 30)
                 .overlay(
                     Image(systemName: selectedCategory.symbol)
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(theme.textOnAccent(for: colorScheme))
                 )
             Text(selectedCategory.title)
-                .font(.system(size: 22, weight: .bold))
+                .font(.system(size: 18, weight: .bold))
             Spacer()
         }
     }
@@ -290,13 +290,13 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 15, weight: .medium))
+                            .font(.system(size: 13, weight: .medium))
                         Text("Check for Updates")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                     }
                     .foregroundStyle(theme.textOnAccent(for: colorScheme))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
+                    .padding(.vertical, 10)
                     .background(RoundedRectangle(cornerRadius: 12).fill(accentColor))
                 }
                 .buttonStyle(.plain)
@@ -322,12 +322,12 @@ struct SettingsView: View {
                         .frame(width: 32, height: 32)
                         .overlay(
                             Image(systemName: "gift.fill")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(theme.textOnAccent(for: colorScheme))
                         )
                     VStack(alignment: .leading, spacing: 1) {
                         Text("See what's new in v\(display)")
-                            .font(.system(size: 15))
+                            .font(.system(size: 13))
                             .foregroundStyle(.primary)
                         Text("Recent updates and features")
                             .font(.system(size: 12))
@@ -345,7 +345,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 12)
-                .padding(.vertical, 14)
+                .padding(.vertical, 10)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 10).fill(accentColor.opacity(0.08)))
                 .contentShape(Rectangle())
@@ -405,12 +405,12 @@ struct SettingsView: View {
                 settingsItem {
                     HStack(spacing: 10) {
                         Image(systemName: "clock.fill")
-                            .font(.system(size: 17))
+                            .font(.system(size: 15))
                             .foregroundStyle(accentColor)
                             .symbolRenderingMode(.hierarchical)
                             .frame(width: 32, alignment: .center)
                         Text("Base interval")
-                            .font(.system(size: 15))
+                            .font(.system(size: 13))
                         Slider(value: $baseInterval, in: 10...45, step: 5)
                             .tint(accentColor)
                         Text("\(Int(baseInterval)) min")
@@ -450,12 +450,12 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         HStack(spacing: 10) {
                             Image(systemName: "bell.fill")
-                                .font(.system(size: 17))
+                                .font(.system(size: 15))
                                 .foregroundStyle(accentColor)
                                 .symbolRenderingMode(.hierarchical)
                                 .frame(width: 32, alignment: .center)
                             Text("Sound")
-                                .font(.system(size: 15))
+                                .font(.system(size: 13))
                             Spacer()
                             Picker("", selection: chimeSelection) {
                                 Text("None").tag(Self.noneChimeTag)
@@ -470,7 +470,7 @@ struct SettingsView: View {
                             HStack(spacing: 10) {
                                 Color.clear.frame(width: 32)
                                 Text("Volume")
-                                    .font(.system(size: 15))
+                                    .font(.system(size: 13))
                                 Slider(value: $chimeVolume, in: 0...1)
                                     .tint(accentColor)
                                 Text("\(Int(chimeVolume * 100))%")
@@ -546,22 +546,22 @@ struct SettingsView: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.system(size: 17))
+                    .font(.system(size: 15))
                     .foregroundStyle(accentColor)
                     .symbolRenderingMode(.hierarchical)
                     .frame(width: 32, alignment: .center)
                 Text(label)
-                    .font(.system(size: 15))
+                    .font(.system(size: 13))
                     .foregroundStyle(.primary)
                 Spacer()
                 Image(systemName: "arrow.up.right")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.06)))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.06)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -597,7 +597,7 @@ struct SettingsView: View {
                 }
                 .foregroundStyle(theme.textOnAccent(for: colorScheme))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 13)
+                .padding(.vertical, 11)
                 .background(accentColor)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
@@ -643,13 +643,13 @@ struct SettingsView: View {
                     // switches during a meeting don't bounce breaks back on.
                     HStack(spacing: 10) {
                         Image(systemName: "hourglass")
-                            .font(.system(size: 17))
+                            .font(.system(size: 15))
                             .foregroundStyle(accentColor)
                             .symbolRenderingMode(.hierarchical)
                             .frame(width: 32, alignment: .center)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Resume after leaving app")
-                                .font(.system(size: 15))
+                                .font(.system(size: 13))
                             Text("Grace before a per-app pause ends")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
@@ -689,7 +689,7 @@ struct SettingsView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Blink")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
                     Text("Smart 20-20-20 Break Reminder")
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
@@ -805,7 +805,7 @@ struct SettingsView: View {
             }
             .foregroundStyle(accentColor)
             .padding(.horizontal, 14)
-            .padding(.vertical, 13)
+            .padding(.vertical, 11)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.06)))
             .contentShape(Rectangle())
@@ -859,13 +859,13 @@ struct SettingsView: View {
                     .foregroundStyle(.tertiary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 8)
                     .fill(isSelected ? accentColor.opacity(0.12) : Color.primary.opacity(0.04))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 8)
                     .stroke(isSelected ? accentColor : Color.clear, lineWidth: 1.5)
             )
             .contentShape(Rectangle())
@@ -876,13 +876,13 @@ struct SettingsView: View {
     // MARK: - Reusable Components
 
     private func settingsSection(_ title: String, @ViewBuilder content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(accentColor)
                 .padding(.leading, 4)
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
                 content()
             }
         }
@@ -895,10 +895,10 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 6) {
             content()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.06)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.06)))
     }
 
     /// Toggle with a leading icon column. `icon` can be any View — an
@@ -913,7 +913,7 @@ struct SettingsView: View {
             icon()
                 .frame(width: 32, alignment: .center)
             Toggle(label, isOn: isOn)
-                .font(.system(size: 15))
+                .font(.system(size: 13))
                 .toggleStyle(ThemedToggleStyle(theme: theme))
         }
     }
@@ -926,7 +926,7 @@ struct SettingsView: View {
     ) -> some View {
         settingsToggleWithIcon(label, icon: {
             Image(systemName: systemImage)
-                .font(.system(size: 17))
+                .font(.system(size: 15))
                 .foregroundStyle(accentColor)
                 .symbolRenderingMode(.hierarchical)
         }, isOn: isOn)
