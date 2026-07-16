@@ -194,11 +194,15 @@ struct SettingsView: View {
         }
         .frame(minWidth: 700, minHeight: 540)
         .tint(accentColor)
-        .onAppear { refreshPermissionStatuses() }
+        .onAppear {
+            refreshPermissionStatuses()
+            appState.refreshPermissionAlerts()
+        }
         // Re-check when the window regains focus — catches the user flipping a
         // permission in System Settings and switching back.
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             refreshPermissionStatuses()
+            appState.refreshPermissionAlerts()
         }
     }
 
@@ -683,6 +687,7 @@ struct SettingsView: View {
             settingsSection("Microphone") {
                 settingsItem {
                     settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
+                        .onChange(of: pauseDuringCalls) { _, _ in appState.refreshPermissionAlerts() }
                     settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they hold the mic open.")
                 }
                 if pauseDuringCalls && !micAuthorized {

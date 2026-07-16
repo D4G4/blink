@@ -25,6 +25,51 @@ final class AppState: ObservableObject {
     @Published private(set) var lastActiveAppID: String?
     @Published private(set) var lastActiveAppName: String?
     @Published var micAlwaysOnWarning: Bool = false
+
+    /// An Auto-Pause feature the user has ON but whose OS permission is missing,
+    /// so the feature silently can't work. Surfaced as a menu-bar attention
+    /// badge + a menu row so the user isn't left thinking it's working.
+    enum PermissionAlert: String, Identifiable, CaseIterable {
+        case microphone, calendar
+        var id: String { rawValue }
+        /// Short line for the menu attention row.
+        var menuText: String {
+            switch self {
+            case .microphone: return "Microphone access is off"
+            case .calendar:   return "Calendar access is off"
+            }
+        }
+    }
+    @Published private(set) var permissionAlerts: [PermissionAlert] = []
+
+    /// Re-evaluate which enabled Auto-Pause features are missing their OS
+    /// permission. Cheap (local TCC queries); call on launch, app activation,
+    /// and when the relevant toggles change. Only flags an *explicit* denial —
+    /// `.notDetermined` (e.g. a user who skipped the mic step) isn't nagged.
+    func refreshPermissionAlerts() {
+        guard !isPreview else { permissionAlerts = []; return }
+        var alerts: [PermissionAlert] = []
+        let micOn = (UserDefaults.standard.object(forKey: "pauseDuringCalls") as? Bool) ?? true
+        if micOn && PermissionManager.microphoneAuthorizationStatus() == .denied {
+            alerts.append(.microphone)
+        }
+        // Calendar can only be ON if access was granted at enable-time, so any
+        // non-fullAccess state now means it was revoked.
+        let calendarOn = UserDefaults.standard.bool(forKey: "pauseDuringCalendarEvents")
+        if calendarOn && PermissionManager.calendarAuthorizationStatus() != .fullAccess {
+            alerts.append(.calendar)
+        }
+        if alerts != permissionAlerts { permissionAlerts = alerts }
+    }
+
+    #if DEBUG
+    /// Preview/snapshot seam to seed `permissionAlerts` (which is otherwise
+    /// private-set and cleared in preview mode).
+    func setPermissionAlertsForPreview(_ alerts: [PermissionAlert]) {
+        permissionAlerts = alerts
+    }
+    #endif
+
     @AppStorage("debugNotifications") var debugNotifications: Bool = false
 
     // Engine — constructed in init() with the effective sensitivity.
@@ -110,6 +155,9 @@ final class AppState: ObservableObject {
     // Persistence
     private let persistence = PersistenceManager()
     private var onboardingObserver: NSObjectProtocol?
+    /// App-activation observer that refreshes `permissionAlerts` (lives for the
+    /// app's lifetime; not part of the monitoring hot-swap teardown).
+    private var appActiveObserver: NSObjectProtocol?
 
     // Pause / auto-resume
     private let ownBundleID = Bundle.main.bundleIdentifier
@@ -248,6 +296,16 @@ final class AppState: ObservableObject {
         restoreCalendarActedKeys()
         restorePauseMode()
         BlinkLog.pruneOldLogs()
+
+        // Re-check permission-attention state whenever Blink regains focus —
+        // catches the user granting/revoking a permission in System Settings
+        // and switching back. Also refreshed once below after startup.
+        appActiveObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refreshPermissionAlerts() }
+        }
+        refreshPermissionAlerts()
 
         let savedWallClock = UserDefaults.standard.integer(forKey: "maxWallClockMinutes")
         if savedWallClock > 0 { engine.maxWallClockSeconds = TimeInterval(savedWallClock * 60) }
@@ -1416,9 +1474,11 @@ final class AppState: ObservableObject {
                     UserDefaults.standard.set(false, forKey: "pauseDuringCalendarEvents")
                     PermissionManager.openCalendarSettings()
                 }
+                self.refreshPermissionAlerts()
             }
         } else {
             stopCalendarMonitor()
+            refreshPermissionAlerts()
         }
     }
 

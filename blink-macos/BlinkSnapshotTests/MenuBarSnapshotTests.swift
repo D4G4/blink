@@ -3,6 +3,25 @@ import SwiftUI
 @testable import Blink
 
 final class MenuBarSnapshotTests: SnapshotTestCase {
+    /// The permission-attention row at the top of the menu, shown when an
+    /// enabled Auto-Pause feature lost its OS permission.
+    @MainActor func testMenuBarPermissionAttention() {
+        for v in [
+            ThemeVariant(name: "peach", theme: .peach, colorScheme: .light),
+            ThemeVariant(name: "midnight", theme: .midnight, colorScheme: .dark),
+        ] {
+            let state = AppState(preview: true)
+            state.setPermissionAlertsForPreview([.calendar])
+            assertSnapshot(
+                of: MenuBarView(appState: state)
+                    .environmentObject(ThemeManager.preview(v.theme)),
+                named: "menu_bar_permission_attention_\(v.snapshotName)",
+                width: 280, height: 400,
+                colorScheme: v.colorScheme
+            )
+        }
+    }
+
     @MainActor func testMenuBar() {
         let themes: [(String, BlinkTheme)] = [
             ("peach", .peach), ("midnight", .midnight), ("sage", .sage),

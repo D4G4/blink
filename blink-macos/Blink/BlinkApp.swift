@@ -38,6 +38,16 @@ struct BlinkApp: App {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: 18, height: 18)
+            // Attention badge — an enabled Auto-Pause feature lost its OS
+            // permission (mic/calendar), so it's silently not working.
+            .overlay(alignment: .topTrailing) {
+                if !appState.permissionAlerts.isEmpty {
+                    Circle()
+                        .fill(.orange)
+                        .frame(width: 6, height: 6)
+                        .offset(x: 1, y: -1)
+                }
+            }
     }
 }
 

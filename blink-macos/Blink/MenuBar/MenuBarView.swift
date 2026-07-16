@@ -9,6 +9,10 @@ struct MenuBarView: View {
     private var theme: BlinkTheme { themeManager.current }
     private var accentColor: Color { theme.accent(for: colorScheme) }
 
+    // Kept short so it fits the narrow menu on one line — the specifics
+    // (which permission, how to fix) live in Settings › Auto-Pause, one tap away.
+    private let permissionAttentionText = "Blink needs your attention"
+
     var body: some View {
         VStack(spacing: 0) {
             // Header with icon
@@ -40,6 +44,41 @@ struct MenuBarView: View {
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .padding(.bottom, 16)
+
+            // Permission attention — an enabled Auto-Pause feature lost its OS
+            // permission. Opens Settings › Auto-Pause where the per-feature
+            // warnings + Open-Settings buttons live.
+            if !appState.permissionAlerts.isEmpty {
+                Button {
+                    UIActionLogger.buttonTapped("Permission attention", context: "MenuBar")
+                    PreferencesWindowController.shared.show(
+                        appState: appState,
+                        themeManager: themeManager,
+                        scrollTo: SettingsAnchor.calendar
+                    )
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.orange)
+                        Text(permissionAttentionText)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.orange)
+                            .lineLimit(1)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.orange)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.orange.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.bottom, 6)
+            }
 
             // Mic always-on — small link, opens detail window
             if appState.micAlwaysOnWarning {
