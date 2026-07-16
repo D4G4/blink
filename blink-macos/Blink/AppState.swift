@@ -220,9 +220,14 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// True for SwiftUI-preview / snapshot-test instances. Lets views skip live
+    /// system reads (e.g. TCC permission checks) so renders stay deterministic.
+    let isPreview: Bool
+
     // MARK: - Init
 
     init(preview: Bool = false) {
+        self.isPreview = preview
         // Construct the engine with the effective sensitivity — either the
         // persisted user value or the canonical UI default. BlinkCore has
         // no internal default; this is the only source of truth.

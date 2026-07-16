@@ -97,6 +97,60 @@ struct SettingsView: View {
     /// The anchor currently flashing its highlight (cleared after ~2s).
     @State private var highlightedAnchor: String?
 
+    /// Live OS-permission state for the Auto-Pause toggles. A toggle only
+    /// stores the user's *preference*; the feature separately re-checks TCC
+    /// authorization every tick. If a user revokes access later, the toggle
+    /// stays on but the feature silently no-ops — so surface the mismatch.
+    /// Optimistic defaults (true) avoid a warning flash before the first read.
+    @State private var micAuthorized = true
+    @State private var calendarAuthorized = true
+
+    private func refreshPermissionStatuses() {
+        // Previews/snapshots must not read live TCC state (machine-dependent) —
+        // treat as authorized so renders stay deterministic.
+        guard !appState.isPreview else {
+            micAuthorized = true
+            calendarAuthorized = true
+            return
+        }
+        micAuthorized = PermissionManager.microphoneAuthorizationStatus() == .authorized
+        calendarAuthorized = PermissionManager.calendarAuthorizationStatus() == .fullAccess
+    }
+
+    /// Amber inline warning shown when a toggle is on but its OS permission was
+    /// revoked. Tapping opens the relevant System Settings pane. The user's
+    /// preference (the toggle) is left as-is — we don't silently flip it.
+    private func permissionWarning(_ message: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.orange)
+                    .frame(width: 32, alignment: .center)
+                Text(message)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
+                HStack(spacing: 3) {
+                    Text("Open Settings")
+                        .font(.system(size: 12, weight: .semibold))
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                .foregroundStyle(.orange)
+                .fixedSize()
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.orange.opacity(0.12)))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.orange.opacity(0.35), lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     /// Preserves the historical `(initialTab, scrollTo)` deep-link contract so
     /// every existing caller keeps working unchanged. `scrollTo` (calendar /
     /// pause) always lands on Auto-Pause; otherwise the legacy tab index maps:
@@ -140,6 +194,12 @@ struct SettingsView: View {
         }
         .frame(minWidth: 700, minHeight: 540)
         .tint(accentColor)
+        .onAppear { refreshPermissionStatuses() }
+        // Re-check when the window regains focus — catches the user flipping a
+        // permission in System Settings and switching back.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshPermissionStatuses()
+        }
     }
 
     // MARK: - Sidebar
@@ -625,6 +685,12 @@ struct SettingsView: View {
                     settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
                     settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they hold the mic open.")
                 }
+                if pauseDuringCalls && !micAuthorized {
+                    permissionWarning("Microphone access is off — Blink can't detect calls until you re-enable it.") {
+                        UIActionLogger.buttonTapped("Open Microphone Settings (permission warning)")
+                        PermissionManager.openMicrophoneSettings()
+                    }
+                }
             }
 
             settingsSection("Calendar") {
@@ -635,6 +701,12 @@ struct SettingsView: View {
                             appState.setCalendarIntegration(enabled: newValue)
                         }
                     settingsCaption("Auto-pauses during events with a meeting link (Zoom, Meet, Teams). Blink reads your calendar only to detect meeting times.")
+                }
+                if pauseDuringCalendarEvents && !calendarAuthorized {
+                    permissionWarning("Calendar access is off — Blink can't see your meetings until you re-enable it.") {
+                        UIActionLogger.buttonTapped("Open Calendar Settings (permission warning)")
+                        PermissionManager.openCalendarSettings()
+                    }
                 }
                 if pauseDuringCalendarEvents {
                     settingsItem {
