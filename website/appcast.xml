@@ -6,6 +6,84 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.2.0-beta.12</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.12</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>399</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.12</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Wed, 15 Jul 2026 19:57:34 +0000</pubDate>
+      <description><![CDATA[<p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.12">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.12/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="vAj9Zih7KCEYZctf/9rQD2WV20nYIr61X4SRZqALWGBuBPwhHPUwzEf2eVZSTQyBL4aoCmkZFDPj09+7Smx8Aw==" length="8888700" />
+    </item>
+    <item>
+      <title>Blink v5.2.0-beta.11</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.11</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>397</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.11</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Wed, 15 Jul 2026 17:05:56 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.11</h3><ul><li>Suggest pause 2 min before a link-less event starts</li><li>Hover-reveal close button on meeting toasts</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.11">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.11/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="FPIoE5VITFsh7RSKsS6DAWITTcgHQMosRtTIkF/ZS8+/u7jnU+7/oYjlrj93GYkWn0ktHF3TcQoGNNeZuWKXAw==" length="8888809" />
+    </item>
+    <item>
+      <title>Blink v5.2.0-beta.10</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.10</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>394</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.10</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Wed, 15 Jul 2026 00:43:19 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.10</h3><ul><li>More breathing room across panes</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.10">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.10/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="NFuvdKTECwFWzUq+FjlTMjz/Lj1hfZ5V8OrQFzacAsrcUq8rUp1/PyNGPy/+FVJ/Inti53elQ2UhSnMlA0vGCw==" length="8878680" />
+    </item>
+    <item>
+      <title>Blink v5.2.0-beta.9</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.9</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>392</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.9</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Tue, 14 Jul 2026 23:05:05 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.9</h3><ul><li>Icon glyphs invisible on white-accent themes</li><li>Add 'Show What's New' debug button</li><li>Move Focus learn links into their own Learn section</li><li>All icons follow theme accent + Flow chip buttons</li><li>Theme-palette icons, macOS spacing, move dark overlay</li><li>Theme the Appearance icon + lighten the Focus pane</li><li>Trim copy + add 10-day What's New card in Settings</li><li>System-Settings-style sidebar redesign</li><li>Deep-link scroll no longer clips the section highlight</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.9">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.9/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="TBBIX8Dcxc9oczfGotUpxo9ANL+TC+OHRWNx+AZtF/f/Eo1vzP3CftKBHuj7BGIWXrbeMm3Yvja5BU6Kb3cCDQ==" length="8878746" />
+    </item>
+    <item>
+      <title>Blink v5.2.0-beta.8</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.8</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>381</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.8</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Tue, 14 Jul 2026 20:40:37 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.8</h3><ul><li>Discoverability — deep-link to the Calendar setting + fresh-user tip</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.8">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.8/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="U62Z/SiiFMPywfBbpXfoHVgaouCgLhaBvzV/SMR/r2VQKBI8+5VkCViWXyz+J73hk7n8SCzNC+/CYDCEyr9yCA==" length="8840545" />
+    </item>
+    <item>
+      <title>Blink v5.2.0-beta.7</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.7</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>379</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.7</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Tue, 14 Jul 2026 20:04:54 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.7</h3><ul><li>Respect an onboarding mic-skip in the startup self-heal</li><li>Only self-heal .notDetermined for existing Smart users</li><li>Announce timed Pause + Calendar integration</li><li>Harden deferred toast actions + debounce store changes</li><li>Auto-pause during meetings via EventKit</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.7">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.7/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="qbW6h6ZNvTBdV2NKhg8wVgY/zHCs3UXjUABBFC+oNZrJTnv4iRtzJsqTdye+nO9mBgUH0k4wOLkyra04OfIkDw==" length="8828868" />
+    </item>
+    <item>
       <title>Blink v5.2.0-beta.6</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.6</link>
       <sparkle:channel>beta</sparkle:channel>
