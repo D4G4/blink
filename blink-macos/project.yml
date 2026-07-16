@@ -82,7 +82,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.blink20.app
-        MARKETING_VERSION: "5.2.0-beta.14"
+        MARKETING_VERSION: "5.2.0-beta.15"
         # CURRENT_PROJECT_VERSION (= CFBundleVersion) is the integer
         # Sparkle uses as its PRIMARY version comparator. The value here
         # is only a development/local-build placeholder — scripts/build-release.sh
