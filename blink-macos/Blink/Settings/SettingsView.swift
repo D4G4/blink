@@ -2,6 +2,40 @@ import SwiftUI
 import ServiceManagement
 import BlinkCore
 
+// MARK: - Sidebar category
+
+/// The System-Settings-style sidebar splits what used to be one overloaded
+/// "General" scroll into focused panes. Raw values are stable so deep-links
+/// (What's New cards, menu bar "Tap to change") can map onto them.
+enum SettingsCategory: Int, CaseIterable, Identifiable {
+    case general, appearance, breaks, focus, autoPause, about
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .general:    return "General"
+        case .appearance: return "Appearance"
+        case .breaks:     return "Breaks"
+        case .focus:      return "Focus"
+        case .autoPause:  return "Auto-Pause"
+        case .about:      return "About"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .general:    return "gearshape.fill"
+        case .appearance: return "paintbrush.fill"
+        case .breaks:     return "eye.fill"
+        case .focus:      return "sparkles"
+        case .autoPause:  return "pause.circle.fill"
+        case .about:      return "info.circle.fill"
+        }
+    }
+
+}
+
 struct SettingsView: View {
     @ObservedObject var appState: AppState
     @EnvironmentObject var themeManager: ThemeManager
@@ -49,101 +83,165 @@ struct SettingsView: View {
             }
         )
     }
-    
+
     @Environment(\.colorScheme) private var colorScheme
     private var theme: BlinkTheme { themeManager.current }
     private var accentColor: Color { theme.accent(for: colorScheme) }
-    
-    @State private var selectedTab: Int
+
+    @State private var selectedCategory: SettingsCategory
 
     /// Optional section anchor to scroll to + briefly highlight on open, so a
     /// deep-link (What's New card / discoverability tip) lands the user on the
-    /// exact setting instead of the top of a long scroll view.
+    /// exact setting inside its pane instead of just the top of the pane.
     private let scrollTarget: String?
     /// The anchor currently flashing its highlight (cleared after ~2s).
     @State private var highlightedAnchor: String?
 
+    /// Preserves the historical `(initialTab, scrollTo)` deep-link contract so
+    /// every existing caller keeps working unchanged. `scrollTo` (calendar /
+    /// pause) always lands on Auto-Pause; otherwise the legacy tab index maps:
+    /// 0=General, 1=Theme→Appearance, 2=Flow→Focus, 3=About.
     init(appState: AppState, initialTab: Int = 0, scrollTo: String? = nil) {
         self.appState = appState
-        self._selectedTab = State(initialValue: initialTab)
         self.scrollTarget = scrollTo
+
+        let category: SettingsCategory
+        if scrollTo == SettingsAnchor.calendar || scrollTo == SettingsAnchor.pause {
+            category = .autoPause
+        } else {
+            switch initialTab {
+            case 1:  category = .appearance
+            case 2:  category = .focus
+            case 3:  category = .about
+            default: category = .general
+            }
+        }
+        self._selectedCategory = State(initialValue: category)
+    }
+
+    /// Direct-category initializer for previews and snapshot tests — the
+    /// public `initialTab`/`scrollTo` init has no deep-link onto Breaks, so
+    /// per-pane coverage needs a way to land on any category.
+    init(appState: AppState, category: SettingsCategory) {
+        self.appState = appState
+        self.scrollTarget = nil
+        self._selectedCategory = State(initialValue: category)
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Custom tab bar
-            HStack(spacing: 0) {
-                tabButton(icon: "gear", label: "General", index: 0)
-                tabButton(icon: "paintpalette", label: "Theme", index: 1)
-                tabButton(icon: "brain", label: "Flow", index: 2)
-                tabButton(icon: "info.circle", label: "About", index: 3)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 8)
+        HStack(spacing: 0) {
+            sidebar
+                .frame(width: 200)
 
             Divider()
 
-            // Content
+            detail
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(minWidth: 700, minHeight: 540)
+        .tint(accentColor)
+    }
+
+    // MARK: - Sidebar
+
+    private var sidebar: some View {
+        List(selection: $selectedCategory) {
+            ForEach(SettingsCategory.allCases) { category in
+                Label {
+                    Text(category.title)
+                        .font(.system(size: 13))
+                } icon: {
+                    sidebarIcon(category.symbol, tintColor(for: category))
+                }
+                .tag(category)
+            }
+        }
+        .listStyle(.sidebar)
+    }
+
+    /// Icon-tile color — every pane follows the current theme accent so the
+    /// sidebar reads as one cohesive themed set.
+    private func tintColor(for category: SettingsCategory) -> Color {
+        accentColor
+    }
+
+    /// System-Settings-style icon tile: a white SF Symbol on a rounded,
+    /// color-filled square.
+    private func sidebarIcon(_ symbol: String, _ color: Color) -> some View {
+        RoundedRectangle(cornerRadius: 6, style: .continuous)
+            .fill(color)
+            .frame(width: 22, height: 22)
+            .overlay(
+                Image(systemName: symbol)
+                    .font(.system(size: 12, weight: .semibold))
+                    // textOnAccent, not .white — the Mono/Dark theme accent
+                    // resolves to white, so a white glyph would vanish on the
+                    // white tile. This returns black in that case.
+                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
+            )
+    }
+
+    // MARK: - Detail pane
+
+    private var detail: some View {
+        GeometryReader { geo in
             ScrollViewReader { proxy in
                 ScrollView {
-                    Group {
-                        switch selectedTab {
-                        case 0: generalContent
-                        case 1: themeContent
-                        case 2: flowContent
-                        case 3: aboutContent
-                        default: generalContent
-                        }
+                    VStack(alignment: .leading, spacing: 28) {
+                        paneHeader
+                        // Fill the leftover height so a pane can bottom-anchor a
+                        // footer (e.g. General's "Check for Updates") with a
+                        // Spacer. Short panes get the footer pinned to the
+                        // bottom; tall panes just scroll past it as normal.
+                        paneContent
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     }
-                    .padding(20)
+                    .padding(.horizontal, 34)
+                    .padding(.top, 28)
+                    .padding(.bottom, 30)
+                    .frame(maxWidth: .infinity, minHeight: geo.size.height, alignment: .leading)
                 }
                 .onAppear { scrollToTargetIfNeeded(proxy) }
             }
         }
-        // Width locked to 440 (the design target); height fills the
-        // hosting window so the ScrollView has as much room as available.
-        // Previously height was also pinned to 440, which left wasted
-        // space in the actual prefs window (520×450) and broke snapshots
-        // that wanted to render the General tab end-to-end with icons.
-        .frame(width: 440)
-        .frame(maxHeight: .infinity)
-        .tint(accentColor)
+        .background(Color(nsColor: .textBackgroundColor).opacity(0.4))
     }
-    
-    // MARK: - Tab Button
-    
-    private func tabButton(icon: String, label: String, index: Int) -> some View {
-        Button {
-            UIActionLogger.tabSelected(label)
-            withAnimation(.easeInOut(duration: 0.15)) { selectedTab = index }
-        } label: {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                Text(label)
-                    .font(.system(size: 10))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .foregroundStyle(selectedTab == index ? accentColor : .secondary)
-            .contentShape(Rectangle())
-            .background(
-                selectedTab == index
-                ? accentColor.opacity(0.1)
-                : Color.clear
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+    /// Big colored icon + title at the top of each pane — mirrors the header
+    /// System Settings puts above every section.
+    private var paneHeader: some View {
+        HStack(spacing: 12) {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(tintColor(for: selectedCategory))
+                .frame(width: 30, height: 30)
+                .overlay(
+                    Image(systemName: selectedCategory.symbol)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                )
+            Text(selectedCategory.title)
+                .font(.system(size: 18, weight: .bold))
+            Spacer()
         }
-        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var paneContent: some View {
+        switch selectedCategory {
+        case .general:    generalPane
+        case .appearance: appearancePane
+        case .breaks:     breaksPane
+        case .focus:      focusPane
+        case .autoPause:  autoPausePane
+        case .about:      aboutPane
+        }
     }
 
     /// Scroll to the deep-link target (if any) shortly after the window
     /// appears, then flash a highlight on it for a couple of seconds so the
-    /// user's eye lands on the right setting.
+    /// user's eye lands on the right setting inside the pane.
     private func scrollToTargetIfNeeded(_ proxy: ScrollViewProxy) {
         guard let target = scrollTarget else { return }
-        // Small delay so the ScrollView has laid out its content first.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             withAnimation(.easeInOut(duration: 0.35)) {
                 proxy.scrollTo(target, anchor: .top)
@@ -155,26 +253,181 @@ struct SettingsView: View {
         }
     }
 
-    /// Deep-link highlight: a soft accent wash + ring that fades in/out on the
-    /// targeted section. Attach with `.modifier(...)` and the section's anchor.
     private func deepLinkHighlight(_ anchor: String) -> some ViewModifier {
         DeepLinkHighlight(isActive: highlightedAnchor == anchor, accent: accentColor)
     }
 
-    // MARK: - General
-    
-    private var generalContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
+    // MARK: - General pane
+
+    private var generalPane: some View {
+        VStack(alignment: .leading, spacing: 30) {
+            if let recent = appState.recentlyUpdatedVersion {
+                whatsNewCard(version: recent)
+            }
+
+            settingsSection("Startup") {
+                settingsItem {
+                    settingsToggleWithIcon("Launch at login", systemImage: "power.circle.fill", isOn: $launchAtLogin)
+                        .onChange(of: launchAtLogin) { _, newValue in
+                            UIActionLogger.settingChanged("launchAtLogin", value: "\(newValue)")
+                            updateLaunchAtLogin(newValue)
+                        }
+                }
+            }
 
             settingsSection("Menu Bar") {
                 settingsItem {
                     settingsToggleWithIcon(
                         "Show countdown timer",
-                        icon: {
-                            CountdownTimerIcon(accent: accentColor, foreground: .primary)
-                        },
+                        icon: { CountdownTimerIcon(accent: accentColor, foreground: .primary) },
                         isOn: $showTimerInMenuBar
                     )
+                }
+            }
+
+            settingsSection("Updates") {
+                settingsItem {
+                    settingsToggleWithIcon("Receive beta updates", systemImage: "flask.fill", isOn: $betaChannelEnabled)
+                    settingsCaption("New features early. Beta builds may be less stable.")
+                }
+            }
+
+            // Push "Check for Updates" to the bottom of the pane (works because
+            // `detail` stretches paneContent to fill the viewport height).
+            Spacer(minLength: 24)
+
+            Button {
+                UIActionLogger.buttonTapped("Check for Updates")
+                BlinkUpdater.shared.checkForUpdates()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 13, weight: .medium))
+                    Text("Check for Updates")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: 12).fill(accentColor))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    /// "What's New" entry point — lives at the top of General for 10 days
+    /// after an update (gated by `AppState.recentlyUpdatedVersion`). Re-opens
+    /// the release digest so users who dismissed the launch window can still
+    /// find it. Beta suffix stripped for a clean "v5.2.0".
+    private func whatsNewCard(version: String) -> some View {
+        let display = version.split(separator: "-").first.map(String.init) ?? version
+        return settingsSection("What's New") {
+            Button {
+                UIActionLogger.buttonTapped("What's New (Settings)")
+                appState.showWhatsNewFromSettings()
+            } label: {
+                HStack(spacing: 12) {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(accentColor)
+                        .frame(width: 32, height: 32)
+                        .overlay(
+                            Image(systemName: "gift.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                        )
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("See what's new in v\(display)")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.primary)
+                        Text("Recent updates and features")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text("NEW")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(accentColor))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 10).fill(accentColor.opacity(0.08)))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    // MARK: - Appearance pane
+
+    private var appearancePane: some View {
+        VStack(alignment: .leading, spacing: 30) {
+            settingsSection("Theme") {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 20), count: 3), spacing: 20) {
+                    ForEach(BlinkTheme.all) { t in
+                        VStack(spacing: 8) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                    .fill(t.backgroundTop)
+                                    .frame(width: 76, height: 76)
+                                Image(t.iconAsset)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 82, height: 82)
+                                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                    .frame(width: 72, height: 72)
+                                    .clipped()
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                    .stroke(theme.id == t.id ? accentColor : .clear, lineWidth: 3)
+                            )
+                            .shadow(color: theme.id == t.id ? accentColor.opacity(0.3) : .clear, radius: 8)
+                            .scaleEffect(theme.id == t.id ? 1.05 : 1.0)
+                            .animation(.easeOut(duration: 0.2), value: theme.id)
+
+                            Text(t.name)
+                                .font(.system(size: 12, weight: theme.id == t.id ? .semibold : .regular))
+                                .foregroundStyle(theme.id == t.id ? .primary : .secondary)
+                        }
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.2)) { themeManager.select(t) }
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+    }
+
+    // MARK: - Breaks pane
+
+    private var breaksPane: some View {
+        VStack(alignment: .leading, spacing: 30) {
+            settingsSection("Timing") {
+                settingsItem {
+                    HStack(spacing: 10) {
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 15))
+                            .foregroundStyle(accentColor)
+                            .symbolRenderingMode(.hierarchical)
+                            .frame(width: 32, alignment: .center)
+                        Text("Base interval")
+                            .font(.system(size: 13))
+                        Slider(value: $baseInterval, in: 10...45, step: 5)
+                            .tint(accentColor)
+                        Text("\(Int(baseInterval)) min")
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 50, alignment: .trailing)
+                    }
                 }
             }
 
@@ -182,14 +435,14 @@ struct SettingsView: View {
                 settingsItem {
                     settingsToggleWithIcon(
                         "Use dark overlay",
-                        icon: {
-                            DarkOverlayIcon(accent: accentColor, foreground: .primary)
-                        },
+                        icon: { DarkOverlayIcon(accent: accentColor, foreground: .primary) },
                         isOn: $useDarkOverlay
                     )
-                    settingsCaption("Pure black background instead of themed colors")
+                    settingsCaption("Pure black background instead of themed colors.")
                 }
+            }
 
+            settingsSection("Suggestions") {
                 settingsItem {
                     SmartSuggestionsSettingControls(
                         theme: theme,
@@ -207,12 +460,12 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         HStack(spacing: 10) {
                             Image(systemName: "bell.fill")
-                                .font(.system(size: 17))
+                                .font(.system(size: 15))
                                 .foregroundStyle(accentColor)
                                 .symbolRenderingMode(.hierarchical)
                                 .frame(width: 32, alignment: .center)
                             Text("Sound")
-                                .font(.system(size: 15))
+                                .font(.system(size: 13))
                             Spacer()
                             Picker("", selection: chimeSelection) {
                                 Text("None").tag(Self.noneChimeTag)
@@ -225,10 +478,9 @@ struct SettingsView: View {
                         }
                         if chimeEnabled {
                             HStack(spacing: 10) {
-                                // Empty 32pt column so Volume aligns with "Sound" above.
                                 Color.clear.frame(width: 32)
                                 Text("Volume")
-                                    .font(.system(size: 15))
+                                    .font(.system(size: 13))
                                 Slider(value: $chimeVolume, in: 0...1)
                                     .tint(accentColor)
                                 Text("\(Int(chimeVolume * 100))%")
@@ -240,21 +492,174 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+    }
 
-            settingsSection("Pause") {
+    // MARK: - Focus pane
+
+    @State private var flowCheckDetail: String?
+
+    private var focusPane: some View {
+        VStack(alignment: .leading, spacing: 30) {
+            settingsSection("Detection Mode") {
+                detectionModePicker
+                settingsCaption(appState.hasInputMonitoringPermission
+                    ? "Breaks land at natural pauses, adapting to your flow."
+                    : "A fixed 20-minute timer. Switch to Smart for flow-aware timing.")
+            }
+
+            // Sensitivity only matters in Smart mode. Flow Check (a diagnostic
+            // spot-check) now lives under About › Debug to keep this pane light.
+            if appState.hasInputMonitoringPermission {
+                settingsSection("Flow Detection") {
+                    FlowSensitivityView(
+                        sensitivity: $flowSensitivity,
+                        accentColor: accentColor,
+                        foregroundColor: .primary,
+                        style: .settings
+                    )
+                    .onChange(of: flowSensitivity) { _, newValue in
+                        appState.engine.sensitivity = newValue
+                    }
+                }
+
+                learnSection
+            } else {
+                settingsSection("Flow Detection") {
+                    flowDetectionLockedPrompt
+                }
+
+                learnSection
+            }
+        }
+    }
+
+    /// Learn section — the reference links that used to sit inline under the
+    /// sensitivity presets. Their own section at the bottom of Focus so the
+    /// controls above stay focused on actual settings.
+    private var learnSection: some View {
+        settingsSection("Learn") {
+            settingsLinkRow(icon: "eye", label: "How Smart timing works") {
+                UIActionLogger.buttonTapped("See impact", context: "Settings")
+                FlowLearnMoreWindowController.shared.show(theme: ThemeManager.shared.current)
+            }
+            settingsLinkRow(icon: "book.closed", label: "The research behind it") { [weak themeManager] in
+                UIActionLogger.buttonTapped("Read the Research", context: "Settings")
+                ResearchWindowController.shared.show(theme: themeManager?.current ?? .peach)
+            }
+        }
+    }
+
+    /// A card row that opens a separate window (Learn links). Trailing
+    /// up-right arrow signals it leaves the settings pane.
+    private func settingsLinkRow(icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 15))
+                    .foregroundStyle(accentColor)
+                    .symbolRenderingMode(.hierarchical)
+                    .frame(width: 32, alignment: .center)
+                Text(label)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.06)))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Shown in place of the sensitivity slider + Flow Check when the
+    /// user is in Simple timer mode.
+    private var flowDetectionLockedPrompt: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Text("Flow sensitivity is a Smart-mode feature")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
+            }
+
+            Text("You're in Simple timer mode, so there's no flow signal to tune. Switch to Smart to bring this back.")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                UIActionLogger.buttonTapped("Switch to Smart (from Flow lock prompt)")
+                appState.setDetectionMode(smart: true)
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("Switch to Smart mode")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(accentColor)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 2)
+        }
+    }
+
+    // MARK: - Auto-Pause pane
+
+    private var autoPausePane: some View {
+        VStack(alignment: .leading, spacing: 30) {
+            settingsSection("Microphone") {
+                settingsItem {
+                    settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
+                    settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they hold the mic open.")
+                }
+            }
+
+            settingsSection("Calendar") {
+                settingsItem {
+                    settingsToggleWithIcon("Pause during meetings", systemImage: "calendar", isOn: $pauseDuringCalendarEvents)
+                        .onChange(of: pauseDuringCalendarEvents) { _, newValue in
+                            UIActionLogger.settingChanged("pauseDuringCalendarEvents", value: "\(newValue)")
+                            appState.setCalendarIntegration(enabled: newValue)
+                        }
+                    settingsCaption("Auto-pauses during events with a meeting link (Zoom, Meet, Teams). Blink reads your calendar only to detect meeting times.")
+                }
+                if pauseDuringCalendarEvents {
+                    settingsItem {
+                        settingsToggleWithIcon("Suggest pause for other events", systemImage: "bell.badge", isOn: $suggestUnlinkedEvents)
+                        settingsCaption("For events without a link, show a dismissible suggestion instead of pausing.")
+                    }
+                }
+            }
+            .modifier(deepLinkHighlight(SettingsAnchor.calendar))
+            .id(SettingsAnchor.calendar)
+
+            settingsSection("Per-App Pause") {
                 settingsItem {
                     // Grace window before a "pause while <App> is open" pause
                     // auto-resumes after you leave the app — so brief tab/app
                     // switches during a meeting don't bounce breaks back on.
                     HStack(spacing: 10) {
                         Image(systemName: "hourglass")
-                            .font(.system(size: 17))
+                            .font(.system(size: 15))
                             .foregroundStyle(accentColor)
                             .symbolRenderingMode(.hierarchical)
                             .frame(width: 32, alignment: .center)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Resume after leaving app")
-                                .font(.system(size: 15))
+                                .font(.system(size: 13))
                             Text("Grace before a per-app pause ends")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
@@ -270,117 +675,63 @@ struct SettingsView: View {
             }
             .modifier(deepLinkHighlight(SettingsAnchor.pause))
             .id(SettingsAnchor.pause)
-
-            settingsSection("Mic Detection") {
-                settingsItem {
-                    settingsToggleWithIcon("Pause timer during calls", systemImage: "mic.fill", isOn: $pauseDuringCalls)
-                    settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
-                }
-            }
-
-            settingsSection("Calendar") {
-                settingsItem {
-                    settingsToggleWithIcon("Pause during meetings", systemImage: "calendar", isOn: $pauseDuringCalendarEvents)
-                        .onChange(of: pauseDuringCalendarEvents) { _, newValue in
-                            UIActionLogger.settingChanged("pauseDuringCalendarEvents", value: "\(newValue)")
-                            appState.setCalendarIntegration(enabled: newValue)
-                        }
-                    settingsCaption("Auto-pauses breaks during calendar events that have a meeting link (Zoom, Meet, Teams). Blink reads your calendar only to detect meeting times.")
-                }
-                if pauseDuringCalendarEvents {
-                    settingsItem {
-                        settingsToggleWithIcon("Suggest pause for other events", systemImage: "bell.badge", isOn: $suggestUnlinkedEvents)
-                        settingsCaption("For events without a meeting link, show a dismissible pause suggestion instead of pausing automatically.")
-                    }
-                }
-            }
-            .modifier(deepLinkHighlight(SettingsAnchor.calendar))
-            .id(SettingsAnchor.calendar)
-
-            settingsSection("Timer") {
-                settingsItem {
-                // Hand-rolled HStack instead of settingsRow because
-                // settingsRow uses .top alignment with a 4pt label inset,
-                // which mis-aligned the clock icon, "Base interval" label,
-                // and the slider relative to each other. Plain .center
-                // HStack lines everything up on its midpoint.
-                HStack(spacing: 10) {
-                    Image(systemName: "clock.fill")
-                        .font(.system(size: 17))
-                        .foregroundStyle(accentColor)
-                        .symbolRenderingMode(.hierarchical)
-                        .frame(width: 32, alignment: .center)
-                    Text("Base interval")
-                        .font(.system(size: 15))
-                    Slider(value: $baseInterval, in: 10...45, step: 5)
-                        .tint(accentColor)
-                    Text("\(Int(baseInterval)) min")
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 50, alignment: .trailing)
-                }
-                }
-            }
-
-            settingsSection("System") {
-                settingsItem {
-                    settingsToggleWithIcon("Launch at login", systemImage: "power.circle.fill", isOn: $launchAtLogin)
-                        .onChange(of: launchAtLogin) { _, newValue in
-                            UIActionLogger.settingChanged("launchAtLogin", value: "\(newValue)")
-                            updateLaunchAtLogin(newValue)
-                        }
-                }
-
-                settingsItem {
-                    settingsToggleWithIcon("Receive beta updates", systemImage: "flask.fill", isOn: $betaChannelEnabled)
-                    settingsCaption("Get new features before everyone else. Beta builds may be less stable; you can switch off any time to roll back to the next stable release.")
-                }
-
-                // Check for Updates as a primary call-to-action — full
-                // width, accent-coloured, more discoverable than the
-                // previous flat link.
-                Button {
-                    UIActionLogger.buttonTapped("Check for Updates")
-                    BlinkUpdater.shared.checkForUpdates()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 13, weight: .medium))
-                        Text("Check for Updates")
-                            .font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundStyle(theme.textOnAccent(for: colorScheme))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(accentColor)
-                    )
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 2)
-
-                // Debug section — collapsible. Houses the dev/diagnostic
-                // controls (toast notifications, log files, onboarding
-                // reset) that most users won't touch. Defaults collapsed
-                // so the bottom of the General tab stays clean.
-                debugDisclosure
-            }
         }
     }
 
-    // MARK: - Debug disclosure (System section)
+    // MARK: - About pane
 
-    /// Collapsible "Debug" group at the bottom of System. Houses the
-    /// diagnostic controls (debug toasts, log files, onboarding reset)
-    /// most users never touch. Defaults closed so the General tab's
-    /// foot stays clean.
+    private var aboutPane: some View {
+        VStack(alignment: .leading, spacing: 34) {
+            HStack(spacing: 16) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(theme.backgroundTop)
+                        .frame(width: 72, height: 72)
+                    Image(theme.iconAsset)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 78, height: 78)
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .frame(width: 68, height: 68)
+                        .clipped()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Blink")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                    Text("Smart 20-20-20 Break Reminder")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                    Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0")")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.tertiary)
+                }
+                Spacer()
+            }
+
+            settingsSection("Acknowledgments") {
+                Text(try! AttributedString(
+                    markdown: "Break-end chime “Ding” by [Aiwha](https://freesound.org/people/Aiwha/sounds/196106/) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)"
+                ))
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .tint(accentColor)
+            }
+
+            debugDisclosure
+        }
+    }
+
+    // MARK: - Debug disclosure (About pane)
+
+    /// Collapsible "Debug" group. Houses the diagnostic controls (debug
+    /// toasts, log files, onboarding reset) most users never touch. Defaults
+    /// closed so the About pane stays clean.
     private var debugDisclosure: some View {
         VStack(alignment: .leading, spacing: 8) {
             Button {
-                withAnimation(.easeInOut(duration: 0.18)) {
-                    debugExpanded.toggle()
-                }
+                withAnimation(.easeInOut(duration: 0.18)) { debugExpanded.toggle() }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "chevron.right")
@@ -396,12 +747,42 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
             .padding(.leading, 4)
-            .padding(.top, 6)
 
             if debugExpanded {
                 settingsItem {
                     settingsToggleWithIcon("Debug notifications", systemImage: "ant.fill", isOn: $appState.debugNotifications)
                     settingsCaption("Show toasts for timer resets, state changes, and idle detection")
+                }
+
+                // Flow Check — a spot-check of the current flow signal. Lives
+                // here (not on the Focus pane) so Focus stays light; only
+                // meaningful in Smart mode where there's a signal to read.
+                if appState.hasInputMonitoringPermission {
+                    VStack(alignment: .leading, spacing: 10) {
+                        debugActionButton(label: "Run Flow Check", systemImage: "waveform.path.ecg") {
+                            let check = appState.engine.spotCheckFlow()
+                            flowCheckDetail = check.description
+                            Log.i("Flow spot check (Preferences):\n\(check.description)")
+                        }
+                        if let detail = flowCheckDetail {
+                            Text(detail)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                                .padding(10)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.primary.opacity(0.05))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                    }
+                }
+
+                // Force-shows the current build's What's New window. The
+                // real launch flow only surfaces it on a version upgrade
+                // (and once per version), so this is the way to re-view it.
+                debugActionButton(label: "Show What's New", systemImage: "gift") {
+                    UIActionLogger.buttonTapped("Show What's New (debug)")
+                    appState.showWhatsNewFromSettings()
                 }
 
                 debugActionButton(label: "Restart Onboarding", systemImage: "arrow.counterclockwise") {
@@ -423,251 +804,25 @@ struct SettingsView: View {
         }
     }
 
-    /// Secondary-style button used for Restart Onboarding + Open Log Files
-    /// inside the debug disclosure. Lower visual weight than the primary
-    /// Check for Updates button above the disclosure, matching their
-    /// diagnostic-utility role.
     private func debugActionButton(label: String, systemImage: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 12))
-                Text(label)
                     .font(.system(size: 13))
+                Text(label)
+                    .font(.system(size: 14))
                 Spacer()
             }
             .foregroundStyle(accentColor)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.secondary.opacity(0.06))
-            )
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.06)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Theme
-    
-    private var themeContent: some View {
-        VStack(spacing: 24) {
-            Text("Choose your theme")
-                .font(.system(size: 16, weight: .semibold))
-            
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 20), count: 3), spacing: 20) {
-                ForEach(BlinkTheme.all) { t in
-                    VStack(spacing: 8) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(t.backgroundTop)
-                                .frame(width: 76, height: 76)
-                            
-                            Image(t.iconAsset)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 82, height: 82)
-                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                .frame(width: 72, height: 72)
-                                .clipped()
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .stroke(theme.id == t.id ? accentColor : .clear, lineWidth: 3)
-                        )
-                        .shadow(color: theme.id == t.id ? accentColor.opacity(0.3) : .clear, radius: 8)
-                        .scaleEffect(theme.id == t.id ? 1.05 : 1.0)
-                        .animation(.easeOut(duration: 0.2), value: theme.id)
-                        
-                        Text(t.name)
-                            .font(.system(size: 12, weight: theme.id == t.id ? .semibold : .regular))
-                            .foregroundStyle(theme.id == t.id ? .primary : .secondary)
-                    }
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            themeManager.select(t)
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - Flow
-    
-    @State private var flowCheckDetail: String?
-
-    private var flowContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            settingsSection("Detection Mode") {
-                detectionModePicker
-                settingsCaption(appState.hasInputMonitoringPermission
-                    ? "Smart mode reads typing rhythm and mouse activity through Input Monitoring, so breaks land at natural pauses and adapt to flow state. Simple is a fixed 20-minute timer that asks for zero macOS permissions."
-                    : "Simple timer mode runs without Input Monitoring or Accessibility — just a steady 20-minute timer that skips when you're idle. Switch to Smart for flow-aware break timing.")
-            }
-
-            // Sensitivity + Flow Check are only meaningful when Smart
-            // mode is on. In Simple mode they're inert — sensitivity
-            // doesn't drive anything, and Flow Check would just report
-            // zeros. Replace both with a single prompt that switches
-            // the user to Smart (which triggers the IM permission flow
-            // if needed, via setDetectionMode hot-swap).
-            if appState.hasInputMonitoringPermission {
-                settingsSection("Flow Detection") {
-                    FlowSensitivityView(
-                        sensitivity: $flowSensitivity,
-                        accentColor: accentColor,
-                        foregroundColor: .primary,
-                        style: .settings,
-                        onResearchTapped: { [weak themeManager] in
-                            UIActionLogger.buttonTapped("Read the Research", context: "Settings")
-                            ResearchWindowController.shared.show(theme: themeManager?.current ?? .peach)
-                        },
-                        onLearnMoreTapped: {
-                            UIActionLogger.buttonTapped("See impact", context: "Settings")
-                            FlowLearnMoreWindowController.shared.show(theme: ThemeManager.shared.current)
-                        }
-                    )
-                    .onChange(of: flowSensitivity) { _, newValue in
-                        appState.engine.sensitivity = newValue
-                    }
-                }
-
-                settingsSection("Flow Check") {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Button {
-                            let check = appState.engine.spotCheckFlow()
-                            flowCheckDetail = check.description
-                            Log.i("Flow spot check (Preferences):\n\(check.description)")
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "waveform.path.ecg")
-                                    .font(.system(size: 12))
-                                Text("Run Flow Check")
-                                    .font(.system(size: 12, weight: .medium))
-                            }
-                            .foregroundStyle(accentColor)
-                        }
-                        .buttonStyle(.plain)
-
-                        if let detail = flowCheckDetail {
-                            Text(detail)
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(.secondary)
-                                .textSelection(.enabled)
-                                .padding(10)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color.primary.opacity(0.05))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
-                    }
-                }
-            } else {
-                settingsSection("Flow Detection") {
-                    flowDetectionLockedPrompt
-                }
-            }
-        }
-    }
-
-    /// Shown in place of the sensitivity slider + Flow Check when the
-    /// user is in Simple timer mode. Explains why those controls are
-    /// hidden, and offers a one-tap shortcut to switch to Smart (which
-    /// surfaces the IM permission flow if needed).
-    private var flowDetectionLockedPrompt: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.secondary)
-                Text("Flow sensitivity is a Smart-mode feature")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.primary)
-            }
-
-            Text("You're in Simple timer mode — Blink runs a fixed 20-minute timer without reading your input, so there's no flow signal to tune. Switch to Smart to bring this back.")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Button {
-                UIActionLogger.buttonTapped("Switch to Smart (from Flow lock prompt)")
-                appState.setDetectionMode(smart: true)
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 12, weight: .semibold))
-                    Text("Switch to Smart mode")
-                        .font(.system(size: 12, weight: .semibold))
-                }
-                .foregroundStyle(theme.textOnAccent(for: colorScheme))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(accentColor)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 2)
-        }
-    }
-    
-    // MARK: - About
-    
-    private var aboutContent: some View {
-        // `frame(maxWidth: .infinity, maxHeight: .infinity)` so the About
-        // tab fills the same window area as the other tabs (General,
-        // Theme, Flow). Without this the VStack only takes its intrinsic
-        // narrow width, and the tab-switch transition animates the
-        // content "expanding" as the view bounds re-flow.
-        VStack(spacing: 16) {
-            Spacer()
-
-            ZStack {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(theme.backgroundTop)
-                    .frame(width: 80, height: 80)
-                Image(theme.iconAsset)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 86, height: 86)
-                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .frame(width: 76, height: 76)
-                    .clipped()
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            
-            Text("Blink")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-            
-            Text("Smart 20-20-20 Break Reminder")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            
-            Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0")")
-                .font(.system(size: 11))
-                .foregroundStyle(.tertiary)
-
-            Spacer()
-
-            VStack(spacing: 6) {
-                Text("ACKNOWLEDGMENTS")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.tertiary)
-                Text(try! AttributedString(
-                    markdown: "Break-end chime “Ding” by [Aiwha](https://freesound.org/people/Aiwha/sounds/196106/) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)"
-                ))
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .tint(accentColor)
-            }
-            .padding(.bottom, 8)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    
     // MARK: - Detection Mode Picker
 
     /// Two-card picker — Smart mode vs Simple timer mode. Reads from
@@ -729,14 +884,8 @@ struct SettingsView: View {
     }
 
     // MARK: - Reusable Components
-    
+
     private func settingsSection(_ title: String, @ViewBuilder content: () -> some View) -> some View {
-        // Title outside the card group. Inner VStack collects per-setting
-        // cards (one per `settingsItem` call) so each setting gets its
-        // own visual container — easier to scan than a single card
-        // lumping several unrelated toggles together. Spacing 8pt
-        // between cards is tight enough to read as "same section" but
-        // open enough that each item feels distinct.
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
@@ -749,91 +898,22 @@ struct SettingsView: View {
         }
     }
 
-    /// Wraps a single setting's controls (toggle + optional caption +
-    /// optional Learn more) in a subtle card. Sections that show
-    /// multiple unrelated settings call this once per setting so each
-    /// gets its own card; action links that shouldn't read as
-    /// settings (Check for Updates, Restart Onboarding) skip this and
-    /// sit flat.
+    /// Wraps a single setting's controls (toggle + optional caption) in a
+    /// subtle card. Sections with several unrelated settings call this once
+    /// per setting so each gets its own container.
     private func settingsItem<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             content()
         }
-        // 12pt horizontal breathing room so icons (especially the
-        // hand-rolled CountdownTimerIcon / DarkOverlayIcon that fill
-        // their 32pt frame) aren't flush against the card edge, and the
-        // toggle on the right side has room before the trailing edge.
-        // Intentionally breaks the title↔icon left alignment — title
-        // stays at .leading(4) on the section, content sits 8pt inward.
-        .padding(.horizontal, 12)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.secondary.opacity(0.06))
-        )
-    }
-
-    /// Variant with the icon at the outer level — it sits in its own
-    /// 32pt-wide leading column, vertically centered with the entire
-    /// content VStack. Use when a row has both a toggle AND a caption
-    /// (and maybe more): the previous pattern locked the icon next to
-    /// the toggle via `settingsToggleWithIcon`, leaving the icon at the
-    /// top edge while the caption hung below it. With the icon at this
-    /// level, it centers between the top of the toggle and the bottom
-    /// of the caption automatically.
-    private func settingsItem<Icon: View, Content: View>(
-        @ViewBuilder icon: () -> Icon,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        HStack(alignment: .center, spacing: 10) {
-            icon()
-                .frame(width: 32, alignment: .center)
-            VStack(alignment: .leading, spacing: 6) {
-                content()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.secondary.opacity(0.06))
-        )
-    }
-
-    /// Caption styled for use inside an outer-icon settingsItem. No
-    /// leading indent — the parent HStack's icon column already shifts
-    /// the content VStack to the right of the icon, so the caption
-    /// naturally sits under the toggle label.
-    private func settingsCaptionFlat(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 13))
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-    
-    private func settingsRow(_ label: String, @ViewBuilder content: () -> some View) -> some View {
-        HStack(alignment: .top) {
-            Text(label)
-                .font(.system(size: 15))
-                .padding(.top, 4)
-            Spacer()
-            content()
-        }
-    }
-
-    private func settingsToggle(_ label: String, isOn: Binding<Bool>) -> some View {
-        Toggle(label, isOn: isOn)
-            .font(.system(size: 15))
-            .toggleStyle(ThemedToggleStyle(theme: theme))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.06)))
     }
 
     /// Toggle with a leading icon column. `icon` can be any View — an
-    /// SF Symbol via `Image(systemName:)` or a hand-rolled SwiftUI icon
-    /// (see `SettingIcons.swift`). The icon column is a fixed 32pt wide
-    /// so labels align across rows regardless of glyph aspect.
+    /// SF Symbol via `Image(systemName:)` or a hand-rolled SwiftUI icon.
+    /// The icon column is a fixed 32pt wide so labels align across rows.
     private func settingsToggleWithIcon<Icon: View>(
         _ label: String,
         @ViewBuilder icon: () -> Icon,
@@ -843,7 +923,7 @@ struct SettingsView: View {
             icon()
                 .frame(width: 32, alignment: .center)
             Toggle(label, isOn: isOn)
-                .font(.system(size: 15))
+                .font(.system(size: 13))
                 .toggleStyle(ThemedToggleStyle(theme: theme))
         }
     }
@@ -856,39 +936,22 @@ struct SettingsView: View {
     ) -> some View {
         settingsToggleWithIcon(label, icon: {
             Image(systemName: systemImage)
-                .font(.system(size: 17))
+                .font(.system(size: 15))
                 .foregroundStyle(accentColor)
                 .symbolRenderingMode(.hierarchical)
         }, isOn: isOn)
     }
 
-    /// Caption text shown under toggles / rows. Sized + colored for
-    /// readability — the previous combination (`size: 11` +
-    /// `.tertiary`) was painful to read on white backgrounds, and the
-    /// user flagged it specifically.
+    /// Caption text shown under toggles / rows. 42pt leading = 32pt icon
+    /// column + 10pt spacing, so captions align with the toggle's label.
     private func settingsCaption(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 13))
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
-            // 42pt = 32pt icon column + 10pt spacing. Captions sit under
-            // iconified toggles and align with the toggle's label, not
-            // the icon. The General tab now uses icons on every row, so
-            // captions get the same indent uniformly.
             .padding(.leading, 42)
     }
-    
-    private func stateRow(_ label: String, value: String) -> some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
-        }
-    }
-    
+
     private func updateLaunchAtLogin(_ enabled: Bool) {
         do {
             if enabled {
@@ -902,23 +965,17 @@ struct SettingsView: View {
     }
 }
 
-#Preview("Settings - General (Smart)") {
+#Preview("Settings - General") {
     SettingsView(appState: AppState(preview: true))
         .environmentObject(ThemeManager.shared)
 }
 
-// Tabs are 0=General, 1=Theme, 2=Flow, 3=About.
-// AppState(preview: true) hard-codes hasInputMonitoringPermission=true,
-// so the Flow tab renders its full sensitivity slider + Flow Check by
-// default. To see the Simple-mode locked-Flow prompt, the previews
-// below flip the flag and land directly on the Flow tab.
-
-#Preview("Settings - Flow tab (Smart)") {
+#Preview("Settings - Focus (Smart)") {
     SettingsView(appState: AppState(preview: true), initialTab: 2)
         .environmentObject(ThemeManager.shared)
 }
 
-#Preview("Settings - Flow tab (Simple, locked)") {
+#Preview("Settings - Focus (Simple, locked)") {
     UserDefaults.standard.set(true, forKey: "basicModeOptIn")
     let state = AppState(preview: true)
     state.hasInputMonitoringPermission = false
@@ -926,21 +983,14 @@ struct SettingsView: View {
         .environmentObject(ThemeManager.shared)
 }
 
-#Preview("Settings - Flow tab (missing IM permission)") {
-    UserDefaults.standard.set(false, forKey: "basicModeOptIn")
-    let state = AppState(preview: true)
-    state.hasInputMonitoringPermission = false
-    return SettingsView(appState: state, initialTab: 2)
+#Preview("Settings - Auto-Pause (deep-link)") {
+    SettingsView(appState: AppState(preview: true), scrollTo: SettingsAnchor.calendar)
         .environmentObject(ThemeManager.shared)
 }
 
 /// A brief accent highlight for a deep-linked Settings section — a soft fill
 /// plus a rounded ring that fades in and out. Uses a small REAL inset padding
-/// (not an overflow) so the fill/ring stay inside the view's own frame: a
-/// negative-padding overflow bled ~8px above the section and got clipped when
-/// ScrollViewReader landed the section flush against the scroll view's top
-/// edge (the "off by a few pixels" scroll target). The 6px inset is always
-/// present (the ring just fades via opacity), so nothing shifts when it flashes.
+/// (not an overflow) so the fill/ring stay inside the view's own frame.
 private struct DeepLinkHighlight: ViewModifier {
     let isActive: Bool
     let accent: Color

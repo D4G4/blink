@@ -18,21 +18,21 @@ enum WhatsNewManifest {
         WhatsNewItem(
             icon: "pause.circle",
             title: "Pause that resumes itself",
-            body: "Need a breather from breaks? Pause Blink for an hour, until tomorrow, or while a chosen app is open — and it turns itself back on automatically when the time's up. No more forgetting you paused it.",
+            body: "Pause for an hour, until tomorrow, or while an app is open — Blink turns itself back on automatically.",
             introducedIn: "5.2.0",
             openAction: .preferences(tab: 0, scrollTo: SettingsAnchor.pause)
         ),
         WhatsNewItem(
             icon: "calendar",
             title: "Auto-pause for meetings",
-            body: "Turn on calendar pausing and Blink quietly steps aside during meetings with a Zoom, Meet, or Teams link — then resumes the moment they end. Events without a link get a gentle \u{201C}pause?\u{201D} nudge you can tap or ignore. Your calendar is read only to spot meeting times; nothing leaves your Mac.",
+            body: "Blink steps aside during meetings with a Zoom, Meet, or Teams link, then resumes when they end. Your calendar is read on-device only.",
             introducedIn: "5.2.0",
             openAction: .preferences(tab: 0, scrollTo: SettingsAnchor.calendar)
         ),
         WhatsNewItem(
             icon: "sparkles",
             title: "Smart break suggestions",
-            body: "Instead of always saying \u{201C}Look at something far away,\u{201D} Blink can pick a healthier action — drink water, stand up, breathe, step outside — based on time of day, how long you've been sitting, and whether you're coming out of focus.",
+            body: "A healthier nudge than \u{201C}look far away\u{201D} — drink water, stand up, or breathe, matched to the moment.",
             introducedIn: "5.1.0",
             openAction: .preferences(tab: 0, scrollTo: nil)
         ),
@@ -69,6 +69,19 @@ enum WhatsNewManifest {
         guard let lastSeen else { return nil }
         let newItems = candidateItems.filter { isVersion($0.introducedIn, greaterThan: lastSeen) }
         return newItems.isEmpty ? nil : newItems
+    }
+
+    /// The items that shipped in a specific version (major.minor.patch match,
+    /// pre-release suffix ignored). Used by the Settings "What's New" card to
+    /// re-open the digest for the *current* build after launch has already
+    /// consumed the one-shot window — `itemsToShowOnLaunch` returns nil once
+    /// seen, but this always resolves the current version's items.
+    static func itemsForVersion(
+        _ version: String,
+        candidateItems: [WhatsNewItem] = WhatsNewManifest.items
+    ) -> [WhatsNewItem] {
+        let target = parse(version)
+        return candidateItems.filter { parse($0.introducedIn) == target }
     }
 
     /// Compare two version strings as (major, minor, patch), ignoring any

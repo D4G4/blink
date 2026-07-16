@@ -9,6 +9,9 @@ struct FlowSensitivityView: View {
     let accentColor: Color
     let foregroundColor: Color
     let style: Style
+    // Retained for the onboarding call site (FlowSensitivityPage). The settings
+    // layout no longer renders these — the Learn links moved to their own
+    // Settings section — but the onboarding page still passes onResearchTapped.
     var onResearchTapped: (() -> Void)? = nil
     var onLearnMoreTapped: (() -> Void)? = nil
 
@@ -112,7 +115,7 @@ struct FlowSensitivityView: View {
     // MARK: - Settings Style
 
     private var settingsLayout: some View {
-        VStack(alignment: .leading, spacing: 30) {
+        VStack(alignment: .leading, spacing: 24) {
             // Full-width preset buttons
             HStack(spacing: 8) {
                 ForEach(Preset.allCases, id: \.name) { preset in
@@ -126,55 +129,18 @@ struct FlowSensitivityView: View {
                 .foregroundStyle(.secondary)
                 .animation(.easeInOut(duration: 0.2), value: sensitivity)
 
-            // Learn more button
-            if onLearnMoreTapped != nil {
-                Button {
-                    onLearnMoreTapped?()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "eye")
-                            .font(.system(size: 12))
-                        Text("How this affects your breaks")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundStyle(accentColor)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(accentColor.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-                .buttonStyle(.plain)
-            }
-
-            // Action links
-            HStack(spacing: 12) {
+            // Fine-tune chip — toggles the sensitivity slider. The Learn links
+            // (How it works / Research) live in their own Settings section now.
+            HStack {
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) { showFineTune.toggle() }
                 } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: showFineTune ? "chevron.up" : "slider.horizontal.3")
-                            .font(.system(size: 10))
-                        Text(showFineTune ? "Hide" : "Fine-tune")
-                            .font(.system(size: 11))
-                    }
-                    .foregroundStyle(.secondary)
+                    chipButton(showFineTune ? "chevron.up" : "slider.horizontal.3",
+                               showFineTune ? "Hide" : "Fine-tune",
+                               prominent: false)
                 }
                 .buttonStyle(.plain)
-
                 Spacer()
-
-                Button {
-                    onResearchTapped?()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "book.closed")
-                            .font(.system(size: 10))
-                        Text("Research")
-                            .font(.system(size: 11))
-                    }
-                    .foregroundStyle(accentColor)
-                }
-                .buttonStyle(.plain)
             }
 
             if showFineTune {
@@ -191,6 +157,29 @@ struct FlowSensitivityView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
+    }
+
+    // Proper chip button for the settings action row. `prominent` = accent-
+    // tinted (How it works / Research); otherwise a neutral secondary chip
+    // (Fine-tune).
+    private func chipButton(_ symbol: String, _ label: String, prominent: Bool) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: symbol)
+                .font(.system(size: 11, weight: .medium))
+            Text(label)
+                .font(.system(size: 12, weight: .medium))
+        }
+        .foregroundStyle(prominent ? accentColor : .secondary)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(prominent ? accentColor.opacity(0.12) : Color.secondary.opacity(0.10))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(prominent ? accentColor.opacity(0.35) : Color.secondary.opacity(0.22), lineWidth: 1)
+        )
     }
 
     // Compact settings preset button — icon + name, no description
@@ -318,9 +307,7 @@ private struct FlowSensitivityPreview: View {
         sensitivity: .constant(0.65),
         accentColor: BlinkTheme.peach.accent,
         foregroundColor: .primary,
-        style: .settings,
-        onResearchTapped: {},
-        onLearnMoreTapped: {}
+        style: .settings
     )
     .padding(20)
     .frame(width: 400)

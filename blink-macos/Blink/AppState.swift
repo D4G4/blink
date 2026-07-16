@@ -70,6 +70,13 @@ final class AppState: ObservableObject {
     /// tick); `.EKEventStoreChanged` triggers an extra immediate evaluation.
     private var ticksSinceCalendarCheck: Int = 0
     private static let calendarCheckTickInterval: Int = 30
+    /// How far before a link-less event starts to offer the pause suggestion,
+    /// so the user has time to interact with the toast before the meeting.
+    static let calendarSuggestionLead: TimeInterval = 120  // 2 min
+    /// Monitor look-ahead — must exceed `calendarSuggestionLead` so an upcoming
+    /// event is fetched in time to suggest before it starts (extra margin
+    /// covers the 30s evaluation throttle).
+    private static let calendarLookAhead: TimeInterval = 180
 
     // Sleep / lock tracking — used to suppress overlay when user is away
     private var isSystemAsleep = false
@@ -1164,20 +1171,55 @@ final class AppState: ObservableObject {
                 UserDefaults.standard.set(true, forKey: Self.calendarTipShownKey)
             }
             let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+            // Record that this update surfaced What's New, so the Settings
+            // "What's New" card can re-open the digest for the next 10 days.
+            UserDefaults.standard.set(Date().timeIntervalSinceReferenceDate, forKey: Self.whatsNewSurfacedDateKey)
+            UserDefaults.standard.set(version, forKey: Self.whatsNewSurfacedVersionKey)
             Log.i("Showing What's New window for v\(version) with \(items.count) item(s)")
-            whatsNewController = WhatsNewWindowController()
-            whatsNewController?.show(
-                theme: ThemeManager.shared.current,
-                version: version,
-                items: items,
-                onOpenAction: { [weak self] action in
-                    switch action {
-                    case .preferences(let tab, let scrollTo):
-                        self?.openPreferences(initialTab: tab, scrollTo: scrollTo)
-                    }
-                }
-            )
+            self.presentWhatsNew(version: version, items: items)
         }
+    }
+
+    static let whatsNewSurfacedDateKey = "whatsNewSurfacedDate"
+    static let whatsNewSurfacedVersionKey = "whatsNewSurfacedVersion"
+    /// How long the Settings "What's New" card stays visible after an update.
+    static let whatsNewBadgeWindow: TimeInterval = 10 * 24 * 60 * 60
+
+    /// Present the What's New window with the given items. Shared by the launch
+    /// one-shot and the Settings "What's New" re-open card.
+    func presentWhatsNew(version: String, items: [WhatsNewItem]) {
+        guard !items.isEmpty else { return }
+        whatsNewController = WhatsNewWindowController()
+        whatsNewController?.show(
+            theme: ThemeManager.shared.current,
+            version: version,
+            items: items,
+            onOpenAction: { [weak self] action in
+                switch action {
+                case .preferences(let tab, let scrollTo):
+                    self?.openPreferences(initialTab: tab, scrollTo: scrollTo)
+                }
+            }
+        )
+    }
+
+    /// Re-open the current build's What's New digest from the Settings card.
+    func showWhatsNewFromSettings() {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        presentWhatsNew(version: version, items: WhatsNewManifest.itemsForVersion(version))
+    }
+
+    /// The version to advertise in the Settings "What's New" card — non-nil
+    /// only for `whatsNewBadgeWindow` (10 days) after an update surfaced the
+    /// window, and only while the running build still matches. nil → no card.
+    var recentlyUpdatedVersion: String? {
+        let d = UserDefaults.standard
+        guard let surfaced = d.string(forKey: Self.whatsNewSurfacedVersionKey) else { return nil }
+        let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        guard surfaced == current else { return nil }
+        let ts = d.double(forKey: Self.whatsNewSurfacedDateKey)
+        guard ts > 0, Date().timeIntervalSinceReferenceDate - ts < Self.whatsNewBadgeWindow else { return nil }
+        return WhatsNewManifest.itemsForVersion(current).isEmpty ? nil : current
     }
 
     private static let calendarTipShownKey = "calendarTipShown"
@@ -1415,13 +1457,14 @@ final class AppState: ObservableObject {
     private func evaluateCalendar() {
         guard let monitor = calendarMonitor, monitor.isAuthorized else { return }
         let now = Date()
-        let meetings = monitor.meetings(now: now)
+        let meetings = monitor.meetings(now: now, ahead: Self.calendarLookAhead)
         let action = CalendarPauseCoordinator.decide(
             meetings: meetings,
             now: now,
             currentlyPaused: isPaused,
             actedKeys: calendarActedKeySet,
-            suggestUnlinked: suggestUnlinkedCalendarEvents
+            suggestUnlinked: suggestUnlinkedCalendarEvents,
+            suggestionLead: Self.calendarSuggestionLead
         )
         switch action {
         case .none:

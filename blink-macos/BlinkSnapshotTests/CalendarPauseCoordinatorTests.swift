@@ -115,4 +115,36 @@ final class CalendarPauseCoordinatorTests: XCTestCase {
         )
         XCTAssertEqual(action, .autoPause(linked))
     }
+
+    /// A link-less meeting is suggested BEFORE it starts (within the lead
+    /// window) so the user has time to react.
+    func testUnlinkedMeetingSuggestsBeforeStartWithinLead() {
+        let m = meeting(startOffset: 90, endOffset: 1500) // starts in 90s
+        let action = CalendarPauseCoordinator.decide(
+            meetings: [m], now: now, currentlyPaused: false,
+            actedKeys: [], suggestUnlinked: true, suggestionLead: 120
+        )
+        XCTAssertEqual(action, .suggest(m))
+    }
+
+    /// Beyond the lead window (event still >lead away) nothing is offered yet.
+    func testUnlinkedMeetingNotSuggestedBeyondLead() {
+        let m = meeting(startOffset: 180, endOffset: 1500) // starts in 3m
+        let action = CalendarPauseCoordinator.decide(
+            meetings: [m], now: now, currentlyPaused: false,
+            actedKeys: [], suggestUnlinked: true, suggestionLead: 120
+        )
+        XCTAssertEqual(action, .none)
+    }
+
+    /// The lead only applies to suggestions — a linked meeting still auto-pauses
+    /// at its start, not early.
+    func testLinkedMeetingDoesNotAutoPauseEarly() {
+        let m = meeting(startOffset: 90, endOffset: 1500, link: zoomLink) // starts in 90s
+        let action = CalendarPauseCoordinator.decide(
+            meetings: [m], now: now, currentlyPaused: false,
+            actedKeys: [], suggestUnlinked: true, suggestionLead: 120
+        )
+        XCTAssertEqual(action, .none)
+    }
 }
