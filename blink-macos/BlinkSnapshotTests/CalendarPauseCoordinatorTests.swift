@@ -122,7 +122,7 @@ final class CalendarPauseCoordinatorTests: XCTestCase {
         let m = meeting(startOffset: 90, endOffset: 1500) // starts in 90s
         let action = CalendarPauseCoordinator.decide(
             meetings: [m], now: now, currentlyPaused: false,
-            actedKeys: [], suggestUnlinked: true, suggestionLead: 120
+            actedKeys: [], suggestUnlinked: true, leadTime: 120
         )
         XCTAssertEqual(action, .suggest(m))
     }
@@ -132,18 +132,28 @@ final class CalendarPauseCoordinatorTests: XCTestCase {
         let m = meeting(startOffset: 180, endOffset: 1500) // starts in 3m
         let action = CalendarPauseCoordinator.decide(
             meetings: [m], now: now, currentlyPaused: false,
-            actedKeys: [], suggestUnlinked: true, suggestionLead: 120
+            actedKeys: [], suggestUnlinked: true, leadTime: 120
         )
         XCTAssertEqual(action, .none)
     }
 
-    /// The lead only applies to suggestions — a linked meeting still auto-pauses
-    /// at its start, not early.
-    func testLinkedMeetingDoesNotAutoPauseEarly() {
+    /// A linked meeting auto-pauses within the lead window too (consistent with
+    /// suggestions) — the timer is paused before the meeting begins.
+    func testLinkedMeetingAutoPausesEarlyWithinLead() {
         let m = meeting(startOffset: 90, endOffset: 1500, link: zoomLink) // starts in 90s
         let action = CalendarPauseCoordinator.decide(
             meetings: [m], now: now, currentlyPaused: false,
-            actedKeys: [], suggestUnlinked: true, suggestionLead: 120
+            actedKeys: [], suggestUnlinked: true, leadTime: 120
+        )
+        XCTAssertEqual(action, .autoPause(m))
+    }
+
+    /// Beyond the lead window a linked meeting isn't auto-paused yet.
+    func testLinkedMeetingNotAutoPausedBeyondLead() {
+        let m = meeting(startOffset: 180, endOffset: 1500, link: zoomLink) // starts in 3m
+        let action = CalendarPauseCoordinator.decide(
+            meetings: [m], now: now, currentlyPaused: false,
+            actedKeys: [], suggestUnlinked: true, leadTime: 120
         )
         XCTAssertEqual(action, .none)
     }
