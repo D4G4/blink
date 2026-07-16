@@ -35,13 +35,12 @@ private let allThemes: [BlinkTheme] = [.peach, .midnight, .sage, .sand, .mono]
         .preferredColorScheme(.dark)
 }
 
-/// Preview that lands directly on the Instructions phase for the
-/// Orientation exercise — so the new "What the tilts look like"
-/// reference patches are visible without clicking through the
-/// disclaimer + ready picker.
-#Preview("GaborExercise — Instructions (Orientation)") {
+/// Preview that lands directly on the Instructions phase for the primary
+/// Detection exercise — so the explanation card is visible without clicking
+/// through the disclaimer + ready picker.
+#Preview("GaborExercise — Instructions (Detection)") {
     let state = GaborExerciseState()
-    state.exerciseType = .orientationDiscrimination
+    state.exerciseType = .detection
     state.phase = .instructions
     return GaborExerciseView(state: state, theme: .peach, onDismiss: {})
         .frame(width: 720, height: 900)
@@ -50,7 +49,7 @@ private let allThemes: [BlinkTheme] = [.peach, .midnight, .sage, .sand, .mono]
 
 #Preview("GaborExercise — Instructions (Flanker)") {
     let state = GaborExerciseState()
-    state.exerciseType = .flankerMasking
+    state.exerciseType = .flanker
     state.phase = .instructions
     return GaborExerciseView(state: state, theme: .peach, onDismiss: {})
         .frame(width: 720, height: 900)

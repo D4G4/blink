@@ -105,7 +105,7 @@ private struct ReadyPhase: View {
                 .foregroundStyle(fg)
                 .padding(.bottom, 8)
 
-            Text("Train your visual cortex with Gabor patch exercises")
+            Text("A brief focus-and-attention game with faint striped patterns")
                 .font(.system(size: 15))
                 .foregroundStyle(fg)
                 .padding(.bottom, 40)
@@ -123,7 +123,7 @@ private struct ReadyPhase: View {
                     }
                 }
             }
-            .frame(maxWidth: 720)
+            .frame(maxWidth: 560)
 
             Spacer()
                 .frame(height: 40)
@@ -246,36 +246,6 @@ private struct InstructionsPhase: View {
                         .lineSpacing(4)
                 }
 
-                // Visual reference for what each tilt direction looks
-                // like. Skipped for contrast detection (different task —
-                // patches there are unambiguously vertical or absent).
-                if state.exerciseType != .contrastDetection {
-                    Divider()
-                        .background(fg.opacity(0.15))
-
-                    VStack(alignment: .leading, spacing: 12) {
-                        Label("What the tilts look like", systemImage: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(fg)
-
-                        Text("Exaggerated examples — the real test uses smaller angles, so look carefully.")
-                            .font(.system(size: 13))
-                            .foregroundStyle(fg.opacity(0.85))
-                            .lineSpacing(3)
-
-                        HStack(spacing: 36) {
-                            // angleDegrees signs match the renderer
-                            // convention verified in GaborExerciseState
-                            // .submitResponse: positive → "\" (tilted
-                            // left), negative → "/" (tilted right).
-                            tiltExample(label: "Tilted Left", angleDegrees: 25, fg: fg)
-                            tiltExample(label: "Tilted Right", angleDegrees: -25, fg: fg)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 4)
-                    }
-                }
-
                 Divider()
                     .background(fg.opacity(0.15))
 
@@ -331,32 +301,6 @@ private struct InstructionsPhase: View {
         }
         .padding(40)
     }
-
-    /// Mini Gabor patch used in the instructions step to show what each
-    /// tilt direction looks like. Uses max contrast and a 25° angle (vs
-    /// the ±15° angle the real test uses) so the direction is
-    /// unambiguous. Renderer convention (verified empirically): positive
-    /// `angleDegrees` → stripes go top-LEFT to bottom-RIGHT ("\" = tilted
-    /// left); negative → "/" = tilted right. See the matching comment in
-    /// GaborExerciseState.submitResponse.
-    private func tiltExample(label: String, angleDegrees: Double, fg: Color) -> some View {
-        VStack(spacing: 10) {
-            GaborRenderer.asImage(
-                pointSize: 84,
-                contrast: 1.0,
-                spatialFrequency: 0.06,
-                orientation: angleDegrees * .pi / 180.0,
-                sigma: 14
-            )
-            .frame(width: 84, height: 84)
-            .clipShape(Circle())
-            .overlay(Circle().stroke(fg.opacity(0.3), lineWidth: 1))
-
-            Text(label)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(fg)
-        }
-    }
 }
 
 // MARK: - Trial Phase
@@ -368,6 +312,14 @@ private struct TrialPhase: View {
 
     private let fg: Color = Color(white: 0.12)
     private let config = GaborDisplayConfig.current()
+
+    // Per-session render parameters derived from the session's spatial frequency.
+    private var patchSize: CGFloat { config.patchPointSize }
+    private var cyclesPerPoint: Double { config.cyclesPerPoint(forCPD: state.sessionSF) }
+    private var sigma: Double { config.sigmaPoints(forCPD: state.sessionSF) }
+
+    /// High-contrast flankers / mask.
+    private let boldContrast: Double = 0.9
 
     var body: some View {
         VStack(spacing: 24) {
@@ -393,7 +345,7 @@ private struct TrialPhase: View {
             // luminance), so its Gaussian-tapered edges blend in with no
             // visible disc or aperture.
             ZStack {
-                stimulusContent
+                stimulusForStage
                     .opacity(feedbackCorrect != nil ? 0.4 : 1.0)
 
                 if let correct = feedbackCorrect {
@@ -403,148 +355,115 @@ private struct TrialPhase: View {
 
             Spacer()
 
-            // Instruction hint
-            Text(state.exerciseType.howToPlay)
-                .font(.system(size: 13))
-                .foregroundStyle(fg)
-
-            // Response buttons (also bound to ← / → arrow keys)
-            if feedbackCorrect == nil {
-                VStack(spacing: 10) {
-                    responseButtons
-                    Text("or press ← / →")
-                        .font(.system(size: 11))
-                        .foregroundStyle(fg.opacity(0.7))
-                }
-                .padding(.horizontal, 60)
-            } else {
-                Color.clear.frame(height: 48)
-            }
+            responseArea
 
             Spacer()
                 .frame(height: 24)
         }
     }
 
-    @ViewBuilder
-    private var stimulusContent: some View {
-        switch state.exerciseType {
-        case .contrastDetection:
-            ContrastDetectionStimulus(state: state, config: config)
-        case .orientationDiscrimination:
-            OrientationStimulus(state: state, config: config)
-        case .flankerMasking:
-            FlankerStimulus(state: state, config: config)
-        }
-    }
+    // MARK: Stimulus (switches on the trial stage)
 
     @ViewBuilder
-    private var responseButtons: some View {
-        let dark = ColorScheme.dark
-        switch state.exerciseType {
-        case .contrastDetection:
-            HStack(spacing: 28) {
-                ResponseButton(label: "Left", icon: "arrow.left.circle", theme: theme, colorScheme: dark) {
-                    state.submitResponse(0)
-                }
-                .keyboardShortcut(.leftArrow, modifiers: [])
-                ResponseButton(label: "Right", icon: "arrow.right.circle", theme: theme, colorScheme: dark) {
-                    state.submitResponse(1)
-                }
-                .keyboardShortcut(.rightArrow, modifiers: [])
-            }
-        case .orientationDiscrimination, .flankerMasking:
-            HStack(spacing: 28) {
-                ResponseButton(label: "Tilted Left", icon: "arrow.turn.up.left", theme: theme, colorScheme: dark) {
-                    state.submitResponse(0)
-                }
-                .keyboardShortcut(.leftArrow, modifiers: [])
-                ResponseButton(label: "Tilted Right", icon: "arrow.turn.up.right", theme: theme, colorScheme: dark) {
-                    state.submitResponse(1)
-                }
-                .keyboardShortcut(.rightArrow, modifiers: [])
-            }
-        }
-    }
-}
-
-// MARK: - Stimulus Views
-
-private struct ContrastDetectionStimulus: View {
-    @ObservedObject var state: GaborExerciseState
-    let config: GaborDisplayConfig
-
-    var body: some View {
-        let size = config.patchPointSize
-        HStack(spacing: 100) {
-            patchCircle(hasGabor: state.targetPosition == 0, size: size)
-            patchCircle(hasGabor: state.targetPosition == 1, size: size)
-        }
-    }
-
-    private func patchCircle(hasGabor: Bool, size: CGFloat) -> some View {
-        // Contrast 0 renders a uniform 0.5 gray — the old `plainGrayImage`.
-        GaborPatchView(
-            size: size,
-            contrast: hasGabor ? state.staircase.currentContrast : 0,
-            spatialFrequencyCyclesPerPoint: config.spatialFrequencyCyclesPerPoint,
-            orientation: hasGabor ? Double.random(in: 0...(.pi)) : 0,
-            phase: hasGabor ? Double.random(in: 0...(2 * .pi)) : 0,
-            sigmaPoints: config.sigmaPoints
-        )
-        .clipShape(Circle())
-    }
-}
-
-private struct OrientationStimulus: View {
-    @ObservedObject var state: GaborExerciseState
-    let config: GaborDisplayConfig
-
-    var body: some View {
-        let size = config.patchPointSize
-        GaborPatchView(
-            size: size,
-            contrast: state.staircase.currentContrast,
-            spatialFrequencyCyclesPerPoint: config.spatialFrequencyCyclesPerPoint,
-            orientation: state.targetOrientation,
-            sigmaPoints: config.sigmaPoints
-        )
-        .clipShape(Circle())
-    }
-}
-
-private struct FlankerStimulus: View {
-    @ObservedObject var state: GaborExerciseState
-    let config: GaborDisplayConfig
-    private let flankerContrast: Double = 0.8
-
-    var body: some View {
-        let size = config.patchPointSize
-        let gaps = config.flankerGapPoints
-        let gap = gaps.indices.contains(state.flankerDistanceLevel) ? gaps[state.flankerDistanceLevel] : gaps[1]
-        HStack(spacing: gap) {
-            flankerPatch(size: size)
-            GaborPatchView(
-                size: size,
-                contrast: state.staircase.currentContrast,
-                spatialFrequencyCyclesPerPoint: config.spatialFrequencyCyclesPerPoint,
-                orientation: state.targetOrientation,
-                sigmaPoints: config.sigmaPoints
+    private var stimulusForStage: some View {
+        switch state.stage {
+        case .fixation, .gap, .response:
+            FixationCross()
+        case .interval(let i):
+            intervalStimulus(i)
+        case .mask:
+            GaborMaskView(
+                size: patchSize,
+                contrast: boldContrast,
+                spatialFrequencyCyclesPerPoint: cyclesPerPoint,
+                sigmaPoints: sigma
             )
             .clipShape(Circle())
-            flankerPatch(size: size)
         }
     }
 
-    private func flankerPatch(size: CGFloat) -> some View {
+    /// One interval's flash: for detection, the target patch (or a plain gray
+    /// disc); for the flanker exercise, the target flanked by two bold
+    /// collinear Gabors — composited in a single shader pass so the envelopes
+    /// overlap at the classic ~3λ spacing without occluding. A subtle "1"/"2"
+    /// marker sits below.
+    @ViewBuilder
+    private func intervalStimulus(_ i: Int) -> some View {
+        ZStack {
+            if state.exerciseType == .flanker {
+                CollinearGaborView(
+                    size: patchSize,
+                    targetContrast: i == state.targetInterval ? state.staircase.currentContrast : 0,
+                    flankerContrast: boldContrast,
+                    spatialFrequencyCyclesPerPoint: cyclesPerPoint,
+                    orientation: state.trialOrientation,
+                    sigmaPoints: collinearSigma,
+                    separationPoints: collinearSeparation
+                )
+                .clipShape(Circle())
+            } else {
+                centerPatch(showTarget: i == state.targetInterval)
+            }
+            intervalLabel(i)
+        }
+    }
+
+    private func centerPatch(showTarget: Bool) -> some View {
         GaborPatchView(
-            size: size,
-            contrast: flankerContrast,
-            spatialFrequencyCyclesPerPoint: config.spatialFrequencyCyclesPerPoint,
-            orientation: 0,
-            sigmaPoints: config.sigmaPoints
+            size: patchSize,
+            contrast: showTarget ? state.staircase.currentContrast : 0,
+            spatialFrequencyCyclesPerPoint: cyclesPerPoint,
+            orientation: showTarget ? state.trialOrientation : 0,
+            sigmaPoints: sigma
         )
         .clipShape(Circle())
+    }
+
+    // Collinear flanker geometry uses the classic Polat convention: σ = one
+    // wavelength (tighter than the detection patch's 2λ) so flankers set 3λ
+    // from the target are distinct but still interact laterally. Both are
+    // derived from the session SF (1 / cyclesPerPoint = λ in points).
+    private var collinearSigma: Double { 1.0 / cyclesPerPoint }        // σ = λ
+    private var collinearSeparation: Double { 3.0 / cyclesPerPoint }   // 3λ
+
+    private func intervalLabel(_ i: Int) -> some View {
+        Text("\(i)")
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(fg.opacity(0.55))
+            .offset(y: patchSize * 0.5 + 20)
+    }
+
+    // MARK: Response
+
+    @ViewBuilder
+    private var responseArea: some View {
+        if case .response = state.stage, feedbackCorrect == nil {
+            VStack(spacing: 10) {
+                Text("Which flash had the pattern?")
+                    .font(.system(size: 13))
+                    .foregroundStyle(fg)
+
+                HStack(spacing: 28) {
+                    ResponseButton(label: "First", icon: "1.circle", theme: theme, colorScheme: .dark) {
+                        state.submitResponse(1)
+                    }
+                    .keyboardShortcut(.leftArrow, modifiers: [])
+                    ResponseButton(label: "Second", icon: "2.circle", theme: theme, colorScheme: .dark) {
+                        state.submitResponse(2)
+                    }
+                    .keyboardShortcut(.rightArrow, modifiers: [])
+                }
+
+                Text("or press ← / →")
+                    .font(.system(size: 11))
+                    .foregroundStyle(fg.opacity(0.7))
+            }
+            .padding(.horizontal, 60)
+        } else {
+            // Reserve the space so the stimulus doesn't jump when the
+            // response prompt appears.
+            Color.clear.frame(height: 90)
+        }
     }
 }
 
@@ -574,7 +493,8 @@ private struct CompletePhase: View {
                 StatRow(label: "Exercise", value: state.exerciseType.rawValue, fg: fg)
                 StatRow(label: "Accuracy", value: "\(state.accuracyPercent)%", fg: fg)
                 StatRow(label: "Score", value: "\(state.score)/\(state.totalTrials)", fg: fg)
-                StatRow(label: "Contrast Threshold", value: state.thresholdDisplay, fg: fg)
+                StatRow(label: "Contrast threshold", value: state.thresholdDisplay, fg: fg)
+                StatRow(label: "Spatial frequency", value: state.sessionSFDisplay, fg: fg)
             }
             .padding(24)
             .frame(maxWidth: 340)

@@ -66,6 +66,22 @@ struct GaborDisplayConfig {
         pointsPerDegree * Self.sigmaDegrees
     }
 
+    // MARK: - Per-session spatial frequency (multi-SF rotation)
+
+    /// Carrier spatial frequency in cycles per point for an arbitrary
+    /// cycles-per-degree value (the per-session SF is chosen at runtime).
+    func cyclesPerPoint(forCPD cpd: Double) -> Double {
+        cpd / pointsPerDegree
+    }
+
+    /// Gaussian sigma in points for an arbitrary cycles-per-degree value.
+    /// Sigma is fixed at two carrier wavelengths (λ = 1/cpd degrees), so the
+    /// envelope scales with the grating and always shows a comparable number
+    /// of visible cycles.
+    func sigmaPoints(forCPD cpd: Double) -> Double {
+        pointsPerDegree * 2.0 / cpd
+    }
+
     /// Flanker edge-to-edge gaps converted to points, indexed by distance level (0, 1, 2).
     var flankerGapPoints: [CGFloat] {
         Self.flankerGapDegrees.map { CGFloat(pointsPerDegree * $0) }

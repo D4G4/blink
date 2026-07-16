@@ -55,3 +55,33 @@ half4 gaborMask(float2 position, half4 color,
     float v = clamp(0.5 + 0.5 * contrast * gauss * plaid, 0.0, 1.0);
     return half4(half3(v), 1.0h);
 }
+
+// Collinear lateral-masking configuration: a low-contrast target flanked by two
+// high-contrast Gabors placed ALONG the carrier's orientation axis (the classic
+// Polat & Sagi paradigm). All three are summed in ONE pass so their Gaussian
+// envelopes overlap at the ~3λ separation without opaque frames occluding each
+// other. `separation` is the target-to-flanker distance in points.
+[[ stitchable ]]
+half4 gaborCollinear(float2 position, half4 color,
+                     float2 size, float targetContrast, float flankerContrast,
+                     float spatialFreq, float orientation, float phase,
+                     float sigma, float separation) {
+    float2 p = float2(position.x - size.x * 0.5, size.y * 0.5 - position.y);
+    float ct = cos(orientation), st = sin(orientation);
+    float twoSig2 = 2.0 * sigma * sigma;
+    float k = 2.0 * M_PI_F * spatialFreq;
+    float2 axis = float2(-st, ct);          // collinear axis (along the bars)
+
+    float acc = 0.0;                        // signed sum of the three gratings
+    float contrasts[3] = { targetContrast, flankerContrast, flankerContrast };
+    float2 centers[3] = { float2(0.0), axis * separation, -axis * separation };
+    for (int n = 0; n < 3; n++) {
+        float2 c = p - centers[n];
+        float xp =  c.x * ct + c.y * st;
+        float yp = -c.x * st + c.y * ct;
+        float g = exp(-(xp * xp + yp * yp) / twoSig2);
+        acc += contrasts[n] * g * cos(k * xp + phase);
+    }
+    float v = clamp(0.5 + 0.5 * acc, 0.0, 1.0);
+    return half4(half3(v), 1.0h);
+}

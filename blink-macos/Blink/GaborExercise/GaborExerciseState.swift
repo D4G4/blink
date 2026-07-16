@@ -2,77 +2,60 @@ import Foundation
 import SwiftUI
 
 enum ExerciseType: String, CaseIterable, Identifiable {
-    case contrastDetection = "Contrast Detection"
-    case orientationDiscrimination = "Orientation"
-    case flankerMasking = "Flanker Masking"
+    /// Primary: single-Gabor temporal two-interval detection.
+    case detection = "Spot the Flash"
+    /// Advanced: same task with two bold collinear flankers bracketing the target.
+    case flanker = "Flanker Focus"
 
     var id: String { rawValue }
 
     var icon: String {
         switch self {
-        case .contrastDetection: "circle.lefthalf.filled"
-        case .orientationDiscrimination: "arrow.up.left.and.arrow.down.right"
-        case .flankerMasking: "circle.grid.3x3"
+        case .detection: "sparkle.magnifyingglass"
+        case .flanker: "circle.grid.3x3"
         }
     }
 
     var headline: String {
         switch self {
-        case .contrastDetection:
-            "Spot the Hidden Pattern"
-        case .orientationDiscrimination:
-            "Read the Tilt"
-        case .flankerMasking:
-            "Focus Through Distractions"
+        case .detection:
+            "Which flash held the pattern?"
+        case .flanker:
+            "Focus through bold distractions"
         }
     }
 
     var explanation: String {
         switch self {
-        case .contrastDetection:
+        case .detection:
             """
-            Two circles appear on a gray background — one contains a faint striped \
-            pattern (a Gabor patch), the other is plain gray. Your job is to click \
-            the circle that contains the pattern.
+            Two brief flashes appear one after another. Only one of them contains a \
+            faint striped pattern (a Gabor patch) — the other flash is a plain gray \
+            disc. A textured mask follows each flash. Your job: pick which flash — \
+            the first or the second — held the striped pattern.
 
-            As you get better, the pattern becomes fainter, training your brain to \
-            detect subtler contrasts. This is the most studied form of contrast \
-            sensitivity training and the foundation of visual perceptual learning.
+            As you answer correctly the pattern grows fainter, and it becomes bolder \
+            when you miss, so the task keeps pace with you.
             """
-        case .orientationDiscrimination:
+        case .flanker:
             """
-            A single striped pattern appears in the center of the screen, tilted \
-            slightly to the left or to the right. Click the direction it's tilting.
+            Same idea as Spot the Flash: two brief flashes appear one after another, \
+            only one holds a faint striped pattern in the center, and a mask follows \
+            each flash. The twist — two bold striped patches bracket the center of \
+            both flashes, making the faint target harder to pick out.
 
-            The pattern gets fainter as you improve, training your visual cortex to \
-            extract orientation information from weaker signals. This strengthens \
-            the same neural pathways used when reading small text or distinguishing \
-            fine details.
-            """
-        case .flankerMasking:
-            """
-            Three striped patterns appear in a row. The two outer patterns (flankers) \
-            are bold and vertical. The center pattern is faint and tilted slightly \
-            left or right. Your task: identify which way the center pattern tilts, \
-            while ignoring the flankers.
-
-            This is the hardest exercise. The flankers create lateral masking — they \
-            interfere with your ability to see the center target. Training with \
-            flankers improves your brain's ability to focus on relevant details \
-            while filtering out visual noise. This is especially helpful for \
-            crowded scenes like reading dense text.
+            Pick which flash — the first or the second — held the center pattern, \
+            ignoring the bold patches on either side.
             """
         }
     }
 
     var howToPlay: String {
         switch self {
-        case .contrastDetection:
-            "Click the circle that contains the pattern — left or right."
-        case .orientationDiscrimination:
-            "Click \"Tilted Left\" or \"Tilted Right\" to match the pattern's tilt."
-        case .flankerMasking:
-            "Ignore the outer patterns. Click the tilt direction of the center pattern."
+        case .detection:
+            "Watch both flashes, then choose First or Second — whichever held the pattern."
+        case .flanker:
+            "Ignore the two bold patches. Choose First or Second — whichever flash held the faint center pattern."
         }
     }
 }
@@ -86,25 +69,58 @@ enum ExercisePhase {
     case complete
 }
 
+/// The timed sequence within a single trial. The `interval`/`mask` argument is
+/// the flash number (1 or 2). A trial runs:
+/// fixation → interval(1) → mask(1) → gap → interval(2) → mask(2) → response.
+enum TrialStage: Equatable {
+    case fixation
+    case interval(Int)
+    case mask(Int)
+    case gap
+    case response
+}
+
 /// Drives a Gabor exercise session — manages trials, scoring, and the adaptive staircase.
 final class GaborExerciseState: ObservableObject {
-    @Published var exerciseType: ExerciseType = .contrastDetection
+    @Published var exerciseType: ExerciseType = .detection
     @Published var phase: ExercisePhase = .disclaimer
     @Published var currentTrial: Int = 0
     @Published var score: Int = 0
 
-    // Trial-specific state
-    @Published var targetPosition: Int = 0         // 0 = left, 1 = right (contrast detection)
-    @Published var targetOrientation: Double = 0    // radians (orientation / flanker)
-    @Published var flankerDistanceLevel: Int = 1      // 0/1/2 → close/medium/far (resolved by view via config)
+    /// Where we are in the current trial's timed flash sequence.
+    @Published var stage: TrialStage = .fixation
+
+    // Per-trial randomized state.
+    /// Which flash (1 or 2) holds the target patch this trial.
+    @Published var targetInterval: Int = 1
+    /// Random carrier orientation (radians) for the target. The detection task
+    /// does NOT depend on it — it just keeps the stimulus from being identical
+    /// every trial.
+    @Published var trialOrientation: Double = 0
+
+    /// One spatial frequency (cycles/deg) is used for the whole session,
+    /// rotating between sessions to avoid within-session roving.
+    @Published var sessionSF: Double = 3.0
+
+    // MARK: - Timing constants (milliseconds)
+
+    static let fixationMs = 500
+    static let flashMs = 120
+    static let maskMs = 120
+    static let gapMs = 500
+
+    /// Spatial frequencies (cycles/deg) rotated one-per-session.
+    static let trainingSFs: [Double] = [1.5, 3.0, 6.0]
+    private static let sfRotationKey = "gaborSFRotation"
 
     let totalTrials: Int
     let staircase = AdaptiveStaircase()
 
     private var sessionStart: Date?
     private var feedbackTimer: Timer?
+    private var trialTask: Task<Void, Never>?
 
-    init(totalTrials: Int = 25) {
+    init(totalTrials: Int = 50) {
         self.totalTrials = totalTrials
         if UserDefaults.standard.bool(forKey: "gaborDisclaimerAccepted") {
             phase = .ready
@@ -133,56 +149,67 @@ final class GaborExerciseState: ObservableObject {
         score = 0
         staircase.reset()
         sessionStart = Date()
+
+        // Pick this session's spatial frequency, then advance the rotation.
+        let idx = UserDefaults.standard.integer(forKey: Self.sfRotationKey)
+        sessionSF = Self.trainingSFs[idx % Self.trainingSFs.count]
+        UserDefaults.standard.set(idx + 1, forKey: Self.sfRotationKey)
+
         generateTrial()
     }
 
     func generateTrial() {
+        trialTask?.cancel()
         currentTrial += 1
-
-        switch exerciseType {
-        case .contrastDetection:
-            targetPosition = Int.random(in: 0...1)
-
-        case .orientationDiscrimination:
-            // +15° or -15° from vertical
-            let tiltDegrees: Double = Bool.random() ? 15 : -15
-            targetOrientation = tiltDegrees * .pi / 180.0
-
-        case .flankerMasking:
-            let tiltDegrees: Double = Bool.random() ? 15 : -15
-            targetOrientation = tiltDegrees * .pi / 180.0
-            flankerDistanceLevel = Int.random(in: 0...2)
-        }
-
+        targetInterval = Int.random(in: 1...2)
+        trialOrientation = Double.random(in: 0..<(.pi))
+        // Reset the stage synchronously before entering .presenting, so a render
+        // can't briefly show the previous trial's .response controls before the
+        // async sequence sets .fixation.
+        stage = .fixation
         phase = .presenting
+        runTrialSequence()
     }
 
-    /// Submit user's response. For contrast detection: 0 = left, 1 = right.
-    /// For orientation/flanker: 0 = tilted left, 1 = tilted right.
-    func submitResponse(_ response: Int) {
-        guard case .presenting = phase else { return }
+    /// Runs the timed flash sequence on the main actor, checking for
+    /// cancellation between each step so a new trial / return-to-picker can
+    /// interrupt it cleanly.
+    private func runTrialSequence() {
+        trialTask = Task { @MainActor [weak self] in
+            self?.stage = .fixation
+            try? await Task.sleep(for: .milliseconds(Self.fixationMs))
+            if Task.isCancelled { return }
 
-        let correct: Bool
-        switch exerciseType {
-        case .contrastDetection:
-            correct = response == targetPosition
-        case .orientationDiscrimination, .flankerMasking:
-            // Renderer convention (verified empirically 2026-05-27 by
-            // rendering +30° and -30° patches via the actual
-            // GaborRenderer math and inspecting the output):
-            //   positive `orientation` → stripes go top-LEFT to
-            //     bottom-RIGHT ("\") → that's TILTED LEFT visually
-            //   negative `orientation` → stripes go top-RIGHT to
-            //     bottom-LEFT ("/") → that's TILTED RIGHT visually
-            // The CGBitmapContext data buffer is laid out with
-            // Cartesian y-up (bottom row first), not the screen y-down
-            // I initially derived — that's where the inversion comes
-            // from. Response 0 = "Tilted Left", response 1 = "Tilted
-            // Right" (from button order in GaborExerciseView).
-            let expectedResponse = targetOrientation > 0 ? 0 : 1
-            correct = response == expectedResponse
+            self?.stage = .interval(1)
+            try? await Task.sleep(for: .milliseconds(Self.flashMs))
+            if Task.isCancelled { return }
+
+            self?.stage = .mask(1)
+            try? await Task.sleep(for: .milliseconds(Self.maskMs))
+            if Task.isCancelled { return }
+
+            self?.stage = .gap
+            try? await Task.sleep(for: .milliseconds(Self.gapMs))
+            if Task.isCancelled { return }
+
+            self?.stage = .interval(2)
+            try? await Task.sleep(for: .milliseconds(Self.flashMs))
+            if Task.isCancelled { return }
+
+            self?.stage = .mask(2)
+            try? await Task.sleep(for: .milliseconds(Self.maskMs))
+            if Task.isCancelled { return }
+
+            self?.stage = .response
         }
+    }
 
+    /// Submit the user's choice of which flash held the pattern (1 or 2). Only
+    /// valid once the sequence has reached `.response`.
+    func submitResponse(_ interval: Int) {
+        guard case .presenting = phase, case .response = stage else { return }
+
+        let correct = interval == targetInterval
         if correct { score += 1 }
         staircase.recordResponse(correct: correct)
         phase = .feedback(correct: correct)
@@ -221,6 +248,7 @@ final class GaborExerciseState: ObservableObject {
 
     /// Save partial results and reset for a clean state.
     func cancelSession() {
+        trialTask?.cancel()
         feedbackTimer?.invalidate()
         if currentTrial > 0 {
             saveSession()
@@ -228,13 +256,15 @@ final class GaborExerciseState: ObservableObject {
     }
 
     /// Abandon the current attempt (without saving) and return to the picker.
-    /// Invalidates any pending feedback timer so it can't advance the trial
-    /// after we've left, and zeroes the counters so a later window-close
-    /// won't persist the abandoned attempt.
+    /// Cancels the running flash sequence and any pending feedback timer so
+    /// neither can advance the trial after we've left, and zeroes the counters
+    /// so a later window-close won't persist the abandoned attempt.
     func returnToPicker() {
+        trialTask?.cancel()
         feedbackTimer?.invalidate()
         currentTrial = 0
         score = 0
+        stage = .fixation
         phase = .ready
     }
 
@@ -249,5 +279,12 @@ final class GaborExerciseState: ObservableObject {
         } else {
             "—"
         }
+    }
+
+    /// Session spatial frequency for display, e.g. "1.5 cpd", "3 cpd".
+    var sessionSFDisplay: String {
+        sessionSF == sessionSF.rounded()
+            ? "\(Int(sessionSF)) cpd"
+            : "\(sessionSF) cpd"
     }
 }

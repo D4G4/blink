@@ -96,3 +96,86 @@ struct GaborPatchView: View {
             )
     }
 }
+
+/// A GPU-rendered backward mask — a high-contrast plaid (two orthogonal
+/// gratings) under the same Gaussian window as the target. Flashed briefly
+/// after each interval to curtail processing of the preceding patch. The mask
+/// has no orientation, phase, or motion; it floods the same spatial-frequency
+/// channels the target used.
+struct GaborMaskView: View {
+    /// Edge length of the (square) patch, in points.
+    let size: CGFloat
+    /// Michelson contrast, 0...1. Masks are shown at high contrast.
+    var contrast: Double = 0.9
+    /// Carrier spatial frequency in cycles per point (match the target's SF).
+    var spatialFrequencyCyclesPerPoint: Double
+    /// Gaussian envelope standard deviation, in points (match the target).
+    var sigmaPoints: Double
+
+    var body: some View {
+        Rectangle()
+            .fill(Color(white: 0.5))
+            .frame(width: size, height: size)
+            .colorEffect(
+                ShaderLibrary.gaborMask(
+                    .float2(Float(size), Float(size)),
+                    .float(Float(contrast)),
+                    .float(Float(spatialFrequencyCyclesPerPoint)),
+                    .float(Float(sigmaPoints))
+                )
+            )
+    }
+}
+
+/// A collinear lateral-masking configuration — a low-contrast target flanked by
+/// two high-contrast Gabors along the carrier's orientation axis (the Polat &
+/// Sagi paradigm) — composited in a single GPU pass. `targetContrast` of 0
+/// renders the flankers alone (the non-target interval).
+struct CollinearGaborView: View {
+    /// Edge length of the (square) field, in points.
+    let size: CGFloat
+    /// Michelson contrast of the central target, 0...1.
+    var targetContrast: Double
+    /// Michelson contrast of the two flankers (high).
+    var flankerContrast: Double = 0.9
+    var spatialFrequencyCyclesPerPoint: Double
+    var orientation: Double
+    var phase: Double = 0
+    /// Gaussian sigma in points (σ = λ for the classic collinear look).
+    var sigmaPoints: Double
+    /// Target-to-flanker distance in points (≈ 3λ).
+    var separationPoints: Double
+
+    var body: some View {
+        Rectangle()
+            .fill(Color(white: 0.5))
+            .frame(width: size, height: size)
+            .colorEffect(
+                ShaderLibrary.gaborCollinear(
+                    .float2(Float(size), Float(size)),
+                    .float(Float(targetContrast)),
+                    .float(Float(flankerContrast)),
+                    .float(Float(spatialFrequencyCyclesPerPoint)),
+                    .float(Float(orientation)),
+                    .float(Float(phase)),
+                    .float(Float(sigmaPoints)),
+                    .float(Float(separationPoints))
+                )
+            )
+    }
+}
+
+/// A thin fixation cross drawn on the mid-gray field between/around flashes so
+/// the eye stays centered.
+struct FixationCross: View {
+    var length: CGFloat = 16
+    var thickness: CGFloat = 2
+    var color: Color = Color(white: 0.12)
+
+    var body: some View {
+        ZStack {
+            Capsule().fill(color).frame(width: length, height: thickness)
+            Capsule().fill(color).frame(width: thickness, height: length)
+        }
+    }
+}
