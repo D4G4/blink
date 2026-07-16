@@ -6,6 +6,19 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.2.0-beta.13</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.13</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>400</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.13</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Thu, 16 Jul 2026 01:00:26 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.13</h3><ul><li>System-Settings-style sidebar redesign + What's New refresh</li><li>Auto-pause during meetings via EventKit</li><li>Respect an onboarding mic-skip in the startup self-heal</li><li>Only self-heal .notDetermined for existing Smart users</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.13">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.13/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="Hc4OP+/H9W2UPjO7Ebg3beuZgXKUSEVv3whMd+eU0Td06HTbcAoBs5I7s3lstKZ8PgDW/UYIZeABNpq5rr+uBw==" length="8888126" />
+    </item>
+    <item>
       <title>Blink v5.2.0-beta.12</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.12</link>
       <sparkle:channel>beta</sparkle:channel>
