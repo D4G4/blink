@@ -1,27 +1,44 @@
 import Foundation
 
-/// 2-down-1-up adaptive staircase for measuring contrast thresholds.
+/// 1-up / 3-down adaptive staircase for measuring contrast thresholds.
 ///
-/// Converges to the 70.7% correct threshold — a standard psychophysical measurement.
-/// Step size halves at each reversal for finer resolution as the staircase homes in.
+/// Converges on the **79.4%-correct** point — the target of the transformed
+/// up/down rule (Levitt 1971) and what the validated Gabor perceptual-learning
+/// protocols use (Polat et al. 2004; GlassesOff). Three correct responses in a
+/// row make the task harder (lower contrast); a single miss makes it easier.
+///
+/// Contrast is stepped in the **log domain** (multiplicatively): a fixed
+/// multiplicative factor keeps resolution uniform across the contrast range,
+/// where a fixed *linear* step is coarse near threshold and needlessly fine up
+/// high. The step halves at each reversal so the track homes in, and the
+/// threshold is the geometric mean of the later reversals — the correct centre
+/// for log-spaced values.
 final class AdaptiveStaircase: ObservableObject {
     @Published private(set) var currentContrast: Double
 
     private var consecutiveCorrect = 0
-    private var stepSize: Double
+    private var logStep: Double                 // current step, log10 contrast units
     private var lastDirection: Direction?
-    private var reversals: [Double] = []
+    private var reversals: [Double] = []        // contrast at each turnaround
     private(set) var trialResults: [(contrast: Double, correct: Bool)] = []
 
     private enum Direction { case up, down }
 
-    private let minContrast: Double = 0.01
+    /// Correct responses in a row required to step down (harder). 3 → 79.4%.
+    private let downAfter = 3
+    private let minContrast: Double = 0.005
     private let maxContrast: Double = 1.0
-    private let minStep: Double = 0.005
+    private let initialLogStep: Double
+    /// Finest step near convergence (~0.03 log10 ≈ ×1.07).
+    private let minLogStep: Double = 0.03
 
-    init(startContrast: Double = 0.5, initialStep: Double = 0.05) {
+    /// - Parameters:
+    ///   - startContrast: where the track begins (well above threshold).
+    ///   - initialLogStep: first step size in log10 units (0.15 ≈ ×1.41).
+    init(startContrast: Double = 0.5, initialLogStep: Double = 0.15) {
         self.currentContrast = startContrast
-        self.stepSize = initialStep
+        self.initialLogStep = initialLogStep
+        self.logStep = initialLogStep
     }
 
     func recordResponse(correct: Bool) {
@@ -29,45 +46,42 @@ final class AdaptiveStaircase: ObservableObject {
 
         if correct {
             consecutiveCorrect += 1
-            if consecutiveCorrect >= 2 {
-                consecutiveCorrect = 0
-                let newDirection = Direction.down
-                currentContrast = max(currentContrast - stepSize, minContrast)
-                if lastDirection == .up {
-                    reversals.append(currentContrast)
-                    stepSize = max(stepSize * 0.5, minStep)
-                }
-                lastDirection = newDirection
-            }
+            guard consecutiveCorrect >= downAfter else { return }
+            consecutiveCorrect = 0
+            step(.down)
         } else {
             consecutiveCorrect = 0
-            let newDirection = Direction.up
-            currentContrast = min(currentContrast + stepSize, maxContrast)
-            if lastDirection == .down {
-                reversals.append(currentContrast)
-                stepSize = max(stepSize * 0.5, minStep)
-            }
-            lastDirection = newDirection
+            step(.up)
         }
     }
 
-    /// Estimated contrast threshold based on reversal values.
-    /// Returns nil if insufficient data.
-    func threshold() -> Double? {
-        if reversals.count >= 6 {
-            let last6 = reversals.suffix(6)
-            return last6.reduce(0, +) / Double(last6.count)
-        } else if reversals.count >= 2 {
-            return reversals.reduce(0, +) / Double(reversals.count)
+    /// Move one step; when the direction flips, record the turnaround contrast
+    /// as a reversal and halve the step for finer resolution.
+    private func step(_ direction: Direction) {
+        if let last = lastDirection, last != direction {
+            reversals.append(currentContrast)
+            logStep = max(logStep * 0.5, minLogStep)
         }
-        return nil
+        let factor = pow(10.0, direction == .down ? -logStep : logStep)
+        currentContrast = min(max(currentContrast * factor, minContrast), maxContrast)
+        lastDirection = direction
+    }
+
+    /// Geometric-mean threshold over the settled reversals (first one dropped,
+    /// last 6 kept). `nil` until at least two reversals exist.
+    func threshold() -> Double? {
+        guard reversals.count >= 2 else { return nil }
+        let settled = Array(reversals.dropFirst().suffix(6))
+        guard !settled.isEmpty else { return nil }
+        let meanLog = settled.map { log10($0) }.reduce(0, +) / Double(settled.count)
+        return pow(10.0, meanLog)
     }
 
     var reversalCount: Int { reversals.count }
 
     func reset() {
         currentContrast = 0.5
-        stepSize = 0.05
+        logStep = initialLogStep
         consecutiveCorrect = 0
         lastDirection = nil
         reversals = []
