@@ -503,6 +503,12 @@ private struct CompletePhase: View {
                     .fill(fg.opacity(0.1))
             )
 
+            GaborProgressSparkline(
+                history: GaborSessionStore.shared.thresholdHistory(forExercise: state.exerciseType.rawValue),
+                tint: fg
+            )
+            .frame(maxWidth: 340)
+
             HStack(spacing: 16) {
                 Button {
                     state.phase = .ready

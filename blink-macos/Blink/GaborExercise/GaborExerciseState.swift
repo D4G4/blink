@@ -147,13 +147,19 @@ final class GaborExerciseState: ObservableObject {
     func startExercise() {
         currentTrial = 0
         score = 0
-        staircase.reset()
         sessionStart = Date()
 
         // Pick this session's spatial frequency, then advance the rotation.
         let idx = UserDefaults.standard.integer(forKey: Self.sfRotationKey)
         sessionSF = Self.trainingSFs[idx % Self.trainingSFs.count]
         UserDefaults.standard.set(idx + 1, forKey: Self.sfRotationKey)
+
+        // Carry difficulty forward: start ~3x above the last threshold measured
+        // for this exercise + SF (capped at 0.5), so the staircase doesn't
+        // re-descend from scratch every session. Falls back to 0.5 first time.
+        let lastT = GaborSessionStore.shared.lastThreshold(forExercise: exerciseType.rawValue, sf: sessionSF)
+        let start = lastT.map { min(0.5, $0 * 3.0) } ?? 0.5
+        staircase.reset(startContrast: start)
 
         generateTrial()
     }
@@ -241,7 +247,8 @@ final class GaborExerciseState: ObservableObject {
             trialCount: currentTrial,
             correctCount: score,
             contrastThreshold: staircase.threshold(),
-            durationSeconds: duration
+            durationSeconds: duration,
+            spatialFrequency: sessionSF
         )
         GaborSessionStore.shared.save(record)
     }

@@ -331,6 +331,7 @@
 		C95A0E37F6A77F1EA16E456E /* GaborPatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 250F1BB8707DBE149C3AF60A /* GaborPatchView.swift */; };
 		C9B6FAF52C2B62BCF93206A9 /* timer_extended_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 27BF82FC797F8EDAC57346E8 /* timer_extended_midnight_light.png */; };
 		C9F040A37308E95E90642297 /* gabor_exercise_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 4C4E9181A66DBFC63D0D2A14 /* gabor_exercise_sand_dark.png */; };
+		CAEE15E2E9C5BFF92F0D78BF /* GaborProgressSparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = E71DA069803E5C91CF710C87 /* GaborProgressSparkline.swift */; };
 		CBA100187EEDAE5A5460E25D /* break_timer_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 71D6D5978A8C0721F9680A54 /* break_timer_peach_light.png */; };
 		CBF502A96C4139DA82CA7235 /* PersistenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259BC5A29D8C29D30B7A8C1F /* PersistenceManager.swift */; };
 		CCE78CA2DD29B5D6E7C1AE77 /* im_permission_stale_mono_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = F1614E727B0A4CC364AC9DD2 /* im_permission_stale_mono_dark.png */; };
@@ -792,6 +793,7 @@
 		E47101DE9439F2AA4AD4EBA7 /* im_permission_stale_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = im_permission_stale_mono_light.png; sourceTree = "<group>"; };
 		E585855A31949A8CB0EB15C7 /* meeting_paused_toast_dark_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = meeting_paused_toast_dark_light.png; sourceTree = "<group>"; };
 		E5A4A3D4C2BAFE5C52075B98 /* menu_bar_simple_peach_missing_im_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_simple_peach_missing_im_dark.png; sourceTree = "<group>"; };
+		E71DA069803E5C91CF710C87 /* GaborProgressSparkline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborProgressSparkline.swift; sourceTree = "<group>"; };
 		E85D94D142977660E9645359 /* PermissionFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionFlowView.swift; sourceTree = "<group>"; };
 		E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchView.swift; sourceTree = "<group>"; };
 		EA29D1D96C261B83F29559C7 /* flow_learn_more_sand_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_learn_more_sand_light.png; sourceTree = "<group>"; };
@@ -1023,6 +1025,7 @@
 				A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */,
 				3FAFF7F938EE92646B112B6B /* GaborExerciseWindowController.swift */,
 				250F1BB8707DBE149C3AF60A /* GaborPatchView.swift */,
+				E71DA069803E5C91CF710C87 /* GaborProgressSparkline.swift */,
 				A04C1C6827F429B94B7B265B /* GaborRenderer.swift */,
 				86936E2AA96EE4843F617808 /* GaborSessionStore.swift */,
 				3DA3A8864D773786D377E0BB /* GaborShader.metal */,
@@ -1834,6 +1837,7 @@
 				CD85665E518B19F7BBB58D1F /* GaborExerciseView.swift in Sources */,
 				1F3B28A4230B4EA81B7BCD0C /* GaborExerciseWindowController.swift in Sources */,
 				C95A0E37F6A77F1EA16E456E /* GaborPatchView.swift in Sources */,
+				CAEE15E2E9C5BFF92F0D78BF /* GaborProgressSparkline.swift in Sources */,
 				9F0CE1946691CF2FE32D1528 /* GaborRenderer.swift in Sources */,
 				DFB0303A5FE33D7F70B95556 /* GaborSessionStore.swift in Sources */,
 				406E022F0EF24C7375706E16 /* GaborShader.metal in Sources */,

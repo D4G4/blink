@@ -79,8 +79,11 @@ final class AdaptiveStaircase: ObservableObject {
 
     var reversalCount: Int { reversals.count }
 
-    func reset() {
-        currentContrast = 0.5
+    /// Reset the track. `startContrast` lets a session begin near the previous
+    /// session's threshold (with headroom) instead of always at 0.5, so the
+    /// staircase spends fewer trials descending from scratch.
+    func reset(startContrast: Double = 0.5) {
+        currentContrast = min(max(startContrast, minContrast), maxContrast)
         logStep = initialLogStep
         consecutiveCorrect = 0
         lastDirection = nil
