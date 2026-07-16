@@ -37,3 +37,21 @@ half4 gaborPatch(float2 position, half4 color,
     float v = clamp(0.5 + 0.5 * contrast * gauss * wave, 0.0, 1.0);
     return half4(half3(v), 1.0h);
 }
+
+// Backward mask — a high-contrast plaid (two orthogonal gratings summed) under
+// the same Gaussian window as the target. Flashed briefly after the target to
+// curtail processing time: this is the temporal ingredient of the validated
+// protocols (Polat 2004 / GlassesOff), the thing that trains speed. It floods
+// the same spatial-frequency channels the target used, so it masks contrast
+// rather than a specific orientation.
+[[ stitchable ]]
+half4 gaborMask(float2 position, half4 color,
+                float2 size, float contrast, float spatialFreq, float sigma) {
+    float2 c = float2(position.x - size.x * 0.5,
+                      size.y * 0.5 - position.y);
+    float gauss = exp(-(c.x * c.x + c.y * c.y) / (2.0 * sigma * sigma));
+    float plaid = 0.5 * (cos(2.0 * M_PI_F * spatialFreq * c.x)
+                       + cos(2.0 * M_PI_F * spatialFreq * c.y));   // [-1, 1]
+    float v = clamp(0.5 + 0.5 * contrast * gauss * plaid, 0.0, 1.0);
+    return half4(half3(v), 1.0h);
+}
