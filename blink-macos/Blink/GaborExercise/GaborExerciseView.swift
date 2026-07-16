@@ -483,21 +483,15 @@ private struct ContrastDetectionStimulus: View {
     }
 
     private func patchCircle(hasGabor: Bool, size: CGFloat) -> some View {
-        Group {
-            if hasGabor {
-                GaborRenderer.asImage(
-                    pointSize: size,
-                    contrast: state.staircase.currentContrast,
-                    spatialFrequency: config.spatialFrequencyCPP,
-                    orientation: Double.random(in: 0...(.pi)),
-                    phase: Double.random(in: 0...(2 * .pi)),
-                    sigma: config.sigmaPixels
-                )
-            } else {
-                GaborRenderer.plainGrayImage(pointSize: size)
-            }
-        }
-        .frame(width: size, height: size)
+        // Contrast 0 renders a uniform 0.5 gray — the old `plainGrayImage`.
+        GaborPatchView(
+            size: size,
+            contrast: hasGabor ? state.staircase.currentContrast : 0,
+            spatialFrequencyCyclesPerPoint: config.spatialFrequencyCyclesPerPoint,
+            orientation: hasGabor ? Double.random(in: 0...(.pi)) : 0,
+            phase: hasGabor ? Double.random(in: 0...(2 * .pi)) : 0,
+            sigmaPoints: config.sigmaPoints
+        )
         .clipShape(Circle())
     }
 }
@@ -508,14 +502,13 @@ private struct OrientationStimulus: View {
 
     var body: some View {
         let size = config.patchPointSize
-        GaborRenderer.asImage(
-            pointSize: size,
+        GaborPatchView(
+            size: size,
             contrast: state.staircase.currentContrast,
-            spatialFrequency: config.spatialFrequencyCPP,
+            spatialFrequencyCyclesPerPoint: config.spatialFrequencyCyclesPerPoint,
             orientation: state.targetOrientation,
-            sigma: config.sigmaPixels
+            sigmaPoints: config.sigmaPoints
         )
-        .frame(width: size, height: size)
         .clipShape(Circle())
     }
 }
@@ -531,28 +524,26 @@ private struct FlankerStimulus: View {
         let gap = gaps.indices.contains(state.flankerDistanceLevel) ? gaps[state.flankerDistanceLevel] : gaps[1]
         HStack(spacing: gap) {
             flankerPatch(size: size)
-            GaborRenderer.asImage(
-                pointSize: size,
+            GaborPatchView(
+                size: size,
                 contrast: state.staircase.currentContrast,
-                spatialFrequency: config.spatialFrequencyCPP,
+                spatialFrequencyCyclesPerPoint: config.spatialFrequencyCyclesPerPoint,
                 orientation: state.targetOrientation,
-                sigma: config.sigmaPixels
+                sigmaPoints: config.sigmaPoints
             )
-            .frame(width: size, height: size)
             .clipShape(Circle())
             flankerPatch(size: size)
         }
     }
 
     private func flankerPatch(size: CGFloat) -> some View {
-        GaborRenderer.asImage(
-            pointSize: size,
+        GaborPatchView(
+            size: size,
             contrast: flankerContrast,
-            spatialFrequency: config.spatialFrequencyCPP,
+            spatialFrequencyCyclesPerPoint: config.spatialFrequencyCyclesPerPoint,
             orientation: 0,
-            sigma: config.sigmaPixels
+            sigmaPoints: config.sigmaPoints
         )
-        .frame(width: size, height: size)
         .clipShape(Circle())
     }
 }

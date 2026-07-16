@@ -55,6 +55,17 @@ struct GaborDisplayConfig {
         pixelsPerDegree * Self.sigmaDegrees
     }
 
+    /// Spatial frequency in cycles per point (for `GaborPatchView` / the
+    /// Metal shader, which works in point coordinates).
+    var spatialFrequencyCyclesPerPoint: Double {
+        Self.spatialFrequencyCPD / pointsPerDegree
+    }
+
+    /// Gaussian sigma in points (for `GaborPatchView` / the Metal shader).
+    var sigmaPoints: Double {
+        pointsPerDegree * Self.sigmaDegrees
+    }
+
     /// Flanker edge-to-edge gaps converted to points, indexed by distance level (0, 1, 2).
     var flankerGapPoints: [CGFloat] {
         Self.flankerGapDegrees.map { CGFloat(pointsPerDegree * $0) }
