@@ -34,6 +34,13 @@ final class AppState: ObservableObject {
     private var inputMonitor: MacInputMonitor?
     private var appMonitor: MacAppMonitor?
     private var contextDetector: MacContextDetector?
+    /// EventKit-backed calendar watcher. nil unless the user has enabled
+    /// "Pause during meetings" AND granted calendar access.
+    private var calendarMonitor: MacCalendarMonitor?
+    /// Coalesces `.EKEventStoreChanged` bursts (CalDAV syncs fire many in a
+    /// row) into a single trailing re-evaluation so we don't run repeated
+    /// synchronous EventKit queries on the main thread.
+    private var calendarChangeDebounce: DispatchWorkItem?
     private var permissionRecovery: InputMonitoringRecoveryWindowController?
     private var permissionFlow: PermissionFlowWindowController?
     private var launchHUD: LaunchHUDWindowController?
@@ -58,6 +65,11 @@ final class AppState: ObservableObject {
     /// a periodic pulse confirming events are flowing without flooding.
     private var ticksSinceLastInputReport: Int = 0
     private static let inputReportTickInterval: Int = 30
+    /// Counts ticks since the last calendar evaluation. Calendar queries are
+    /// heavier than the mic/cam poll, so we run them every 30s (not every
+    /// tick); `.EKEventStoreChanged` triggers an extra immediate evaluation.
+    private var ticksSinceCalendarCheck: Int = 0
+    private static let calendarCheckTickInterval: Int = 30
 
     // Sleep / lock tracking — used to suppress overlay when user is away
     private var isSystemAsleep = false
@@ -110,6 +122,25 @@ final class AppState: ObservableObject {
         return max(0, mins) * 60
     }
 
+    // MARK: Calendar pause state
+
+    private static let calendarActedKeysKey = "calendarActedKeys"
+    /// Cap on the persisted acted-key ring so it can't grow unbounded. 50
+    /// occurrences comfortably covers a day of back-to-back meetings; older
+    /// keys roll off (harmless — those meetings are long over).
+    private static let calendarActedKeysCap = 50
+    /// Occurrence keys already handled (auto-paused or suggested), oldest
+    /// first. Persisted so a meeting that ran past its scheduled end isn't
+    /// re-paused after relaunch, and so an Undo isn't re-nagged. The Set is
+    /// the lookup index for the array.
+    private var calendarActedKeys: [String] = []
+    private var calendarActedKeySet: Set<String> = []
+    /// Whether link-less events get a suggestion toast. Mirrors the Settings
+    /// default (on) at this non-view read site.
+    private var suggestUnlinkedCalendarEvents: Bool {
+        (UserDefaults.standard.object(forKey: "suggestUnlinkedEvents") as? Bool) ?? true
+    }
+
     // MARK: - Computed
 
     var formattedRemaining: String {
@@ -134,6 +165,8 @@ final class AppState: ObservableObject {
             return "Paused · resumes \(Self.resumeLabel(for: until))"
         case .currentApp(_, let name):
             return "Paused while \(name) is open"
+        case .calendarEvent(_, _, let title):
+            return "Paused for \(title)"
         }
     }
 
@@ -200,6 +233,7 @@ final class AppState: ObservableObject {
 
         setupEngineCallbacks()
         loadTodayStats()
+        restoreCalendarActedKeys()
         restorePauseMode()
         BlinkLog.pruneOldLogs()
 
@@ -660,6 +694,7 @@ final class AppState: ObservableObject {
         // reference. The cheap polling it does via the tick timer stops
         // automatically once tickTimer is invalidated below.
         contextDetector = nil
+        stopCalendarMonitor()
         tickTimer?.invalidate()
         tickTimer = nil
 
@@ -878,6 +913,12 @@ final class AppState: ObservableObject {
         self.contextDetector = ctx
         Log.i("All monitors active")
 
+        // Start calendar watching if the user opted in previously (persisted
+        // flag). Access may still be revoked — startCalendarMonitor re-checks.
+        if UserDefaults.standard.bool(forKey: "pauseDuringCalendarEvents") {
+            startCalendarMonitor()
+        }
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             _ = self?.contextDetector?.isMicrophoneActive()
         }
@@ -977,6 +1018,17 @@ final class AppState: ObservableObject {
                     self.isBreakPrompted = false
                     self.overlayShownAt = nil
                     self.overlayController.dismissImmediately()
+                }
+
+                // Periodically evaluate the calendar (auto-pause / suggest for
+                // meetings). Throttled to every 30s; runs before checkAutoResume
+                // so a pause taken this tick gates engine.tick() below.
+                if self.calendarMonitor != nil {
+                    self.ticksSinceCalendarCheck += 1
+                    if self.ticksSinceCalendarCheck >= Self.calendarCheckTickInterval {
+                        self.ticksSinceCalendarCheck = 0
+                        self.evaluateCalendar()
+                    }
                 }
 
                 // End any pause whose resume condition is now met (timer
@@ -1099,7 +1151,18 @@ final class AppState: ObservableObject {
     private func maybeShowWhatsNew() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
             guard let self else { return }
-            guard let items = WhatsNewManifest.itemsToShowOnLaunch() else { return }
+            // itemsToShowOnLaunch() has a side effect (seeds lastSeenVersion),
+            // so it must be called exactly once. nil → fresh install or nothing
+            // new; fall through to the standalone calendar discoverability tip.
+            guard let items = WhatsNewManifest.itemsToShowOnLaunch() else {
+                self.maybeShowCalendarTip()
+                return
+            }
+            // The upgrader is seeing the calendar card here — suppress the
+            // separate tip so we don't double-announce.
+            if items.contains(where: { $0.icon == "calendar" }) {
+                UserDefaults.standard.set(true, forKey: Self.calendarTipShownKey)
+            }
             let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
             Log.i("Showing What's New window for v\(version) with \(items.count) item(s)")
             whatsNewController = WhatsNewWindowController()
@@ -1109,11 +1172,32 @@ final class AppState: ObservableObject {
                 items: items,
                 onOpenAction: { [weak self] action in
                     switch action {
-                    case .preferences(let tab):
-                        self?.openPreferences(initialTab: tab)
+                    case .preferences(let tab, let scrollTo):
+                        self?.openPreferences(initialTab: tab, scrollTo: scrollTo)
                     }
                 }
             )
+        }
+    }
+
+    private static let calendarTipShownKey = "calendarTipShown"
+
+    /// One-time discoverability nudge for fresh users, who never see the
+    /// What's New calendar card (What's New is suppressed on first install).
+    /// Points them at Settings › Calendar with a scroll-to-highlight deep link.
+    private func maybeShowCalendarTip() {
+        guard !UserDefaults.standard.bool(forKey: Self.calendarTipShownKey) else { return }
+        guard ThemeManager.shared.hasCompletedOnboarding else { return }
+        // Already enabled → nothing to discover; mark shown and move on.
+        if UserDefaults.standard.bool(forKey: "pauseDuringCalendarEvents") {
+            UserDefaults.standard.set(true, forKey: Self.calendarTipShownKey)
+            return
+        }
+        guard !isUserAway else { return }  // don't fire while asleep/locked
+        UserDefaults.standard.set(true, forKey: Self.calendarTipShownKey)
+        Log.i("Showing calendar discoverability tip")
+        overlayController.showCalendarTip { [weak self] in
+            self?.openPreferences(initialTab: 0, scrollTo: SettingsAnchor.calendar)
         }
     }
 
@@ -1121,8 +1205,8 @@ final class AppState: ObservableObject {
     /// the user has somewhere obvious to land if they can't find the menu
     /// bar icon. `initialTab` deep-links to a tab (0=General, 1=Theme,
     /// 2=Flow, 3=About) — honored only when the window isn't already open.
-    func openPreferences(initialTab: Int = 0) {
-        PreferencesWindowController.shared.show(appState: self, themeManager: ThemeManager.shared, initialTab: initialTab)
+    func openPreferences(initialTab: Int = 0, scrollTo: String? = nil) {
+        PreferencesWindowController.shared.show(appState: self, themeManager: ThemeManager.shared, initialTab: initialTab, scrollTo: scrollTo)
     }
 
     // MARK: - Public actions (for menu bar buttons)
@@ -1176,6 +1260,21 @@ final class AppState: ObservableObject {
         case .timed(let until):
             guard now >= until else { return }
             autoResume(reason: "pause window elapsed", detail: "Your timed pause ended")
+
+        case .calendarEvent(let until, _, _):
+            guard now >= until else { return }
+            // Scheduled end reached. If the mic is still hot the call is
+            // likely running over — lift the pause (so the engine can act)
+            // but SUPPRESS the "breaks are back" toast: the engine's own
+            // mic-based meeting state will re-pause internally, so a resume
+            // toast would be misleading. Its occurrence key stays acted, so
+            // the calendar layer won't re-pause the same meeting.
+            let micHot = contextDetector?.isMicrophoneActive() ?? false
+            if micHot {
+                resume(reason: "calendar meeting scheduled end (mic still active)")
+            } else {
+                autoResume(reason: "calendar meeting ended", detail: "Meeting ended")
+            }
 
         case .currentApp(let bundleID, let name):
             // Filter out Blink itself so opening our own menu bar popover
@@ -1244,7 +1343,151 @@ final class AppState: ObservableObject {
             return
         }
         pauseMode = mode
+        // Seed a restored calendar pause's occurrence key so a meeting that
+        // ran past its scheduled end isn't re-paused once this restored pause
+        // elapses (the coordinator sees the key as already-acted).
+        if case .calendarEvent(_, let key, _) = mode {
+            markCalendarActed(key)
+        }
         Log.i("Restored pause → \(mode.logDescription)")
+    }
+
+    // MARK: - Calendar integration
+
+    /// Called from Settings when the "Pause during meetings" toggle changes.
+    /// Enabling requests calendar access (and starts the monitor on grant);
+    /// denial flips the toggle back and opens the Calendars settings pane.
+    /// Disabling tears the monitor down.
+    func setCalendarIntegration(enabled: Bool) {
+        if enabled {
+            Task { @MainActor in
+                let granted = await PermissionManager.requestCalendarAccess()
+                if granted {
+                    self.startCalendarMonitor()
+                } else {
+                    Log.i("Calendar access denied — reverting toggle")
+                    UserDefaults.standard.set(false, forKey: "pauseDuringCalendarEvents")
+                    PermissionManager.openCalendarSettings()
+                }
+            }
+        } else {
+            stopCalendarMonitor()
+        }
+    }
+
+    private func startCalendarMonitor() {
+        guard calendarMonitor == nil else { return }
+        guard PermissionManager.calendarAuthorizationStatus() == .fullAccess else {
+            Log.i("Calendar monitor not started — access not granted")
+            return
+        }
+        let monitor = MacCalendarMonitor()
+        monitor.onStoreChanged = { [weak self] in
+            // .EKEventStoreChanged posts on the main queue; hop into MainActor
+            // isolation to touch @MainActor state (mirrors the sleep/wake obs).
+            MainActor.assumeIsolated { self?.scheduleCalendarReevaluation() }
+        }
+        monitor.start()
+        calendarMonitor = monitor
+        ticksSinceCalendarCheck = 0
+        Log.i("Calendar monitor started")
+        evaluateCalendar()
+    }
+
+    private func stopCalendarMonitor() {
+        calendarChangeDebounce?.cancel()
+        calendarChangeDebounce = nil
+        calendarMonitor?.stop()
+        calendarMonitor = nil
+    }
+
+    /// Trailing-debounce a calendar re-evaluation after a store change.
+    private func scheduleCalendarReevaluation() {
+        calendarChangeDebounce?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated { self?.evaluateCalendar() }
+        }
+        calendarChangeDebounce = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: work)
+    }
+
+    /// Query the current meeting window and apply the coordinator's decision.
+    private func evaluateCalendar() {
+        guard let monitor = calendarMonitor, monitor.isAuthorized else { return }
+        let now = Date()
+        let meetings = monitor.meetings(now: now)
+        let action = CalendarPauseCoordinator.decide(
+            meetings: meetings,
+            now: now,
+            currentlyPaused: isPaused,
+            actedKeys: calendarActedKeySet,
+            suggestUnlinked: suggestUnlinkedCalendarEvents
+        )
+        switch action {
+        case .none:
+            break
+        case .autoPause(let meeting):
+            applyCalendarAutoPause(meeting)
+        case .suggest(let meeting):
+            applyCalendarSuggestion(meeting)
+        }
+    }
+
+    /// Auto-pause for a meeting with a video link, and show a dismissible
+    /// "Paused for X · Undo" toast. Marked acted first so we never double-pause.
+    private func applyCalendarAutoPause(_ meeting: CalendarMeeting) {
+        markCalendarActed(meeting.occurrenceKey)
+        pause(.calendarEvent(until: meeting.end, eventKey: meeting.occurrenceKey, title: meeting.title))
+        guard !isUserAway else { return }
+        let provider = meeting.link?.provider.displayName ?? "meeting"
+        let detail = "\(provider) · until \(Self.resumeLabel(for: meeting.end))"
+        overlayController.showMeetingPausedToast(title: meeting.title, detail: detail) { [weak self] in
+            guard let self else { return }
+            // Only undo if OUR calendar pause is still the active one — the
+            // toast lingers ~15s, in which the user may have set a different
+            // pause we must not blow away.
+            if case .calendarEvent(_, let key, _) = self.pauseMode, key == meeting.occurrenceKey {
+                self.resume(reason: "calendar undo")
+            }
+        }
+    }
+
+    /// Suggest a pause for a link-less meeting via an interactive toast. Marked
+    /// acted (once actually shown) so we don't re-nag.
+    private func applyCalendarSuggestion(_ meeting: CalendarMeeting) {
+        // Don't consume the occurrence while the user can't see the toast —
+        // mark acted only when we actually show it, so it surfaces on unlock.
+        guard !isUserAway else { return }
+        markCalendarActed(meeting.occurrenceKey)
+        let minutes = max(1, Int(meeting.end.timeIntervalSince(Date()) / 60))
+        overlayController.showMeetingSuggestionToast(title: meeting.title, minutes: minutes) { [weak self] in
+            guard let self else { return }
+            // Don't override a pause the user set after the toast appeared —
+            // the never-override-a-manual-pause guard must hold for this
+            // deferred action too, not just at decision time.
+            guard !self.isPaused else { return }
+            self.pause(.calendarEvent(until: meeting.end, eventKey: meeting.occurrenceKey, title: meeting.title))
+        }
+    }
+
+    /// Record an occurrence as handled and persist the capped ring.
+    private func markCalendarActed(_ key: String) {
+        guard !calendarActedKeySet.contains(key) else { return }
+        calendarActedKeys.append(key)
+        if calendarActedKeys.count > Self.calendarActedKeysCap {
+            let overflow = calendarActedKeys.count - Self.calendarActedKeysCap
+            let dropped = calendarActedKeys.prefix(overflow)
+            calendarActedKeys.removeFirst(overflow)
+            dropped.forEach { calendarActedKeySet.remove($0) }
+        }
+        calendarActedKeySet.insert(key)
+        UserDefaults.standard.set(calendarActedKeys, forKey: Self.calendarActedKeysKey)
+    }
+
+    private func restoreCalendarActedKeys() {
+        let keys = UserDefaults.standard.stringArray(forKey: Self.calendarActedKeysKey) ?? []
+        calendarActedKeys = keys
+        calendarActedKeySet = Set(keys)
     }
 
     func showBreakPrompt() {

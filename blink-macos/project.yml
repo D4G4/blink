@@ -61,6 +61,12 @@ targets:
         # live in a real Info.plist file like this one or it silently drops.
         NSInputMonitoringUsageDescription: "Blink monitors keyboard and mouse timing to detect flow state and deliver breaks at the right moment. No keystrokes or content are recorded."
         NSMicrophoneUsageDescription: "Blink checks whether the microphone is in use so it can pause break reminders during calls. No audio is recorded or transmitted."
+        # macOS 14+ EKEventStore.requestFullAccessToEvents() reads the
+        # *FullAccess* key, NOT the legacy NSCalendarsUsageDescription — the
+        # legacy key alone yields a silent denial. Both are declared: the
+        # FullAccess key is load-bearing, the legacy key covers older readers.
+        NSCalendarsFullAccessUsageDescription: "Blink reads your calendar to automatically pause break reminders during meetings. Event details stay on your Mac and are never recorded or transmitted."
+        NSCalendarsUsageDescription: "Blink reads your calendar to automatically pause break reminders during meetings. Event details stay on your Mac and are never recorded or transmitted."
         # Sparkle auto-update wiring. SUPublicEDKey is the EdDSA public
         # key whose private half lives in the developer's login Keychain
         # (item: "https://sparkle-project.org"). sign_update uses the
@@ -76,7 +82,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.blink20.app
-        MARKETING_VERSION: "5.2.0-beta.6"
+        MARKETING_VERSION: "5.2.0-beta.8"
         # CURRENT_PROJECT_VERSION (= CFBundleVersion) is the integer
         # Sparkle uses as its PRIMARY version comparator. The value here
         # is only a development/local-build placeholder — scripts/build-release.sh
@@ -98,6 +104,9 @@ targets:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
         com.apple.security.device.audio-input: true
+        # Read-only calendar access (EventKit) for meeting auto-pause. Required
+        # under the sandbox for EKEventStore to enumerate events.
+        com.apple.security.personal-information.calendars: true
         # Sparkle 2.x with sandboxing: the installer pipeline spans TWO
         # XPC services keyed off the host bundle ID:
         #   -spks → Installer Launcher (host app launches it to begin install)

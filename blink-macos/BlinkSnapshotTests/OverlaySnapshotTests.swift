@@ -108,6 +108,44 @@ final class ToastSnapshotTests: SnapshotTestCase {
             )
         }
     }
+
+    /// The calendar auto-pause toast ("Paused for … · Undo").
+    @MainActor func testMeetingPausedToast() {
+        for v in allThemeVariants {
+            assertSnapshot(
+                of: MeetingActionToastView(
+                    theme: v.theme,
+                    icon: "calendar",
+                    title: "Paused for Standup",
+                    detail: "Zoom · until 10:30",
+                    actionLabel: "Undo",
+                    onAction: {}
+                ),
+                named: "meeting_paused_toast_\(v.snapshotName)",
+                width: 320, height: 72,
+                colorScheme: v.colorScheme
+            )
+        }
+    }
+
+    /// The calendar suggestion toast for a link-less event ("… starting · Pause").
+    @MainActor func testMeetingSuggestionToast() {
+        for v in allThemeVariants {
+            assertSnapshot(
+                of: MeetingActionToastView(
+                    theme: v.theme,
+                    icon: "calendar.badge.clock",
+                    title: "1:1 with Sam starting",
+                    detail: "Pause Blink for 30m?",
+                    actionLabel: "Pause",
+                    onAction: {}
+                ),
+                named: "meeting_suggestion_toast_\(v.snapshotName)",
+                width: 320, height: 72,
+                colorScheme: v.colorScheme
+            )
+        }
+    }
 }
 
 final class PausePickerSnapshotTests: SnapshotTestCase {

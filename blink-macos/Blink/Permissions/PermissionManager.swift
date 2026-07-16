@@ -2,6 +2,7 @@ import Foundation
 import AppKit
 import AVFoundation
 import CoreGraphics
+import EventKit
 import UserNotifications
 
 /// Manages system permissions for sandboxed (App Store/TestFlight) builds.
@@ -89,6 +90,37 @@ enum PermissionManager {
     static func openMicrophoneSettings() {
         log.info("Opening Microphone settings pane")
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    // MARK: - Calendar (for meeting auto-pause)
+
+    /// Current authorization status for calendar access. Gate the feature and
+    /// the in-app toggle on this — `.fullAccess` is the granted case on macOS 14+.
+    static func calendarAuthorizationStatus() -> EKAuthorizationStatus {
+        EKEventStore.authorizationStatus(for: .event)
+    }
+
+    /// Request full calendar access. First call with `.notDetermined` triggers
+    /// the system TCC dialog backed by `NSCalendarsFullAccessUsageDescription`.
+    /// Reading events (not just writing) requires full access on macOS 14+.
+    static func requestCalendarAccess() async -> Bool {
+        log.info("Requesting calendar access")
+        do {
+            let granted = try await EKEventStore().requestFullAccessToEvents()
+            log.info("Calendar access result: \(granted ? "granted" : "denied")")
+            return granted
+        } catch {
+            log.error("Calendar access error: \(error)")
+            return false
+        }
+    }
+
+    /// Opens System Settings to the Calendars pane (for users who previously
+    /// denied and want to flip it on).
+    static func openCalendarSettings() {
+        log.info("Opening Calendars settings pane")
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars") else { return }
         NSWorkspace.shared.open(url)
     }
 

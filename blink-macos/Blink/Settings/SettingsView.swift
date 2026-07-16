@@ -12,6 +12,8 @@ struct SettingsView: View {
     @AppStorage("useDarkOverlay") private var useDarkOverlay: Bool = false
     @AppStorage("pauseDuringCalls") private var pauseDuringCalls: Bool = true
     @AppStorage("currentAppGraceMinutes") private var currentAppGraceMinutes: Double = 5
+    @AppStorage("pauseDuringCalendarEvents") private var pauseDuringCalendarEvents: Bool = false
+    @AppStorage("suggestUnlinkedEvents") private var suggestUnlinkedEvents: Bool = true
     @AppStorage("chimeEnabled") private var chimeEnabled: Bool = true
     @AppStorage("chimeID") private var chimeID: String = ChimePlayer.defaultChimeID
     @AppStorage("chimeVolume") private var chimeVolume: Double = ChimePlayer.defaultVolume
@@ -54,11 +56,19 @@ struct SettingsView: View {
     
     @State private var selectedTab: Int
 
-    init(appState: AppState, initialTab: Int = 0) {
+    /// Optional section anchor to scroll to + briefly highlight on open, so a
+    /// deep-link (What's New card / discoverability tip) lands the user on the
+    /// exact setting instead of the top of a long scroll view.
+    private let scrollTarget: String?
+    /// The anchor currently flashing its highlight (cleared after ~2s).
+    @State private var highlightedAnchor: String?
+
+    init(appState: AppState, initialTab: Int = 0, scrollTo: String? = nil) {
         self.appState = appState
         self._selectedTab = State(initialValue: initialTab)
+        self.scrollTarget = scrollTo
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Custom tab bar
@@ -71,21 +81,24 @@ struct SettingsView: View {
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .padding(.bottom, 8)
-            
+
             Divider()
-            
+
             // Content
-            ScrollView {
-                Group {
-                    switch selectedTab {
-                    case 0: generalContent
-                    case 1: themeContent
-                    case 2: flowContent
-                    case 3: aboutContent
-                    default: generalContent
+            ScrollViewReader { proxy in
+                ScrollView {
+                    Group {
+                        switch selectedTab {
+                        case 0: generalContent
+                        case 1: themeContent
+                        case 2: flowContent
+                        case 3: aboutContent
+                        default: generalContent
+                        }
                     }
+                    .padding(20)
                 }
-                .padding(20)
+                .onAppear { scrollToTargetIfNeeded(proxy) }
             }
         }
         // Width locked to 440 (the design target); height fills the
@@ -124,7 +137,30 @@ struct SettingsView: View {
         }
         .buttonStyle(.plain)
     }
-    
+
+    /// Scroll to the deep-link target (if any) shortly after the window
+    /// appears, then flash a highlight on it for a couple of seconds so the
+    /// user's eye lands on the right setting.
+    private func scrollToTargetIfNeeded(_ proxy: ScrollViewProxy) {
+        guard let target = scrollTarget else { return }
+        // Small delay so the ScrollView has laid out its content first.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            withAnimation(.easeInOut(duration: 0.35)) {
+                proxy.scrollTo(target, anchor: .top)
+            }
+            withAnimation(.easeInOut(duration: 0.3)) { highlightedAnchor = target }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+                withAnimation(.easeInOut(duration: 0.5)) { highlightedAnchor = nil }
+            }
+        }
+    }
+
+    /// Deep-link highlight: a soft accent wash + ring that fades in/out on the
+    /// targeted section. Attach with `.modifier(...)` and the section's anchor.
+    private func deepLinkHighlight(_ anchor: String) -> some ViewModifier {
+        DeepLinkHighlight(isActive: highlightedAnchor == anchor, accent: accentColor)
+    }
+
     // MARK: - General
     
     private var generalContent: some View {
@@ -232,6 +268,8 @@ struct SettingsView: View {
                     }
                 }
             }
+            .modifier(deepLinkHighlight(SettingsAnchor.pause))
+            .id(SettingsAnchor.pause)
 
             settingsSection("Mic Detection") {
                 settingsItem {
@@ -239,6 +277,25 @@ struct SettingsView: View {
                     settingsCaption("Pauses breaks when your mic is active. Turn off if you use Dictation or Siri — they keep the mic open and will pause Blink permanently.")
                 }
             }
+
+            settingsSection("Calendar") {
+                settingsItem {
+                    settingsToggleWithIcon("Pause during meetings", systemImage: "calendar", isOn: $pauseDuringCalendarEvents)
+                        .onChange(of: pauseDuringCalendarEvents) { _, newValue in
+                            UIActionLogger.settingChanged("pauseDuringCalendarEvents", value: "\(newValue)")
+                            appState.setCalendarIntegration(enabled: newValue)
+                        }
+                    settingsCaption("Auto-pauses breaks during calendar events that have a meeting link (Zoom, Meet, Teams). Blink reads your calendar only to detect meeting times.")
+                }
+                if pauseDuringCalendarEvents {
+                    settingsItem {
+                        settingsToggleWithIcon("Suggest pause for other events", systemImage: "bell.badge", isOn: $suggestUnlinkedEvents)
+                        settingsCaption("For events without a meeting link, show a dismissible pause suggestion instead of pausing automatically.")
+                    }
+                }
+            }
+            .modifier(deepLinkHighlight(SettingsAnchor.calendar))
+            .id(SettingsAnchor.calendar)
 
             settingsSection("Timer") {
                 settingsItem {
@@ -875,4 +932,30 @@ struct SettingsView: View {
     state.hasInputMonitoringPermission = false
     return SettingsView(appState: state, initialTab: 2)
         .environmentObject(ThemeManager.shared)
+}
+
+/// A brief accent highlight for a deep-linked Settings section — a soft fill
+/// plus a rounded ring that fades in and out. Uses a small REAL inset padding
+/// (not an overflow) so the fill/ring stay inside the view's own frame: a
+/// negative-padding overflow bled ~8px above the section and got clipped when
+/// ScrollViewReader landed the section flush against the scroll view's top
+/// edge (the "off by a few pixels" scroll target). The 6px inset is always
+/// present (the ring just fades via opacity), so nothing shifts when it flashes.
+private struct DeepLinkHighlight: ViewModifier {
+    let isActive: Bool
+    let accent: Color
+
+    func body(content: Content) -> some View {
+        content
+            .padding(6)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(accent.opacity(isActive ? 0.12 : 0))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(accent.opacity(isActive ? 0.55 : 0), lineWidth: 1.5)
+            )
+            .animation(.easeInOut(duration: 0.4), value: isActive)
+    }
 }

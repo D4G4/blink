@@ -18,6 +18,11 @@ enum PauseMode: Equatable, Codable {
     /// user switches to any other app. `name` is the display name captured
     /// when the pause began.
     case currentApp(bundleID: String, name: String)
+    /// Paused for a calendar meeting until `until` (its scheduled end).
+    /// `eventKey` is the per-occurrence identity (so the same meeting isn't
+    /// re-paused after it ends or after the user hits Undo); `title` is the
+    /// event title for the status label. Behaves like `.timed` for elapse.
+    case calendarEvent(until: Date, eventKey: String, title: String)
 
     // MARK: - Factories
 
@@ -39,8 +44,11 @@ enum PauseMode: Equatable, Codable {
     /// `.indefinite` and `.currentApp` (those resume conditions are stateful —
     /// user action / a grace timer — and live in `AppState.checkAutoResume`).
     func isElapsed(at now: Date) -> Bool {
-        if case .timed(let until) = self { return now >= until }
-        return false
+        switch self {
+        case .timed(let until): return now >= until
+        case .calendarEvent(let until, _, _): return now >= until
+        default: return false
+        }
     }
 
     /// Pure grace-timer step for a `.currentApp` pause. Given the current
@@ -77,6 +85,7 @@ enum PauseMode: Equatable, Codable {
         case .indefinite: return "indefinite"
         case .timed(let until): return "until \(until)"
         case .currentApp(_, let name): return "while \(name) is frontmost"
+        case .calendarEvent(let until, _, let title): return "for meeting '\(title)' until \(until)"
         }
     }
 }

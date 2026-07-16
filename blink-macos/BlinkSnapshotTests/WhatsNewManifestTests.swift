@@ -27,8 +27,8 @@ final class WhatsNewManifestTests: XCTestCase {
     @MainActor
     func testSameVersionReturnsNil() {
         let d = makeDefaults()
-        d.set("5.1.0", forKey: key)
-        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.1.0")
+        d.set("5.2.0", forKey: key)
+        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
         XCTAssertNil(result)
     }
 
@@ -46,8 +46,8 @@ final class WhatsNewManifestTests: XCTestCase {
     func testUpgradeSecondLaunchDoesNotReshow() {
         let d = makeDefaults()
         d.set("5.0.9", forKey: key)
-        _ = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.1.0")
-        let secondCall = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.1.0")
+        _ = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
+        let secondCall = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
         XCTAssertNil(secondCall, "Same version on second launch should not reshow")
     }
 
@@ -56,8 +56,8 @@ final class WhatsNewManifestTests: XCTestCase {
     @MainActor
     func testBetaBumpWithinSameXYZDoesNotReshow() {
         let d = makeDefaults()
-        d.set("5.1.0-beta.5", forKey: key)
-        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.1.0-beta.6")
+        d.set("5.2.0-beta.5", forKey: key)
+        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0-beta.6")
         XCTAssertNil(result, "Beta-to-beta within the same x.y.z must not reshow")
     }
 
@@ -66,8 +66,8 @@ final class WhatsNewManifestTests: XCTestCase {
     @MainActor
     func testBetaToStableSameXYZDoesNotReshow() {
         let d = makeDefaults()
-        d.set("5.1.0-beta.6", forKey: key)
-        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.1.0")
+        d.set("5.2.0-beta.6", forKey: key)
+        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
         XCTAssertNil(result)
     }
 
@@ -76,10 +76,10 @@ final class WhatsNewManifestTests: XCTestCase {
     @MainActor
     func testUpgradePastManifestWithNoNewerItemsReturnsNil() {
         let d = makeDefaults()
-        d.set("5.1.0", forKey: key)
-        // All items in the current manifest are introducedIn = 5.1.0, so a
-        // 5.1.0 → 5.2.0 jump finds nothing new.
-        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
+        d.set("5.2.0", forKey: key)
+        // The newest items in the current manifest are introducedIn = 5.2.0, so
+        // a 5.2.0 → 5.3.0 jump finds nothing new.
+        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.3.0")
         XCTAssertNil(result)
     }
 
