@@ -196,110 +196,164 @@ private struct InstructionsPhase: View {
     let colorScheme: ColorScheme
 
     private var fg: Color { .white }
+    private let config = GaborDisplayConfig.current()
+
+    // Illustrative demo-patch parameters (fixed at 3 cpd — not the session SF).
+    private let demoSize: CGFloat = 96
+    private var demoCPP: Double { config.cyclesPerPoint(forCPD: 3) }
+    private var demoSigma: Double { config.sigmaPoints(forCPD: 3) }
+    private var demoCollinearSigma: Double { 1.0 / demoCPP }
+    private var demoCollinearSep: Double { 3.0 / demoCPP }
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: 0) {
+                Image(systemName: state.exerciseType.icon)
+                    .font(.system(size: 52))
+                    .foregroundStyle(theme.accent)
+                    .padding(.top, 24)
+                    .padding(.bottom, 20)
 
-            // Exercise icon
-            Image(systemName: state.exerciseType.icon)
-                .font(.system(size: 52))
-                .foregroundStyle(theme.accent)
-                .padding(.bottom, 20)
+                Text(state.exerciseType.rawValue)
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundStyle(fg)
+                    .padding(.bottom, 6)
 
-            Text(state.exerciseType.rawValue)
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(fg)
-                .padding(.bottom, 6)
+                Text(state.exerciseType.headline)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(fg)
+                    .multilineTextAlignment(.center)
+                    .padding(.bottom, 36)
 
-            Text(state.exerciseType.headline)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(fg)
-                .padding(.bottom, 36)
-
-            // Explanation card
-            VStack(alignment: .leading, spacing: 24) {
-                // What is this?
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("What is this?", systemImage: "info.circle")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(fg)
-
-                    Text(state.exerciseType.explanation)
-                        .font(.system(size: 14))
-                        .foregroundStyle(fg)
-                        .lineSpacing(4)
+                // Explanation card
+                VStack(alignment: .leading, spacing: 22) {
+                    demoSection
+                    Divider().background(fg.opacity(0.15))
+                    instructionSection("How to play", "hand.tap", state.exerciseType.howToPlay)
+                    Divider().background(fg.opacity(0.15))
+                    instructionSection("How this helps", "brain.head.profile", state.exerciseType.benefit)
                 }
+                .padding(28)
+                .frame(maxWidth: 560)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(fg.opacity(0.1))
+                )
 
-                Divider()
-                    .background(fg.opacity(0.15))
+                HStack(spacing: 16) {
+                    Button {
+                        state.phase = .ready
+                    } label: {
+                        Text("Back")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(fg)
+                            .frame(width: 100, height: 40)
+                            .background(fg.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .buttonStyle(.plain)
 
-                // How to play
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("How to play", systemImage: "hand.tap")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(fg)
-
-                    Text(state.exerciseType.howToPlay)
-                        .font(.system(size: 14))
-                        .foregroundStyle(fg)
-                        .lineSpacing(4)
+                    Button {
+                        state.startExercise()
+                    } label: {
+                        Text("Start \(state.totalTrials) Trials")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(theme.textOnAccent(for: colorScheme))
+                            .frame(width: 180, height: 44)
+                            .background(theme.accent(for: colorScheme))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
                 }
-
-                Divider()
-                    .background(fg.opacity(0.15))
-
-                // How it adapts
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("Adaptive difficulty", systemImage: "chart.line.uptrend.xyaxis")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(fg)
-
-                    Text("The pattern gets fainter as you answer correctly, and bolder when you make mistakes. The exercise zeroes in on your contrast threshold — the faintest level you can reliably detect.")
-                        .font(.system(size: 14))
-                        .foregroundStyle(fg)
-                        .lineSpacing(4)
-                }
+                .padding(.top, 36)
+                .padding(.bottom, 24)
             }
-            .padding(28)
-            .frame(maxWidth: 560)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(fg.opacity(0.1))
-            )
-
-            Spacer()
-                .frame(height: 36)
-
-            HStack(spacing: 16) {
-                Button {
-                    state.phase = .ready
-                } label: {
-                    Text("Back")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(fg)
-                        .frame(width: 100, height: 40)
-                        .background(fg.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-                .buttonStyle(.plain)
-
-                Button {
-                    state.startExercise()
-                } label: {
-                    Text("Start \(state.totalTrials) Trials")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(theme.textOnAccent(for: colorScheme))
-                        .frame(width: 180, height: 44)
-                        .background(theme.accent(for: colorScheme))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-                .buttonStyle(.plain)
-            }
-
-            Spacer()
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 40)
         }
-        .padding(40)
+    }
+
+    /// One titled section of the instructions card. `.fixedSize(vertical)` lets
+    /// the body text wrap to its full height instead of truncating to one line
+    /// when the column is height-constrained.
+    private func instructionSection(_ title: String, _ icon: String, _ text: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(title, systemImage: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(fg)
+            Text(text)
+                .font(.system(size: 14))
+                .foregroundStyle(fg)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// A labelled two-panel example of one trial — one flash holds the pattern,
+    /// the other is plain gray — so you know what to look for before the real
+    /// (fainter, briefer) stimulus.
+    private var demoSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("What you'll see", systemImage: "eye")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(fg)
+
+            HStack(spacing: 28) {
+                demoFlash(label: "First flash", hasTarget: true)
+                demoFlash(label: "Second flash", hasTarget: false)
+            }
+            .frame(maxWidth: .infinity)
+
+            Text(demoCaption)
+                .font(.system(size: 13))
+                .foregroundStyle(fg.opacity(0.85))
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var demoCaption: String {
+        switch state.exerciseType {
+        case .detection:
+            "Only one flash holds a striped pattern — here, the first, so you'd choose First. In the real exercise it's much fainter and appears only briefly."
+        case .flanker:
+            "Both flashes show the two bold patches; only one also hides a faint pattern in the center — here, the first. In the real exercise the center is much fainter."
+        }
+    }
+
+    private func demoFlash(label: String, hasTarget: Bool) -> some View {
+        VStack(spacing: 8) {
+            Group {
+                if state.exerciseType == .flanker {
+                    CollinearGaborView(
+                        size: demoSize,
+                        targetContrast: hasTarget ? 0.9 : 0,
+                        flankerContrast: 0.9,
+                        spatialFrequencyCyclesPerPoint: demoCPP,
+                        orientation: 0,
+                        sigmaPoints: demoCollinearSigma,
+                        separationPoints: demoCollinearSep
+                    )
+                } else {
+                    GaborPatchView(
+                        size: demoSize,
+                        contrast: hasTarget ? 0.9 : 0,
+                        spatialFrequencyCyclesPerPoint: demoCPP,
+                        orientation: 0,
+                        sigmaPoints: demoSigma
+                    )
+                }
+            }
+            .frame(width: demoSize, height: demoSize)
+            .clipShape(Circle())
+            .overlay(Circle().stroke(fg.opacity(0.2), lineWidth: 1))
+
+            Text(label)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(fg)
+        }
     }
 }
 
@@ -393,7 +447,7 @@ private struct TrialPhase: View {
             if state.exerciseType == .flanker {
                 CollinearGaborView(
                     size: patchSize,
-                    targetContrast: i == state.targetInterval ? state.staircase.currentContrast : 0,
+                    targetContrast: state.isTargetInterval(i) ? state.staircase.currentContrast : 0,
                     flankerContrast: boldContrast,
                     spatialFrequencyCyclesPerPoint: cyclesPerPoint,
                     orientation: state.trialOrientation,
@@ -402,7 +456,7 @@ private struct TrialPhase: View {
                 )
                 .clipShape(Circle())
             } else {
-                centerPatch(showTarget: i == state.targetInterval)
+                centerPatch(showTarget: state.isTargetInterval(i))
             }
             intervalLabel(i)
         }

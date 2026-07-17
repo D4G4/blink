@@ -28,25 +28,9 @@ enum ExerciseType: String, CaseIterable, Identifiable {
     var explanation: String {
         switch self {
         case .detection:
-            """
-            Two brief flashes appear one after another. Only one of them contains a \
-            faint striped pattern (a Gabor patch) — the other flash is a plain gray \
-            disc. A textured mask follows each flash. Your job: pick which flash — \
-            the first or the second — held the striped pattern.
-
-            As you answer correctly the pattern grows fainter, and it becomes bolder \
-            when you miss, so the task keeps pace with you.
-            """
+            "Two brief flashes, one after the other. Only one holds a faint striped pattern; the other is plain gray. Spot which flash had it."
         case .flanker:
-            """
-            Same idea as Spot the Flash: two brief flashes appear one after another, \
-            only one holds a faint striped pattern in the center, and a mask follows \
-            each flash. The twist — two bold striped patches bracket the center of \
-            both flashes, making the faint target harder to pick out.
-
-            Pick which flash — the first or the second — held the center pattern, \
-            ignoring the bold patches on either side.
-            """
+            "Like Spot the Flash, but two bold striped patches bracket the center of both flashes. Only one flash also hides a faint pattern between them."
         }
     }
 
@@ -56,6 +40,18 @@ enum ExerciseType: String, CaseIterable, Identifiable {
             "Watch both flashes, then choose First or Second — whichever held the pattern."
         case .flanker:
             "Ignore the two bold patches. Choose First or Second — whichever flash held the faint center pattern."
+        }
+    }
+
+    /// Honest, plain-English "how this helps" — describes the visual skill the
+    /// task exercises, framed as a wellness activity. Never a medical/vision-
+    /// improvement claim (see the disclaimer).
+    var benefit: String {
+        switch self {
+        case .detection:
+            "Exercises your contrast sensitivity — seeing faint, low-contrast detail. A wellness activity done little-and-often, not a medical treatment; results vary."
+        case .flanker:
+            "Exercises pulling a faint target out of nearby clutter (lateral masking). A wellness activity, not a medical treatment; benefits build slowly."
         }
     }
 }
@@ -105,9 +101,15 @@ final class GaborExerciseState: ObservableObject {
     // MARK: - Timing constants (milliseconds)
 
     static let fixationMs = 500
-    static let flashMs = 120
+    /// A single clear flash. The default flow has NO backward mask (simpler, and
+    /// matches Camilleri's single-Gabor detection — the better fit for a general
+    /// audience), so the flash can be a calm, clearly-perceptible duration.
+    static let flashMs = 250
+    static let interIntervalGapMs = 500
+    // Reserved for a future "processing-speed" advanced mode that re-adds the
+    // backward mask (the gaborMask shader / GaborMaskView still exist):
+    static let maskISIMs = 180
     static let maskMs = 120
-    static let gapMs = 500
 
     /// Spatial frequencies (cycles/deg) rotated one-per-session.
     static let trainingSFs: [Double] = [1.5, 3.0, 6.0]
@@ -155,10 +157,12 @@ final class GaborExerciseState: ObservableObject {
         UserDefaults.standard.set(idx + 1, forKey: Self.sfRotationKey)
 
         // Carry difficulty forward: start ~3x above the last threshold measured
-        // for this exercise + SF (capped at 0.5), so the staircase doesn't
-        // re-descend from scratch every session. Falls back to 0.5 first time.
+        // for this exercise + SF, so the staircase doesn't re-descend from
+        // scratch every session. The cap/first-session value is high (0.85) on
+        // purpose — the pattern should be obvious at the start so you learn what
+        // to look for; the staircase brings it down as you succeed.
         let lastT = GaborSessionStore.shared.lastThreshold(forExercise: exerciseType.rawValue, sf: sessionSF)
-        let start = lastT.map { min(0.5, $0 * 3.0) } ?? 0.5
+        let start = lastT.map { min(0.85, $0 * 3.0) } ?? 0.85
         staircase.reset(startContrast: start)
 
         generateTrial()
@@ -190,20 +194,12 @@ final class GaborExerciseState: ObservableObject {
             try? await Task.sleep(for: .milliseconds(Self.flashMs))
             if Task.isCancelled { return }
 
-            self?.stage = .mask(1)
-            try? await Task.sleep(for: .milliseconds(Self.maskMs))
-            if Task.isCancelled { return }
-
             self?.stage = .gap
-            try? await Task.sleep(for: .milliseconds(Self.gapMs))
+            try? await Task.sleep(for: .milliseconds(Self.interIntervalGapMs))
             if Task.isCancelled { return }
 
             self?.stage = .interval(2)
             try? await Task.sleep(for: .milliseconds(Self.flashMs))
-            if Task.isCancelled { return }
-
-            self?.stage = .mask(2)
-            try? await Task.sleep(for: .milliseconds(Self.maskMs))
             if Task.isCancelled { return }
 
             self?.stage = .response
@@ -286,6 +282,14 @@ final class GaborExerciseState: ObservableObject {
         } else {
             "—"
         }
+    }
+
+    /// Whether the given flash interval (1 or 2) holds the target this trial.
+    /// Exactly one interval does; the other is a plain gray disc. Centralized
+    /// here (rather than inline in the view) so the "only one flash has the
+    /// pattern" invariant is unit-testable.
+    func isTargetInterval(_ interval: Int) -> Bool {
+        interval == targetInterval
     }
 
     /// Session spatial frequency for display, e.g. "1.5 cpd", "3 cpd".
