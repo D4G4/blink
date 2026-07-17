@@ -26,8 +26,8 @@ final class AdaptiveStaircase: ObservableObject {
 
     /// Correct responses in a row required to step down (harder). 3 → 79.4%.
     private let downAfter = 3
-    private let minContrast: Double
-    private let maxContrast: Double
+    private let minContrast: Double = 0.005
+    private let maxContrast: Double = 1.0
     private let initialLogStep: Double
     /// Finest step near convergence (~0.03 log10 ≈ ×1.07).
     private let minLogStep: Double = 0.03
@@ -37,16 +37,10 @@ final class AdaptiveStaircase: ObservableObject {
     ///   - initialLogStep: first step size in log10 units (0.25 ≈ ×1.78). Large
     ///     early steps descend to threshold fast; the step halves at each
     ///     reversal for fine resolution once it is homing in.
-    /// The same 1-up/3-down log staircase also drives the crowding exercise's
-    /// dimensionless spacing ratio b (min/max then bound b, not contrast); the
-    /// "down = harder" direction is already correct there (smaller b = harder).
-    init(startContrast: Double = 0.5, initialLogStep: Double = 0.25,
-         minContrast: Double = 0.005, maxContrast: Double = 1.0) {
+    init(startContrast: Double = 0.5, initialLogStep: Double = 0.25) {
         self.currentContrast = startContrast
         self.initialLogStep = initialLogStep
         self.logStep = initialLogStep
-        self.minContrast = minContrast
-        self.maxContrast = maxContrast
     }
 
     func recordResponse(correct: Bool) {

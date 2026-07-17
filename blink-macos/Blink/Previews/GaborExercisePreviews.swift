@@ -47,9 +47,9 @@ private let allThemes: [BlinkTheme] = [.peach, .midnight, .sage, .sand, .mono]
         .preferredColorScheme(.dark)
 }
 
-#Preview("GaborExercise — Instructions (Contour)") {
+#Preview("GaborExercise — Instructions (Flanker)") {
     let state = GaborExerciseState()
-    state.exerciseType = .contour
+    state.exerciseType = .flanker
     state.phase = .instructions
     return GaborExerciseView(state: state, theme: .peach, onDismiss: {})
         .frame(width: 720, height: 900)

@@ -67,54 +67,19 @@ final class GaborExerciseSnapshotTests: SnapshotTestCase {
         )
     }
 
-    /// Instructions for the primary detection exercise (contour's and crowding's
-    /// demos render asynchronously, so they aren't deterministic static snapshots).
+    /// Instructions for the two shader-based exercises (contour's demo renders
+    /// asynchronously, so it isn't a deterministic static snapshot).
     @MainActor func testGaborInstructions() {
-        let s = GaborExerciseState()
-        s.exerciseType = .detection
-        s.phase = .instructions
-        assertHostedSnapshot(
-            of: GaborExerciseView(state: s, theme: .peach, onDismiss: {}),
-            named: "gabor_instructions_detection",
-            width: 900, height: 1100,
-            colorScheme: .dark
-        )
-    }
-
-    /// The contour trial (a pre-rendered field injected so the async path is
-    /// bypassed — a deterministic snapshot of the real ContourTrialView).
-    @MainActor func testGaborContourTrial() {
-        let W: CGFloat = 900, H: CGFloat = 700
-        let fieldPt = min(W, H) * 0.86
-        guard let cg = ContourFieldRenderer.render(sizePt: fieldPt, scale: 2, jitterRadians: 0,
-                                                   facing: .right, seed: 5) else { return XCTFail("render") }
-        let field = ContourField(image: cg, facing: .right, sizePt: fieldPt)
-        let s = GaborExerciseState()
-        s.exerciseType = .contour; s.currentTrial = 8; s.contourSeed = 1
-        s.phase = .presenting; s.stage = .field
-        assertSnapshot(
-            of: ZStack { Color(white: GaborDisplayConfig.meanLuminanceGray)
-                         ContourTrialView(state: s, theme: .peach, previewField: field) },
-            named: "gabor_contour_trial", width: W, height: H, colorScheme: .light)
-    }
-
-    /// The crowding trial for both sides — the target flashes LEFT or RIGHT of
-    /// the (prominent) fixation cross. Injected triplet → deterministic.
-    @MainActor func testGaborCrowdingTrial() {
-        let W: CGFloat = 900, H: CGFloat = 700
-        let sz = min(max(0.08 * min(W, H), 56), 140)
-        let E = min(4 * sz, (0.5 * W - sz) / 1.8)
-        let spacing = 0.8 * E
-        for (side, name) in [(CrowdingSide.left, "left"), (CrowdingSide.right, "right")] {
-            guard let stim = CrowdingRenderer.render(patchPt: sz, spacingPt: spacing, tiltSign: 1,
-                    flankerA: 1.0, flankerB: -0.5, flankers: true, scale: 2) else { return XCTFail("render") }
+        for type in [ExerciseType.detection, .flanker] {
             let s = GaborExerciseState()
-            s.exerciseType = .crowding; s.currentTrial = 8; s.crowdingSide = side; s.crowdingB = 0.8
-            s.phase = .presenting; s.stage = .interval(1)
-            assertSnapshot(
-                of: ZStack { Color(white: GaborDisplayConfig.meanLuminanceGray)
-                             CrowdingTrialView(state: s, theme: .peach, previewStimulus: stim) },
-                named: "gabor_crowding_\(name)", width: W, height: H, colorScheme: .light)
+            s.exerciseType = type
+            s.phase = .instructions
+            assertHostedSnapshot(
+                of: GaborExerciseView(state: s, theme: .peach, onDismiss: {}),
+                named: "gabor_instructions_\(type == .detection ? "detection" : "flanker")",
+                width: 900, height: 1100,
+                colorScheme: .dark
+            )
         }
     }
 }

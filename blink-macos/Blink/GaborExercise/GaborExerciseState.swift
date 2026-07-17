@@ -4,25 +4,22 @@ import SwiftUI
 enum ExerciseType: String, CaseIterable, Identifiable {
     /// Primary: single-Gabor temporal two-interval detection.
     case detection = "Spot the Flash"
+    /// Advanced: same task with two bold collinear flankers bracketing the target.
+    case flanker = "Flanker Focus"
     /// Contour integration: find a closed loop of aligned Gabors hidden in noise.
     case contour = "Trace the Shape"
-    /// Peripheral crowding: read a tilted target sandwiched by flankers, off to
-    /// the side, without looking at it.
-    case crowding = "Sideways Focus"
 
     var id: String { rawValue }
 
     /// Contour is a single-presentation GROUPING task (not the temporal two-
     /// interval detection flow the other two share).
     var isContour: Bool { self == .contour }
-    /// Crowding is a single-look peripheral IDENTIFICATION task.
-    var isCrowding: Bool { self == .crowding }
 
     var icon: String {
         switch self {
         case .detection: "sparkle.magnifyingglass"
+        case .flanker: "circle.grid.3x3"
         case .contour: "circle.dashed"
-        case .crowding: "dot.viewfinder"
         }
     }
 
@@ -30,10 +27,10 @@ enum ExerciseType: String, CaseIterable, Identifiable {
         switch self {
         case .detection:
             "Which flash held the pattern?"
+        case .flanker:
+            "Focus through bold distractions"
         case .contour:
             "Which way does the hidden loop point?"
-        case .crowding:
-            "Read the tilt out of the corner of your eye"
         }
     }
 
@@ -42,8 +39,8 @@ enum ExerciseType: String, CaseIterable, Identifiable {
     var shortBenefit: String {
         switch self {
         case .detection: "Trains faint-detail (contrast) vision"
+        case .flanker:   "Trains seeing past nearby clutter"
         case .contour:   "Trains grouping shapes out of noise"
-        case .crowding:  "Trains reading cluttered side vision"
         }
     }
 
@@ -51,10 +48,10 @@ enum ExerciseType: String, CaseIterable, Identifiable {
         switch self {
         case .detection:
             "Two brief flashes, one after the other. Only one holds a faint striped pattern; the other is plain gray. Spot which flash had it."
+        case .flanker:
+            "Like Spot the Flash, but two bold striped patches bracket the center of both flashes. Only one flash also hides a faint pattern between them."
         case .contour:
             "A screen fills with tiny striped patches pointing every which way. Hidden among them, about sixteen line up into a closed loop shaped like an egg with one pointed end."
-        case .crowding:
-            "You stare at a center cross while a small striped patch flashes briefly off to one side, with two more patches hugging it. The trick is to read the middle one without looking straight at it."
         }
     }
 
@@ -62,10 +59,10 @@ enum ExerciseType: String, CaseIterable, Identifiable {
         switch self {
         case .detection:
             "Watch both flashes, then choose First or Second — whichever held the pattern."
+        case .flanker:
+            "Ignore the two bold patches. Choose First or Second — whichever flash held the faint center pattern."
         case .contour:
             "Look for the patches that line up into a smooth closed outline — a dotted egg with one pointed end — while the rest point at random. Choose Left or Right for the way the point faces. It's clear at first and hides more each round; if you truly can't find it, just guess."
-        case .crowding:
-            "Keep your eyes on the center cross the whole time — don't look at the patch. When it flashes to the side, judge whether the MIDDLE one leans left or right, then press ← or →. If you flick your eyes to it, it gets too easy and measures nothing."
         }
     }
 
@@ -76,10 +73,10 @@ enum ExerciseType: String, CaseIterable, Identifiable {
         switch self {
         case .detection:
             "Trains contrast sensitivity — spotting faint, low-contrast detail, the vision you lean on for dim text, fog, night driving, or a dark screen. A wellness activity done little-and-often, not a medical treatment; results vary."
+        case .flanker:
+            "Trains seeing a target clearly when it's hemmed in by nearby clutter (lateral masking) — the skill behind reading crowded text or picking one thing out of a busy scene. A wellness activity, not a medical treatment; benefits build slowly."
         case .contour:
             "Trains visual grouping — your brain's knack for linking scattered edges into one whole shape (the 'good continuation' you use to follow a line on a graph or pick an object out of clutter). The patches are bold, not faint, so this isn't about faint-detail vision. A wellness activity, not a medical treatment; benefits build slowly and vary."
-        case .crowding:
-            "Trains reading a target hemmed in by nearby clutter in side (peripheral) vision — the 'crowding' bottleneck that makes packed text or a busy shelf hard to parse away from where you look directly. A wellness activity for normally-sighted eyes, not a medical treatment; whether it carries over to everyday tasks isn't established, and results vary."
         }
     }
 }
@@ -139,22 +136,6 @@ final class GaborExerciseState: ObservableObject {
     /// Δβ staircase for the contour exercise.
     let contourStaircase = ContourStaircase()
 
-    // Crowding exercise per-trial state (single-look peripheral identification).
-    /// Which side of fixation the target flashes on.
-    @Published var crowdingSide: CrowdingSide = .right
-    /// Target tilt sign: −1 leans left, +1 leans right (the answer).
-    @Published var crowdingTiltSign: Int = 1
-    /// Dimensionless target–flanker spacing ratio b (the staircased variable).
-    @Published var crowdingB: Double = 0.8
-    /// Independent random flanker orientations (radians).
-    @Published var crowdingFlankerA: Double = 0
-    @Published var crowdingFlankerB: Double = 0
-    /// ~10% of trials show the target alone (acuity sanity floor) — not staircased.
-    @Published var crowdingIsCatch: Bool = false
-    /// b staircase (reuses the log 1-up/3-down; bounds are b, not contrast).
-    let crowdingStaircase = AdaptiveStaircase(startContrast: 0.8, initialLogStep: 0.12,
-                                              minContrast: 0.15, maxContrast: 1.0)
-
     // MARK: - Timing constants (milliseconds)
 
     static let fixationMs = 500
@@ -169,17 +150,6 @@ final class GaborExerciseState: ObservableObject {
     /// (the field stays visible during the response — a gentle wellness variant
     /// of the ~1 s single presentation).
     static let contourLookMs = 900
-
-    // Crowding: a target flash then a backward mask, so the answer must be read
-    // peripherally. Crowding is duration-INVARIANT (it's the flanker spacing,
-    // not the speed, that drives difficulty), so the flash is only long enough
-    // to be perceptible while still ending as a foveating saccade (~200 ms
-    // latency) would land — the mask then curtails it. 120 ms (the strict
-    // lab value) was too fast to see; 220 ms is a wellness-friendly compromise.
-    static let crowdingFlashMs = 300
-    static let crowdingMaskMs = 100
-    /// Fraction of crowding trials with no flankers (acuity catch trials).
-    static let crowdingCatchRate = 0.1
 
     /// Spatial frequencies (cycles/deg) rotated one-per-session.
     static let trainingSFs: [Double] = [1.5, 3.0, 6.0]
@@ -233,13 +203,6 @@ final class GaborExerciseState: ObservableObject {
             return
         }
 
-        if exerciseType.isCrowding {
-            // Crowding: start at b = 0.8 (clearly uncrowded), staircase tightens.
-            crowdingStaircase.reset(startContrast: 0.8)
-            generateTrial()
-            return
-        }
-
         // Pick this session's spatial frequency, then advance the rotation.
         let idx = UserDefaults.standard.integer(forKey: Self.sfRotationKey)
         sessionSF = Self.trainingSFs[idx % Self.trainingSFs.count]
@@ -273,19 +236,6 @@ final class GaborExerciseState: ObservableObject {
             return
         }
 
-        if exerciseType.isCrowding {
-            crowdingSide = Bool.random() ? .left : .right
-            crowdingTiltSign = Bool.random() ? 1 : -1
-            crowdingIsCatch = Double.random(in: 0..<1) < Self.crowdingCatchRate
-            crowdingB = crowdingStaircase.currentContrast
-            crowdingFlankerA = Double.random(in: 0..<(.pi))
-            crowdingFlankerB = Double.random(in: 0..<(.pi))
-            stage = .fixation
-            phase = .presenting
-            runCrowdingSequence()
-            return
-        }
-
         targetInterval = Int.random(in: 1...2)
         trialOrientation = Double.random(in: 0..<(.pi))
         // Reset the stage synchronously before entering .presenting, so a render
@@ -303,36 +253,6 @@ final class GaborExerciseState: ObservableObject {
             try? await Task.sleep(for: .milliseconds(Self.contourLookMs))
             if Task.isCancelled { return }
             self?.stage = .response
-        }
-    }
-
-    /// Crowding: fixation → brief target flash → backward mask → response.
-    private func runCrowdingSequence() {
-        trialTask = Task { @MainActor [weak self] in
-            self?.stage = .fixation
-            try? await Task.sleep(for: .milliseconds(Self.fixationMs))
-            if Task.isCancelled { return }
-            self?.stage = .interval(1)                 // target flash
-            try? await Task.sleep(for: .milliseconds(Self.crowdingFlashMs))
-            if Task.isCancelled { return }
-            self?.stage = .mask(1)                      // backward mask
-            try? await Task.sleep(for: .milliseconds(Self.crowdingMaskMs))
-            if Task.isCancelled { return }
-            self?.stage = .response
-        }
-    }
-
-    /// Submit the crowding answer — the target's tilt sign (−1 left, +1 right).
-    /// Catch trials (no flankers) score but don't drive the b staircase.
-    func submitTilt(_ sign: Int) {
-        guard exerciseType.isCrowding, case .presenting = phase, case .response = stage else { return }
-        let correct = sign == crowdingTiltSign
-        if correct { score += 1 }
-        if !crowdingIsCatch { crowdingStaircase.recordResponse(correct: correct) }
-        phase = .feedback(correct: correct)
-        feedbackTimer?.invalidate()
-        feedbackTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
-            self?.advanceAfterFeedback()
         }
     }
 
@@ -405,23 +325,16 @@ final class GaborExerciseState: ObservableObject {
 
     func saveSession() {
         let duration = sessionStart.map { Date().timeIntervalSince($0) } ?? 0
-        // The "threshold" field is reused per exercise: contrast for detection,
-        // Δβ degrees for contour, the Bouma ratio b for crowding. Only the flash
-        // task has a spatial frequency.
-        let threshold: Double?
-        switch exerciseType {
-        case .contour:  threshold = contourStaircase.threshold()
-        case .crowding: threshold = crowdingStaircase.threshold()
-        default:        threshold = staircase.threshold()
-        }
+        // For contour the "threshold" is the Δβ jitter tolerance (degrees) and
+        // there is no spatial frequency; it reuses the same record fields.
         let record = GaborSessionRecord(
             date: Date(),
             exerciseType: exerciseType.rawValue,
             trialCount: currentTrial,
             correctCount: score,
-            contrastThreshold: threshold,
+            contrastThreshold: exerciseType.isContour ? contourStaircase.threshold() : staircase.threshold(),
             durationSeconds: duration,
-            spatialFrequency: showsSpatialFrequency ? sessionSF : nil
+            spatialFrequency: exerciseType.isContour ? nil : sessionSF
         )
         GaborSessionStore.shared.save(record)
     }
@@ -430,30 +343,20 @@ final class GaborExerciseState: ObservableObject {
 
     /// Label for the primary threshold metric on the results screen.
     var primaryMetricLabel: String {
-        switch exerciseType {
-        case .contour:  return "Jitter tolerance"
-        case .crowding: return "Crowding threshold"
-        default:        return "Contrast threshold"
-        }
+        exerciseType.isContour ? "Jitter tolerance" : "Contrast threshold"
     }
 
     /// Value for the primary threshold metric.
     var primaryMetricValue: String {
-        switch exerciseType {
-        case .contour:
+        if exerciseType.isContour {
             if let d = contourStaircase.threshold() { return String(format: "±%.0f°", d) }
             return "—"
-        case .crowding:
-            // Bouma ratio b = spacing ÷ eccentricity (dimensionless).
-            if let b = crowdingStaircase.threshold() { return String(format: "b = %.2f", b) }
-            return "—"
-        default:
-            return thresholdDisplay
         }
+        return thresholdDisplay
     }
 
-    /// Only the flash tasks have a spatial-frequency row.
-    var showsSpatialFrequency: Bool { !(exerciseType.isContour || exerciseType.isCrowding) }
+    /// Contour has no spatial-frequency row; the flash tasks do.
+    var showsSpatialFrequency: Bool { !exerciseType.isContour }
 
     /// Save partial results and reset for a clean state.
     func cancelSession() {

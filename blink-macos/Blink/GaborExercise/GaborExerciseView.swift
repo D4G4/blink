@@ -33,16 +33,12 @@ struct GaborExerciseView: View {
                 case .presenting:
                     if state.exerciseType.isContour {
                         ContourTrialView(state: state, theme: theme)
-                    } else if state.exerciseType.isCrowding {
-                        CrowdingTrialView(state: state, theme: theme)
                     } else {
                         TrialPhase(state: state, theme: theme)
                     }
                 case .feedback(let correct):
                     if state.exerciseType.isContour {
                         ContourTrialView(state: state, theme: theme, feedbackCorrect: correct)
-                    } else if state.exerciseType.isCrowding {
-                        CrowdingTrialView(state: state, theme: theme, feedbackCorrect: correct)
                     } else {
                         TrialPhase(state: state, theme: theme, feedbackCorrect: correct)
                     }
@@ -113,10 +109,8 @@ private struct ReadyPhase: View {
     var body: some View {
         GeometryReader { geo in
             // Responsive card size: fills the width on a big screen (capped so
-            // it doesn't get silly) and shrinks to fit a small one. Divides by
-            // the actual card count so adding exercises never overflows.
-            let n = CGFloat(ExerciseType.allCases.count)
-            let cardW = min(max((geo.size.width - 80 - (n - 1) * 24) / n, 140), 300)
+            // it doesn't get silly) and shrinks to fit a small one.
+            let cardW = min(max((geo.size.width - 128) / 3, 150), 340)
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
@@ -228,7 +222,6 @@ private struct InstructionsPhase: View {
     private var fg: Color { .white }
     @State private var contourDemoLoop: CGImage?     // the isolated target shape
     @State private var contourDemoField: CGImage?    // the same loop hidden in noise
-    @State private var crowdingDemoImage: CGImage?   // an example target + flankers
 
     // Illustrative demo patch: a fixed 96-pt disc showing the mid SF level, with
     // the SAME cycles-per-patch / σ=λ geometry the real trial uses, so the
@@ -237,6 +230,8 @@ private struct InstructionsPhase: View {
     private let demoCyclesPerPatch: Double = 9
     private var demoCPP: Double { demoCyclesPerPatch / Double(demoSize) }
     private var demoSigma: Double { 1.0 / demoCPP }        // σ = λ = demoSize / cycles
+    private var demoCollinearSigma: Double { demoSigma }
+    private var demoCollinearSep: Double { 3.0 * demoSigma }
 
     var body: some View {
         GeometryReader { geo in
@@ -347,8 +342,6 @@ private struct InstructionsPhase: View {
 
             if state.exerciseType.isContour {
                 contourDemoPanel
-            } else if state.exerciseType.isCrowding {
-                crowdingDemoPanel
             } else {
                 HStack(spacing: 28) {
                     demoFlash(label: "First flash", hasTarget: true)
@@ -396,42 +389,6 @@ private struct InstructionsPhase: View {
         }
     }
 
-    /// Fixation cross + an example (uncrowded) target-and-flankers off to the
-    /// side, so you learn what to read and where. Rendered once, cached.
-    private var crowdingDemoPanel: some View {
-        HStack(spacing: 26) {
-            VStack(spacing: 6) {
-                FixationCross(length: 22, thickness: 2.5).frame(width: 40, height: 150)
-                Text("stare here")
-                    .font(.system(size: 11)).foregroundStyle(fg.opacity(0.7))
-            }
-            VStack(spacing: 6) {
-                Group {
-                    if let cg = crowdingDemoImage {
-                        Image(cg, scale: 1, label: Text("example"))
-                            .resizable().interpolation(.high)
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 240, height: 150)
-                    } else {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color(white: GaborDisplayConfig.meanLuminanceGray))
-                            .frame(width: 240, height: 150)
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                Text("read the MIDDLE patch")
-                    .font(.system(size: 11)).foregroundStyle(fg.opacity(0.7))
-            }
-        }
-        .task(id: state.exerciseType) {
-            guard state.exerciseType.isCrowding, crowdingDemoImage == nil else { return }
-            crowdingDemoImage = await Task.detached(priority: .userInitiated) {
-                CrowdingRenderer.render(patchPt: 60, spacingPt: 130, tiltSign: 1,
-                                        flankerA: 1.0, flankerB: -0.5, flankers: true, scale: 2)?.image
-            }.value
-        }
-    }
-
     private func demoTile(_ cg: CGImage?, _ title: String, _ sub: String) -> some View {
         VStack(spacing: 8) {
             Group {
@@ -465,22 +422,36 @@ private struct InstructionsPhase: View {
         switch state.exerciseType {
         case .detection:
             "Only one flash holds a striped pattern — here, the first, so you'd choose First. In the real exercise it's much fainter and appears only briefly."
+        case .flanker:
+            "Both flashes show the two bold patches; only one also hides a faint pattern in the center — here, the first. In the real exercise the center is much fainter."
         case .contour:
             "In the loop, the little stripes line up end-to-end to trace a smooth closed outline — like a dotted egg with one pointed end. Every other patch points at random. Find the loop, then choose which way its point faces. Each round it hides a little better."
-        case .crowding:
-            "Keep your eyes on the cross. The three patches flash briefly to the side; the two outer ones are random clutter. Read only the MIDDLE one — is it leaning left or right? Each round the clutter creeps closer, making it harder."
         }
     }
 
     private func demoFlash(label: String, hasTarget: Bool) -> some View {
         VStack(spacing: 8) {
-            GaborPatchView(
-                size: demoSize,
-                contrast: hasTarget ? 0.9 : 0,
-                spatialFrequencyCyclesPerPoint: demoCPP,
-                orientation: 0,
-                sigmaPoints: demoSigma
-            )
+            Group {
+                if state.exerciseType == .flanker {
+                    CollinearGaborView(
+                        size: demoSize,
+                        targetContrast: hasTarget ? 0.9 : 0,
+                        flankerContrast: 0.9,
+                        spatialFrequencyCyclesPerPoint: demoCPP,
+                        orientation: 0,
+                        sigmaPoints: demoCollinearSigma,
+                        separationPoints: demoCollinearSep
+                    )
+                } else {
+                    GaborPatchView(
+                        size: demoSize,
+                        contrast: hasTarget ? 0.9 : 0,
+                        spatialFrequencyCyclesPerPoint: demoCPP,
+                        orientation: 0,
+                        sigmaPoints: demoSigma
+                    )
+                }
+            }
             .frame(width: demoSize, height: demoSize)
             .clipShape(Circle())
             .overlay(Circle().stroke(fg.opacity(0.2), lineWidth: 1))
@@ -614,12 +585,10 @@ private struct SciencePhase: View {
 /// trial on a background thread) with a hidden loop; the observer picks which
 /// way the loop's pinched end points. Single presentation — no temporal
 /// two-interval flow, so it is a sibling of `TrialPhase`, not a branch of it.
-struct ContourTrialView: View {
+private struct ContourTrialView: View {
     @ObservedObject var state: GaborExerciseState
     let theme: BlinkTheme
     var feedbackCorrect: Bool?
-    /// Test/preview hook: a pre-rendered field to bypass the async render.
-    var previewField: ContourField? = nil
 
     @State private var rendered: (seed: UInt64, field: ContourField)?
     @Environment(\.displayScale) private var displayScale
@@ -630,8 +599,8 @@ struct ContourTrialView: View {
             let fieldPt = min(geo.size.width, geo.size.height) * 0.86
             ZStack {
                 // The rendered field (blends into the mean-gray screen).
-                if let field = previewField ?? (rendered?.seed == state.contourSeed ? rendered?.field : nil) {
-                    ContourFieldView(field: field)
+                if let r = rendered, r.seed == state.contourSeed {
+                    ContourFieldView(field: r.field)
                         .opacity(feedbackCorrect != nil ? 0.35 : 1.0)
                 }
 
@@ -706,121 +675,6 @@ struct ContourTrialView: View {
     }
 }
 
-// MARK: - Crowding Trial
-
-/// The crowding trial: fixation cross held dead center; a small tilted target
-/// (± two flankers) flashes briefly at eccentricity E to one side, then a
-/// backward mask, then a Leans-left / Leans-right response. Single look — a
-/// sibling of TrialPhase, not a branch.
-struct CrowdingTrialView: View {
-    @ObservedObject var state: GaborExerciseState
-    let theme: BlinkTheme
-    var feedbackCorrect: Bool?
-    /// Test/preview hook: a pre-rendered stimulus so the async render can be
-    /// bypassed for a deterministic snapshot.
-    var previewStimulus: CrowdingStimulus? = nil
-
-    @State private var rendered: (trial: Int, stim: CrowdingStimulus)?
-    @Environment(\.displayScale) private var displayScale
-    private let fg = Color(white: 0.12)
-
-    // Small peripheral target (much smaller than the detection patch), placed
-    // ~4 target-widths out, capped so the widest triplet stays on-screen.
-    private func patch(_ size: CGSize) -> CGFloat {
-        min(max(0.08 * min(size.width, size.height), 56), 140)
-    }
-    private func ecc(_ size: CGSize, _ s: CGFloat) -> CGFloat {
-        min(4 * s, (0.5 * size.width - s) / 1.8)   // 1.8 = 1 + b_start(0.8)
-    }
-
-    var body: some View {
-        GeometryReader { geo in
-            let s = patch(geo.size)
-            let E = ecc(geo.size, s)
-            let dir: CGFloat = state.crowdingSide == .left ? -1 : 1
-            let cpp = 4.0 / Double(s)
-            let sig = Double(s) / 4.0
-            ZStack {
-                // Prominent central anchor — the whole task is "keep your eyes
-                // here while the target flashes to the side", so it must be
-                // unmistakably the thing to fixate.
-                FixationCross(length: 48, thickness: 6)
-
-                if case .interval = state.stage,
-                   let stim = previewStimulus ?? (rendered?.trial == state.currentTrial ? rendered?.stim : nil) {
-                    CrowdingStimulusView(stimulus: stim).offset(x: dir * E)
-                }
-                if case .mask = state.stage {
-                    GaborMaskView(size: s * 1.8, contrast: 0.9,
-                                  spatialFrequencyCyclesPerPoint: cpp, sigmaPoints: sig)
-                        .clipShape(Circle())
-                        .offset(x: dir * E)
-                }
-                if let correct = feedbackCorrect {
-                    FeedbackOverlay(correct: correct)
-                }
-
-                VStack {
-                    Text("\(state.currentTrial) / \(state.totalTrials)")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(fg.opacity(0.55))
-                        .padding(.top, 20)
-                    Spacer()
-                }
-
-                if case .response = state.stage, feedbackCorrect == nil {
-                    VStack {
-                        Spacer()
-                        responseControls
-                            .padding(20)
-                            .background(RoundedRectangle(cornerRadius: 16).fill(Color(white: 0.5).opacity(0.55)))
-                            .padding(.bottom, 28)
-                    }
-                }
-            }
-            .frame(width: geo.size.width, height: geo.size.height)
-            .task(id: state.currentTrial) { await renderStim(s: s, E: E) }
-        }
-    }
-
-    private func renderStim(s: CGFloat, E: CGFloat) async {
-        let spacing = CGFloat(state.crowdingB) * E
-        let scale = displayScale
-        let tilt = state.crowdingTiltSign
-        let fA = state.crowdingFlankerA, fB = state.crowdingFlankerB
-        let flankers = !state.crowdingIsCatch
-        let trial = state.currentTrial
-        let stim = await Task.detached(priority: .userInitiated) {
-            CrowdingRenderer.render(patchPt: s, spacingPt: spacing, tiltSign: tilt,
-                                    flankerA: fA, flankerB: fB, flankers: flankers, scale: scale)
-        }.value
-        if let stim { rendered = (trial, stim) }
-    }
-
-    private var responseControls: some View {
-        VStack(spacing: 12) {
-            Text("Which way does the middle patch lean?")
-                .font(.system(size: 15))
-                .foregroundStyle(fg)
-
-            HStack(spacing: 20) {
-                ResponseButton(label: "Leans left", icon: "arrow.left", theme: theme, colorScheme: .dark) {
-                    state.submitTilt(-1)
-                }
-                .keyboardShortcut(.leftArrow, modifiers: [])
-                ResponseButton(label: "Leans right", icon: "arrow.right", theme: theme, colorScheme: .dark) {
-                    state.submitTilt(1)
-                }
-                .keyboardShortcut(.rightArrow, modifiers: [])
-            }
-
-            Text("or press ← / →")
-                .font(.system(size: 11))
-                .foregroundStyle(fg.opacity(0.7))
-        }
-    }
-}
-
 // MARK: - Trial Phase
 
 private struct TrialPhase: View {
@@ -849,6 +703,7 @@ private struct TrialPhase: View {
         let patch: CGFloat
         let cyclesPerPoint: Double
         let sigma: Double                // σ = λ
+        let collinearSeparation: Double  // 3λ (Polat & Sagi)
     }
 
     private func metrics(for size: CGSize) -> Metrics {
@@ -857,7 +712,8 @@ private struct TrialPhase: View {
         let cyclesPerPatch = Self.cyclesPerPatch(forSF: state.sessionSF)
         let cpp = cyclesPerPatch / Double(patch)          // cycles per point
         let sigma = 1.0 / cpp                             // λ (σ = λ)
-        return Metrics(patch: patch, cyclesPerPoint: cpp, sigma: sigma)
+        return Metrics(patch: patch, cyclesPerPoint: cpp, sigma: sigma,
+                       collinearSeparation: 3.0 * sigma)
     }
 
     /// `sessionSF` is a nominal/relative spatial-frequency LEVEL (units are not
@@ -944,14 +800,30 @@ private struct TrialPhase: View {
         return FixationCross(length: len, thickness: max(len * 0.12, 1.5))
     }
 
-    /// One interval's flash. A faint aperture ring marks BOTH flash windows (so
-    /// the empty interval is perceptible) concentric with fixation; the target
-    /// interval also shows the Gabor centered inside it.
+    /// One interval's flash. Detection: a faint aperture ring marks BOTH flash
+    /// windows (so the empty interval is perceptible) concentric with fixation;
+    /// the target interval also shows the Gabor centered inside it. Flanker: the
+    /// two bold collinear flankers are present in both intervals and only the
+    /// faint center target differs.
+    @ViewBuilder
     private func interval(_ i: Int, _ m: Metrics) -> some View {
-        ZStack {
-            apertureRing(m)
-            if state.isTargetInterval(i) {
-                patch(m)
+        if state.exerciseType == .flanker {
+            CollinearGaborView(
+                size: m.patch,
+                targetContrast: state.isTargetInterval(i) ? state.staircase.currentContrast : 0,
+                flankerContrast: boldContrast,
+                spatialFrequencyCyclesPerPoint: m.cyclesPerPoint,
+                orientation: state.trialOrientation,
+                sigmaPoints: m.sigma,                 // σ = λ
+                separationPoints: m.collinearSeparation
+            )
+            .clipShape(Circle())
+        } else {
+            ZStack {
+                apertureRing(m)
+                if state.isTargetInterval(i) {
+                    patch(m)
+                }
             }
         }
     }
