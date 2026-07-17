@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		015614087E1362D0362B4424 /* FlowSensitivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDA291436352B986E47616EA /* FlowSensitivityView.swift */; };
 		017F4B24805044AE8FC20786 /* flow_nudge_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 979849D1DD8C9AC47889EB20 /* flow_nudge_sand_dark.png */; };
+		02750E3E893F9ED3B2D69004 /* GaborProgressSparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = E71DA069803E5C91CF710C87 /* GaborProgressSparkline.swift */; };
 		029B5C110DF8E16A5C64AB1D /* GaborExerciseSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D117D06FC441AD7EAF0DAF /* GaborExerciseSnapshotTests.swift */; };
 		07758E753C26D39C90846C3A /* settings_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = F167FA781B1C40BBCF2E0677 /* settings_peach_dark.png */; };
 		077E131A427314C522DE0D6B /* launch_hud_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 2D22AFDF295A8DB6102C3E23 /* launch_hud_midnight_light.png */; };
@@ -24,6 +25,7 @@
 		0F67D26D5B309F4CCACFC8DC /* onboarding_picker_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = D2DCF500902826311ABD9F61 /* onboarding_picker_midnight_dark.png */; };
 		0FEE1066FF8A7B430A2D0DF5 /* PermissionPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C52EC0F95A3EDFAEB7BF5EF /* PermissionPreviews.swift */; };
 		10276944C44E73570F2BA3C3 /* SettingsSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21FD11E9D68B96F023FC575A /* SettingsSnapshotTests.swift */; };
+		1066CB0AC8B8524310DE29F8 /* GaborExerciseState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E55AA4F9D3F6C46BB8F0D1 /* GaborExerciseState.swift */; };
 		106DD7BB4336A61EF22124B9 /* GaborExercisePreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF145F6FA9620208E8F61F12 /* GaborExercisePreviews.swift */; };
 		114C08EEC80D8DF96C725FF6 /* pane_appearance_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 0CBA58EACA7D667CAA24BE5C /* pane_appearance_light.png */; };
 		1197129CCBD90BA724BD0C4F /* research_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1FA52BA42B04BF1BE905DDA7 /* research_sand_dark.png */; };
@@ -69,6 +71,7 @@
 		27E97AAA1B3A6DC74190C659 /* flow_nudge_dark_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 5750B6CF063A073B2A341776 /* flow_nudge_dark_dark.png */; };
 		2845F667F94C074C586E91A6 /* pause_picker_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 3A654FBE5E8E912713669A7D /* pause_picker_peach_light.png */; };
 		285C0EFFE325468E346E69D5 /* MacInputMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 545B271DAD35F8C4FA3D7CCF /* MacInputMonitor.swift */; };
+		28CD5829CD2A90BE9AAE5BB3 /* BlinkTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0886829FB1518795A9E605C /* BlinkTheme.swift */; };
 		28E2B8080529B8AC0863F58C /* whats_new_stale_back_catalogue_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AA0C5D0153F85CBB2E797B0 /* whats_new_stale_back_catalogue_midnight_dark.png */; };
 		28E58DDE064ECF7397229824 /* flow_learn_more_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 7D82E84A031C6147E572EA96 /* flow_learn_more_peach_light.png */; };
 		2A0582A72A1AAB4740356223 /* WhyExistWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */; };
@@ -113,6 +116,7 @@
 		3C8412B0F8746398A791B8A8 /* menu_bar_simple_midnight_missing_im_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 5EBB032DBCE09F6615A42150 /* menu_bar_simple_midnight_missing_im_dark.png */; };
 		3D3AB8DA3F82E0DDD7B2E048 /* flow_nudge_sage_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 5FBD4C21F0CC6A17A64514A3 /* flow_nudge_sage_dark.png */; };
 		3EB31B4EA6B8209D4738F260 /* flow_learn_more_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = D1F5ED38AF48A90DD6AD0F4C /* flow_learn_more_peach_dark.png */; };
+		3EB4200321053FC229966AAF /* GaborDevMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0973061865A5E91D224AE4D6 /* GaborDevMain.swift */; };
 		3EF3ACD5936E4C2CB9E817BB /* countdown_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 49986524F7CA1A15B9A54025 /* countdown_sand_light.png */; };
 		3F3DF7ABD45386851002EF30 /* flow_nudge_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = C2B5274EAAC775A45BD421DD /* flow_nudge_mono_light.png */; };
 		402AB2A35B94E1884943DE7C /* why_exist_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 920C49960254BDD993740006 /* why_exist_peach_light.png */; };
@@ -125,6 +129,7 @@
 		42448895900DDEB11F5BE37B /* toast_dark_light.png in Resources */ = {isa = PBXBuildFile; fileRef = D531195EE1688A406E6D6925 /* toast_dark_light.png */; };
 		42A312A57295FDF5582306FF /* why_exist_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = CF45F967B8CB8EF80D2C83B8 /* why_exist_peach_dark.png */; };
 		42E3217149CAF5FF6E5873ED /* FlowLearnMorePreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 950FEEA7873F266C9905AA29 /* FlowLearnMorePreviews.swift */; };
+		432F1F6918A1D7F14C5CF0E7 /* GaborSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86936E2AA96EE4843F617808 /* GaborSessionStore.swift */; };
 		43C0F3D47AB0EB4609CC1F50 /* gabor_exercise_sage_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 29FDFB9AB9D3DC2554312A0C /* gabor_exercise_sage_light.png */; };
 		44796479B306A113DAE2C207 /* countdown_dark_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C26FEE808F6E2CB576566A5 /* countdown_dark_dark.png */; };
 		448AF90207B91EBE42C88ADA /* countdown_mono_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = D16C7B92E80F08A0AADB1F51 /* countdown_mono_dark.png */; };
@@ -233,6 +238,7 @@
 		87C4116EAF0237DB33DD22C0 /* im_rationale_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 6CA319CB74D3BB8C215E09AE /* im_rationale_midnight_light.png */; };
 		87C5F742C3E229EA824084E8 /* toast_sage_light.png in Resources */ = {isa = PBXBuildFile; fileRef = C6111A9C741C1F3DAE291116 /* toast_sage_light.png */; };
 		89797CEDFFCDE3D7F9553017 /* timer_extended_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 4EC28C81E5ACC36D09DAC725 /* timer_extended_sand_light.png */; };
+		89B693E456F8FF7973DAC308 /* GaborShader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 3DA3A8864D773786D377E0BB /* GaborShader.metal */; };
 		8A0E9BCB07ED512A558EF7E9 /* why_exist_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = F9BE1BDD86A974B9AA19245A /* why_exist_sand_light.png */; };
 		8A5722C195128F8BAD7F7823 /* menu_bar_paused_app_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 757ED24AFA08DC05895726C9 /* menu_bar_paused_app_midnight_dark.png */; };
 		8A8D7CECE3E84B127D07E3A1 /* menu_bar_paused_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 0E0C732214E32BE221D23080 /* menu_bar_paused_midnight_dark.png */; };
@@ -248,6 +254,7 @@
 		93A3C8145686B02C9F006AFB /* im_permission_stale_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 4FBFFDE4E75C52B431CACE1B /* im_permission_stale_peach_dark.png */; };
 		93B8AE8B744018E3A895F71D /* toast_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 122D2BBFC387864D21A12C30 /* toast_sand_light.png */; };
 		93F81E8FE41E928CE9C2DABF /* meeting_suggestion_toast_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 3D3A632827239D0AA62E7AA5 /* meeting_suggestion_toast_midnight_light.png */; };
+		9433772CEE5C799952D07C67 /* GaborDisplayConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7812EFC9F08563A52F81AA7 /* GaborDisplayConfig.swift */; };
 		951ED50EFDCF07392AEF3DDC /* timer_extended_sage_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 47F40C3E146DB8BEEE4BC324 /* timer_extended_sage_dark.png */; };
 		95E3FA0C258F598660CF2EF5 /* resume_toast_dark_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 56F2E1333063104C6B98CF4B /* resume_toast_dark_dark.png */; };
 		95E5B83122B9B82E1483F939 /* pane_general_light.png in Resources */ = {isa = PBXBuildFile; fileRef = EF697CFB0073213E65EC4B23 /* pane_general_light.png */; };
@@ -264,6 +271,7 @@
 		9FB38D71EB553CAA4C7B89FF /* whats_new_multiple_items_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 8FCC7DBA7BE593B335C6E842 /* whats_new_multiple_items_peach_light.png */; };
 		A0462C64DCADDC43FA97B6D1 /* ResearchWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F839D2575DE2B8C9F7F320B9 /* ResearchWindowController.swift */; };
 		A1BB70D39423C998F4D332C9 /* detection_choice_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = A95B2EBFE0B19EAB79AC39C4 /* detection_choice_peach_light.png */; };
+		A1D97D1FBE983A2F0A08D63E /* GaborExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */; };
 		A233F663E3A1DAADE4DB81C9 /* WhyExistPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E235E6FC3668A9A6898B7849 /* WhyExistPreviews.swift */; };
 		A29B3EE9F6A7C2C82F1E2187 /* mic_permission_sage_light.png in Resources */ = {isa = PBXBuildFile; fileRef = D7BAD6EB2D59593D1986AD33 /* mic_permission_sage_light.png */; };
 		A2C7F6B9D9A08815B02A8148 /* mic_permission_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1A4C6EB11A5E6A300433E000 /* mic_permission_peach_dark.png */; };
@@ -276,6 +284,7 @@
 		A65CCEFA53173F01A21361A1 /* im_permission_standard_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 3623FC422A5D80C91F4B198D /* im_permission_standard_peach_dark.png */; };
 		A65D70D858223B3EC3CC6FE5 /* whatsnew_card_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 0C9E38EBD30AEDF05C5500E0 /* whatsnew_card_dark.png */; };
 		A679A52978B3F946802C4448 /* MenuBarHelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A280E44E6940BC1469665B91 /* MenuBarHelpView.swift */; };
+		A69B6A87BB6EA11838451D2F /* GaborPatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 250F1BB8707DBE149C3AF60A /* GaborPatchView.swift */; };
 		A6AB611E022B953B141D75F7 /* pane_autoPause_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 4844D421519EDFAE8FFDB1C6 /* pane_autoPause_light.png */; };
 		A764B552A8C024B989E79757 /* SettingsPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 926B0463A25FAEDC0BE064A4 /* SettingsPreviews.swift */; };
 		A8DBF16B0DE1E28748259468 /* simple_announcement_active_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = C297E5B4123F547A89FF49DF /* simple_announcement_active_midnight_light.png */; };
@@ -356,12 +365,14 @@
 		D90B19BD79628E98A11290BB /* research_mono_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 863262D254A3D6519CC8DCF8 /* research_mono_dark.png */; };
 		D93489A1504C4DAD66481476 /* MicrophonePermissionPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 044D3385530F92D2BA15F90E /* MicrophonePermissionPage.swift */; };
 		D96089B8C75E04DBD4A793C4 /* research_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 263CBFF3F4CD2B04DD629A90 /* research_mono_light.png */; };
+		D96EF173ACD68DDD71901EE9 /* AdaptiveStaircase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06436D890269E4C851271B66 /* AdaptiveStaircase.swift */; };
 		DA48D8469AF493556C2B6C1F /* flow_sensitivity_page_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = F6947ADDAF9B5994F99C4370 /* flow_sensitivity_page_midnight_light.png */; };
 		DB7E09FA2ABFA1859109417C /* WhatsNewSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DCD6B51794BB63E51D81074 /* WhatsNewSnapshotTests.swift */; };
 		DD290A65EEF30F6BFDA1DB9C /* toast_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 1CF7FCF3155C01BD81BCD3B0 /* toast_peach_light.png */; };
 		DE00E2C7A53BB67FD75A8D0C /* why_exist_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = C3FF9499DF87E49B82E201A1 /* why_exist_sand_dark.png */; };
 		DE5BDA2DC244F80E4D05FDA7 /* BreakNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B15A88459421C77F80ACFC3 /* BreakNotificationManager.swift */; };
 		DE6A05D59D952A8A559001AB /* menu_bar_help_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = FA90704F3385ADA2F48DA348 /* menu_bar_help_peach_dark.png */; };
+		DE82317961C2DBF8C8BB37B5 /* GaborRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04C1C6827F429B94B7B265B /* GaborRenderer.swift */; };
 		DFB0303A5FE33D7F70B95556 /* GaborSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86936E2AA96EE4843F617808 /* GaborSessionStore.swift */; };
 		DFD356B6E8759B2CA71BFDA8 /* break_timer_getUp_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 8F8B43B02D3AD6D331DEED67 /* break_timer_getUp_midnight_dark.png */; };
 		E0F46FEB32D475426FF66166 /* break_timer_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = DC60496826E482E3128C2781 /* break_timer_mono_light.png */; };
@@ -437,6 +448,7 @@
 		06AF28268C456D45BC003C81 /* gabor_exercise_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_exercise_midnight_light.png; sourceTree = "<group>"; };
 		071B933F149E272633E33CFE /* simple_announcement_announce_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = simple_announcement_announce_peach_light.png; sourceTree = "<group>"; };
 		07EBBB7C793C0E00ECC02F4E /* meeting_paused_toast_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = meeting_paused_toast_peach_light.png; sourceTree = "<group>"; };
+		0973061865A5E91D224AE4D6 /* GaborDevMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborDevMain.swift; sourceTree = "<group>"; };
 		0B47EB8B7273BB95141192DE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0C9E38EBD30AEDF05C5500E0 /* whatsnew_card_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = whatsnew_card_dark.png; sourceTree = "<group>"; };
 		0CBA58EACA7D667CAA24BE5C /* pane_appearance_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pane_appearance_light.png; sourceTree = "<group>"; };
@@ -613,6 +625,7 @@
 		71AF16B93A94215233284E2E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		71C4B83C4A0ECE678FA93BCE /* pane_focus_locked_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pane_focus_locked_dark.png; sourceTree = "<group>"; };
 		71D6D5978A8C0721F9680A54 /* break_timer_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_timer_peach_light.png; sourceTree = "<group>"; };
+		7290D6CBDE4DA06402C0F835 /* GaborDev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GaborDev.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		735556FD7C06690A41EAEC8B /* pause_picker_sand_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pause_picker_sand_dark.png; sourceTree = "<group>"; };
 		740D1AA5D2999B2DC6F4AF46 /* BlinkUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkUpdater.swift; sourceTree = "<group>"; };
 		7443656269E67119020F9BD2 /* break_timer_sage_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_timer_sage_light.png; sourceTree = "<group>"; };
@@ -857,6 +870,14 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
+		2BDB6754B260EDBED2289ACB /* GaborDev */ = {
+			isa = PBXGroup;
+			children = (
+				0973061865A5E91D224AE4D6 /* GaborDevMain.swift */,
+			);
+			path = GaborDev;
+			sourceTree = "<group>";
+		};
 		57EF48B0C782CFEFFFE18294 /* Notifications */ = {
 			isa = PBXGroup;
 			children = (
@@ -1000,6 +1021,7 @@
 			children = (
 				A668A2BE284733E6CF606FC7 /* Blink */,
 				6D74E16DDB7CA36D75AEA683 /* BlinkSnapshotTests */,
+				2BDB6754B260EDBED2289ACB /* GaborDev */,
 				E370FA75E2B9CA960A6CB41D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -1090,6 +1112,7 @@
 			children = (
 				48431B2C296BDB92BF0BB93C /* Blink.app */,
 				8334922ADFE4C98CE1CF6D35 /* BlinkSnapshotTests.xctest */,
+				7290D6CBDE4DA06402C0F835 /* GaborDev.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1405,6 +1428,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		2F7A9D2FC60BAF9B5DDA099A /* GaborDev */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 26638566902D724330C4ABC8 /* Build configuration list for PBXNativeTarget "GaborDev" */;
+			buildPhases = (
+				C9C216D8D07676B54555DAAE /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GaborDev;
+			packageProductDependencies = (
+			);
+			productName = GaborDev;
+			productReference = 7290D6CBDE4DA06402C0F835 /* GaborDev.app */;
+			productType = "com.apple.product-type.application";
+		};
 		4F7B28CBF14815045A9B7C0C /* Blink */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9CDF5C024DE739BC28A35BFC /* Build configuration list for PBXNativeTarget "Blink" */;
@@ -1454,6 +1494,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
+					2F7A9D2FC60BAF9B5DDA099A = {
+						ProvisioningStyle = Manual;
+					};
 					4F7B28CBF14815045A9B7C0C = {
 						DevelopmentTeam = 6V6FZW3FFN;
 						ProvisioningStyle = Automatic;
@@ -1484,6 +1527,7 @@
 			targets = (
 				4F7B28CBF14815045A9B7C0C /* Blink */,
 				7226FE7A6D8511C87E6B2253 /* BlinkSnapshotTests */,
+				2F7A9D2FC60BAF9B5DDA099A /* GaborDev */,
 			);
 		};
 /* End PBXProject section */
@@ -1921,6 +1965,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C9C216D8D07676B54555DAAE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D96EF173ACD68DDD71901EE9 /* AdaptiveStaircase.swift in Sources */,
+				28CD5829CD2A90BE9AAE5BB3 /* BlinkTheme.swift in Sources */,
+				3EB4200321053FC229966AAF /* GaborDevMain.swift in Sources */,
+				9433772CEE5C799952D07C67 /* GaborDisplayConfig.swift in Sources */,
+				1066CB0AC8B8524310DE29F8 /* GaborExerciseState.swift in Sources */,
+				A1D97D1FBE983A2F0A08D63E /* GaborExerciseView.swift in Sources */,
+				A69B6A87BB6EA11838451D2F /* GaborPatchView.swift in Sources */,
+				02750E3E893F9ED3B2D69004 /* GaborProgressSparkline.swift in Sources */,
+				DE82317961C2DBF8C8BB37B5 /* GaborRenderer.swift in Sources */,
+				432F1F6918A1D7F14C5CF0E7 /* GaborSessionStore.swift in Sources */,
+				89B693E456F8FF7973DAC308 /* GaborShader.metal in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -2118,6 +2180,54 @@
 			};
 			name = Release;
 		};
+		B92F84E7A5A150968FBA3109 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.gabordev;
+				PRODUCT_NAME = GaborDev;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		CF136FC9BB1605822A68B9A8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.gabordev;
+				PRODUCT_NAME = GaborDev;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
 		F31BE749247DCA686B22646D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2149,6 +2259,15 @@
 			buildConfigurations = (
 				ACFF4EBC46D010A5CFBCEBF5 /* Debug */,
 				01A119BFF1E989B0A233C246 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		26638566902D724330C4ABC8 /* Build configuration list for PBXNativeTarget "GaborDev" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B92F84E7A5A150968FBA3109 /* Debug */,
+				CF136FC9BB1605822A68B9A8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
