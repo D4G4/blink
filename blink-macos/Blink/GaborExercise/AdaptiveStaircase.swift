@@ -34,8 +34,10 @@ final class AdaptiveStaircase: ObservableObject {
 
     /// - Parameters:
     ///   - startContrast: where the track begins (well above threshold).
-    ///   - initialLogStep: first step size in log10 units (0.15 ≈ ×1.41).
-    init(startContrast: Double = 0.5, initialLogStep: Double = 0.15) {
+    ///   - initialLogStep: first step size in log10 units (0.25 ≈ ×1.78). Large
+    ///     early steps descend to threshold fast; the step halves at each
+    ///     reversal for fine resolution once it is homing in.
+    init(startContrast: Double = 0.5, initialLogStep: Double = 0.25) {
         self.currentContrast = startContrast
         self.initialLogStep = initialLogStep
         self.logStep = initialLogStep

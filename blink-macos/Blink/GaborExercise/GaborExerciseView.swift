@@ -226,7 +226,7 @@ private struct InstructionsPhase: View {
                     .padding(.bottom, 36)
 
                 // Explanation card
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .center, spacing: 22) {
                     demoSection
                     Divider().background(fg.opacity(0.15))
                     instructionSection("How to play", "hand.tap", state.exerciseType.howToPlay)
@@ -273,11 +273,9 @@ private struct InstructionsPhase: View {
         }
     }
 
-    /// One titled section of the instructions card. `.fixedSize(vertical)` lets
-    /// the body text wrap to its full height instead of truncating to one line
-    /// when the column is height-constrained.
+    /// One titled section of the instructions card, centered.
     private func instructionSection(_ title: String, _ icon: String, _ text: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .center, spacing: 10) {
             Label(title, systemImage: icon)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(fg)
@@ -285,16 +283,17 @@ private struct InstructionsPhase: View {
                 .font(.system(size: 14))
                 .foregroundStyle(fg)
                 .lineSpacing(4)
+                .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity)
     }
 
     /// A labelled two-panel example of one trial — one flash holds the pattern,
     /// the other is plain gray — so you know what to look for before the real
     /// (fainter, briefer) stimulus.
     private var demoSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .center, spacing: 12) {
             Label("What you'll see", systemImage: "eye")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(fg)
@@ -303,15 +302,15 @@ private struct InstructionsPhase: View {
                 demoFlash(label: "First flash", hasTarget: true)
                 demoFlash(label: "Second flash", hasTarget: false)
             }
-            .frame(maxWidth: .infinity)
 
             Text(demoCaption)
                 .font(.system(size: 13))
                 .foregroundStyle(fg.opacity(0.85))
                 .lineSpacing(3)
+                .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity)
     }
 
     private var demoCaption: String {
@@ -370,7 +369,7 @@ private struct TrialPhase: View {
     // Per-session render parameters derived from the session's spatial frequency.
     private var patchSize: CGFloat { config.patchPointSize }
     private var cyclesPerPoint: Double { config.cyclesPerPoint(forCPD: state.sessionSF) }
-    private var sigma: Double { config.sigmaPoints(forCPD: state.sessionSF) }
+    private var sigma: Double { 1.0 / cyclesPerPoint }   // σ = λ (Camilleri 2014 convention)
 
     /// High-contrast flankers / mask.
     private let boldContrast: Double = 0.9
@@ -395,16 +394,27 @@ private struct TrialPhase: View {
 
             Spacer()
 
-            // Stimulus sits on the mid-gray field (matched to the patch's mean
-            // luminance), so its Gaussian-tapered edges blend in with no
-            // visible disc or aperture.
-            ZStack {
-                stimulusForStage
-                    .opacity(feedbackCorrect != nil ? 0.4 : 1.0)
+            // Stimulus sits on the mid-gray field in a FIXED-SIZE box so the
+            // fixation cross, the patch, and the mask all share one exact
+            // center — otherwise the small cross and the large patch land at
+            // different centers and the fixation point appears to jump.
+            VStack(spacing: 14) {
+                ZStack {
+                    stimulusForStage
+                        .opacity(feedbackCorrect != nil ? 0.4 : 1.0)
 
-                if let correct = feedbackCorrect {
-                    FeedbackOverlay(correct: correct)
+                    if let correct = feedbackCorrect {
+                        FeedbackOverlay(correct: correct)
+                    }
                 }
+                .frame(width: patchSize, height: patchSize)
+
+                // Which flash is showing — in a fixed-height slot so the box
+                // above never shifts as it appears/disappears.
+                Text(intervalMarker)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(fg.opacity(0.55))
+                    .frame(height: 20)
             }
 
             Spacer()
@@ -458,7 +468,6 @@ private struct TrialPhase: View {
             } else {
                 centerPatch(showTarget: state.isTargetInterval(i))
             }
-            intervalLabel(i)
         }
     }
 
@@ -480,11 +489,11 @@ private struct TrialPhase: View {
     private var collinearSigma: Double { 1.0 / cyclesPerPoint }        // σ = λ
     private var collinearSeparation: Double { 3.0 / cyclesPerPoint }   // 3λ
 
-    private func intervalLabel(_ i: Int) -> some View {
-        Text("\(i)")
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(fg.opacity(0.55))
-            .offset(y: patchSize * 0.5 + 20)
+    /// "1"/"2" while a flash is showing; a blank space otherwise so its
+    /// fixed-height slot never changes the layout.
+    private var intervalMarker: String {
+        if case .interval(let i) = state.stage { return "\(i)" }
+        return " "
     }
 
     // MARK: Response

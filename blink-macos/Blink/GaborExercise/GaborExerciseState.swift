@@ -101,10 +101,9 @@ final class GaborExerciseState: ObservableObject {
     // MARK: - Timing constants (milliseconds)
 
     static let fixationMs = 500
-    /// A single clear flash. The default flow has NO backward mask (simpler, and
-    /// matches Camilleri's single-Gabor detection — the better fit for a general
-    /// audience), so the flash can be a calm, clearly-perceptible duration.
-    static let flashMs = 250
+    /// Single-Gabor detection with NO backward mask — the Camilleri (2014)
+    /// convention: 200 ms flash, σ = λ, 1-up/3-down staircase.
+    static let flashMs = 200
     static let interIntervalGapMs = 500
     // Reserved for a future "processing-speed" advanced mode that re-adds the
     // backward mask (the gaborMask shader / GaborMaskView still exist):
@@ -158,11 +157,12 @@ final class GaborExerciseState: ObservableObject {
 
         // Carry difficulty forward: start ~3x above the last threshold measured
         // for this exercise + SF, so the staircase doesn't re-descend from
-        // scratch every session. The cap/first-session value is high (0.85) on
-        // purpose — the pattern should be obvious at the start so you learn what
-        // to look for; the staircase brings it down as you succeed.
+        // scratch every session. First session starts at 0.4 (clearly visible
+        // but not trivially bold) with a large initial staircase step, so it
+        // reaches genuine near-threshold difficulty within a few trials rather
+        // than a long easy warm-up.
         let lastT = GaborSessionStore.shared.lastThreshold(forExercise: exerciseType.rawValue, sf: sessionSF)
-        let start = lastT.map { min(0.85, $0 * 3.0) } ?? 0.85
+        let start = lastT.map { min(0.4, $0 * 3.0) } ?? 0.4
         staircase.reset(startContrast: start)
 
         generateTrial()
