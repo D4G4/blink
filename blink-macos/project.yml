@@ -35,6 +35,13 @@ schemes:
         - BlinkSnapshotTests
     archive:
       config: Release
+  # Dev-only harness that launches straight into the Gabor exercise UI.
+  GaborDev:
+    build:
+      targets:
+        GaborDev: all
+    run:
+      config: Debug
 
 targets:
   Blink:
@@ -139,3 +146,35 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 6V6FZW3FFN
         ENABLE_APP_SANDBOX: false
+
+  # Dev-only harness app: boots directly into the Gabor exercise UI so it can
+  # be launched and clicked through without the menu bar, onboarding, or
+  # permissions. Compiles ONLY the GaborExercise files + BlinkTheme (no
+  # BlinkCore/Sparkle/AppState), so it builds fast and stays isolated. Not
+  # signed for distribution; never referenced by the release build.
+  GaborDev:
+    type: application
+    platform: macOS
+    sources:
+      - GaborDev
+      # GaborExerciseWindowController pulls in app-wide symbols (UIActionLogger)
+      # and isn't needed — the dev app makes its own WindowGroup.
+      - path: Blink/GaborExercise
+        excludes:
+          - GaborExerciseWindowController.swift
+      - path: Blink/Theme/BlinkTheme.swift
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: com.blink20.gabordev
+        PRODUCT_NAME: GaborDev
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        # Dev-only harness: ad-hoc sign ("-") so it runs locally without a
+        # Developer ID / Mac Development certificate. Never distributed.
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_APP_SANDBOX: false
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.developer-tools"

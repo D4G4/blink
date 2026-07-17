@@ -7,6 +7,9 @@ struct GaborSessionRecord: Codable {
     let correctCount: Int
     let contrastThreshold: Double?
     let durationSeconds: TimeInterval
+    /// Session spatial frequency (cycles/deg). Optional so records written
+    /// before multi-SF sessions still decode.
+    var spatialFrequency: Double? = nil
 }
 
 /// Persists Gabor exercise session records as JSON in Application Support.
@@ -70,6 +73,29 @@ final class GaborSessionStore {
             .filter { $0.exerciseType == exerciseType }
             .compactMap { $0.contrastThreshold }
             .min()
+    }
+
+    /// Most recent measured threshold for a given exercise at a given spatial
+    /// frequency — used to carry difficulty forward between sessions.
+    func lastThreshold(forExercise exerciseType: String, sf: Double) -> Double? {
+        loadAll()
+            .filter { $0.exerciseType == exerciseType && $0.spatialFrequency == sf }
+            .sorted { $0.date < $1.date }
+            .compactMap { $0.contrastThreshold }
+            .last
+    }
+
+    /// Chronological threshold history for an exercise (across all SFs), for the
+    /// progress trend. Returns (date, threshold) pairs, oldest first.
+    func thresholdHistory(forExercise exerciseType: String, limit: Int = 20) -> [(date: Date, threshold: Double)] {
+        let pairs = loadAll()
+            .filter { $0.exerciseType == exerciseType }
+            .sorted { $0.date < $1.date }
+            .compactMap { rec -> (date: Date, threshold: Double)? in
+                guard let t = rec.contrastThreshold else { return nil }
+                return (rec.date, t)
+            }
+        return Array(pairs.suffix(limit))
     }
 
     // MARK: - Helpers
