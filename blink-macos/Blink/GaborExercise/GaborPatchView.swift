@@ -82,7 +82,7 @@ struct GaborPatchView: View {
 
     private func patch(phase: Double, contrast: Double) -> some View {
         Rectangle()
-            .fill(Color(white: 0.5))
+            .fill(Color(white: GaborDisplayConfig.meanLuminanceGray))
             .frame(width: size, height: size)
             .colorEffect(
                 ShaderLibrary.gaborPatch(
@@ -114,7 +114,7 @@ struct GaborMaskView: View {
 
     var body: some View {
         Rectangle()
-            .fill(Color(white: 0.5))
+            .fill(Color(white: GaborDisplayConfig.meanLuminanceGray))
             .frame(width: size, height: size)
             .colorEffect(
                 ShaderLibrary.gaborMask(
@@ -148,7 +148,7 @@ struct CollinearGaborView: View {
 
     var body: some View {
         Rectangle()
-            .fill(Color(white: 0.5))
+            .fill(Color(white: GaborDisplayConfig.meanLuminanceGray))
             .frame(width: size, height: size)
             .colorEffect(
                 ShaderLibrary.gaborCollinear(

@@ -69,17 +69,30 @@ final class AdaptiveStaircase: ObservableObject {
         lastDirection = direction
     }
 
-    /// Geometric-mean threshold over the settled reversals (first one dropped,
-    /// last 6 kept). `nil` until at least two reversals exist.
+    /// Reversals to discard before averaging — the early turnarounds are taken
+    /// at the large, still-halving step and sit far above the settled threshold,
+    /// so folding them in biases the estimate high (García-Pérez 1998; Levitt
+    /// 1971). Only reversals from here on are near the final minLogStep.
+    private let discardReversals = 2
+    /// Minimum settled reversals before a threshold is trustworthy enough to show.
+    private let minSettledReversals = 4
+
+    /// Geometric-mean contrast threshold over the SETTLED reversals: the first
+    /// `discardReversals` (coarse-step) turnarounds are dropped and up to the
+    /// last 8 of the remainder are averaged in the log domain. Returns `nil`
+    /// until at least `minSettledReversals` settled reversals exist, so a noisy
+    /// early estimate is never reported as a threshold.
     func threshold() -> Double? {
-        guard reversals.count >= 2 else { return nil }
-        let settled = Array(reversals.dropFirst().suffix(6))
-        guard !settled.isEmpty else { return nil }
-        let meanLog = settled.map { log10($0) }.reduce(0, +) / Double(settled.count)
+        let settled = reversals.dropFirst(discardReversals)
+        guard settled.count >= minSettledReversals else { return nil }
+        let used = Array(settled.suffix(8))
+        let meanLog = used.map { log10($0) }.reduce(0, +) / Double(used.count)
         return pow(10.0, meanLog)
     }
 
     var reversalCount: Int { reversals.count }
+    /// Whether enough settled reversals have accrued for `threshold()` to report.
+    var hasSettledThreshold: Bool { reversals.count >= discardReversals + minSettledReversals }
 
     /// Reset the track. `startContrast` lets a session begin near the previous
     /// session's threshold (with headroom) instead of always at 0.5, so the

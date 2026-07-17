@@ -6,13 +6,20 @@ enum ExerciseType: String, CaseIterable, Identifiable {
     case detection = "Spot the Flash"
     /// Advanced: same task with two bold collinear flankers bracketing the target.
     case flanker = "Flanker Focus"
+    /// Contour integration: find a closed loop of aligned Gabors hidden in noise.
+    case contour = "Trace the Shape"
 
     var id: String { rawValue }
+
+    /// Contour is a single-presentation GROUPING task (not the temporal two-
+    /// interval detection flow the other two share).
+    var isContour: Bool { self == .contour }
 
     var icon: String {
         switch self {
         case .detection: "sparkle.magnifyingglass"
         case .flanker: "circle.grid.3x3"
+        case .contour: "circle.dashed"
         }
     }
 
@@ -22,6 +29,18 @@ enum ExerciseType: String, CaseIterable, Identifiable {
             "Which flash held the pattern?"
         case .flanker:
             "Focus through bold distractions"
+        case .contour:
+            "Which way does the hidden loop point?"
+        }
+    }
+
+    /// One-line "what it trains", short enough for a picker card so you can
+    /// choose by benefit. Honest wellness framing (see `benefit`).
+    var shortBenefit: String {
+        switch self {
+        case .detection: "Trains faint-detail (contrast) vision"
+        case .flanker:   "Trains seeing past nearby clutter"
+        case .contour:   "Trains grouping shapes out of noise"
         }
     }
 
@@ -31,6 +50,8 @@ enum ExerciseType: String, CaseIterable, Identifiable {
             "Two brief flashes, one after the other. Only one holds a faint striped pattern; the other is plain gray. Spot which flash had it."
         case .flanker:
             "Like Spot the Flash, but two bold striped patches bracket the center of both flashes. Only one flash also hides a faint pattern between them."
+        case .contour:
+            "A screen fills with tiny striped patches pointing every which way. Hidden among them, about sixteen line up into a closed loop shaped like an egg with one pointed end."
         }
     }
 
@@ -40,6 +61,8 @@ enum ExerciseType: String, CaseIterable, Identifiable {
             "Watch both flashes, then choose First or Second — whichever held the pattern."
         case .flanker:
             "Ignore the two bold patches. Choose First or Second — whichever flash held the faint center pattern."
+        case .contour:
+            "Look for the patches that line up into a smooth closed outline — a dotted egg with one pointed end — while the rest point at random. Choose Left or Right for the way the point faces. It's clear at first and hides more each round; if you truly can't find it, just guess."
         }
     }
 
@@ -49,9 +72,11 @@ enum ExerciseType: String, CaseIterable, Identifiable {
     var benefit: String {
         switch self {
         case .detection:
-            "Exercises your contrast sensitivity — seeing faint, low-contrast detail. A wellness activity done little-and-often, not a medical treatment; results vary."
+            "Trains contrast sensitivity — spotting faint, low-contrast detail, the vision you lean on for dim text, fog, night driving, or a dark screen. A wellness activity done little-and-often, not a medical treatment; results vary."
         case .flanker:
-            "Exercises pulling a faint target out of nearby clutter (lateral masking). A wellness activity, not a medical treatment; benefits build slowly."
+            "Trains seeing a target clearly when it's hemmed in by nearby clutter (lateral masking) — the skill behind reading crowded text or picking one thing out of a busy scene. A wellness activity, not a medical treatment; benefits build slowly."
+        case .contour:
+            "Trains visual grouping — your brain's knack for linking scattered edges into one whole shape (the 'good continuation' you use to follow a line on a graph or pick an object out of clutter). The patches are bold, not faint, so this isn't about faint-detail vision. A wellness activity, not a medical treatment; benefits build slowly and vary."
         }
     }
 }
@@ -60,6 +85,7 @@ enum ExercisePhase {
     case disclaimer
     case ready
     case instructions
+    case science
     case presenting
     case feedback(correct: Bool)
     case complete
@@ -74,6 +100,8 @@ enum TrialStage: Equatable {
     case mask(Int)
     case gap
     case response
+    /// Contour exercise: the full noise+contour field is displayed.
+    case field
 }
 
 /// Drives a Gabor exercise session — manages trials, scoring, and the adaptive staircase.
@@ -98,17 +126,30 @@ final class GaborExerciseState: ObservableObject {
     /// rotating between sessions to avoid within-session roving.
     @Published var sessionSF: Double = 3.0
 
+    // Contour exercise per-trial state (single-presentation grouping task).
+    /// Which way the hidden loop's pinched end faces — the answer.
+    @Published var contourFacing: ContourFacing = .right
+    /// Orientation jitter Δβ (radians) applied to the contour this trial.
+    @Published var contourJitterRad: Double = 0
+    /// Per-trial RNG seed, so the field is stable within a trial.
+    @Published var contourSeed: UInt64 = 1
+    /// Δβ staircase for the contour exercise.
+    let contourStaircase = ContourStaircase()
+
     // MARK: - Timing constants (milliseconds)
 
     static let fixationMs = 500
     /// Single-Gabor detection with NO backward mask — the Camilleri (2014)
-    /// convention: 200 ms flash, σ = λ, 1-up/3-down staircase.
+    /// unmasked convention: 200 ms flash, σ = λ, 1-up/3-down staircase. A masked
+    /// "processing-speed" mode (40 ms target + plaid mask at a staircased SOA)
+    /// is a distinct future mode; the `gaborMask` shader / `GaborMaskView` /
+    /// `.mask` stage are parked for it but are NOT wired into the trial sequence.
     static let flashMs = 200
     static let interIntervalGapMs = 500
-    // Reserved for a future "processing-speed" advanced mode that re-adds the
-    // backward mask (the gaborMask shader / GaborMaskView still exist):
-    static let maskISIMs = 180
-    static let maskMs = 120
+    /// Contour: how long the field shows before the Left/Right buttons appear
+    /// (the field stays visible during the response — a gentle wellness variant
+    /// of the ~1 s single presentation).
+    static let contourLookMs = 900
 
     /// Spatial frequencies (cycles/deg) rotated one-per-session.
     static let trainingSFs: [Double] = [1.5, 3.0, 6.0]
@@ -145,10 +186,22 @@ final class GaborExerciseState: ObservableObject {
         phase = .instructions
     }
 
+    func showScience() {
+        phase = .science
+    }
+
     func startExercise() {
         currentTrial = 0
         score = 0
         sessionStart = Date()
+
+        if exerciseType.isContour {
+            // Contour grouping task: start at Δβ = 0° (the loop is obvious) as a
+            // warm-up, then the staircase raises the jitter into threshold.
+            contourStaircase.reset(start: 0)
+            generateTrial()
+            return
+        }
 
         // Pick this session's spatial frequency, then advance the rotation.
         let idx = UserDefaults.standard.integer(forKey: Self.sfRotationKey)
@@ -171,6 +224,18 @@ final class GaborExerciseState: ObservableObject {
     func generateTrial() {
         trialTask?.cancel()
         currentTrial += 1
+
+        if exerciseType.isContour {
+            contourFacing = Bool.random() ? .left : .right
+            contourJitterRad = contourStaircase.jitterRad
+            // Vary the field (distractor arrangement) each trial.
+            contourSeed = UInt64(currentTrial) &* 0x9E3779B97F4A7C15 &+ 0x1234_5678
+            stage = .field
+            phase = .presenting
+            runContourSequence()
+            return
+        }
+
         targetInterval = Int.random(in: 1...2)
         trialOrientation = Double.random(in: 0..<(.pi))
         // Reset the stage synchronously before entering .presenting, so a render
@@ -179,6 +244,29 @@ final class GaborExerciseState: ObservableObject {
         stage = .fixation
         phase = .presenting
         runTrialSequence()
+    }
+
+    /// Contour: show the field, then reveal the Left/Right buttons (field stays).
+    private func runContourSequence() {
+        trialTask = Task { @MainActor [weak self] in
+            self?.stage = .field
+            try? await Task.sleep(for: .milliseconds(Self.contourLookMs))
+            if Task.isCancelled { return }
+            self?.stage = .response
+        }
+    }
+
+    /// Submit the contour answer — which way the loop's pinched end faces.
+    func submitContourResponse(_ facing: ContourFacing) {
+        guard exerciseType.isContour, case .presenting = phase, case .response = stage else { return }
+        let correct = facing == contourFacing
+        if correct { score += 1 }
+        contourStaircase.record(correct: correct)
+        phase = .feedback(correct: correct)
+        feedbackTimer?.invalidate()
+        feedbackTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            self?.advanceAfterFeedback()
+        }
     }
 
     /// Runs the timed flash sequence on the main actor, checking for
@@ -237,17 +325,38 @@ final class GaborExerciseState: ObservableObject {
 
     func saveSession() {
         let duration = sessionStart.map { Date().timeIntervalSince($0) } ?? 0
+        // For contour the "threshold" is the Δβ jitter tolerance (degrees) and
+        // there is no spatial frequency; it reuses the same record fields.
         let record = GaborSessionRecord(
             date: Date(),
             exerciseType: exerciseType.rawValue,
             trialCount: currentTrial,
             correctCount: score,
-            contrastThreshold: staircase.threshold(),
+            contrastThreshold: exerciseType.isContour ? contourStaircase.threshold() : staircase.threshold(),
             durationSeconds: duration,
-            spatialFrequency: sessionSF
+            spatialFrequency: exerciseType.isContour ? nil : sessionSF
         )
         GaborSessionStore.shared.save(record)
     }
+
+    // MARK: - Complete-screen metrics (per exercise)
+
+    /// Label for the primary threshold metric on the results screen.
+    var primaryMetricLabel: String {
+        exerciseType.isContour ? "Jitter tolerance" : "Contrast threshold"
+    }
+
+    /// Value for the primary threshold metric.
+    var primaryMetricValue: String {
+        if exerciseType.isContour {
+            if let d = contourStaircase.threshold() { return String(format: "±%.0f°", d) }
+            return "—"
+        }
+        return thresholdDisplay
+    }
+
+    /// Contour has no spatial-frequency row; the flash tasks do.
+    var showsSpatialFrequency: Bool { !exerciseType.isContour }
 
     /// Save partial results and reset for a clean state.
     func cancelSession() {
@@ -292,10 +401,17 @@ final class GaborExerciseState: ObservableObject {
         interval == targetInterval
     }
 
-    /// Session spatial frequency for display, e.g. "1.5 cpd", "3 cpd".
+    /// Session spatial-frequency LEVEL for display. Not labelled in cycles/deg:
+    /// without a measured viewing distance and display size, cpd is not
+    /// calibrated (see "The science"). The carrier is set as a fixed number of
+    /// cycles across a screen-proportional patch, so what actually varies
+    /// between sessions is the stripe fineness — reported here as a relative
+    /// level rather than a false photometric number.
     var sessionSFDisplay: String {
-        sessionSF == sessionSF.rounded()
-            ? "\(Int(sessionSF)) cpd"
-            : "\(sessionSF) cpd"
+        switch sessionSF {
+        case ..<2.0: return "Low (coarse stripes)"
+        case ..<4.5: return "Medium"
+        default:     return "High (fine stripes)"
+        }
     }
 }

@@ -11,6 +11,7 @@
 		017F4B24805044AE8FC20786 /* flow_nudge_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 979849D1DD8C9AC47889EB20 /* flow_nudge_sand_dark.png */; };
 		02750E3E893F9ED3B2D69004 /* GaborProgressSparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = E71DA069803E5C91CF710C87 /* GaborProgressSparkline.swift */; };
 		029B5C110DF8E16A5C64AB1D /* GaborExerciseSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D117D06FC441AD7EAF0DAF /* GaborExerciseSnapshotTests.swift */; };
+		05C8C24D9BA91AD4FFCE12F7 /* gabor_trial_fixation.png in Resources */ = {isa = PBXBuildFile; fileRef = A7E625BB9106A07FCA05C42B /* gabor_trial_fixation.png */; };
 		07758E753C26D39C90846C3A /* settings_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = F167FA781B1C40BBCF2E0677 /* settings_peach_dark.png */; };
 		077E131A427314C522DE0D6B /* launch_hud_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 2D22AFDF295A8DB6102C3E23 /* launch_hud_midnight_light.png */; };
 		0985FF512D39F5D7786566FB /* im_permission_stale_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 896781B613A4E9562DAA8010 /* im_permission_stale_sand_light.png */; };
@@ -28,6 +29,7 @@
 		1066CB0AC8B8524310DE29F8 /* GaborExerciseState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E55AA4F9D3F6C46BB8F0D1 /* GaborExerciseState.swift */; };
 		106DD7BB4336A61EF22124B9 /* GaborExercisePreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF145F6FA9620208E8F61F12 /* GaborExercisePreviews.swift */; };
 		114C08EEC80D8DF96C725FF6 /* pane_appearance_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 0CBA58EACA7D667CAA24BE5C /* pane_appearance_light.png */; };
+		117314FCAEB2AB809EE14C31 /* gabor_instructions_detection.png in Resources */ = {isa = PBXBuildFile; fileRef = 9879BB51B3469A708BA7DAF7 /* gabor_instructions_detection.png */; };
 		1197129CCBD90BA724BD0C4F /* research_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1FA52BA42B04BF1BE905DDA7 /* research_sand_dark.png */; };
 		120656A97CE5723B38F61A5F /* im_permission_stale_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E47101DE9439F2AA4AD4EBA7 /* im_permission_stale_mono_light.png */; };
 		12C7B778D74068EA839220C6 /* flow_sensitivity_settings_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 1E2637452EFECC7AB9CC0487 /* flow_sensitivity_settings_midnight_light.png */; };
@@ -45,6 +47,7 @@
 		1806278F1AD4B66E2C165D48 /* flow_sensitivity_settings_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = F8B5D32E5C40F46BC6326FEA /* flow_sensitivity_settings_sand_light.png */; };
 		18FC72DC3CE2CA4762FB4712 /* flow_nudge_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 30121397DABA4A607FE50F47 /* flow_nudge_sand_light.png */; };
 		1937110DCEF04D38ACC16AD5 /* break_timer_touchGrass_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = A656363543EA37A4423C449A /* break_timer_touchGrass_midnight_dark.png */; };
+		193B5425B051481975641D52 /* gabor_trial_gap.png in Resources */ = {isa = PBXBuildFile; fileRef = 7285635F54C7975457E844A5 /* gabor_trial_gap.png */; };
 		19EA05FBA30BECC7BFA02C69 /* UIActionLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0FF6DFB2A34886365FDFBEE /* UIActionLogger.swift */; };
 		1B2D8171F6332961BAB81044 /* pane_focus_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 17DF6F7B0271C10F09B58C8F /* pane_focus_light.png */; };
 		1BB8F112BA1F2D463757D0E8 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB2FCB3D4A937B4DF52593C /* AppState.swift */; };
@@ -208,6 +211,7 @@
 		72570C0C40040759FE52FBDF /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D286D81AEFFC707C40AF416D /* MenuBarView.swift */; };
 		7285C5F34941F649E47E9569 /* GaborExerciseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC027CA056DB931F2C54FF99 /* GaborExerciseTests.swift */; };
 		72C9CD067ADBFB360C1A751D /* resume_toast_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 9570C84F5501FCBF3446A28C /* resume_toast_sand_dark.png */; };
+		7335E15950C758AF79723C0E /* gabor_trial_feedback_correct.png in Resources */ = {isa = PBXBuildFile; fileRef = 5C6BF8091B39E74246B82F8A /* gabor_trial_feedback_correct.png */; };
 		737A6C4EC5960568A72D2821 /* simple_announcement_active_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 2DA5DFEF838EDCD58A54CCA3 /* simple_announcement_active_midnight_dark.png */; };
 		73CC61B7191A8AE65D1BC556 /* settings_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 58078BA61C96DCC88F67C1A7 /* settings_mono_light.png */; };
 		74F1DE20685F1D97CFB0C8D0 /* menu_bar_paused_app_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C331432191295E3F8D79324 /* menu_bar_paused_app_peach_dark.png */; };
@@ -228,13 +232,16 @@
 		7CFFEE1FC3312383D4570718 /* SimpleModeAnnouncementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87819193A576EABBEECAEC50 /* SimpleModeAnnouncementView.swift */; };
 		7D233C03212E195C2A96AAA8 /* ResearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */; };
 		7DC3EB979553B9261A042FE5 /* im_permission_standard_sage_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 80195DCC491A47DA7C93486C /* im_permission_standard_sage_light.png */; };
+		7DFC35F11DE33EB45B8C2D15 /* gabor_trial_complete.png in Resources */ = {isa = PBXBuildFile; fileRef = 14FAD1B09CCF89F8E95ED1A0 /* gabor_trial_complete.png */; };
 		7DFE8AE436BEE1CAF33F6991 /* toast_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = ADE72A40FB9E450832EDEFCD /* toast_midnight_dark.png */; };
 		7EA5BE55927AABED383F2D04 /* simple_announcement_announce_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = D1F69BEBFB6EE53148F112A2 /* simple_announcement_announce_peach_dark.png */; };
+		7F0960423AC17EED5F1DA163 /* GaborContourField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99D967B0EF4612B0F56C15B8 /* GaborContourField.swift */; };
 		7FEFD639132B172938568FBA /* pane_breaks_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = A48092D8434D97BDD062822C /* pane_breaks_dark.png */; };
 		814920965E9D559257443659 /* launch_hud_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 4116DC6072699D553B36A131 /* launch_hud_midnight_dark.png */; };
 		82E41427CA99FF1D19DF0DCF /* menu_bar_simple_midnight_deliberate_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 6DFECD929671B302B8D070F7 /* menu_bar_simple_midnight_deliberate_light.png */; };
 		831192192409F43CC392D159 /* break_timer_takeAWalk_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 3B8E55CAB36D746D98E50D66 /* break_timer_takeAWalk_peach_light.png */; };
 		84123B319E018DF9164E70CE /* im_permission_standard_mono_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 038921F3B6630FA94376E341 /* im_permission_standard_mono_dark.png */; };
+		84C11AE4F185AEE70551E5D6 /* gabor_trial_empty_flash.png in Resources */ = {isa = PBXBuildFile; fileRef = 00DA87DD0D861006434E7D44 /* gabor_trial_empty_flash.png */; };
 		8528BDFC2A56DA19317892E4 /* meeting_paused_toast_dark_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = CEC9E063B300F3C79C2DE97B /* meeting_paused_toast_dark_dark.png */; };
 		86F9E51075E2656748234A67 /* research_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = DDBCA1CEE7BF14F25BA20A19 /* research_midnight_light.png */; };
 		87C4116EAF0237DB33DD22C0 /* im_rationale_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 6CA319CB74D3BB8C215E09AE /* im_rationale_midnight_light.png */; };
@@ -262,6 +269,7 @@
 		95E5B83122B9B82E1483F939 /* pane_general_light.png in Resources */ = {isa = PBXBuildFile; fileRef = EF697CFB0073213E65EC4B23 /* pane_general_light.png */; };
 		96677541FE3A222392DF5984 /* gabor_exercise_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 035A7B7773E213D38194836A /* gabor_exercise_peach_dark.png */; };
 		975E91C770BD55BE5FF2D26C /* settings_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = AFCA932ACA94A741134F21E0 /* settings_midnight_dark.png */; };
+		9800EB9EB9E7224B7EFB8A51 /* gabor_science.png in Resources */ = {isa = PBXBuildFile; fileRef = 8059694190B1F8DBFE74FC21 /* gabor_science.png */; };
 		998C794E543313B53C783A15 /* InputMonitoringRationaleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841399F648DE043BE5C3E12E /* InputMonitoringRationaleView.swift */; };
 		9B60B27F36D623303648DC2B /* flow_nudge_dark_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 993485451F0B1638E7EE3169 /* flow_nudge_dark_light.png */; };
 		9D0FC9FB9F66FD14FAF45C25 /* gabor_exercise_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 06AF28268C456D45BC003C81 /* gabor_exercise_midnight_light.png */; };
@@ -271,6 +279,7 @@
 		9EBA50E12C5D71E0EA2F93E7 /* im_permission_stale_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 440E357BDCF5160381F71C75 /* im_permission_stale_peach_light.png */; };
 		9F0CE1946691CF2FE32D1528 /* GaborRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04C1C6827F429B94B7B265B /* GaborRenderer.swift */; };
 		9FB38D71EB553CAA4C7B89FF /* whats_new_multiple_items_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 8FCC7DBA7BE593B335C6E842 /* whats_new_multiple_items_peach_light.png */; };
+		9FBF00D10BE34B43C89AC2E3 /* GaborContourTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B65851B5E097C7D7BE91C999 /* GaborContourTests.swift */; };
 		A0462C64DCADDC43FA97B6D1 /* ResearchWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F839D2575DE2B8C9F7F320B9 /* ResearchWindowController.swift */; };
 		A1BB70D39423C998F4D332C9 /* detection_choice_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = A95B2EBFE0B19EAB79AC39C4 /* detection_choice_peach_light.png */; };
 		A1D97D1FBE983A2F0A08D63E /* GaborExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */; };
@@ -311,6 +320,8 @@
 		B5AEE8CC84A8C5A9C91867F3 /* flow_nudge_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 5824198DDEA309E707D23336 /* flow_nudge_midnight_dark.png */; };
 		B67642DD9E0A5AB257F988B4 /* countdown_sage_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 4AE1F72B9B3EE55FBF310BAF /* countdown_sage_dark.png */; };
 		B69C31E03AC9DCBB668B8960 /* menu_bar_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 05E15AB3D897C0ADB5D3F489 /* menu_bar_sand_light.png */; };
+		B71B4948FC0D778AAE5F3599 /* gabor_instructions_flanker.png in Resources */ = {isa = PBXBuildFile; fileRef = 097E7F86B890E2BAF39E5E6E /* gabor_instructions_flanker.png */; };
+		B75C2EA865409CAC7E568C13 /* gabor_trial_feedback_wrong.png in Resources */ = {isa = PBXBuildFile; fileRef = EBDEB1DC5985CCAD9163D20E /* gabor_trial_feedback_wrong.png */; };
 		B772A7DF971B1C1EF5CFC26C /* flow_sensitivity_page_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = CB75DB96C04F3828F45F1B56 /* flow_sensitivity_page_peach_dark.png */; };
 		B7880FA752C613BC5E572293 /* mic_permission_mono_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 33FD3F1BBDB28C4D80919251 /* mic_permission_mono_light.png */; };
 		B79C8EE8C2734955C16BD2AB /* meeting_paused_toast_dark_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E585855A31949A8CB0EB15C7 /* meeting_paused_toast_dark_light.png */; };
@@ -386,6 +397,7 @@
 		E6871A9DA14F2C795CF40016 /* mic_permission_midnight_light.png in Resources */ = {isa = PBXBuildFile; fileRef = D32F486D47744A74605131BE /* mic_permission_midnight_light.png */; };
 		E7A87F9CADA595CD3AFF5895 /* timer_extended_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB5008A719CBE8A1F977FF /* timer_extended_peach_dark.png */; };
 		E7DB28C99A20B66081510515 /* menu_bar_help_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 700FCAA98676D1FBC93F91C4 /* menu_bar_help_peach_light.png */; };
+		E818F585133382295662A893 /* GaborContourField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99D967B0EF4612B0F56C15B8 /* GaborContourField.swift */; };
 		E9A572E5FF0DFBFDCCC9E62D /* simple_announcement_announce_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 071B933F149E272633E33CFE /* simple_announcement_announce_peach_light.png */; };
 		EA6F6BD4A96C0F66254A6167 /* MicWarningWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BC933707696BDE8C0788B9 /* MicWarningWindowController.swift */; };
 		EA9DDF7AA3158D1A8E9B8857 /* meeting_suggestion_toast_dark_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 23F6851015FDCC55243CD127 /* meeting_suggestion_toast_dark_light.png */; };
@@ -406,6 +418,7 @@
 		F2B3C0EF64848366CF457A9E /* simple_announcement_active_peach_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 3DF76DDCCCACFB9E47B26C72 /* simple_announcement_active_peach_dark.png */; };
 		F44C11070976E4F4774E22A3 /* settings_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 98E2BF9DEF5EDD799CC30178 /* settings_sand_light.png */; };
 		F5A792ECE489D9542AE83D97 /* pane_focus_locked_light.png in Resources */ = {isa = PBXBuildFile; fileRef = FD01CE9D28FE8F9DE3289D84 /* pane_focus_locked_light.png */; };
+		F5CC5B3ED3369E86A3D3E249 /* gabor_trial_response.png in Resources */ = {isa = PBXBuildFile; fileRef = 6F4E30869E6B9BF1BCEC516A /* gabor_trial_response.png */; };
 		F5D12C44C51BFDAB3929B105 /* mic_permission_sand_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = D0BFCC1A034E247CE91DB20F /* mic_permission_sand_dark.png */; };
 		F6212462068334EE2FC0772B /* simple_announcement_active_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 0151CE2650F786E453426D43 /* simple_announcement_active_peach_light.png */; };
 		F6C1EA753FB9936226C980B8 /* WhatsNewManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50FB5F661FB9E790F31C7502 /* WhatsNewManifest.swift */; };
@@ -419,6 +432,7 @@
 		FD52D987E5B60CC501722EDD /* pane_about_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = DE9CE069A04898F062C4305F /* pane_about_dark.png */; };
 		FD55356C942F1A6AA88B7F01 /* flow_learn_more_sand_light.png in Resources */ = {isa = PBXBuildFile; fileRef = EA29D1D96C261B83F29559C7 /* flow_learn_more_sand_light.png */; };
 		FDA907BFAF11D9A378D0EF4D /* break_timer_midnight_dark.png in Resources */ = {isa = PBXBuildFile; fileRef = 3DD7C7DA62E52F2AEFE94165 /* break_timer_midnight_dark.png */; };
+		FDD8236F1476E5F4A7F381A8 /* gabor_trial_pattern_flash.png in Resources */ = {isa = PBXBuildFile; fileRef = BCE8806D10B0C93E24E5FC4A /* gabor_trial_pattern_flash.png */; };
 		FE1C33827B498C68028A6F55 /* im_rationale_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = C482DBA2EEC37581DFD191B1 /* im_rationale_peach_light.png */; };
 		FECFF04952000FA85026C5E3 /* flow_learn_more_sage_light.png in Resources */ = {isa = PBXBuildFile; fileRef = 4764737D26993A9105D2E9BB /* flow_learn_more_sage_light.png */; };
 		FED12B75AF6DA948CB0D3C9E /* key_hint_peach_light.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0FE2DC41DB7332E182D01F /* key_hint_peach_light.png */; };
@@ -436,6 +450,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		00DA87DD0D861006434E7D44 /* gabor_trial_empty_flash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_trial_empty_flash.png; sourceTree = "<group>"; };
 		0151CE2650F786E453426D43 /* simple_announcement_active_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = simple_announcement_active_peach_light.png; sourceTree = "<group>"; };
 		01C015BF2AE35F18FB02967A /* pane_about_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pane_about_light.png; sourceTree = "<group>"; };
 		02DA8867E4C8F5F93C0CD014 /* countdown_dark_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = countdown_dark_light.png; sourceTree = "<group>"; };
@@ -451,6 +466,7 @@
 		071B933F149E272633E33CFE /* simple_announcement_announce_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = simple_announcement_announce_peach_light.png; sourceTree = "<group>"; };
 		07EBBB7C793C0E00ECC02F4E /* meeting_paused_toast_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = meeting_paused_toast_peach_light.png; sourceTree = "<group>"; };
 		0973061865A5E91D224AE4D6 /* GaborDevMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborDevMain.swift; sourceTree = "<group>"; };
+		097E7F86B890E2BAF39E5E6E /* gabor_instructions_flanker.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_instructions_flanker.png; sourceTree = "<group>"; };
 		0B47EB8B7273BB95141192DE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0C9E38EBD30AEDF05C5500E0 /* whatsnew_card_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = whatsnew_card_dark.png; sourceTree = "<group>"; };
 		0CBA58EACA7D667CAA24BE5C /* pane_appearance_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pane_appearance_light.png; sourceTree = "<group>"; };
@@ -467,6 +483,7 @@
 		1107ED1AA27A38BEB1C02E49 /* break_timer_breathe_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_timer_breathe_midnight_dark.png; sourceTree = "<group>"; };
 		122D2BBFC387864D21A12C30 /* toast_sand_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = toast_sand_light.png; sourceTree = "<group>"; };
 		129C11C4E483C21F20CE402E /* im_rationale_peach_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = im_rationale_peach_dark.png; sourceTree = "<group>"; };
+		14FAD1B09CCF89F8E95ED1A0 /* gabor_trial_complete.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_trial_complete.png; sourceTree = "<group>"; };
 		168E1165A8C5F9C4D84F2495 /* menu_bar_mono_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_mono_dark.png; sourceTree = "<group>"; };
 		17D4BE9835C14EFCB870A9C9 /* SmartSuggestionsSettingControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartSuggestionsSettingControls.swift; sourceTree = "<group>"; };
 		17DF6F7B0271C10F09B58C8F /* pane_focus_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pane_focus_light.png; sourceTree = "<group>"; };
@@ -588,6 +605,7 @@
 		5B75D4D47CA870920FD0AAD9 /* key_hint_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = key_hint_midnight_light.png; sourceTree = "<group>"; };
 		5BF962FF18971AF11C38BFD0 /* pane_focus_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pane_focus_dark.png; sourceTree = "<group>"; };
 		5C288FF8FC6506F24FA20EF7 /* break_timer_getUp_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_timer_getUp_peach_light.png; sourceTree = "<group>"; };
+		5C6BF8091B39E74246B82F8A /* gabor_trial_feedback_correct.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_trial_feedback_correct.png; sourceTree = "<group>"; };
 		5C956E1AC9089FC7F099258E /* pause_picker_dark_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pause_picker_dark_dark.png; sourceTree = "<group>"; };
 		5DCD6B51794BB63E51D81074 /* WhatsNewSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewSnapshotTests.swift; sourceTree = "<group>"; };
 		5DDF046BFA087DB3BD12703D /* flow_sensitivity_settings_sand_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_sensitivity_settings_sand_dark.png; sourceTree = "<group>"; };
@@ -617,6 +635,7 @@
 		6DFECD929671B302B8D070F7 /* menu_bar_simple_midnight_deliberate_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_simple_midnight_deliberate_light.png; sourceTree = "<group>"; };
 		6E14E713D6C47450FA832929 /* flow_sensitivity_settings_sage_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_sensitivity_settings_sage_dark.png; sourceTree = "<group>"; };
 		6E6937F05347EA6643D234A0 /* whatsnew_card_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = whatsnew_card_light.png; sourceTree = "<group>"; };
+		6F4E30869E6B9BF1BCEC516A /* gabor_trial_response.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_trial_response.png; sourceTree = "<group>"; };
 		6F7FF9803723BE1736A37C3E /* menu_bar_paused_app_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_paused_app_midnight_light.png; sourceTree = "<group>"; };
 		6FF93A15FE366C370E8500F9 /* flow_sensitivity_settings_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_sensitivity_settings_peach_light.png; sourceTree = "<group>"; };
 		700FCAA98676D1FBC93F91C4 /* menu_bar_help_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_help_peach_light.png; sourceTree = "<group>"; };
@@ -627,6 +646,7 @@
 		71AF16B93A94215233284E2E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		71C4B83C4A0ECE678FA93BCE /* pane_focus_locked_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pane_focus_locked_dark.png; sourceTree = "<group>"; };
 		71D6D5978A8C0721F9680A54 /* break_timer_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_timer_peach_light.png; sourceTree = "<group>"; };
+		7285635F54C7975457E844A5 /* gabor_trial_gap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_trial_gap.png; sourceTree = "<group>"; };
 		7290D6CBDE4DA06402C0F835 /* GaborDev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GaborDev.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		735556FD7C06690A41EAEC8B /* pause_picker_sand_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pause_picker_sand_dark.png; sourceTree = "<group>"; };
 		740D1AA5D2999B2DC6F4AF46 /* BlinkUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkUpdater.swift; sourceTree = "<group>"; };
@@ -647,6 +667,7 @@
 		7EFA6E0E8A45B0471ABE4FB0 /* smart_suggestions_settings_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = smart_suggestions_settings_midnight_dark.png; sourceTree = "<group>"; };
 		80195DCC491A47DA7C93486C /* im_permission_standard_sage_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = im_permission_standard_sage_light.png; sourceTree = "<group>"; };
 		801D11C459C5DF674130B105 /* im_permission_standard_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = im_permission_standard_peach_light.png; sourceTree = "<group>"; };
+		8059694190B1F8DBFE74FC21 /* gabor_science.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_science.png; sourceTree = "<group>"; };
 		8155256B978232A47E986CE4 /* flow_learn_more_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_learn_more_mono_light.png; sourceTree = "<group>"; };
 		82C83872049ED9FADECF4CF3 /* menu_bar_sage_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_sage_light.png; sourceTree = "<group>"; };
 		831955ED4F0476B3259E2D6E /* pause_picker_mono_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pause_picker_mono_dark.png; sourceTree = "<group>"; };
@@ -693,6 +714,7 @@
 		979996FD3730D21869F3A2F2 /* pause_picker_sand_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pause_picker_sand_light.png; sourceTree = "<group>"; };
 		97BC933707696BDE8C0788B9 /* MicWarningWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicWarningWindowController.swift; sourceTree = "<group>"; };
 		97C6A2F96E581C651EBF834E /* toast_mono_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = toast_mono_dark.png; sourceTree = "<group>"; };
+		9879BB51B3469A708BA7DAF7 /* gabor_instructions_detection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_instructions_detection.png; sourceTree = "<group>"; };
 		98838DF57DBDAD45BA04F5A3 /* MeetingLinkDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingLinkDetector.swift; sourceTree = "<group>"; };
 		989DBB159CA5CB427CCCADEF /* BlinkApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlinkApp.swift; sourceTree = "<group>"; };
 		98A4A21A521D054DD953F889 /* FlowSensitivityPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityPreviews.swift; sourceTree = "<group>"; };
@@ -701,6 +723,7 @@
 		993298D79EE8D176E02E744C /* onboarding_picker_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = onboarding_picker_peach_light.png; sourceTree = "<group>"; };
 		993485451F0B1638E7EE3169 /* flow_nudge_dark_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_nudge_dark_light.png; sourceTree = "<group>"; };
 		99AB4A0F1A907993DE3CD92A /* flow_learn_more_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_learn_more_midnight_dark.png; sourceTree = "<group>"; };
+		99D967B0EF4612B0F56C15B8 /* GaborContourField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborContourField.swift; sourceTree = "<group>"; };
 		9A68025F523772A3614C351E /* SnapshotTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotTestCase.swift; sourceTree = "<group>"; };
 		9C26FEE808F6E2CB576566A5 /* countdown_dark_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = countdown_dark_dark.png; sourceTree = "<group>"; };
 		9C2B9C8AB9E73996A3E78E03 /* SetupFlowSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupFlowSnapshotTests.swift; sourceTree = "<group>"; };
@@ -718,6 +741,7 @@
 		A75DE47BE5C32027ADDB4F12 /* why_exist_mono_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = why_exist_mono_light.png; sourceTree = "<group>"; };
 		A7812EFC9F08563A52F81AA7 /* GaborDisplayConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborDisplayConfig.swift; sourceTree = "<group>"; };
 		A7D117D06FC441AD7EAF0DAF /* GaborExerciseSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborExerciseSnapshotTests.swift; sourceTree = "<group>"; };
+		A7E625BB9106A07FCA05C42B /* gabor_trial_fixation.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_trial_fixation.png; sourceTree = "<group>"; };
 		A80FE6D60FD24B930FA9C651 /* resume_toast_dark_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = resume_toast_dark_light.png; sourceTree = "<group>"; };
 		A8919A95A03586CABD364494 /* WhyExistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistView.swift; sourceTree = "<group>"; };
 		A8A1B32170E777871D978C3D /* research_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = research_midnight_dark.png; sourceTree = "<group>"; };
@@ -740,12 +764,14 @@
 		B4FE216C4384F02971EE0B9C /* menu_bar_permission_attention_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_bar_permission_attention_peach_light.png; sourceTree = "<group>"; };
 		B556E3C656A648A999080A36 /* break_timer_drinkWater_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_timer_drinkWater_peach_light.png; sourceTree = "<group>"; };
 		B56751092C6D80D3328ED55B /* DetectionModeChoicePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectionModeChoicePage.swift; sourceTree = "<group>"; };
+		B65851B5E097C7D7BE91C999 /* GaborContourTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborContourTests.swift; sourceTree = "<group>"; };
 		B8E1FE160984914B32DC935A /* PermissionFlowWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionFlowWindowController.swift; sourceTree = "<group>"; };
 		B8EA122BF45036A8CABE9E55 /* pane_appearance_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pane_appearance_dark.png; sourceTree = "<group>"; };
 		BB0FE2DC41DB7332E182D01F /* key_hint_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = key_hint_peach_light.png; sourceTree = "<group>"; };
 		BC027CA056DB931F2C54FF99 /* GaborExerciseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaborExerciseTests.swift; sourceTree = "<group>"; };
 		BCD9B07A614189547632C2BC /* onboarding_picker_midnight_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = onboarding_picker_midnight_light.png; sourceTree = "<group>"; };
 		BCE1BA7AFCEA49F4E7654099 /* launch_hud_peach_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = launch_hud_peach_light.png; sourceTree = "<group>"; };
+		BCE8806D10B0C93E24E5FC4A /* gabor_trial_pattern_flash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_trial_pattern_flash.png; sourceTree = "<group>"; };
 		BD07A80969704E571481D62E /* meeting_suggestion_toast_dark_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = meeting_suggestion_toast_dark_dark.png; sourceTree = "<group>"; };
 		BD8D50A622B6AA6F58704C73 /* WhyExistWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhyExistWindowController.swift; sourceTree = "<group>"; };
 		BDC7A406373F0EF880032986 /* mic_permission_sand_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = mic_permission_sand_light.png; sourceTree = "<group>"; };
@@ -814,6 +840,7 @@
 		E85D94D142977660E9645359 /* PermissionFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionFlowView.swift; sourceTree = "<group>"; };
 		E9C7DBB6B3C1F462DE7B6728 /* ResearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchView.swift; sourceTree = "<group>"; };
 		EA29D1D96C261B83F29559C7 /* flow_learn_more_sand_light.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flow_learn_more_sand_light.png; sourceTree = "<group>"; };
+		EBDEB1DC5985CCAD9163D20E /* gabor_trial_feedback_wrong.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gabor_trial_feedback_wrong.png; sourceTree = "<group>"; };
 		EC7FAB129F44AE104023F51B /* break_timer_sand_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = break_timer_sand_dark.png; sourceTree = "<group>"; };
 		ECC5F9B73EFE6D17E4809FFF /* countdown_midnight_dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = countdown_midnight_dark.png; sourceTree = "<group>"; };
 		EDA291436352B986E47616EA /* FlowSensitivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowSensitivityView.swift; sourceTree = "<group>"; };
@@ -900,6 +927,7 @@
 				4C62F06D6C9258FE46CAC90A /* CalendarPauseCoordinatorTests.swift */,
 				202CAF4CACB2F0935E18B8D1 /* DetectionModeCardSnapshotTests.swift */,
 				964212701D5ED9457FCD5925 /* FlowSensitivitySnapshotTests.swift */,
+				B65851B5E097C7D7BE91C999 /* GaborContourTests.swift */,
 				A7D117D06FC441AD7EAF0DAF /* GaborExerciseSnapshotTests.swift */,
 				BC027CA056DB931F2C54FF99 /* GaborExerciseTests.swift */,
 				E237B39478EE91689F077F21 /* GaborLayoutTests.swift */,
@@ -1048,6 +1076,7 @@
 			isa = PBXGroup;
 			children = (
 				06436D890269E4C851271B66 /* AdaptiveStaircase.swift */,
+				99D967B0EF4612B0F56C15B8 /* GaborContourField.swift */,
 				A7812EFC9F08563A52F81AA7 /* GaborDisplayConfig.swift */,
 				04E55AA4F9D3F6C46BB8F0D1 /* GaborExerciseState.swift */,
 				A49EA8844D507F00FB2839F6 /* GaborExerciseView.swift */,
@@ -1214,6 +1243,17 @@
 				29FDFB9AB9D3DC2554312A0C /* gabor_exercise_sage_light.png */,
 				4C4E9181A66DBFC63D0D2A14 /* gabor_exercise_sand_dark.png */,
 				792D3FF94C2D992918325AAD /* gabor_exercise_sand_light.png */,
+				9879BB51B3469A708BA7DAF7 /* gabor_instructions_detection.png */,
+				097E7F86B890E2BAF39E5E6E /* gabor_instructions_flanker.png */,
+				8059694190B1F8DBFE74FC21 /* gabor_science.png */,
+				14FAD1B09CCF89F8E95ED1A0 /* gabor_trial_complete.png */,
+				00DA87DD0D861006434E7D44 /* gabor_trial_empty_flash.png */,
+				5C6BF8091B39E74246B82F8A /* gabor_trial_feedback_correct.png */,
+				EBDEB1DC5985CCAD9163D20E /* gabor_trial_feedback_wrong.png */,
+				A7E625BB9106A07FCA05C42B /* gabor_trial_fixation.png */,
+				7285635F54C7975457E844A5 /* gabor_trial_gap.png */,
+				BCE8806D10B0C93E24E5FC4A /* gabor_trial_pattern_flash.png */,
+				6F4E30869E6B9BF1BCEC516A /* gabor_trial_response.png */,
 				9287E2F58611D3BB44B0A409 /* im_permission_stale_midnight_dark.png */,
 				E44EA4EAF09BC101C2DB7EE4 /* im_permission_stale_midnight_light.png */,
 				F1614E727B0A4CC364AC9DD2 /* im_permission_stale_mono_dark.png */,
@@ -1638,6 +1678,17 @@
 				43C0F3D47AB0EB4609CC1F50 /* gabor_exercise_sage_light.png in Resources */,
 				C9F040A37308E95E90642297 /* gabor_exercise_sand_dark.png in Resources */,
 				C13117E348BEDBCCA646A921 /* gabor_exercise_sand_light.png in Resources */,
+				117314FCAEB2AB809EE14C31 /* gabor_instructions_detection.png in Resources */,
+				B71B4948FC0D778AAE5F3599 /* gabor_instructions_flanker.png in Resources */,
+				9800EB9EB9E7224B7EFB8A51 /* gabor_science.png in Resources */,
+				7DFC35F11DE33EB45B8C2D15 /* gabor_trial_complete.png in Resources */,
+				84C11AE4F185AEE70551E5D6 /* gabor_trial_empty_flash.png in Resources */,
+				7335E15950C758AF79723C0E /* gabor_trial_feedback_correct.png in Resources */,
+				B75C2EA865409CAC7E568C13 /* gabor_trial_feedback_wrong.png in Resources */,
+				05C8C24D9BA91AD4FFCE12F7 /* gabor_trial_fixation.png in Resources */,
+				193B5425B051481975641D52 /* gabor_trial_gap.png in Resources */,
+				FDD8236F1476E5F4A7F381A8 /* gabor_trial_pattern_flash.png in Resources */,
+				F5CC5B3ED3369E86A3D3E249 /* gabor_trial_response.png in Resources */,
 				773AFF8E35A4588A4F56B984 /* im_permission_stale_midnight_dark.png in Resources */,
 				AF523EF35CCF07FBF90485F9 /* im_permission_stale_midnight_light.png in Resources */,
 				CCE78CA2DD29B5D6E7C1AE77 /* im_permission_stale_mono_dark.png in Resources */,
@@ -1881,6 +1932,7 @@
 				71DDA90772E11550128D362D /* FlowSensitivityPage.swift in Sources */,
 				2AA0C694A19FC9CC9E17AD7E /* FlowSensitivityPreviews.swift in Sources */,
 				015614087E1362D0362B4424 /* FlowSensitivityView.swift in Sources */,
+				7F0960423AC17EED5F1DA163 /* GaborContourField.swift in Sources */,
 				D4C7B9C1BE451DB94C843A92 /* GaborDisplayConfig.swift in Sources */,
 				106DD7BB4336A61EF22124B9 /* GaborExercisePreviews.swift in Sources */,
 				77928BBBF428D817C890540F /* GaborExerciseState.swift in Sources */,
@@ -1954,6 +2006,7 @@
 				1CF01C212F6A19CB84FEBF54 /* CalendarPauseCoordinatorTests.swift in Sources */,
 				0B94C895109DE4BCC325F35C /* DetectionModeCardSnapshotTests.swift in Sources */,
 				EC80B94B73F08EB078CAC1DE /* FlowSensitivitySnapshotTests.swift in Sources */,
+				9FBF00D10BE34B43C89AC2E3 /* GaborContourTests.swift in Sources */,
 				029B5C110DF8E16A5C64AB1D /* GaborExerciseSnapshotTests.swift in Sources */,
 				7285C5F34941F649E47E9569 /* GaborExerciseTests.swift in Sources */,
 				4347149BF30C15A29E404681 /* GaborLayoutTests.swift in Sources */,
@@ -1979,6 +2032,7 @@
 			files = (
 				D96EF173ACD68DDD71901EE9 /* AdaptiveStaircase.swift in Sources */,
 				28CD5829CD2A90BE9AAE5BB3 /* BlinkTheme.swift in Sources */,
+				E818F585133382295662A893 /* GaborContourField.swift in Sources */,
 				3EB4200321053FC229966AAF /* GaborDevMain.swift in Sources */,
 				9433772CEE5C799952D07C67 /* GaborDisplayConfig.swift in Sources */,
 				1066CB0AC8B8524310DE29F8 /* GaborExerciseState.swift in Sources */,
