@@ -178,7 +178,10 @@ final class OverlayWindowController {
         self.toastWindow = panel
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-            self?.dismissToast()
+            // Panel-scoped: only close THIS toast, never a newer one that
+            // replaced it in the shared `toastWindow` slot meanwhile.
+            guard let self, self.toastWindow === panel else { return }
+            self.dismissToast()
         }
     }
 
@@ -342,7 +345,10 @@ final class OverlayWindowController {
         self.toastWindow = panel
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-            self?.dismissToast()
+            // Panel-scoped: only close THIS toast, never a newer one that
+            // replaced it in the shared `toastWindow` slot meanwhile.
+            guard let self, self.toastWindow === panel else { return }
+            self.dismissToast()
         }
     }
 
@@ -481,8 +487,15 @@ final class OverlayWindowController {
     // MARK: - Phase 1: Mini toast (bottom-right corner)
 
     private func showToast(onToastDone: @escaping () -> Void) {
+        // Dismiss-before-replace: every other toast method starts this way.
+        // Without it, showing a break toast while a resume/meeting toast is
+        // still up overwrites the single `toastWindow` slot and orphans the
+        // previous panel — it stays on screen forever (its own stale dismiss
+        // timer then closes THIS window instead). That leak is what left a
+        // "Blink resumed" toast stuck over the screen.
+        dismissToast()
         guard let screen = NSScreen.main else { return }
-        
+
         let toastWidth: CGFloat = 280
         let toastHeight: CGFloat = 72
         let padding: CGFloat = 16
