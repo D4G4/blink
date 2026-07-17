@@ -370,6 +370,15 @@ function V2Shot7({ copy }) {
         }}>Train your eyes,
           <span style={{ color: accent }}> not just your breaks.</span>
         </div>
+        <div style={{
+          marginTop: 44, fontSize: 44, fontWeight: 500, lineHeight: 1.3,
+          letterSpacing: '-0.01em', color: 'rgba(244,234,219,0.62)',
+          maxWidth: 1520, marginLeft: 'auto', marginRight: 'auto', textWrap: 'balance',
+        }}>
+          Optional 2-minute break exercises built on the{' '}
+          <span style={{ color: accent, fontWeight: 700 }}>Gabor patch</span>
+          {' '}— vision science&rsquo;s classic stimulus for training contrast, orientation, and focus.
+        </div>
       </div>
 
       {/* The patch, centred, with concentric scientific rings around it */}
