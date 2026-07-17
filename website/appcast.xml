@@ -6,6 +6,19 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.2.0-beta.20</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.20</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>407</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.20</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Fri, 17 Jul 2026 21:40:24 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.20</h3><ul><li>Restore Flanker Focus, remove Sideways Focus (crowding)</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.20">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.20/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="6pZ27H6BWefoQZnFdNaW9KEOKuUJ6D55DLp4J/xK41WILI7Jk0SvxRJ2BJyboDuNbWM4Zt/qhvgFKXG7YI+OAw==" length="9044337" />
+    </item>
+    <item>
       <title>Blink v5.2.0-beta.19</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.19</link>
       <sparkle:channel>beta</sparkle:channel>
