@@ -426,7 +426,10 @@ final class OverlayWindowController {
         autoDismiss: TimeInterval
     ) {
         dismissToast()
-        guard let screen = NSScreen.main else { return }
+        guard let screen = NSScreen.main else {
+            Log.e("Interactive toast dropped — no main screen (display asleep/clamshell?)")
+            return
+        }
 
         let padding: CGFloat = 16
         let frame = NSRect(
@@ -462,7 +465,15 @@ final class OverlayWindowController {
 
         if autoDismiss > 0 {
             DispatchQueue.main.asyncAfter(deadline: .now() + autoDismiss) { [weak self] in
-                self?.dismissToast()
+                guard let self else { return }
+                // Only if THIS panel is still up — a button tap or a newer toast
+                // would have replaced it, and those paths log their own outcome.
+                // This line confirms the toast actually rendered its full window
+                // and the user never interacted (vs. never having shown at all).
+                if self.toastWindow === panel {
+                    Log.i("Interactive toast auto-dismissed after \(Int(autoDismiss))s (not interacted)")
+                }
+                self.dismissToast()
             }
         }
     }

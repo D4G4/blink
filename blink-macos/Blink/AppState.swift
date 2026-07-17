@@ -238,6 +238,14 @@ final class AppState: ObservableObject {
         return time
     }
 
+    /// Compact clock formatter ("4:30 PM") for calendar diagnostic logging.
+    private static let calendarLogClock: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        f.dateStyle = .none
+        return f
+    }()
+
     var flowState: FlowState {
         switch displayState {
         case .working: return .normal
@@ -1531,6 +1539,7 @@ final class AppState: ObservableObject {
             suggestUnlinked: suggestUnlinkedCalendarEvents,
             leadTime: Self.calendarLeadTime
         )
+        logCalendarEvaluation(meetings, now: now, action: action)
         switch action {
         case .none:
             break
@@ -1541,12 +1550,46 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// One diagnostic line per evaluation that has at least one meeting in the
+    /// look-ahead window — the trail that explains WHY a meeting did or didn't
+    /// pause/suggest. Silent when the window is empty so the 30s cadence never
+    /// spams the log. The per-meeting fields (link/declined/allDay/acted/
+    /// suggestible) plus the settings context (paused/suggestUnlinked) fully
+    /// account for a `.none` decision — e.g. `link=none suggestible=true` with
+    /// `suggestUnlinked=false`, or `acted=true` (already handled this occurrence).
+    private func logCalendarEvaluation(_ meetings: [CalendarMeeting], now: Date, action: CalendarPauseAction) {
+        guard !meetings.isEmpty else { return }
+
+        let clock = Self.calendarLogClock
+        let details = meetings.map { m -> String in
+            let link = m.link?.provider.rawValue ?? "none"
+            return "'\(m.title)' \(clock.string(from: m.start))–\(clock.string(from: m.end))"
+                + " link=\(link) declined=\(m.isDeclined) allDay=\(m.isAllDay)"
+                + " acted=\(calendarActedKeySet.contains(m.occurrenceKey))"
+                + " suggestible=\(m.isSuggestible(at: now, lead: Self.calendarLeadTime))"
+        }.joined(separator: " | ")
+
+        let decision: String
+        switch action {
+        case .none:             decision = "none"
+        case .autoPause(let m): decision = "autoPause '\(m.title)'"
+        case .suggest(let m):   decision = "suggest '\(m.title)'"
+        }
+
+        Log.i("Calendar eval: \(meetings.count) in window"
+            + " [paused=\(isPaused) suggestUnlinked=\(suggestUnlinkedCalendarEvents)]"
+            + " \(details) → decision: \(decision)")
+    }
+
     /// Auto-pause for a meeting with a video link, and show a dismissible
     /// "Paused for X · Undo" toast. Marked acted first so we never double-pause.
     private func applyCalendarAutoPause(_ meeting: CalendarMeeting) {
         markCalendarActed(meeting.occurrenceKey)
         pause(.calendarEvent(until: meeting.end, eventKey: meeting.occurrenceKey, title: meeting.title))
-        guard !isUserAway else { return }
+        guard !isUserAway else {
+            Log.i("Auto-paused for '\(meeting.title)' — toast suppressed (user away)")
+            return
+        }
         let provider = meeting.link?.provider.displayName ?? "meeting"
         let detail = "\(provider) · until \(Self.resumeLabel(for: meeting.end))"
         overlayController.showMeetingPausedToast(title: meeting.title, detail: detail) { [weak self] in
@@ -1565,7 +1608,10 @@ final class AppState: ObservableObject {
     private func applyCalendarSuggestion(_ meeting: CalendarMeeting) {
         // Don't consume the occurrence while the user can't see the toast —
         // mark acted only when we actually show it, so it surfaces on unlock.
-        guard !isUserAway else { return }
+        guard !isUserAway else {
+            Log.i("Calendar suggestion for '\(meeting.title)' deferred — user away (will retry)")
+            return
+        }
         markCalendarActed(meeting.occurrenceKey)
         let minutes = max(1, Int(meeting.end.timeIntervalSince(Date()) / 60))
         overlayController.showMeetingSuggestionToast(title: meeting.title, minutes: minutes) { [weak self] in
