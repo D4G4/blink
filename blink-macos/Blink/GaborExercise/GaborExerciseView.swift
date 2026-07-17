@@ -206,6 +206,7 @@ private struct InstructionsPhase: View {
     private var demoCollinearSep: Double { 3.0 / demoCPP }
 
     var body: some View {
+        GeometryReader { geo in
         ScrollView {
             VStack(spacing: 0) {
                 Image(systemName: state.exerciseType.icon)
@@ -270,6 +271,8 @@ private struct InstructionsPhase: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 40)
+            .frame(minHeight: geo.size.height)
+        }
         }
     }
 
@@ -392,37 +395,32 @@ private struct TrialPhase: View {
             ProgressDots(current: state.currentTrial, total: state.totalTrials, theme: theme, trialResults: state.staircase.trialResults)
                 .padding(.horizontal, 60)
 
-            Spacer()
+            // A fixed-size stimulus box, centered in ALL the space between the
+            // header and the fixed-height response row, so the fixation cross
+            // and the patch land at the exact same center on every stage. The
+            // flash marker is an OVERLAY (not in the layout flow), so it can
+            // never nudge the box; the response row is a FIXED height, so the
+            // box never re-centers when the buttons appear.
+            ZStack {
+                stimulusForStage
+                    .opacity(feedbackCorrect != nil ? 0.4 : 1.0)
 
-            // Stimulus sits on the mid-gray field in a FIXED-SIZE box so the
-            // fixation cross, the patch, and the mask all share one exact
-            // center — otherwise the small cross and the large patch land at
-            // different centers and the fixation point appears to jump.
-            VStack(spacing: 14) {
-                ZStack {
-                    stimulusForStage
-                        .opacity(feedbackCorrect != nil ? 0.4 : 1.0)
-
-                    if let correct = feedbackCorrect {
-                        FeedbackOverlay(correct: correct)
-                    }
+                if let correct = feedbackCorrect {
+                    FeedbackOverlay(correct: correct)
                 }
-                .frame(width: patchSize, height: patchSize)
-
-                // Which flash is showing — in a fixed-height slot so the box
-                // above never shifts as it appears/disappears.
+            }
+            .frame(width: patchSize, height: patchSize)
+            .overlay(alignment: .bottom) {
                 Text(intervalMarker)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(fg.opacity(0.55))
-                    .frame(height: 20)
+                    .offset(y: 30)
             }
-
-            Spacer()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             responseArea
-
-            Spacer()
-                .frame(height: 24)
+                .frame(height: 110)
+                .padding(.bottom, 24)
         }
     }
 
