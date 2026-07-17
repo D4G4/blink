@@ -6,6 +6,19 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.2.0-beta.19</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.19</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>406</sparkle:version>
+      <sparkle:shortVersionString>5.2.0-beta.19</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Fri, 17 Jul 2026 21:22:23 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.0-beta.19</h3><ul><li>GPU Gabor-patch eye exercises (detection, contour, crowding)</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.19">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.0-beta.19/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="koucyNyx3K4UlM+BwxEX4bjeWigTSuprwAeZdnZWFyaq5V0a+u0+m922zlBrjORtCfPowAfxyyOPbTHfRJLeAQ==" length="9077224" />
+    </item>
+    <item>
       <title>Blink v5.2.0-beta.18</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.2.0-beta.18</link>
       <sparkle:channel>beta</sparkle:channel>
