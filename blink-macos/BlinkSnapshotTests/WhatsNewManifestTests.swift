@@ -61,14 +61,30 @@ final class WhatsNewManifestTests: XCTestCase {
         XCTAssertNil(result, "Beta-to-beta within the same x.y.z must not reshow")
     }
 
-    /// Beta tester rolling over to the stable release of the same x.y.z
-    /// shouldn't see the dialog again either.
+    /// Beta tester rolling over to the STABLE release of the same x.y.z sees
+    /// the digest once — the "the release is out" moment — even though the
+    /// betas already showed the same items. (Deliberate reversal of the old
+    /// suppress-on-promotion behavior.)
     @MainActor
-    func testBetaToStableSameXYZDoesNotReshow() {
+    func testBetaToStableSameXYZReshowsOnce() {
         let d = makeDefaults()
         d.set("5.2.0-beta.6", forKey: key)
         let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
-        XCTAssertNil(result)
+        XCTAssertNotNil(result, "Beta → stable of the same version should surface the digest once")
+        XCTAssertEqual(result?.count, WhatsNewManifest.items.filter { $0.introducedIn == "5.2.0" }.count,
+                       "Only the 5.2.0 items, not older-version items")
+        XCTAssertEqual(d.string(forKey: key), "5.2.0", "Bookkeeping updates to the stable string")
+    }
+
+    /// ...but the promotion fires exactly once: relaunching the stable build
+    /// (lastSeen now the stable string) must not reshow.
+    @MainActor
+    func testBetaToStablePromotionDoesNotReshowOnSecondLaunch() {
+        let d = makeDefaults()
+        d.set("5.2.0-beta.6", forKey: key)
+        _ = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
+        let second = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
+        XCTAssertNil(second, "Second stable launch after a beta→stable promotion must not reshow")
     }
 
     /// If a future release ships no items with a higher `introducedIn`,
