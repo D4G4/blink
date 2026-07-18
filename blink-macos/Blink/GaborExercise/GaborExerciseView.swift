@@ -114,9 +114,10 @@ private struct ReadyPhase: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                Text("Eye Exercise")
+                Text("Gabor Patch Eye Exercises")
                     .font(.system(size: 40, weight: .bold))
                     .foregroundStyle(fg)
+                    .multilineTextAlignment(.center)
                     .padding(.bottom, 10)
 
                 Text("Brief Gabor-patch exercises — each trains a different visual skill")
