@@ -16,6 +16,12 @@ enum WhatsNewManifest {
     /// oldest still-supported install might need to see them.
     static let items: [WhatsNewItem] = [
         WhatsNewItem(
+            icon: "eye.fill",
+            title: "Gabor-patch eye exercises",
+            body: "Three quick exercises — Spot the Flash, Flanker Focus, and Trace the Shape — each trains a different visual skill. Launch them any time from the menu bar.",
+            introducedIn: "5.2.1"
+        ),
+        WhatsNewItem(
             icon: "pause.circle",
             title: "Pause that resumes itself",
             body: "Pause for an hour, until tomorrow, or while an app is open — Blink turns itself back on automatically.",

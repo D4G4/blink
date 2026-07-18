@@ -14,6 +14,18 @@ final class WhatsNewManifestTests: XCTestCase {
         return d
     }
 
+    /// A synthetic manifest capped at 5.2.0 (two 5.2.0 items + one 5.1.0),
+    /// mirroring the real 5.2.0-era shape. Tests that assert behavior "as of
+    /// 5.2.0" use this so a later manifest edit (e.g. a 5.2.1 announcement)
+    /// can't perturb them — they own their fixture instead of the live list.
+    private func manifestThrough520() -> [WhatsNewItem] {
+        [
+            WhatsNewItem(icon: "a", title: "First 5.2.0 item", body: "b", introducedIn: "5.2.0"),
+            WhatsNewItem(icon: "c", title: "Second 5.2.0 item", body: "d", introducedIn: "5.2.0"),
+            WhatsNewItem(icon: "e", title: "A 5.1.0 item", body: "f", introducedIn: "5.1.0"),
+        ]
+    }
+
     @MainActor
     func testFirstInstallReturnsNilAndSeedsVersion() {
         let d = makeDefaults()
@@ -28,7 +40,8 @@ final class WhatsNewManifestTests: XCTestCase {
     func testSameVersionReturnsNil() {
         let d = makeDefaults()
         d.set("5.2.0", forKey: key)
-        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
+        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0",
+                                                          candidateItems: manifestThrough520())
         XCTAssertNil(result)
     }
 
@@ -46,8 +59,9 @@ final class WhatsNewManifestTests: XCTestCase {
     func testUpgradeSecondLaunchDoesNotReshow() {
         let d = makeDefaults()
         d.set("5.0.9", forKey: key)
-        _ = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
-        let secondCall = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
+        let items = manifestThrough520()
+        _ = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0", candidateItems: items)
+        let secondCall = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0", candidateItems: items)
         XCTAssertNil(secondCall, "Same version on second launch should not reshow")
     }
 
@@ -57,7 +71,8 @@ final class WhatsNewManifestTests: XCTestCase {
     func testBetaBumpWithinSameXYZDoesNotReshow() {
         let d = makeDefaults()
         d.set("5.2.0-beta.5", forKey: key)
-        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0-beta.6")
+        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0-beta.6",
+                                                          candidateItems: manifestThrough520())
         XCTAssertNil(result, "Beta-to-beta within the same x.y.z must not reshow")
     }
 
@@ -69,10 +84,11 @@ final class WhatsNewManifestTests: XCTestCase {
     func testBetaToStableSameXYZReshowsOnce() {
         let d = makeDefaults()
         d.set("5.2.0-beta.6", forKey: key)
-        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
+        let items = manifestThrough520()
+        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0", candidateItems: items)
         XCTAssertNotNil(result, "Beta → stable of the same version should surface the digest once")
-        XCTAssertEqual(result?.count, WhatsNewManifest.items.filter { $0.introducedIn == "5.2.0" }.count,
-                       "Only the 5.2.0 items, not older-version items")
+        XCTAssertEqual(result?.map(\.introducedIn), ["5.2.0", "5.2.0"],
+                       "Only the promoted version's items surface, not the older 5.1.0 one")
         XCTAssertEqual(d.string(forKey: key), "5.2.0", "Bookkeeping updates to the stable string")
     }
 
@@ -82,8 +98,9 @@ final class WhatsNewManifestTests: XCTestCase {
     func testBetaToStablePromotionDoesNotReshowOnSecondLaunch() {
         let d = makeDefaults()
         d.set("5.2.0-beta.6", forKey: key)
-        _ = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
-        let second = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0")
+        let items = manifestThrough520()
+        _ = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0", candidateItems: items)
+        let second = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.2.0", candidateItems: items)
         XCTAssertNil(second, "Second stable launch after a beta→stable promotion must not reshow")
     }
 
@@ -93,9 +110,10 @@ final class WhatsNewManifestTests: XCTestCase {
     func testUpgradePastManifestWithNoNewerItemsReturnsNil() {
         let d = makeDefaults()
         d.set("5.2.0", forKey: key)
-        // The newest items in the current manifest are introducedIn = 5.2.0, so
-        // a 5.2.0 → 5.3.0 jump finds nothing new.
-        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.3.0")
+        // The newest items in this manifest are introducedIn = 5.2.0, so a
+        // 5.2.0 → 5.3.0 jump finds nothing new.
+        let result = WhatsNewManifest.itemsToShowOnLaunch(defaults: d, currentVersion: "5.3.0",
+                                                          candidateItems: manifestThrough520())
         XCTAssertNil(result)
     }
 
