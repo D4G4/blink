@@ -259,7 +259,18 @@ private struct InstructionsPhase: View {
                 VStack(alignment: .center, spacing: 32) {
                     demoSection
                     Divider().background(fg.opacity(0.15))
-                    instructionSection("How to play", "hand.tap", state.exerciseType.howToPlay)
+                    VStack(spacing: 12) {
+                        instructionSection("How to play", "hand.tap", state.exerciseType.howToPlay)
+                        // The two-interval exercises mark each flash with a soft
+                        // tick — the primary "when" cue — so prompt for volume.
+                        if !state.exerciseType.isContour {
+                            Label("Turn your volume up — a soft tick marks each flash.",
+                                  systemImage: "speaker.wave.2.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(fg.opacity(0.7))
+                                .multilineTextAlignment(.center)
+                        }
+                    }
                     Divider().background(fg.opacity(0.15))
                     instructionSection("How this helps", "brain.head.profile", state.exerciseType.benefit)
                 }
@@ -801,11 +812,13 @@ private struct TrialPhase: View {
         return FixationCross(length: len, thickness: max(len * 0.12, 1.5))
     }
 
-    /// One interval's flash. Detection: a faint aperture ring marks BOTH flash
-    /// windows (so the empty interval is perceptible) concentric with fixation;
-    /// the target interval also shows the Gabor centered inside it. Flanker: the
-    /// two bold collinear flankers are present in both intervals and only the
-    /// faint center target differs.
+    /// One interval's flash. Detection: BOTH intervals draw a filled mean-gray
+    /// disc (the empty one at contrast 0, so it blends into the field with no
+    /// dark centre or bare ring); only the target's disc carries the faint
+    /// Gabor. The flash window itself is marked by the auditory cue plus a very
+    /// faint aperture ring, identical in both intervals so neither cues the
+    /// answer. Flanker: the two bold collinear flankers are present in both
+    /// intervals and only the faint center target differs.
     @ViewBuilder
     private func interval(_ i: Int, _ m: Metrics) -> some View {
         if state.exerciseType == .flanker {
@@ -822,29 +835,35 @@ private struct TrialPhase: View {
         } else {
             ZStack {
                 apertureRing(m)
-                if state.isTargetInterval(i) {
-                    patch(m)
-                }
+                // Filled mean-gray disc in BOTH intervals — the empty one uses
+                // contrast 0 (a uniform mean-gray disc that blends into the
+                // field), so the pattern-less interval is no longer a bare ring
+                // around a dark centre. Only the faint Gabor sets the target
+                // apart. Mirrors the flanker path, which always draws a field.
+                patch(m, contrast: state.isTargetInterval(i) ? state.staircase.currentContrast : 0)
             }
         }
     }
 
-    /// A faint hairline circle at the patch's edge (radius patchSize/2 ≥ 3σ, so
-    /// it sits outside the Gabor's Gaussian and never masks it) that flashes on
-    /// during each detection interval to mark the flash window — a real Gabor has
-    /// no outline, so this is kept minimal and is identical in both intervals so
-    /// it can't cue the answer. (The pure-convention marker is an auditory beep;
-    /// the ring is retained as a muted-system fallback — see "The science".)
+    /// A very faint hairline at the patch's edge (radius patchSize/2 ≥ 3σ, so it
+    /// sits outside the Gabor's Gaussian and never masks it), identical in both
+    /// intervals so it can't cue the answer. The primary interval marker is now
+    /// the auditory cue (`playIntervalCue`) — 2IFC detection marks intervals by
+    /// tone, and a bright outline both reintroduces the hard edge the Gaussian
+    /// window exists to avoid and acts as a spatial attention cue (Pelli & Bex
+    /// 2013). This ring is kept only as a low-contrast muted-system fallback,
+    /// hence white 0.63 on the 0.735 field (≈7% Michelson) rather than a bold
+    /// outline. (See "The science".)
     private func apertureRing(_ m: Metrics) -> some View {
         Circle()
-            .strokeBorder(Color(white: 0.4), lineWidth: 1.5)
+            .strokeBorder(Color(white: 0.63), lineWidth: 1)
             .frame(width: m.patch, height: m.patch)
     }
 
-    private func patch(_ m: Metrics) -> some View {
+    private func patch(_ m: Metrics, contrast: Double) -> some View {
         GaborPatchView(
             size: m.patch,
-            contrast: state.staircase.currentContrast,
+            contrast: contrast,
             spatialFrequencyCyclesPerPoint: m.cyclesPerPoint,
             orientation: state.trialOrientation,
             sigmaPoints: m.sigma                      // σ = λ

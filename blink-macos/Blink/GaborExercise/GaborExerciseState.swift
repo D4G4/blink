@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import AppKit
 
 enum ExerciseType: String, CaseIterable, Identifiable {
     /// Primary: single-Gabor temporal two-interval detection.
@@ -156,7 +157,10 @@ final class GaborExerciseState: ObservableObject {
     private static let sfRotationKey = "gaborSFRotation"
 
     let totalTrials: Int
-    let staircase = AdaptiveStaircase()
+    // Large initial log step (0.35 ≈ ×2.2 per down-step) so the track descends
+    // from the visible start to genuine near-threshold in ~5 down-steps; it
+    // still halves at each reversal for fine convergence near threshold.
+    let staircase = AdaptiveStaircase(initialLogStep: 0.35)
 
     private var sessionStart: Date?
     private var feedbackTimer: Timer?
@@ -210,12 +214,13 @@ final class GaborExerciseState: ObservableObject {
 
         // Carry difficulty forward: start ~3x above the last threshold measured
         // for this exercise + SF, so the staircase doesn't re-descend from
-        // scratch every session. First session starts at 0.4 (clearly visible
-        // but not trivially bold) with a large initial staircase step, so it
-        // reaches genuine near-threshold difficulty within a few trials rather
-        // than a long easy warm-up.
+        // scratch every session. First session starts at 0.3 (clearly visible
+        // but not bold); combined with the large initial log step the track
+        // reaches genuine near-threshold difficulty within ~10 trials rather
+        // than a long easy warm-up. Carryover is capped at 0.3 so a stale-high
+        // stored threshold can't reintroduce the long warm-up.
         let lastT = GaborSessionStore.shared.lastThreshold(forExercise: exerciseType.rawValue, sf: sessionSF)
-        let start = lastT.map { min(0.4, $0 * 3.0) } ?? 0.4
+        let start = lastT.map { min(0.3, $0 * 3.0) } ?? 0.3
         staircase.reset(startContrast: start)
 
         generateTrial()
@@ -279,6 +284,7 @@ final class GaborExerciseState: ObservableObject {
             if Task.isCancelled { return }
 
             self?.stage = .interval(1)
+            self?.playIntervalCue()
             try? await Task.sleep(for: .milliseconds(Self.flashMs))
             if Task.isCancelled { return }
 
@@ -287,11 +293,25 @@ final class GaborExerciseState: ObservableObject {
             if Task.isCancelled { return }
 
             self?.stage = .interval(2)
+            self?.playIntervalCue()
             try? await Task.sleep(for: .milliseconds(Self.flashMs))
             if Task.isCancelled { return }
 
             self?.stage = .response
         }
+    }
+
+    /// Soft auditory interval marker — the PRIMARY cue for WHEN each flash
+    /// occurs. The pattern-less interval is near-invisible on the mean-gray
+    /// field (by design: a real Gabor has no outline), so conventional 2IFC
+    /// detection marks intervals with a brief tone rather than a bright ring
+    /// (Pelli & Bex 2013). The faint aperture ring is only a muted-system
+    /// visual fallback. A fresh NSSound each call avoids one-shot clipped
+    /// replay between the two closely-spaced intervals.
+    private func playIntervalCue() {
+        let cue = NSSound(named: "Tink")
+        cue?.volume = 0.55
+        cue?.play()
     }
 
     /// Submit the user's choice of which flash held the pattern (1 or 2). Only
