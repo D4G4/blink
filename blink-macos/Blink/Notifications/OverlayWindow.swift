@@ -22,6 +22,12 @@ final class OverlayWindowController {
     /// True when the fullscreen break overlay window exists and is visible.
     var isShowingFullscreen: Bool { fullscreenWindow != nil }
 
+    /// Supplies the most recent keystroke timestamp (set by AppState from the
+    /// CGEventTap). The break toast uses it to hold the fullscreen takeover
+    /// while the user is typing. nil / never set (basic mode) → the toast
+    /// runs its fixed 3s countdown.
+    var lastKeystrokeAt: (() -> Date?)?
+
     private var theme: BlinkTheme {
         UserDefaults.standard.bool(forKey: "useDarkOverlay")
         ? .dark
@@ -507,7 +513,9 @@ final class OverlayWindowController {
             height: toastHeight
         )
         
-        let toastView = ToastView(theme: theme, onDone: { onToastDone() })
+        let toastView = ToastView(theme: theme,
+                                  onDone: { onToastDone() },
+                                  lastKeystrokeAt: lastKeystrokeAt ?? { nil })
         
         let panel = NSPanel(
             contentRect: toastFrame,
@@ -739,10 +747,22 @@ final class OverlayWindowController {
 struct ToastView: View {
     let theme: BlinkTheme
     let onDone: () -> Void
+    /// Most recent keystroke timestamp, or nil when unknown (basic mode).
+    /// While the user is typing, the countdown holds instead of advancing —
+    /// the fullscreen never takes over mid-keystroke. Bounded by
+    /// `maxHoldSeconds` so the break can't be deferred indefinitely.
+    var lastKeystrokeAt: () -> Date? = { nil }
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var count: Int = 3
     @State private var timer: Timer?
+    @State private var holdingForTyping = false
+    @State private var appearedAt = Date()
+
+    /// Keystroke within this window counts as "still typing".
+    private let typingWindow: TimeInterval = 1.2
+    /// Max total time the toast can hold off the fullscreen takeover.
+    private let maxHoldSeconds: TimeInterval = 30
 
     var body: some View {
         let bg = theme.overlayBackground(for: colorScheme)
@@ -754,7 +774,7 @@ struct ToastView: View {
                 .foregroundStyle(fg)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Break in \(count)s")
+                Text(holdingForTyping ? "Break when you pause…" : "Break in \(count)s")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(fg)
             }
@@ -782,7 +802,22 @@ struct ToastView: View {
     }
     
     private func startTimer() {
+        appearedAt = Date()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            let sinceKeystroke = lastKeystrokeAt().map { Date().timeIntervalSince($0) } ?? .infinity
+            let heldFor = Date().timeIntervalSince(appearedAt)
+            if sinceKeystroke < typingWindow && heldFor < maxHoldSeconds {
+                if !holdingForTyping {
+                    Log.i("Break toast: typing detected — holding fullscreen until keyboard is quiet")
+                }
+                holdingForTyping = true
+                count = 3
+                return
+            }
+            if holdingForTyping {
+                Log.i("Break toast: keyboard quiet (or \(Int(maxHoldSeconds))s hold cap reached) — resuming countdown")
+                holdingForTyping = false
+            }
             if count > 1 { count -= 1 } else { stopTimer(); onDone() }
         }
     }

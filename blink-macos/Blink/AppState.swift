@@ -152,6 +152,12 @@ final class AppState: ObservableObject {
     // Break overlay
     private let overlayController = OverlayWindowController()
 
+    /// Most recent keystroke seen by the CGEventTap. Feeds the break toast's
+    /// typing-hold (the fullscreen takeover defers while the user is typing).
+    /// nil in basic mode (no Input Monitoring) — the toast then runs its
+    /// fixed 3s countdown.
+    private var lastKeystrokeAt: Date?
+
     // Persistence
     private let persistence = PersistenceManager()
     private var onboardingObserver: NSObjectProtocol?
@@ -333,6 +339,9 @@ final class AppState: ObservableObject {
     // MARK: - Engine Callbacks
 
     private func setupEngineCallbacks() {
+        engine.onLog = { Log.i($0) }
+        overlayController.lastKeystrokeAt = { [weak self] in self?.lastKeystrokeAt }
+
         engine.onShowBreak = { [weak self] breakNumber in
             guard let self else { return }
 
@@ -839,7 +848,10 @@ final class AppState: ObservableObject {
         if hasInputMonitoringPermission {
             Log.i("Starting input monitoring (CGEventTap)")
             let input = MacInputMonitor()
-            input.onKeystroke = { [weak self] _ in self?.engine.recordKeystroke() }
+            input.onKeystroke = { [weak self] _ in
+                self?.lastKeystrokeAt = Date()
+                self?.engine.recordKeystroke()
+            }
             input.onMouseEvent = { [weak self] event in
                 switch event.kind {
                 case .click: self?.engine.recordClick()

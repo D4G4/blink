@@ -75,7 +75,7 @@ public sealed class BlinkEngine
     // CourtesyMicroGap between-word pause instead, and only at
     // CourtesyHardMax deliver unconditionally.
     private const double CourtesyWaitMax = 60;
-    private const double CourtesyGap = 3;
+    private const double CourtesyGap = 5;
     private const double CourtesyMicroGap = 1;
     private const double CourtesyHardMax = 120;
 
