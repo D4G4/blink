@@ -69,8 +69,15 @@ public sealed class BlinkEngine
     // Constants
     private const double GraceSeconds = 60;
     private const double IdleThreshold = 180;
-    private const double CourtesyWaitMax = 10;
+    // Normal courtesy: deliver a pending break once the keyboard has been
+    // quiet for CourtesyGap. If the user types straight through, don't
+    // interrupt mid-keystroke: after CourtesyWaitMax accept any
+    // CourtesyMicroGap between-word pause instead, and only at
+    // CourtesyHardMax deliver unconditionally.
+    private const double CourtesyWaitMax = 60;
     private const double CourtesyGap = 3;
+    private const double CourtesyMicroGap = 1;
+    private const double CourtesyHardMax = 120;
 
     public BlinkEngine()
     {
@@ -162,7 +169,8 @@ public sealed class BlinkEngine
         {
             var waited = (now - (_breakPendingSince ?? now)).TotalSeconds;
             var kbIdle = _lastKeystrokeTime.HasValue ? (now - _lastKeystrokeTime.Value).TotalSeconds : 999;
-            if (waited >= CourtesyWaitMax || kbIdle >= CourtesyGap)
+            var requiredGap = waited >= CourtesyWaitMax ? CourtesyMicroGap : CourtesyGap;
+            if (kbIdle >= requiredGap || waited >= CourtesyHardMax)
             {
                 _breakPending = false;
                 _breakPendingSince = null;
