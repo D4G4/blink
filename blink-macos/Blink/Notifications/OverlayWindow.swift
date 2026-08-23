@@ -502,17 +502,19 @@ final class OverlayWindowController {
         dismissToast()
         guard let screen = NSScreen.main else { return }
 
-        let toastWidth: CGFloat = 280
+        // 320 (not the 280 of the other toasts): must fit the longer
+        // "Break when you pause…" typing-hold label without truncating.
+        let toastWidth: CGFloat = 320
         let toastHeight: CGFloat = 72
         let padding: CGFloat = 16
-        
+
         let toastFrame = NSRect(
             x: screen.visibleFrame.maxX - toastWidth - padding,
             y: screen.visibleFrame.minY + padding,
             width: toastWidth,
             height: toastHeight
         )
-        
+
         let toastView = ToastView(theme: theme,
                                   onDone: { onToastDone() },
                                   lastKeystrokeAt: lastKeystrokeAt ?? { nil })
@@ -776,6 +778,8 @@ struct ToastView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(holdingForTyping ? "Break when you pause…" : "Break in \(count)s")
                     .font(.system(size: 13, weight: .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                     .foregroundStyle(fg)
             }
 
