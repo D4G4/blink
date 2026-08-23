@@ -503,7 +503,7 @@ final class OverlayWindowController {
         guard let screen = NSScreen.main else { return }
 
         // 320 (not the 280 of the other toasts): must fit the longer
-        // "Break when you pause…" typing-hold label without truncating.
+        // "Keep typing, I'll wait" typing-hold label without truncating.
         let toastWidth: CGFloat = 320
         let toastHeight: CGFloat = 72
         let padding: CGFloat = 16
@@ -776,7 +776,7 @@ struct ToastView: View {
                 .foregroundStyle(fg)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(holdingForTyping ? "Break when you pause…" : "Break in \(count)s")
+                Text(holdingForTyping ? "Keep typing, I'll wait" : "Break in \(count)s")
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
