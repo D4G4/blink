@@ -6,6 +6,19 @@
     <description>Most recent Blink releases. Auto-update feed consumed by Sparkle inside the macOS app.</description>
     <language>en</language>
     <item>
+      <title>Blink v5.2.3-beta.3</title>
+      <link>https://github.com/D4G4/blink/releases/tag/v5.2.3-beta.3</link>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>426</sparkle:version>
+      <sparkle:shortVersionString>5.2.3-beta.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Sun, 23 Aug 2026 21:04:33 +0000</pubDate>
+      <description><![CDATA[<h3 style="margin-top:0">What's new in 5.2.3-beta.3</h3><ul><li>Copy(macos): typing-hold toast label → "Keep typing, I'll wait"</li><li>Break toast label truncated — widen toast to 320pt</li></ul><p style="margin-bottom:0">Full release on <a href="https://github.com/D4G4/blink/releases/tag/v5.2.3-beta.3">GitHub</a>.</p>]]></description>
+      <enclosure url="https://github.com/D4G4/blink/releases/download/v5.2.3-beta.3/Blink.dmg"
+                 type="application/octet-stream"
+                 sparkle:edSignature="AcEDYl0yzBD6tSgXUjIwmiWmIMb8uWiO4SKryQjVqukNb709TlS4GKVohkxOVgRXvQNfeZfJtxDSKuUhskPrAQ==" length="9053166" />
+    </item>
+    <item>
       <title>Blink v5.2.3-beta.2</title>
       <link>https://github.com/D4G4/blink/releases/tag/v5.2.3-beta.2</link>
       <sparkle:channel>beta</sparkle:channel>
