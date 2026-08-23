@@ -2213,7 +2213,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "5.2.3-beta.1";
+				MARKETING_VERSION = "5.2.3-beta.3";
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -2306,7 +2306,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "5.2.3-beta.1";
+				MARKETING_VERSION = "5.2.3-beta.3";
 				PRODUCT_BUNDLE_IDENTIFIER = com.blink20.app;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -2368,7 +2368,7 @@
 			repositoryURL = "https://github.com/D4G4/blink-core.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.10.0;
+				minimumVersion = 2.10.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
