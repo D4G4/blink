@@ -12,6 +12,8 @@ Blink uses macOS **Input Monitoring** permission to observe:
 
 It also uses macOS **Microphone** permission to read one bit of state — whether any app is currently capturing audio — so the break timer can pause during calls. No audio is recorded or transmitted.
 
+Optionally, if you enable meeting auto-pause, Blink uses macOS **Calendar** permission to read the times of your events so it can pause during meetings. Event details are read on your Mac and never stored or transmitted.
+
 This data is used **only** to detect flow state and decide when to show a break reminder.
 
 ## What Blink does NOT access
@@ -20,7 +22,7 @@ This data is used **only** to detect flow state and decide when to show a break 
 - Window contents or titles
 - URLs or browsing history
 - Files or documents
-- Contacts, calendar, or email
+- Contacts or email
 - Location
 - Any personal or identifiable information
 

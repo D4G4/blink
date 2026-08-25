@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Privacy — Blink</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Blink's privacy policy. Blink collects nothing: no analytics, no telemetry, no tracking. Everything stays on your Mac." />
+<link rel="icon" type="image/png" href="blink-icon-peach.png" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://blink20.net/privacy" />
+<meta property="og:title" content="Privacy — Blink" />
+<meta property="og:description" content="Blink collects nothing: no analytics, no telemetry, no tracking. Everything stays on your Mac." />
+<meta property="og:image" content="https://blink20.net/og-image.png" />
+<style>
+  @font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 300 800;
+    font-display: swap;
+    src: url(fonts/nunito-latin-var.woff2) format('woff2');
+  }
+  :root {
+    --paper:   #FFE9D6;
+    --paperHi: #FFF5E9;
+    --ink:     #2A1408;
+    --inkMute: rgba(42,20,8,0.58);
+    --hair:    rgba(180,90,50,0.26);
+    --peach:   #E88565;
+    --mono: "SF Mono", ui-monospace, "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    --head: ui-rounded, "SF Pro Rounded", "Nunito", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--head); -webkit-font-smoothing: antialiased; }
+  .mono { font-family: var(--mono); letter-spacing: 0.2em; text-transform: uppercase; }
+
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 40px;
+    background: rgba(255,245,233,0.82);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    border-bottom: 1px solid var(--hair);
+  }
+  .brand { display: flex; align-items: center; gap: 13px; color: inherit; text-decoration: none; }
+  .brand .lockup { display: flex; align-items: baseline; gap: 12px; }
+  .brand .wm { font-size: 19px; font-weight: 800; letter-spacing: -0.03em; }
+  .brand .tag { font-size: 12px; color: var(--inkMute); }
+  .nav .spacer { flex: 1; }
+  .get {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 11px 20px; border: none; border-radius: 999px;
+    background: var(--ink); color: var(--paperHi);
+    font-family: var(--head); font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+    white-space: nowrap; text-decoration: none;
+    cursor: pointer; transition: transform .12s ease, background .2s ease;
+  }
+  .get:hover { transform: translateY(-1px); background: #3a1c0d; }
+  .get .os { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; opacity: 0.62; }
+
+  article { max-width: 720px; margin: 0 auto; padding: 72px 40px 40px; }
+  .kicker { font-size: 12px; color: var(--peach); margin-bottom: 18px; }
+  h1 { font-size: clamp(40px, 6vw, 64px); font-weight: 800; letter-spacing: -0.04em;
+    line-height: 1; margin: 0 0 18px; }
+  .lede { font-size: clamp(18px, 2vw, 22px); color: var(--inkMute); margin: 0 0 48px; line-height: 1.4; }
+  h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin: 44px 0 12px; }
+  p, li { font-size: 16px; line-height: 1.6; }
+  p { margin: 0 0 14px; }
+  ul { padding-left: 22px; margin: 0 0 14px; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--peach); }
+  code { font-family: var(--mono); font-size: 13.5px; background: rgba(42,20,8,0.06);
+    padding: 2px 6px; border-radius: 6px; }
+  a { color: var(--ink); text-decoration-color: var(--peach); text-underline-offset: 3px; }
+  a:hover { color: var(--peach); }
+  .updated { margin-top: 48px; font-size: 12px; color: var(--inkMute); }
+
+  footer { max-width: 1180px; margin: 0 auto; padding: 40px 40px 70px; }
+  footer .rule { height: 1px; background: var(--hair); margin-bottom: 26px; }
+  footer .row { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--inkMute); }
+  footer .row .spacer { flex: 1; }
+  footer a { color: var(--inkMute); text-decoration: none; }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 720px) {
+    .nav { padding: 12px 18px; gap: 10px; }
+    .brand .tag { display: none; }
+    article { padding: 48px 20px 30px; }
+    footer { padding: 30px 20px 50px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="brand" href="/">
+    <img src="blink-icon-peach.png" width="28" height="28" alt="Blink" style="display:block;" />
+    <div class="lockup">
+      <span class="wm">Blink</span>
+      <span class="mono tag">Smart eye breaks for macOS</span>
+    </div>
+  </a>
+  <div class="spacer"></div>
+  <a class="get" href="/download">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M8 1.5v8.5M8 10l-3-3M8 10l3-3M2.5 13h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Get Blink <span class="os">macOS · .dmg</span>
+  </a>
+</nav>
+
+<article>
+  <div class="mono kicker">Privacy policy</div>
+  <h1>We don't collect anything.</h1>
+  <p class="lede">Blink is a desktop eye-break reminder. Everything it learns about your rhythm stays on your Mac. No account, no analytics, no telemetry, no tracking.</p>
+
+  <h2>What Blink accesses</h2>
+  <p>Blink uses the macOS <strong>Input Monitoring</strong> permission to observe:</p>
+  <ul>
+    <li><strong>Keystroke timing</strong> — how fast you type and the pauses between keystrokes. Never <em>what</em> you type.</li>
+    <li><strong>Mouse movement patterns</strong> — speed, distance, scroll events.</li>
+    <li><strong>App switches</strong> — which app is frontmost, via public <code>NSWorkspace</code> notifications (no permission needed).</li>
+  </ul>
+  <p>It uses the <strong>Microphone</strong> permission to read one bit of state — whether any app is currently capturing audio — so the timer can pause during calls. No audio is recorded or transmitted.</p>
+  <p>Optionally, if you enable meeting auto-pause, Blink uses the <strong>Calendar</strong> permission to read the times of your events so it can pause during meetings. Event details are read on your Mac and never stored or transmitted.</p>
+  <p>This data is used <strong>only</strong> to detect flow state and decide when to show a break reminder.</p>
+
+  <h2>What Blink does not access</h2>
+  <ul>
+    <li>Keystroke content (what you type)</li>
+    <li>Window contents or titles</li>
+    <li>URLs or browsing history</li>
+    <li>Files or documents</li>
+    <li>Contacts or email</li>
+    <li>Location</li>
+    <li>Any personal or identifiable information</li>
+  </ul>
+
+  <h2>Data storage</h2>
+  <p>All data is stored <strong>locally on your device</strong> in daily JSON files:</p>
+  <ul>
+    <li><strong>macOS:</strong> <code>~/Library/Application Support/Blink/</code></li>
+    <li><strong>Windows:</strong> <code>%LOCALAPPDATA%\Blink\</code></li>
+  </ul>
+  <p>Files older than 30 days are automatically deleted. No data is ever transmitted off your device.</p>
+
+  <h2>Network access</h2>
+  <p>Blink makes <strong>one kind of network call</strong>: checking for updates. Once a day (and shortly after launch) the app fetches <code>https://blink20.net/appcast.xml</code> using the open-source <a href="https://sparkle-project.org/">Sparkle</a> framework, and downloads new versions from GitHub Releases. That request carries only what any HTTPS request carries plus the standard Sparkle user agent (e.g. <code>Blink/5.2.3 Sparkle/2.9</code>). No user data is sent. Blink contains no analytics SDK, no telemetry, and no tracking, and nothing about your usage of the app ever leaves your Mac.</p>
+  <p><strong>What our update server counts.</strong> blink20.net keeps a daily tally of how many update checks and website downloads it receives, broken down by app version and operating system — so we know roughly how many people use Blink and which versions are out there. It does not log IP addresses, does not set cookies, and does not store anything per request or per person; the only thing retained is a number per day per version. You can read the code that does this in <a href="https://github.com/D4G4/blink/blob/main/worker/index.js"><code>worker/index.js</code></a>.</p>
+
+  <h2>Third-party services</h2>
+  <p>Blink bundles one open-source framework, Sparkle, for updates. Updates are served from Cloudflare (blink20.net) and GitHub Releases. There are no analytics platforms, SDKs, or other third-party services.</p>
+
+  <h2>Open source</h2>
+  <p>Blink is fully open source. You can verify every claim on this page by reading the code at <a href="https://github.com/D4G4/blink">github.com/D4G4/blink</a>.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about privacy? <a href="https://github.com/D4G4/blink/issues">Open an issue on GitHub</a> or email <a href="mailto:dakshg18@gmail.com">dakshg18@gmail.com</a>.</p>
+
+  <div class="mono updated">Last updated · August 24, 2026</div>
+</article>
+
+<footer>
+  <div class="rule"></div>
+  <div class="row">
+    <span>© 2026 Blink</span>
+    <span class="spacer"></span>
+    <a href="/privacy">Privacy</a>
+    <a href="https://github.com/D4G4/blink">GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>
