@@ -44,7 +44,7 @@ stats:
 	echo "== Sparkle update checks per day (≈ active installs), since $$since =="; \
 	q "SELECT day, SUM(count) AS checks FROM events WHERE event='appcast' AND day >= '$$since' GROUP BY day ORDER BY day"; \
 	echo; echo "== Update checks by installed version, since $$since =="; \
-	q "SELECT app_version, SUM(count) AS checks FROM events WHERE event='appcast' AND day >= '$$since' GROUP BY app_version ORDER BY checks DESC"; \
+	q "SELECT CASE WHEN app_version='' THEN '(non-Sparkle)' ELSE app_version END AS app_version, SUM(count) AS checks FROM events WHERE event='appcast' AND day >= '$$since' GROUP BY app_version ORDER BY checks DESC"; \
 	echo; echo "== Website downloads per day, since $$since =="; \
 	q "SELECT day, SUM(count) AS downloads FROM events WHERE event='download' AND day >= '$$since' GROUP BY day ORDER BY day"
 
