@@ -37,7 +37,9 @@ stats:
 	  | head -15 | column -t
 	@echo
 	@q() { npx wrangler d1 execute $(D1_DB) --remote --json --command "$$1" 2>/dev/null \
-	     | python3 -c 'import sys,json; rows=json.load(sys.stdin)[0]["results"]; \
+	     | python3 -c 'import sys,json; raw=sys.stdin.read(); \
+	                  d=json.loads(raw[raw.find("["):]) if "[" in raw else []; \
+	                  rows=d[0]["results"] if isinstance(d,list) and d else d.get("results",[]) if isinstance(d,dict) else []; \
 	                  [print("\t".join(str(v) for v in r.values())) for r in rows] if rows else print("(no data yet)")' \
 	     | column -t; }; \
 	since=$$(date -u -v-$(STATS_DAYS)d +%Y-%m-%d); \
