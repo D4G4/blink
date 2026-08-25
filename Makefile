@@ -28,27 +28,10 @@ help:
 version:
 	@grep -m1 'MARKETING_VERSION:' $(PROJECT) | sed -E 's/.*"(.*)".*/\1/'
 
-# Counters live in D1 (see worker/index.js): one row per day × event ×
-# version. Queries go through wrangler's login — no extra API token.
+# Counters live in D1 (see worker/index.js). scripts/stats.sh does the work
+# and can be run from anywhere; this target is just the in-repo alias.
 stats:
-	@echo "== GitHub release downloads (all time; website + Sparkle updates + brew) =="
-	@gh api repos/D4G4/blink/releases --paginate \
-	  --jq '.[] | select(.assets|length>0) | "\(.tag_name)\t\(.assets[]|select(.name=="Blink.dmg")|.download_count)"' \
-	  | head -15 | column -t
-	@echo
-	@q() { npx wrangler d1 execute $(D1_DB) --remote --json --command "$$1" 2>/dev/null \
-	     | python3 -c 'import sys,json; raw=sys.stdin.read(); \
-	                  d=json.loads(raw[raw.find("["):]) if "[" in raw else []; \
-	                  rows=d[0]["results"] if isinstance(d,list) and d else d.get("results",[]) if isinstance(d,dict) else []; \
-	                  [print("\t".join(str(v) for v in r.values())) for r in rows] if rows else print("(no data yet)")' \
-	     | column -t; }; \
-	since=$$(date -u -v-$(STATS_DAYS)d +%Y-%m-%d); \
-	echo "== Sparkle update checks per day (≈ active installs), since $$since =="; \
-	q "SELECT day, SUM(count) AS checks FROM events WHERE event='appcast' AND day >= '$$since' GROUP BY day ORDER BY day"; \
-	echo; echo "== Update checks by installed version, since $$since =="; \
-	q "SELECT CASE WHEN app_version='' THEN '(non-Sparkle)' ELSE app_version END AS app_version, SUM(count) AS checks FROM events WHERE event='appcast' AND day >= '$$since' GROUP BY app_version ORDER BY checks DESC"; \
-	echo; echo "== Website downloads per day, since $$since =="; \
-	q "SELECT day, SUM(count) AS downloads FROM events WHERE event='download' AND day >= '$$since' GROUP BY day ORDER BY day"
+	@scripts/stats.sh --days $(STATS_DAYS)
 
 stats-init:
 	npx wrangler d1 execute $(D1_DB) --remote --file worker/schema.sql
