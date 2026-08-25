@@ -99,9 +99,11 @@
   .cta p { font-size: clamp(16px, 1.7vw, 20px); color: var(--inkMute); margin: 22px 0 40px; }
   .cta .sub { margin-top: 26px; font-size: 12px; color: var(--inkMute); }
 
-  /* ── Footer ────────────────────────────────────────────────── */
-  footer { max-width: 1180px; margin: 0 auto; padding: 40px 40px 70px; }
-  footer .rule { height: 1px; background: var(--hair); margin-bottom: 26px; }
+  /* ── Footer (lives inside .cta, pinned to its bottom edge) ─── */
+  .cta { position: relative; }
+  footer { position: absolute; left: 0; right: 0; bottom: 0;
+    max-width: 1180px; margin: 0 auto; padding: 0 40px 28px; text-align: left; }
+  footer .rule { height: 1px; background: var(--hair); margin-bottom: 18px; }
   footer .row { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--inkMute); }
   footer .row .spacer { flex: 1; }
   footer a { color: var(--inkMute); text-decoration: none; }
@@ -111,7 +113,7 @@
     .nav { padding: 12px 18px; gap: 10px; }
     .brand .tag { display: none; }
     .cta { padding: 80px 20px; }
-    footer { padding: 30px 20px 50px; }
+    footer { padding: 0 20px 20px; }
   }
 </style>
 
@@ -140,7 +142,7 @@
 
 <main id="sections"></main>
 
-<section class="cta">
+<section class="cta" id="get">
   <h2>Rest your eyes.</h2>
   <p>Free, open source, and notarized for macOS.</p>
   <a class="get big" href="/download">
@@ -150,17 +152,20 @@
     Get Blink <span class="os">macOS · .dmg</span>
   </a>
   <div class="mono sub">macOS 14+ · Apple-notarized · Open source</div>
-</section>
 
-<footer>
-  <div class="rule"></div>
-  <div class="row">
-    <span>© 2026 Blink</span>
-    <span class="spacer"></span>
-    <a href="/privacy">Privacy</a>
-    <a href="https://github.com/D4G4/blink">GitHub</a>
-  </div>
-</footer>
+  <!-- Inside the CTA on purpose: the page snap-scrolls between full-height
+       sections, so a separate short footer below the last one has no snap
+       point and can never be reached. Pinned to the bottom of this screen. -->
+  <footer>
+    <div class="rule"></div>
+    <div class="row">
+      <span>© 2026 Blink</span>
+      <span class="spacer"></span>
+      <a href="/privacy">Privacy</a>
+      <a href="https://github.com/D4G4/blink">GitHub</a>
+    </div>
+  </footer>
+</section>
 
 <!-- Reused design components -->
 <script type="text/babel" src="themes.jsx?v=7"></script>
