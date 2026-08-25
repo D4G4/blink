@@ -1,7 +1,21 @@
-# Cloudflare Workers Static Assets — serves the Blink marketing site (blink20.net).
-# Assets-only: no Worker script, just the static files in website/.
+# Cloudflare Worker for blink20.net — serves the static marketing site from
+# website/ and counts Sparkle update checks + website downloads at the edge
+# (see worker/index.js). The app itself sends nothing new: Sparkle was
+# already fetching /appcast.xml daily; we just count those requests into
+# daily aggregate rows in D1 (no per-request data, no IPs).
 name = "blink"
+main = "worker/index.js"
 compatibility_date = "2024-11-01"
 
 [assets]
 directory = "./website"
+binding = "ASSETS"
+# Assets normally short-circuit the Worker when a file exists at the path.
+# /appcast.xml IS a real file, so the Worker must run first for it to count.
+run_worker_first = ["/appcast.xml", "/download", "/download/"]
+
+# Schema: worker/schema.sql (apply with `make stats-init`).
+[[d1_databases]]
+binding = "BLINK_DB"
+database_name = "blink-analytics"
+database_id = "4ecf831a-b683-41cb-868f-63e63165514f"

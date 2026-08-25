@@ -10,18 +10,46 @@
 # the -beta.N / -rc.N suffix, and ships it to the stable channel in one shot.
 
 PROJECT := blink-macos/project.yml
+D1_DB   := blink-analytics
+STATS_DAYS ?= 30
 
-.PHONY: help version promote
+.PHONY: help version promote stats stats-init
 
 help:
 	@echo "Targets:"
-	@echo "  make version   Print the current MARKETING_VERSION"
-	@echo "  make promote   Promote the current beta/rc to a stable release"
-	@echo "                 (drops -beta.N/-rc.N, commits, tags, pushes → CI)"
-	@echo "                 Add CONFIRM=1 to skip the interactive prompt."
+	@echo "  make version     Print the current MARKETING_VERSION"
+	@echo "  make promote     Promote the current beta/rc to a stable release"
+	@echo "                   (drops -beta.N/-rc.N, commits, tags, pushes → CI)"
+	@echo "                   Add CONFIRM=1 to skip the interactive prompt."
+	@echo "  make stats       Download counts (GitHub) + Sparkle update checks and"
+	@echo "                   website downloads by day/version (D1). STATS_DAYS=30"
+	@echo "  make stats-init  Apply worker/schema.sql to the D1 database (once)."
 
 version:
 	@grep -m1 'MARKETING_VERSION:' $(PROJECT) | sed -E 's/.*"(.*)".*/\1/'
+
+# Counters live in D1 (see worker/index.js): one row per day × event ×
+# version. Queries go through wrangler's login — no extra API token.
+stats:
+	@echo "== GitHub release downloads (all time; website + Sparkle updates + brew) =="
+	@gh api repos/D4G4/blink/releases --paginate \
+	  --jq '.[] | select(.assets|length>0) | "\(.tag_name)\t\(.assets[]|select(.name=="Blink.dmg")|.download_count)"' \
+	  | head -15 | column -t
+	@echo
+	@q() { npx wrangler d1 execute $(D1_DB) --remote --json --command "$$1" 2>/dev/null \
+	     | python3 -c 'import sys,json; rows=json.load(sys.stdin)[0]["results"]; \
+	                  [print("\t".join(str(v) for v in r.values())) for r in rows] if rows else print("(no data yet)")' \
+	     | column -t; }; \
+	since=$$(date -u -v-$(STATS_DAYS)d +%Y-%m-%d); \
+	echo "== Sparkle update checks per day (≈ active installs), since $$since =="; \
+	q "SELECT day, SUM(count) AS checks FROM events WHERE event='appcast' AND day >= '$$since' GROUP BY day ORDER BY day"; \
+	echo; echo "== Update checks by installed version, since $$since =="; \
+	q "SELECT app_version, SUM(count) AS checks FROM events WHERE event='appcast' AND day >= '$$since' GROUP BY app_version ORDER BY checks DESC"; \
+	echo; echo "== Website downloads per day, since $$since =="; \
+	q "SELECT day, SUM(count) AS downloads FROM events WHERE event='download' AND day >= '$$since' GROUP BY day ORDER BY day"
+
+stats-init:
+	npx wrangler d1 execute $(D1_DB) --remote --file worker/schema.sql
 
 promote:
 	@cur=$$(grep -m1 'MARKETING_VERSION:' $(PROJECT) | sed -E 's/.*"(.*)".*/\1/'); \
